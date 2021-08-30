@@ -234,10 +234,10 @@ function LightGraphs.adjacency_matrix(fg::FeaturedGraph{<:ADJMAT_T}, T::DataType
     return dir == :out ? A : A'
 end
 
-function LightGraphs.degree(fg::FeaturedGraph{<:COO_T}; dir=:out)
+function LightGraphs.degree(fg::FeaturedGraph{<:COO_T}, T=Int; dir=:out)
     s, t = edge_index(fg)
-    degs = fill!(similar(s, eltype(s), fg.num_nodes), 0)
-    o = fill!(similar(s, eltype(s), fg.num_edges), 1)
+    degs = fill!(similar(s, T, fg.num_nodes), 0)
+    o = fill!(similar(s, Int, fg.num_edges), 1)
     if dir ∈ [:out, :both]
         NNlib.scatter!(+, degs, o, s)
     end
@@ -247,9 +247,9 @@ function LightGraphs.degree(fg::FeaturedGraph{<:COO_T}; dir=:out)
     return degs
 end
 
-function LightGraphs.degree(fg::FeaturedGraph{<:ADJMAT_T}; dir=:out)
+function LightGraphs.degree(fg::FeaturedGraph{<:ADJMAT_T}, T=Int; dir=:out)
     @assert dir ∈ (:in, :out)
-    A = graph(fg)
+    A = adjacency_matrix(fg, T)
     return dir == :out ? vec(sum(A, dims=2)) : vec(sum(A, dims=1))
 end
 
