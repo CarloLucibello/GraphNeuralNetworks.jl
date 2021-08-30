@@ -18,8 +18,8 @@ end
 @functor GNN
 
 function GNN(; nin, nhidden, nout)
-    GNN(GraphConv(nin => nhidden, relu),
-        GraphConv(nhidden => nhidden, relu), 
+    GNN(GCNConv(nin => nhidden, relu),
+        GCNConv(nhidden => nhidden, relu), 
         Dense(nhidden, nout))
 end
 
@@ -70,7 +70,8 @@ function train(; kws...)
     train_ids = data.train_indices |> device
     val_ids = data.val_indices |> device
     test_ids = data.test_indices |> device
-    
+    ytrain = y[:,train_ids]
+
     model = GNN(nin=size(X,1), 
                 nhidden=args.nhidden, 
                 nout=data.num_classes) |> device
@@ -90,7 +91,7 @@ function train(; kws...)
     for epoch in 1:args.epochs
         gs = Flux.gradient(ps) do
             ŷ = model(fg, X)
-            logitcrossentropy(ŷ[:,train_ids], y[:,train_ids])
+            logitcrossentropy(ŷ[:,train_ids], ytrain)
         end
 
         Flux.Optimise.update!(opt, ps, gs)
