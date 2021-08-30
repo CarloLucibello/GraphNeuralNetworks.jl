@@ -30,16 +30,19 @@ function GCNConv(ch::Pair{Int,Int}, σ=identity;
     GCNConv(W, b, σ)
 end
 
-
-# function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix)
-#     L̃ = normalized_laplacian(fg, eltype(x); selfloop=true)
-#     l.σ.(l.weight * x * L̃ .+ l.bias)
-# end
+## Matrix operations are more performant, 
+## but cannot compute the normalized laplacian of sparse cuda matrices yet,
+## therefore fallback to message passing framework on gpu for the time being
+ 
+function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix)
+    L̃ = normalized_laplacian(fg, eltype(x); selfloop=true)
+    l.σ.(l.weight * x * L̃ .+ l.bias)
+end
 
 message(l::GCNConv, xi, xj) = xj
 update(l::GCNConv, m, x) = m
 
-function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix)
+function (l::GCNConv)(fg::FeaturedGraph, x::CuMatrix)
     fg = add_self_loops(fg)
     T = eltype(l.weight)
     # cout = sqrt.(degree(fg, dir=:out))
