@@ -37,8 +37,8 @@ end
         layers = [GCNConv, GraphConv, GATConv]
         )
 
-Benchmark GNN layers on random regular graphs 
-of connectivity `c` and each nodes' number in the list `Ns`.
+Benchmark GNN layers on Erdos-Renyi ranomd graphs 
+with average degree `c`. Benchmarks are perfomed for each graph size in the list `Ns`.
 `D` is the number of node features.
 """
 function run_benchmarks(; 
