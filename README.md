@@ -1,26 +1,25 @@
 # GraphNeuralNetworks.jl
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://fluxml.ai/GraphNeuralNetworks.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://fluxml.ai/GraphNeuralNetworks.jl/dev)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://CarloLucibello.github.io/GraphNeuralNetworks.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://CarloLucibello.github.io/GraphNeuralNetworks.jl/dev)
 ![](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/FluxML/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/CarloLucibello/GraphNeuralNetworks.jl)
 
-GraphNeuralNetworks (GNN) is a graph neural network library for Julia based on the [Flux.jl](https://github.com/FluxML/Flux.jl) deep learning framework.
+*GraphNeuralNetworks* is a graph neural network library for Julia based on the [Flux.jl](https://github.com/FluxML/Flux.jl) deep learning framework.
 
-
-## Installation
-
-```julia
-]add GraphNeuralNetworks
-```
-
-## Features
+Some of its noticeable features are the following:
 
 * Based on the Flux deep learning framework.
 * CUDA support.
 * Integrated with the JuliaGraphs ecosystem.
 * Supports generic graph neural network architectures.
 * Easy to define custom graph convolutional layers.
+
+## Installation
+
+```julia
+]add GraphNeuralNetworks
+```
 
 ## Featured Graphs
 
@@ -49,15 +48,15 @@ struct GNN
     conv1
     conv2 
     dense
-
-    function GNN()
-        new(GCNConv(1024=>512, relu),
-            GCNConv(512=>128, relu), 
-            Dense(128, 10))
-    end
 end
 
 @functor GNN
+
+function GNN()
+    GNN(GCNConv(1024=>512, relu),
+        GCNConv(512=>128, relu), 
+        Dense(128, 10))
+end
 
 function (net::GNN)(g, x)
     x = net.conv1(g, x)
