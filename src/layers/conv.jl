@@ -43,7 +43,7 @@ message(l::GCNConv, xi, xj) = xj
 update(l::GCNConv, m, x) = m
 
 function (l::GCNConv)(fg::FeaturedGraph, x::CuMatrix{T}) where T
-    fg = add_self_loops(fg; add_to_existing=true)
+    fg = add_self_loops(fg)
     c = 1 ./ sqrt.(degree(fg, T, dir=:in))
     x = x .* c'
     _, x = propagate(l, fg, nothing, x, nothing, +)

@@ -353,23 +353,18 @@ _eigmax(A) = KrylovKit.eigsolve(Symmetric(A), 1, :LR)[1][1] # also eigs(A, x0, n
 # https://discourse.julialang.org/t/cuda-eigenvalues-of-a-sparse-matrix/46851/5
 
 """
-    add_self_loops(fg::FeaturedGraph; add_to_existing=true)
+    add_self_loops(fg::FeaturedGraph)
 
 Return a featured graph with the same features as `fg`
 but also adding edges connecting the nodes to themselves.
 
-If `add_to_existing=true`, nodes with already existing
+Nodes with already existing
 self-loops will obtain a second self-loop.
 """
-function add_self_loops(fg::FeaturedGraph{<:COO_T}; add_to_existing=true)
+function add_self_loops(fg::FeaturedGraph{<:COO_T})
     s, t = edge_index(fg)
     @assert edge_feature(fg) === nothing
     @assert edge_weight(fg) === nothing
-    if !add_to_existing
-        mask_old_loops = s .!= t
-        s = s[mask_old_loops]
-        t = t[mask_old_loops]
-    end
     n = fg.num_nodes
     nodes = convert(typeof(s), [1:n;])
     s = [s; nodes]
@@ -382,14 +377,8 @@ end
 function add_self_loops(fg::FeaturedGraph{<:ADJMAT_T}; add_to_existing=true)
     A = graph(fg)
     @assert edge_feature(fg) === nothing
-    if add_to_existing
-        nold = 0
-        A += I
-    else
-        nold = sum(Diagonal(A)) |> Int
-        A += I - Diagonal(A)
-    end
-    num_edges =  fg.num_edges - nold + fg.num_nodes
+    A += I
+    num_edges =  fg.num_edges + fg.num_nodes
     FeaturedGraph(A, fg.num_nodes, num_edges,
         node_feature(fg), edge_feature(fg), global_feature(fg))
 end
