@@ -34,15 +34,15 @@ end
 ## but cannot compute the normalized laplacian of sparse cuda matrices yet,
 ## therefore fallback to message passing framework on gpu for the time being
  
-# function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix)
-#     Ã = normalized_adjacency(fg, eltype(x); dir=:out, add_self_loops=true)
-#     l.σ.(l.weight * x * Ã .+ l.bias)
-# end
+function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix{T}) where T
+    Ã = normalized_adjacency(fg, T; dir=:out, add_self_loops=true)
+    l.σ.(l.weight * x * Ã .+ l.bias)
+end
 
 message(l::GCNConv, xi, xj) = xj
 update(l::GCNConv, m, x) = m
 
-function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix{T}) where T
+function (l::GCNConv)(fg::FeaturedGraph, x::CuMatrix{T}) where T
     fg = add_self_loops(fg; add_to_existing=true)
     c = 1 ./ sqrt.(degree(fg, T, dir=:in))
     x = x .* c'
