@@ -5,16 +5,7 @@ https://juliagraphs.org/LightGraphs.jl/latest/types/#AbstractGraph-Type
 https://juliagraphs.org/LightGraphs.jl/latest/developing/#Developing-Alternate-Graph-Types
 =============================================#
 
-abstract type AbstractFeaturedGraph <: AbstractGraph{Int} end
-
-"""
-    NullGraph()
-
-Null object for `FeaturedGraph`.
-"""
-struct NullGraph <: AbstractFeaturedGraph end
-
-const COO_T = Tuple{T, T, V} where {T <: AbstractVector,V}
+const COO_T = Tuple{T, T, V} where {T <: AbstractVector, V}
 const ADJLIST_T = AbstractVector{T} where T <: AbstractVector
 const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
@@ -93,7 +84,7 @@ source, target = edge_index(fg)
 
 See also [`graph`](@ref), [`edge_index`](@ref), [`node_feature`](@ref), [`edge_feature`](@ref), and [`global_feature`](@ref) 
 """
-struct FeaturedGraph{T<:Union{COO_T,ADJMAT_T}} <: AbstractFeaturedGraph
+struct FeaturedGraph{T<:Union{COO_T,ADJMAT_T}}
     graph::T
     num_nodes::Int
     num_edges::Int
