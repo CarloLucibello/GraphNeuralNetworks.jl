@@ -114,7 +114,6 @@ function to_sparse(A::ADJMAT_T, T::DataType=eltype(A); dir=:out, num_nodes=nothi
     return sparse(A), num_nodes, num_edges
 end
 
-
 function to_sparse(adj_list::ADJLIST_T, T::DataType=Int; dir=:out, num_nodes=nothing)
     coo, num_nodes, num_edges = to_coo(adj_list; dir, num_nodes)
     to_sparse(coo; dir, num_nodes)

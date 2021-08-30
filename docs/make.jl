@@ -8,6 +8,7 @@ makedocs(;
     sitename = "GraphNeuralNetworks.jl",
     pages=[
         "Home" => "index.md",
+        "Developer Notes" => "dev.md",
     ],
 )
 

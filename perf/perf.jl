@@ -1,39 +1,26 @@
 using Flux, GraphNeuralNetworks, LightGraphs, BenchmarkTools, CUDA
 using DataFrames, Statistics, JLD2, SparseArrays
+CUDA.device!(2)
+CUDA.allowscalar(false)
 
 BenchmarkTools.ratio(::Missing, x) = Inf
 BenchmarkTools.ratio(x, ::Missing) = 0.0
 BenchmarkTools.ratio(::Missing, ::Missing) = missing
 
-adjlist(g) = [neighbors(g, i) for i in 1:nv(g)]
-
 function run_single_benchmark(N, c, D, CONV; gtype=:lg)
-    @assert gtype ∈ [:lightgraph, :adjlist, :dense, :sparse]
     g = erdos_renyi(N, c / (N-1), seed=17)
-    if gtype == :adjlist
-        g = adjlist(g)
-    elseif gtype == :dense
-        g = Array(adjacency_matrix(g))
-    elseif gtype == :sparse 
-        g = adjacency_matrix(g) # lightgraphs returns sparse adj mats
-    end
-
-    res = Dict() 
     X = randn(Float32, D, N)
-    res["FG"] = @benchmark FeaturedGraph($g, nf=$X) 
     
-    fg = FeaturedGraph(g, nf=X)
+    fg = FeaturedGraph(g; nf=X, graph_type=gtype)
     fg_gpu = fg |> gpu    
     
     m = CONV(D => D)
     m_gpu = m |> gpu
-    try 
-        res["CPU"] = @benchmark $m($fg)
-    catch
-        res["CPU"] = missing
-    end
-
-    try 
+    
+    res = Dict()
+    res["CPU"] = @benchmark $m($fg)
+    
+    try [GCNConv, GraphConv, GATConv]
         res["GPU"] = @benchmark CUDA.@sync($m_gpu($fg_gpu)) teardown=(GC.gc(); CUDA.reclaim())
     catch
         res["GPU"] = missing
@@ -41,34 +28,39 @@ function run_single_benchmark(N, c, D, CONV; gtype=:lg)
 
     return res
 end
+
 """
     run_benchmarks(;
         Ns = [10, 100, 1000, 10000],
         c = 6,
-        D = 100)
+        D = 100,
+        layers = [GCNConv, GraphConv, GATConv]
+        )
 
 Benchmark GNN layers on random regular graphs 
-of mean connectivity `c` and number of nodes in the list `Ns`.
+of connectivity `c` and each nodes' number in the list `Ns`.
 `D` is the number of node features.
 """
 function run_benchmarks(; 
         Ns = [10, 100, 1000, 10000],
-        c = 6.0,
-        D = 100)
+        c = 6,
+        D = 100,
+        layers = [GCNConv, GraphConv, GATConv],
+        gtypes = [:coo, :sparse, :dense],
+        )
 
     df = DataFrame(N=Int[], c=Float64[], layer=String[], gtype=Symbol[], 
-                   time_fg=Any[], time_cpu=Any[], time_gpu=Any[]) |> allowmissing
+                   time_cpu=Any[], time_gpu=Any[]) |> allowmissing
     
-    for gtype in [:lightgraph, :adjlist, :dense, :sparse]
+    for gtype in gtypes
         for N in Ns
             println("## GRAPH_TYPE = $gtype  N = $N")           
-            for CONV in [GCNConv, GraphConv, GATConv]
+            for CONV in layers
                 res = run_single_benchmark(N, c, D, CONV; gtype)
-                row = (; N = N,
+                row = (;layer = "$CONV", 
+                        N = N,
                         c = c,
-                        layer = "$CONV", 
                         gtype = gtype, 
-                        time_fg = median(res["FG"]),
                         time_cpu = ismissing(res["CPU"]) ? missing : median(res["CPU"]),
                         time_gpu = ismissing(res["GPU"]) ? missing : median(res["GPU"]),
                     )
@@ -76,6 +68,7 @@ function run_benchmarks(;
             end
         end
     end
+
     df.gpu_to_cpu = ratio.(df.time_gpu, df.time_cpu)
     sort!(df, [:layer, :N, :c, :gtype])
     return df
@@ -89,11 +82,11 @@ end
 # @save "perf/perf_pr.jld2" dfpr=df
 
 
-function compare(dfpr, dfmaster; on=[:N, :c, :layer])
+function compare(dfpr, dfmaster; on=[:N, :c, :gtype, :layer])
     df = outerjoin(dfpr, dfmaster; on=on, makeunique=true, renamecols = :_pr => :_master)
     df.pr_to_master_cpu = ratio.(df.time_cpu_pr, df.time_cpu_master)
-    df.pr_to_master_gpu = ratio.(df.time_cpu_pr, df.time_gpu_master) 
-    return df[:,[:N, :c, :gtype_pr, :gtype_master, :layer, :pr_to_master_cpu, :pr_to_master_gpu]]
+    df.pr_to_master_gpu = ratio.(df.time_gpu_pr, df.time_gpu_master) 
+    return df[:,[:N, :c, :gtype, :layer, :pr_to_master_cpu, :pr_to_master_gpu]]
 end
 
 # @load "perf/perf_pr.jld2" dfpr
