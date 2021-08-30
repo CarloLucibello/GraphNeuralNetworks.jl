@@ -18,8 +18,8 @@ end
 @functor GNN
 
 function GNN(; nin, nhidden, nout)
-    GNN(GCNConv(nin => nhidden, relu),
-        GCNConv(nhidden => nhidden, relu), 
+    GNN(GraphConv(nin => nhidden, relu),
+        GraphConv(nhidden => nhidden, relu), 
         Dense(nhidden, nout))
 end
 
@@ -35,12 +35,8 @@ function eval_loss_accuracy(X, y, ids, model, fg)
     ŷ = model(fg, X)
     l = logitcrossentropy(ŷ[:,ids], y[:,ids])
     acc = mean(onecold(ŷ[:,ids] |> cpu) .== onecold(y[:,ids] |> cpu))
-    return (loss = l |> round4, acc = acc*100 |> round4)
+    return (loss = round(l, digits=4), acc = round(acc*100, digits=2))
 end
-
-## utility functions
-num_params(model) = sum(length, Flux.params(model)) 
-round4(x) = round(x, digits=4)
 
 # arguments for the `train` function 
 Base.@kwdef mutable struct Args
@@ -68,7 +64,7 @@ function train(; kws...)
     end
 
     data = Cora.dataset()
-    fg = FeaturedGraph(data.adjacency_list)
+    fg = FeaturedGraph(data.adjacency_list) |> device
     X = data.node_features |> device
     y = onehotbatch(data.node_labels, 1:data.num_classes) |> device
     train_ids = data.train_indices |> device
@@ -85,9 +81,8 @@ function train(; kws...)
     
     function report(epoch)
         train = eval_loss_accuracy(X, y, train_ids, model, fg)
-        val = eval_loss_accuracy(X, y, val_ids, model, fg)
         test = eval_loss_accuracy(X, y, test_ids, model, fg)        
-        println("Epoch: $epoch   Train: $(train)  Val: $(val)   Test: $(test)")
+        println("Epoch: $epoch   Train: $(train)   Test: $(test)")
     end
     
     ## TRAINING
