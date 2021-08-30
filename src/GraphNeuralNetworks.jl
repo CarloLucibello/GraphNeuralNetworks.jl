@@ -64,7 +64,6 @@ include("layers/msgpass.jl")
 
 include("layers/conv.jl")
 include("layers/pool.jl")
-include("models.jl")
 include("layers/misc.jl")
 
 

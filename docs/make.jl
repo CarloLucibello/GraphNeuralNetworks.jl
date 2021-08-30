@@ -5,19 +5,10 @@ DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup, :(using GraphNeuralNetwo
 
 makedocs(;
     modules=[GraphNeuralNetworks],
-    authors="Carlo Lucibello <carlo.lucibello@gmail.com> and contributors",
-    repo="https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/{commit}{path}#{line}",
-    sitename="GraphNeuralNetworks.jl",
-    format=Documenter.HTML(;
-        prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://CarloLucibello.github.io/GraphNeuralNetworks.jl",
-        assets=String[],
-    ),
+    sitename = "GraphNeuralNetworks.jl",
     pages=[
         "Home" => "index.md",
     ],
 )
 
-deploydocs(;
-    repo="github.com/CarloLucibello/GraphNeuralNetworks.jl",
-)
+deploydocs(repo="github.com/CarloLucibello/GraphNeuralNetworks.jl.git")

@@ -1,11 +1,10 @@
 """
-    GCNConv([fg,] in => out, σ=identity; bias=true, init=glorot_uniform)
+    GCNConv(in => out, σ=identity; bias=true, init=glorot_uniform)
 
 Graph convolutional layer.
 
 # Arguments
 
-- `fg`: Optionally pass a [`FeaturedGraph`](@ref). 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
 - `σ`: Activation function.
@@ -15,25 +14,22 @@ Graph convolutional layer.
 The input to the layer is a node feature array `X` 
 of size `(num_features, num_nodes)`.
 """
-struct GCNConv{A<:AbstractMatrix, B, F, S<:AbstractFeaturedGraph} <: MessagePassing
+struct GCNConv{A<:AbstractMatrix, B, F} <: MessagePassing
     weight::A
     bias::B
     σ::F
-    fg::S
 end
 
-function GCNConv(fg::AbstractFeaturedGraph, ch::Pair{Int,Int}, σ=identity;
+@functor GCNConv
+
+function GCNConv(ch::Pair{Int,Int}, σ=identity;
                  init=glorot_uniform, bias::Bool=true)
     in, out = ch
     W = init(out, in)
     b = Flux.create_bias(W, bias, out)
-    GCNConv(W, b, σ, fg)
+    GCNConv(W, b, σ)
 end
 
-GCNConv(ch::Pair{Int,Int}, σ = identity; kwargs...) =
-    GCNConv(NullGraph(), ch, σ; kwargs...)
-
-@functor GCNConv
 
 # function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix)
 #     L̃ = normalized_laplacian(fg, eltype(x); selfloop=true)
@@ -55,7 +51,6 @@ function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix)
 end
 
 (l::GCNConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
-(l::GCNConv)(x::AbstractMatrix) = l(l.fg, x)
 
 function Base.show(io::IO, l::GCNConv)
     out, in = size(l.weight)
@@ -66,36 +61,31 @@ end
 
 
 """
-    ChebConv([fg,] in=>out, k; bias=true, init=glorot_uniform)
+    ChebConv(in=>out, k; bias=true, init=glorot_uniform)
 
 Chebyshev spectral graph convolutional layer.
 
 # Arguments
 
-- `fg`: Optionally pass a [`FeaturedGraph`](@ref). 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
 - `k`: The order of Chebyshev polynomial.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
 """
-struct ChebConv{A<:AbstractArray{<:Number,3}, B, S<:AbstractFeaturedGraph}
+struct ChebConv{A<:AbstractArray{<:Number,3}, B}
     weight::A
     bias::B
-    fg::S
     k::Int
 end
 
-function ChebConv(fg::AbstractFeaturedGraph, ch::Pair{Int,Int}, k::Int;
+function ChebConv(ch::Pair{Int,Int}, k::Int;
                   init=glorot_uniform, bias::Bool=true)
     in, out = ch
     W = init(out, in, k)
     b = Flux.create_bias(W, bias, out)
-    ChebConv(W, b, fg, k)
+    ChebConv(W, b, k)
 end
-
-ChebConv(ch::Pair{Int,Int}, k::Int; kwargs...) =
-    ChebConv(NullGraph(), ch, k; kwargs...)
 
 @functor ChebConv
 
@@ -117,7 +107,6 @@ function (c::ChebConv)(fg::FeaturedGraph, X::AbstractMatrix{T}) where T
 end
 
 (l::ChebConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
-(l::ChebConv)(x::AbstractMatrix) = l(l.fg, x)
 
 function Base.show(io::IO, l::ChebConv)
     out, in, k = size(l.weight)
@@ -128,13 +117,12 @@ end
 
 
 """
-    GraphConv([fg,] in => out, σ=identity, aggr=+; bias=true, init=glorot_uniform)
+    GraphConv(in => out, σ=identity, aggr=+; bias=true, init=glorot_uniform)
 
 Graph neural network layer.
 
 # Arguments
 
-- `fg`: Optionally pass a [`FeaturedGraph`](@ref). 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
 - `σ`: Activation function.
@@ -143,8 +131,7 @@ Graph neural network layer.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
 """
-struct GraphConv{V<:AbstractFeaturedGraph, A<:AbstractMatrix, B} <: MessagePassing
-    fg::V
+struct GraphConv{A<:AbstractMatrix, B} <: MessagePassing
     weight1::A
     weight2::A
     bias::B
@@ -152,22 +139,18 @@ struct GraphConv{V<:AbstractFeaturedGraph, A<:AbstractMatrix, B} <: MessagePassi
     aggr
 end
 
-function GraphConv(fg::AbstractFeaturedGraph, ch::Pair{Int,Int}, σ=identity, aggr=+;
+@functor GraphConv
+
+function GraphConv(ch::Pair{Int,Int}, σ=identity, aggr=+;
                    init=glorot_uniform, bias::Bool=true)
     in, out = ch
     W1 = init(out, in)
     W2 = init(out, in)
     b = Flux.create_bias(W1, bias, out)
-    GraphConv(fg, W1, W2, b, σ, aggr)
+    GraphConv(W1, W2, b, σ, aggr)
 end
 
-GraphConv(ch::Pair{Int,Int}, σ=identity, aggr=+; kwargs...) =
-    GraphConv(NullGraph(), ch, σ, aggr; kwargs...)
-
-@functor GraphConv
-
 message(gc::GraphConv, x_i, x_j, e_ij) =  x_j
-
 update(gc::GraphConv, m, x) = gc.σ.(gc.weight1 * x .+ gc.weight2 * m .+ gc.bias)
 
 function (gc::GraphConv)(fg::FeaturedGraph, x::AbstractMatrix)
@@ -177,7 +160,6 @@ function (gc::GraphConv)(fg::FeaturedGraph, x::AbstractMatrix)
 end
 
 (l::GraphConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
-(l::GraphConv)(x::AbstractMatrix) = l(l.fg, x)
 
 function Base.show(io::IO, l::GraphConv)
     in_channel = size(l.weight1, ndims(l.weight1))
@@ -189,9 +171,8 @@ function Base.show(io::IO, l::GraphConv)
 end
 
 
-
 """
-    GATConv([fg,] in => out;
+    GATConv(in => out;
             heads=1,
             concat=true,
             init=glorot_uniform    
@@ -202,7 +183,6 @@ Graph attentional layer.
 
 # Arguments
 
-- `fg`: Optionally pass a [`FeaturedGraph`](@ref). 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
 - `bias::Bool`: Keyword argument, whether to learn the additive bias.
@@ -210,8 +190,7 @@ Graph attentional layer.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
 - `negative_slope::Real`: Keyword argument, the parameter of LeakyReLU.
 """
-struct GATConv{V<:AbstractFeaturedGraph, T, A<:AbstractMatrix{T}, B} <: MessagePassing
-    fg::V
+struct GATConv{T, A<:AbstractMatrix{T}, B} <: MessagePassing
     weight::A
     bias::B
     a::A
@@ -221,19 +200,17 @@ struct GATConv{V<:AbstractFeaturedGraph, T, A<:AbstractMatrix{T}, B} <: MessageP
     concat::Bool
 end
 
-function GATConv(fg::AbstractFeaturedGraph, ch::Pair{Int,Int};
+@functor GATConv
+
+function GATConv(ch::Pair{Int,Int};
                  heads::Int=1, concat::Bool=true, negative_slope=0.2f0,
                  init=glorot_uniform, bias::Bool=true)
     in, out = ch             
     W = init(out*heads, in)
     b = Flux.create_bias(W, bias, out*heads)
     a = init(2*out, heads)
-    GATConv(fg, W, b, a, negative_slope, ch, heads, concat)
+    GATConv(W, b, a, negative_slope, ch, heads, concat)
 end
-
-GATConv(ch::Pair{Int,Int}; kwargs...) = GATConv(NullGraph(), ch; kwargs...)
-
-@functor GATConv
 
 function (gat::GATConv)(fg::FeaturedGraph, X::AbstractMatrix)
     check_num_nodes(fg, X)
@@ -266,7 +243,7 @@ function (gat::GATConv)(fg::FeaturedGraph, X::AbstractMatrix)
 end
 
 (l::GATConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
-(l::GATConv)(x::AbstractMatrix) = l(l.fg, x)
+
 
 function Base.show(io::IO, l::GATConv)
     in_channel = size(l.weight, ndims(l.weight))
@@ -278,20 +255,18 @@ end
 
 
 """
-    GatedGraphConv([fg,] out, num_layers; aggr=+, init=glorot_uniform)
+    GatedGraphConv(out, num_layers; aggr=+, init=glorot_uniform)
 
 Gated graph convolution layer.
 
 # Arguments
 
-- `fg`: Optionally pass a [`FeaturedGraph`](@ref). 
 - `out`: The dimension of output features.
 - `num_layers`: The number of gated recurrent unit.
 - `aggr`: An aggregate function applied to the result of message function. `+`, `-`,
 `*`, `/`, `max`, `min` and `mean` are available.
 """
-struct GatedGraphConv{V<:AbstractFeaturedGraph, A<:AbstractArray{<:Number,3}, R} <: MessagePassing
-    fg::V
+struct GatedGraphConv{A<:AbstractArray{<:Number,3}, R} <: MessagePassing
     weight::A
     gru::R
     out_ch::Int
@@ -299,22 +274,18 @@ struct GatedGraphConv{V<:AbstractFeaturedGraph, A<:AbstractArray{<:Number,3}, R}
     aggr
 end
 
-function GatedGraphConv(fg::AbstractFeaturedGraph, out_ch::Int, num_layers::Int;
+@functor GatedGraphConv
+
+function GatedGraphConv(out_ch::Int, num_layers::Int;
                         aggr=+, init=glorot_uniform)
     w = init(out_ch, out_ch, num_layers)
     gru = GRUCell(out_ch, out_ch)
-    GatedGraphConv(fg, w, gru, out_ch, num_layers, aggr)
+    GatedGraphConv(w, gru, out_ch, num_layers, aggr)
 end
 
-GatedGraphConv(out_ch::Int, num_layers::Int; kwargs...) =
-    GatedGraphConv(NullGraph(), out_ch, num_layers; kwargs...)
 
-@functor GatedGraphConv
-
-message(ggc::GatedGraphConv, x_i, x_j, e_ij) = x_j
-
-update(ggc::GatedGraphConv, m, x) = m
-
+message(l::GatedGraphConv, x_i, x_j, e_ij) = x_j
+update(l::GatedGraphConv, m, x) = m
 
 function (ggc::GatedGraphConv)(fg::FeaturedGraph, H::AbstractMatrix{S}) where {T<:AbstractVector,S<:Real}
     check_num_nodes(fg, H)
@@ -333,8 +304,6 @@ function (ggc::GatedGraphConv)(fg::FeaturedGraph, H::AbstractMatrix{S}) where {T
 end
 
 (l::GatedGraphConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
-(l::GatedGraphConv)(x::AbstractMatrix) = l(l.fg, x)
-
 
 function Base.show(io::IO, l::GatedGraphConv)
     print(io, "GatedGraphConv(($(l.out_ch) => $(l.out_ch))^$(l.num_layers)")
@@ -345,26 +314,23 @@ end
 
 
 """
-    EdgeConv([fg,] nn; aggr=max)
+    EdgeConv(nn; aggr=max)
 
 Edge convolutional layer.
 
 # Arguments
 
-- `fg`: Optionally pass a [`FeaturedGraph`](@ref). 
 - `nn`: A neural network (e.g. a Dense layer or a MLP). 
 - `aggr`: An aggregate function applied to the result of message function. `+`, `max` and `mean` are available.
 """
-struct EdgeConv{V<:AbstractFeaturedGraph} <: MessagePassing
-    fg::V
+struct EdgeConv <: MessagePassing
     nn
     aggr
 end
 
-EdgeConv(fg::AbstractFeaturedGraph, nn; aggr=max) = EdgeConv(fg, nn, aggr)
-EdgeConv(nn; kwargs...) = EdgeConv(NullGraph(), nn; kwargs...)
-
 @functor EdgeConv
+
+EdgeConv(nn; aggr=max) = EdgeConv(nn, aggr)
 
 message(ec::EdgeConv, x_i, x_j, e_ij) = ec.nn(vcat(x_i, x_j .- x_i))
 
@@ -377,7 +343,6 @@ function (ec::EdgeConv)(fg::FeaturedGraph, X::AbstractMatrix)
 end
 
 (l::EdgeConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
-(l::EdgeConv)(x::AbstractMatrix) = l(l.fg, x)
 
 function Base.show(io::IO, l::EdgeConv)
     print(io, "EdgeConv(", l.nn)
@@ -387,39 +352,32 @@ end
 
 
 """
-    GINConv([fg,] nn, [eps])
+    GINConv(nn; eps = 0f0)
 
-    Graph Isomorphism Network.
+Graph Isomorphism Network.
 
 # Arguments
 
-- `fg`: Optionally pass in a FeaturedGraph as input.
 - `nn`: A neural network/layer.
-- `eps`: Weighting factor. Default 0.
+- `eps`: Weighting factor.
 
 The definition of this is as defined in the original paper,
 Xu et. al. (2018) https://arxiv.org/abs/1810.00826.
 """
-struct GINConv{V<:AbstractFeaturedGraph,R<:Real} <: MessagePassing
-    fg::V
+struct GINConv{R<:Real} <: MessagePassing
     nn
     eps::R
 end
 
-function GINConv(fg::AbstractFeaturedGraph, nn; eps=0f0)
-    GINConv(fg, nn, eps)
-end
+@functor GINConv
+Flux.trainable(g::GINConv) = (nn=g.nn,)
 
-function GINConv(nn; eps=0f0) 
-    GINConv(NullGraph(), nn, eps)
+function GINConv(nn; eps=0f0)
+    GINConv(nn, eps)
 end
-
-Flux.trainable(g::GINConv) = (fg=g.fg, nn=g.nn)
 
 message(g::GINConv, x_i, x_j) = x_j 
 update(g::GINConv, m, x) = g.nn((1 + g.eps) * x + m)
-
-@functor GINConv
 
 function (g::GINConv)(fg::FeaturedGraph, X::AbstractMatrix)
     check_num_nodes(fg, X)
@@ -428,4 +386,3 @@ function (g::GINConv)(fg::FeaturedGraph, X::AbstractMatrix)
 end
 
 (l::GINConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
-(l::GINConv)(x::AbstractMatrix) = l(l.fg, x)
