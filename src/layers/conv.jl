@@ -35,15 +35,15 @@ end
 ## therefore fallback to message passing framework on gpu for the time being
  
 function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix)
-    L̃ = normalized_laplacian(fg, eltype(x); selfloop=true)
-    l.σ.(l.weight * x * L̃ .+ l.bias)
+    Ã = normalized_adjacency(fg, eltype(x); dir=:out, add_self_loops=true)
+    l.σ.(l.weight * x * Ã .+ l.bias)
 end
 
 message(l::GCNConv, xi, xj) = xj
 update(l::GCNConv, m, x) = m
 
 function (l::GCNConv)(fg::FeaturedGraph, x::CuMatrix)
-    fg = add_self_loops(fg)
+    fg = add_self_loops(fg; add_to_existing=true)
     T = eltype(l.weight)
     # cout = sqrt.(degree(fg, dir=:out))
     cin = 1 ./ reshape(sqrt.(T.(degree(fg, dir=:in))), 1, :)
