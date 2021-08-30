@@ -98,6 +98,6 @@ function train(; kws...)
         
         epoch % args.infotime == 0 && report(epoch)
     end
-    
-    return fg, X, model, y, data
 end
+
+train()
