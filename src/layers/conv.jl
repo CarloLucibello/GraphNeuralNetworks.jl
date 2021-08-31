@@ -1,18 +1,24 @@
-"""
+@doc raw"""
     GCNConv(in => out, σ=identity; bias=true, init=glorot_uniform)
 
-Graph convolutional layer.
+Graph convolutional layer from paper [Semi-supervised Classification with Graph Convolutional Networks](https://arxiv.org/abs/1609.02907).
 
-# Arguments
-
-- `in`: The dimension of input features.
-- `out`: The dimension of output features.
-- `σ`: Activation function.
-- `bias`: Add learnable bias.
-- `init`: Weights' initializer.
+Performs the operation
+```math
+\mathbf{x}'_i = \sum_{j\in N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
+```
+where ``c_{ij} = \sqrt{N(i)\,N(j)}``.
 
 The input to the layer is a node feature array `X` 
 of size `(num_features, num_nodes)`.
+
+## Arguments
+
+- `in`: Number of input features.
+- `out`: Number of output features.
+- `σ`: Activation function.
+- `bias`: Add learnable bias.
+- `init`: Weights' initializer.
 """
 struct GCNConv{A<:AbstractMatrix, B, F} <: MessagePassing
     weight::A
@@ -61,12 +67,29 @@ function Base.show(io::IO, l::GCNConv)
 end
 
 
-"""
+@doc raw"""
     ChebConv(in=>out, k; bias=true, init=glorot_uniform)
 
-Chebyshev spectral graph convolutional layer.
+Chebyshev spectral graph convolutional layer from
+paper [Convolutional Neural Networks on Graphs with Fast Localized Spectral Filtering](https://arxiv.org/abs/1606.09375).
 
-# Arguments
+Implements
+
+```math
+X' = \sum^{K-1}_{k=0}  W^{(k)} Z^{(k)}
+```
+
+where ``Z^{(k)}`` is the ``k``-th term of Chebyshev polynomials, and can be calculated by the following recursive form:
+
+```math
+Z^{(0)} = X \\
+Z^{(1)} = \hat{L} X \\
+Z^{(k)} = 2 \hat{L} Z^{(k-1)} - Z^{(k-2)}
+```
+
+with ``\hat{L}`` the [`scaled_laplacian`](@ref).
+
+## Arguments
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
@@ -117,18 +140,23 @@ function Base.show(io::IO, l::ChebConv)
 end
 
 
-"""
+@doc raw"""
     GraphConv(in => out, σ=identity, aggr=+; bias=true, init=glorot_uniform)
 
-Graph neural network layer.
+Graph convolution layer from Reference: [Weisfeiler and Leman Go Neural: Higher-order Graph Neural Networks](https://arxiv.org/abs/1810.02244).
 
-# Arguments
+Performs:
+```math
+\mathbf{x}_i' = W^1 \mathbf{x}_i + \box_{j \in \mathcal{N}(i)} W^2 \mathbf{x}_j)
+```
+where the aggregation type is selected by `aggr`.
+
+## Arguments
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
 - `σ`: Activation function.
-- `aggr`: An aggregate function applied to the result of message function. `+`, `-`,
-`*`, `/`, `max`, `min` and `mean` are available.
+- `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
 """
@@ -172,7 +200,7 @@ function Base.show(io::IO, l::GraphConv)
 end
 
 
-"""
+@doc raw"""
     GATConv(in => out;
             heads=1,
             concat=true,
@@ -180,9 +208,19 @@ end
             bias=true, 
             negative_slope=0.2)
 
-Graph attentional layer.
+Graph attentional layer from the paper [Graph Attention Networks](https://arxiv.org/abs/1710.10903).
 
-# Arguments
+Implements the operation
+```math
+\mathbf{x}_i' = \sum_{j \in N(i)} \alpha_{ij} W \mathbf{x}_j
+```
+where the attention coefficient ``\alpha_{ij}`` is given by
+```math
+\alpha_{ij} = \frac{1}{z_i} exp(LeakyReLU(\mathbf{a}^T [W \mathbf{x}_i || W \mathbf{x}_j]))
+```
+with ``z_i`` a normalization factor.
+
+## Arguments
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
@@ -255,17 +293,25 @@ function Base.show(io::IO, l::GATConv)
 end
 
 
-"""
+@doc raw"""
     GatedGraphConv(out, num_layers; aggr=+, init=glorot_uniform)
 
-Gated graph convolution layer.
+Gated graph convolution layer from [Gated Graph Sequence Neural Networks](https://arxiv.org/abs/1511.05493).
 
-# Arguments
+Implements the recursion
+```math
+\mathbf{h}^{(0)}_i = \mathbf{x}_i || \mathbf{0} \\
+\mathbf{h}^{(l)}_i = GRU(\mathbf{h}^{(l-1)}_i, \box_{j \in N(i)} W \mathbf{h}^{(l-1)}_j)
+```
+
+ where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing through GRU. The dimension of input ``\mathbf{x}_i`` needs to be less or equal to `out`.
+
+## Arguments
 
 - `out`: The dimension of output features.
 - `num_layers`: The number of gated recurrent unit.
-- `aggr`: An aggregate function applied to the result of message function. `+`, `-`,
-`*`, `/`, `max`, `min` and `mean` are available.
+- `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+- `init`: Weight initialization function.
 """
 struct GatedGraphConv{A<:AbstractArray{<:Number,3}, R} <: MessagePassing
     weight::A
@@ -313,16 +359,22 @@ function Base.show(io::IO, l::GatedGraphConv)
 end
 
 
+@doc raw"""
+    EdgeConv(f; aggr=max)
 
-"""
-    EdgeConv(nn; aggr=max)
+Edge convolutional layer from paper [Dynamic Graph CNN for Learning on Point Clouds](https://arxiv.org/abs/1801.07829).
 
-Edge convolutional layer.
+Performs the operation
+```math
+\mathbf{x}_i' = \box_{j \in N(i)} f(\mathbf{x}_i || \mathbf{x}_j - \mathbf{x}_i)
+```
 
-# Arguments
+where `f` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
 
-- `nn`: A neural network (e.g. a Dense layer or a MLP). 
-- `aggr`: An aggregate function applied to the result of message function. `+`, `max` and `mean` are available.
+## Arguments
+
+- `f`: A (possibly learnable) function acting on edge features. 
+- `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 """
 struct EdgeConv <: MessagePassing
     nn
@@ -352,18 +404,21 @@ function Base.show(io::IO, l::EdgeConv)
 end
 
 
-"""
-    GINConv(nn; eps = 0f0)
+@doc raw"""
+    GINConv(f; eps = 0f0)
 
-Graph Isomorphism Network.
+Graph Isomorphism convolutional layer from paper [How Powerful are Graph Neural Networks?](https://arxiv.org/pdf/1810.00826.pdf)
 
-# Arguments
 
-- `nn`: A neural network/layer.
+```math
+\mathbf{x}_i' = f\left((1 + \epsilon) \mathbf{x}_i + \sum_{j \in N(i)} \mathbf{x}_j \right)
+```
+where `f` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
+
+## Arguments
+
+- `f`: A (possibly learnable) function acting on node features. 
 - `eps`: Weighting factor.
-
-The definition of this is as defined in the original paper,
-Xu et. al. (2018) https://arxiv.org/abs/1810.00826.
 """
 struct GINConv{R<:Real} <: MessagePassing
     nn

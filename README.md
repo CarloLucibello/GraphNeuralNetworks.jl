@@ -24,4 +24,3 @@ Some of its noticeable features are the following:
 ## Usage
 
 Usage examples can be found in the `examples/` folder. 
-```
