@@ -15,7 +15,7 @@ include("cuda/test_utils.jl")
 
 tests = [
     "gnngraph",
-    "layers/msgpass",
+    "msgpass",
     "layers/basic",
     "layers/conv",
     "layers/pool",

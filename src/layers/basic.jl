@@ -52,12 +52,15 @@ end
 @forward GNNChain.layers Base.getindex, Base.length, Base.first, Base.last,
     Base.iterate, Base.lastindex, Base.keys
 
-functor(::Type{<:GNNChain}, c) = c.layers, ls -> GNNChain(ls...)
+Flux.functor(::Type{<:GNNChain}, c) = c.layers, ls -> GNNChain(ls...)
 
-applychain(::Tuple{}, x) = x
-applychain(fs::Tuple, x) = applychain(tail(fs), first(fs)(x))
+applylayer(l, g::GNNGraph, x) = l(x)
+applylayer(l::GNNLayer, g::GNNGraph, x) = l(g, x)
 
-(c::GNNChain)(x) = applychain(Tuple(c.layers), x)
+applychain(::Tuple{}, g::GNNGraph, x) = x
+applychain(fs::Tuple, g::GNNGraph, x) = applychain(tail(fs), g, applylayer(first(fs), g, x))
+
+(c::GNNChain)(g::GNNGraph, x) = applychain(Tuple(c.layers), g, x)
 
 Base.getindex(c::GNNChain, i::AbstractArray) = GNNChain(c.layers[i]...)
 Base.getindex(c::GNNChain{<:NamedTuple}, i::AbstractArray) = 

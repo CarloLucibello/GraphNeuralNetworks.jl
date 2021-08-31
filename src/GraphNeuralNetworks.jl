@@ -1,11 +1,13 @@
 module GraphNeuralNetworks
 
+using Core: apply_type
 using NNlib: similar
 using LinearAlgebra: similar, fill!
 using Statistics: mean
 using LinearAlgebra
 using SparseArrays
 import KrylovKit
+using Base: tail
 using CUDA
 using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, @functor
@@ -27,7 +29,8 @@ export
     # from LightGraphs
     adjacency_matrix, 
 
-    # layers/msgpass
+    # msgpass
+    # update, update_edge, update_global, message, propagate,
 
     # layers/basic
     GNNLayer,
@@ -54,11 +57,9 @@ export
 include("gnngraph.jl")
 include("graph_conversions.jl")
 include("utils.jl")
-
-include("layers/msgpass.jl")
+include("msgpass.jl")
 include("layers/basic.jl")
 include("layers/conv.jl")
 include("layers/pool.jl")
-
 
 end

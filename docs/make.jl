@@ -9,10 +9,11 @@ makedocs(;
     pages = ["Home" => "index.md",
              "GNNGraph" => "gnngraph.md",
              "Message Passing" => "messagepassing.md",
-             "Building Models" => "models.md",
+             "Model Building" => "models.md",
              "API Reference" =>
                [
                 "GNNGraph" => "api/gnngraph.md",
+                "Basic Layers" => "api/basic.md",
                 "Convolutional Layers" => "api/conv.md",
                 "Pooling Layers" => "api/pool.md",
                ],
