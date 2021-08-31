@@ -54,8 +54,8 @@ function train(; kws...)
     nin, nhidden, nout = size(X,1), args.nhidden, data.num_classes 
     
     ## DEFINE MODEL
-    model = GNNGraph(GCNConv(nin => nhidden, relu),
-                     Dropout(0.5)
+    model = GNNChain(GCNConv(nin => nhidden, relu),
+                     Dropout(0.5),
                      GCNConv(nhidden => nhidden, relu), 
                      Dense(nhidden, nout))  |> device
 
