@@ -1,4 +1,4 @@
-@testset "MessagePassing" begin 
+@testset "message passing" begin 
     in_channel = 10
     out_channel = 5
     num_V = 6
@@ -12,7 +12,7 @@
             0 1 0 1 0 1
             0 1 1 0 1 0]
 
-    struct NewLayer{G} <: MessagePassing end
+    struct NewLayer{G} end
 
     X = rand(T, in_channel, num_V)
     E = rand(T, in_channel, num_E)
@@ -90,7 +90,7 @@
         @test size(global_feature(fg_)) == (in_channel,)
     end
 
-    struct NewLayerW{G} <: MessagePassing
+    struct NewLayerW{G}
         weight
     end
 

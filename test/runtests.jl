@@ -16,9 +16,9 @@ include("cuda/test_utils.jl")
 tests = [
     "gnngraph",
     "layers/msgpass",
+    "layers/basic",
     "layers/conv",
     "layers/pool",
-    "layers/misc",
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")

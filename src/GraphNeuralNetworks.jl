@@ -27,7 +27,10 @@ export
     adjacency_matrix, 
 
     # layers/msgpass
-    MessagePassing,
+
+    # layers/basic
+    GNNLayer,
+    GNNChain,
 
     # layers/conv
     GCNConv,
@@ -38,22 +41,13 @@ export
     EdgeConv,
     GINConv,
 
-    # layer/pool
+    # layers/pool
     GlobalPool,
     LocalPool,
     TopKPool,
-    topk_index,
+    topk_index
 
-    # models
-    GAE,
-    VGAE,
-    InnerProductDecoder,
-    VariationalEncoder,
-    summarize,
-    sample,
 
-    # layer/selector
-    bypass_graph
 
     
 include("gnngraph.jl")
@@ -61,10 +55,9 @@ include("graph_conversions.jl")
 include("utils.jl")
 
 include("layers/msgpass.jl")
-
+include("layers/basic.jl")
 include("layers/conv.jl")
 include("layers/pool.jl")
-include("layers/misc.jl")
 
 
 end

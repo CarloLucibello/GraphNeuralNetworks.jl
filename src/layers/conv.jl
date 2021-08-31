@@ -20,7 +20,7 @@ of size `(num_features, num_nodes)`.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
 """
-struct GCNConv{A<:AbstractMatrix, B, F} <: MessagePassing
+struct GCNConv{A<:AbstractMatrix, B, F} <: GNNLayer
     weight::A
     bias::B
     σ::F
@@ -97,7 +97,7 @@ with ``\hat{L}`` the [`scaled_laplacian`](@ref).
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
 """
-struct ChebConv{A<:AbstractArray{<:Number,3}, B}
+struct ChebConv{A<:AbstractArray{<:Number,3}, B} <: GNNLayer
     weight::A
     bias::B
     k::Int
@@ -160,7 +160,7 @@ where the aggregation type is selected by `aggr`.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
 """
-struct GraphConv{A<:AbstractMatrix, B} <: MessagePassing
+struct GraphConv{A<:AbstractMatrix, B} <: GNNLayer
     weight1::A
     weight2::A
     bias::B
@@ -229,7 +229,7 @@ with ``z_i`` a normalization factor.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
 - `negative_slope::Real`: Keyword argument, the parameter of LeakyReLU.
 """
-struct GATConv{T, A<:AbstractMatrix{T}, B} <: MessagePassing
+struct GATConv{T, A<:AbstractMatrix{T}, B} <: GNNLayer
     weight::A
     bias::B
     a::A
@@ -313,7 +313,7 @@ Implements the recursion
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `init`: Weight initialization function.
 """
-struct GatedGraphConv{A<:AbstractArray{<:Number,3}, R} <: MessagePassing
+struct GatedGraphConv{A<:AbstractArray{<:Number,3}, R} <: GNNLayer
     weight::A
     gru::R
     out_ch::Int
@@ -376,7 +376,7 @@ where `f` typically denotes a learnable function, e.g. a linear layer or a multi
 - `f`: A (possibly learnable) function acting on edge features. 
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 """
-struct EdgeConv <: MessagePassing
+struct EdgeConv <: GNNLayer
     nn
     aggr
 end
@@ -420,7 +420,7 @@ where `f` typically denotes a learnable function, e.g. a linear layer or a multi
 - `f`: A (possibly learnable) function acting on node features. 
 - `eps`: Weighting factor.
 """
-struct GINConv{R<:Real} <: MessagePassing
+struct GINConv{R<:Real} <: GNNLayer
     nn
     eps::R
 end

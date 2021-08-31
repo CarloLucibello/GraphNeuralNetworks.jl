@@ -9,7 +9,7 @@ adj = [0 1 0 0 0 0
        0 1 0 1 0 1
        0 1 1 0 1 0]
 
-struct NewCudaLayer <: MessagePassing
+struct NewCudaLayer
     weight
 end
 NewCudaLayer(m, n) = NewCudaLayer(randn(T, m,n))
