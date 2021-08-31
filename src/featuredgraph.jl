@@ -26,7 +26,7 @@ is preserved and shared.
 A `FeaturedGraph` is a LightGraphs' `AbstractGraph`, therefore any functionality
 from the LightGraphs' graph library can be used on it.
 
-# Arguments 
+## Arguments 
 
 - `g`: Some data representing the graph topology. Possible type are 
     - An adjacency matrix
@@ -302,7 +302,7 @@ end
 
 Normalized Laplacian matrix of graph `g`.
 
-# Arguments
+## Arguments
 
 - `fg`: A `FeaturedGraph`.
 - `T`: result element type.
@@ -332,7 +332,7 @@ end
 Scaled Laplacian matrix of graph `g`,
 defined as ``\hat{L} = \frac{2}{\lambda_{max}} L - I`` where ``L`` is the normalized Laplacian matrix.
 
-# Arguments
+## Arguments
 
 - `fg`: A `FeaturedGraph`.
 - `T`: result element type.

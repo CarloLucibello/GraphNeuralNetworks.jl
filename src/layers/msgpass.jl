@@ -74,7 +74,7 @@ By default, the function returns `x_j`.
 Layers subtyping [`MessagePassing`](@ref) should 
 specialize this method with custom behavior.
 
-# Arguments
+## Arguments
 
 - `mp`: A [`MessagePassing`](@ref) layer.
 - `x_i`: Features of the central node `i`.
@@ -98,7 +98,7 @@ By default, the function returns `m̄`.
 Layers subtyping [`MessagePassing`](@ref) should 
 specialize this method with custom behavior.
 
-# Arguments
+## Arguments
 
 - `mp`: A [`MessagePassing`](@ref) layer.
 - `m̄`: Aggregated edge messages from the [`message`](@ref) function.
