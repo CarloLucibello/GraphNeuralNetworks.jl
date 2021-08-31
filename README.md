@@ -21,60 +21,7 @@ Some of its noticeable features are the following:
 ]add GraphNeuralNetworks
 ```
 
-## Featured Graphs
+## Usage
 
-GraphNeuralNetworks handles graph data (the graph topology + node/edge/global features)
-thanks to the type `FeaturedGraph`.
-
-A `FeaturedGraph` can be constructed out of 
-adjacency matrices, adjacency lists, LightGraphs' types...
-
-```julia
-fg = FeaturedGraph(adj_list)   
-```
-
-## Graph convolutional layers
-
-Construct a GCN layer:
-
-```julia
-GCNConv(input_dim => output_dim, relu)
-```
-
-## Usage Example
-
-```julia
-struct GNN
-    conv1
-    conv2 
-    dense
-end
-
-@functor GNN
-
-function GNN()
-    GNN(GCNConv(1024=>512, relu),
-        GCNConv(512=>128, relu), 
-        Dense(128, 10))
-end
-
-function (net::GNN)(g, x)
-    x = net.conv1(g, x)
-    x = dropout(x, 0.5)
-    x = net.conv2(g, x)
-    x = net.dense(x)
-    return x
-end
-
-model = GNN()
-
-loss(x, y) = logitcrossentropy(model(fg, x), y)
-accuracy(x, y) = mean(onecold(model(fg, x)) .== onecold(y))
-
-ps = Flux.params(model)
-train_data = [(train_X, train_y)]
-opt = ADAM(0.01)
-evalcb() = @show(accuracy(train_X, train_y))
-
-Flux.train!(loss, ps, train_data, opt, cb=throttle(evalcb, 10))
+Usage examples can be found in the `examples/` folder. 
 ```

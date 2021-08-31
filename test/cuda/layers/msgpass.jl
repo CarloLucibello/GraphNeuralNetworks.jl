@@ -15,7 +15,7 @@ end
 NewCudaLayer(m, n) = NewCudaLayer(randn(T, m,n))
 @functor NewCudaLayer
 
-(l::NewCudaLayer)(X) = propagate(l, X, +)
+(l::NewCudaLayer)(X) = GraphNeuralNetworks.propagate(l, X, +)
 GraphNeuralNetworks.message(n::NewCudaLayer, x_i, x_j, e_ij) = n.weight * x_j
 GraphNeuralNetworks.update(::NewCudaLayer, m, x) = m
 

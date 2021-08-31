@@ -234,10 +234,10 @@ function LightGraphs.adjacency_matrix(fg::FeaturedGraph{<:ADJMAT_T}, T::DataType
     return dir == :out ? A : A'
 end
 
-function LightGraphs.degree(fg::FeaturedGraph{<:COO_T}; dir=:out)
+function LightGraphs.degree(fg::FeaturedGraph{<:COO_T}, T=Int; dir=:out)
     s, t = edge_index(fg)
-    degs = fill!(similar(s, eltype(s), fg.num_nodes), 0)
-    o = fill!(similar(s, eltype(s), fg.num_edges), 1)
+    degs = fill!(similar(s, T, fg.num_nodes), 0)
+    o = fill!(similar(s, Int, fg.num_edges), 1)
     if dir ∈ [:out, :both]
         NNlib.scatter!(+, degs, o, s)
     end
@@ -247,9 +247,9 @@ function LightGraphs.degree(fg::FeaturedGraph{<:COO_T}; dir=:out)
     return degs
 end
 
-function LightGraphs.degree(fg::FeaturedGraph{<:ADJMAT_T}; dir=:out)
+function LightGraphs.degree(fg::FeaturedGraph{<:ADJMAT_T}, T=Int; dir=:out)
     @assert dir ∈ (:in, :out)
-    A = graph(fg)
+    A = adjacency_matrix(fg, T)
     return dir == :out ? vec(sum(A, dims=2)) : vec(sum(A, dims=1))
 end
 
@@ -298,7 +298,7 @@ function LightGraphs.laplacian_matrix(fg::FeaturedGraph, T::DataType=Int; dir::S
 end
 
 """
-    normalized_laplacian(fg, T=Float32; selfloop=false, dir=:out)
+    normalized_laplacian(fg, T=Float32; add_self_loops=false, dir=:out)
 
 Normalized Laplacian matrix of graph `g`.
 
@@ -306,21 +306,24 @@ Normalized Laplacian matrix of graph `g`.
 
 - `fg`: A `FeaturedGraph`.
 - `T`: result element type.
-- `selfloop`: adding self loop while calculating the matrix.
+- `add_self_loops`: add self-loops while calculating the matrix.
 - `dir`: the edge directionality considered (:out, :in, :both).
 """
-function normalized_laplacian(fg::FeaturedGraph, T::DataType=Float32; selfloop::Bool=false, dir::Symbol=:out)
+function normalized_laplacian(fg::FeaturedGraph, T::DataType=Float32; 
+                        add_self_loops::Bool=false, dir::Symbol=:out)
+    Ã = normalized_adjacency(fg, T; dir, add_self_loops)
+    return I - Ã
+end
+
+function normalized_adjacency(fg::FeaturedGraph, T::DataType=Float32; 
+                        add_self_loops::Bool=false, dir::Symbol=:out)
     A = adjacency_matrix(fg, T; dir=dir)
-    sz = size(A)
-    @assert sz[1] == sz[2]
-    if selfloop
-        A += I - Diagonal(A)
-    else
-        A -= Diagonal(A) 
+    if add_self_loops
+        A += I
     end
     degs = vec(sum(A; dims=2))
     inv_sqrtD = Diagonal(inv.(sqrt.(degs)))
-    return I - inv_sqrtD * A * inv_sqrtD
+    return inv_sqrtD * A * inv_sqrtD
 end
 
 @doc raw"""
@@ -354,14 +357,14 @@ _eigmax(A) = KrylovKit.eigsolve(Symmetric(A), 1, :LR)[1][1] # also eigs(A, x0, n
 
 Return a featured graph with the same features as `fg`
 but also adding edges connecting the nodes to themselves.
+
+Nodes with already existing
+self-loops will obtain a second self-loop.
 """
 function add_self_loops(fg::FeaturedGraph{<:COO_T})
     s, t = edge_index(fg)
     @assert edge_feature(fg) === nothing
     @assert edge_weight(fg) === nothing
-    mask_old_loops = s .!= t
-    s = s[mask_old_loops]
-    t = t[mask_old_loops]
     n = fg.num_nodes
     nodes = convert(typeof(s), [1:n;])
     s = [s; nodes]
@@ -371,12 +374,11 @@ function add_self_loops(fg::FeaturedGraph{<:COO_T})
         node_feature(fg), edge_feature(fg), global_feature(fg))
 end
 
-function add_self_loops(fg::FeaturedGraph{<:ADJMAT_T})
+function add_self_loops(fg::FeaturedGraph{<:ADJMAT_T}; add_to_existing=true)
     A = graph(fg)
     @assert edge_feature(fg) === nothing
-    nold = sum(Diagonal(A)) |> Int
-    A = A - Diagonal(A) + I
-    num_edges =  fg.num_edges - nold + fg.num_nodes
+    A += I
+    num_edges =  fg.num_edges + fg.num_nodes
     FeaturedGraph(A, fg.num_nodes, num_edges,
         node_feature(fg), edge_feature(fg), global_feature(fg))
 end
@@ -396,6 +398,7 @@ function remove_self_loops(fg::FeaturedGraph{<:COO_T})
 end
 
 @non_differentiable normalized_laplacian(x...)
+@non_differentiable normalized_adjacency(x...)
 @non_differentiable scaled_laplacian(x...)
 @non_differentiable adjacency_matrix(x...)
 @non_differentiable adjacency_list(x...)
