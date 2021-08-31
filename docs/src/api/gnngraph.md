@@ -7,6 +7,6 @@ Pages   = ["api/graphs.md"]
 
 ```@autodocs
 Modules = [GraphNeuralNetworks]
-Pages   = ["featuredgraph.jl"]
+Pages   = ["gnngraph.jl"]
 Private = false
 ```

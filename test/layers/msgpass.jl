@@ -21,10 +21,10 @@
 
     @testset "no aggregation" begin
         l = NewLayer{GRAPH_T}()
-        (l::NewLayer{GRAPH_T})(fg) = GraphNeuralNetworks.propagate(l, fg, nothing)
+        (l::NewLayer{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, nothing)
 
-        fg = FeaturedGraph(adj, nf=X, graph_type=GRAPH_T)
-        fg_ = l(fg)
+        g = GNNGraph(adj, nf=X, graph_type=GRAPH_T)
+        fg_ = l(g)
 
         @test adjacency_matrix(fg_) == adj
         @test node_feature(fg_) === nothing
@@ -34,10 +34,10 @@
 
     @testset "neighbor aggregation (+)" begin
         l = NewLayer{GRAPH_T}()
-        (l::NewLayer{GRAPH_T})(fg) = GraphNeuralNetworks.propagate(l, fg, +)
+        (l::NewLayer{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
-        fg = FeaturedGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
-        fg_ = l(fg)
+        g = GNNGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
+        fg_ = l(g)
 
         @test adjacency_matrix(fg_) == adj
         @test size(node_feature(fg_)) == (in_channel, num_V)
@@ -49,40 +49,40 @@
 
     @testset "custom message and neighbor aggregation" begin
         l = NewLayer{GRAPH_T}()
-        (l::NewLayer{GRAPH_T})(fg) = GraphNeuralNetworks.propagate(l, fg, +)
+        (l::NewLayer{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
-        fg = FeaturedGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
-        fg_ = l(fg)
+        g = GNNGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
+        fg_ = l(g)
 
         @test adjacency_matrix(fg_) == adj
         @test size(node_feature(fg_)) == (out_channel, num_V)
-        @test edge_feature(fg_) ≈ edge_feature(fg)
-        @test global_feature(fg_) ≈ global_feature(fg)
+        @test edge_feature(fg_) ≈ edge_feature(g)
+        @test global_feature(fg_) ≈ global_feature(g)
     end
 
     GraphNeuralNetworks.update_edge(l::NewLayer{GRAPH_T}, m, e) = m
 
     @testset "update_edge" begin
         l = NewLayer{GRAPH_T}()
-        (l::NewLayer{GRAPH_T})(fg) = GraphNeuralNetworks.propagate(l, fg, +)
+        (l::NewLayer{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
-        fg = FeaturedGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
-        fg_ = l(fg)
+        g = GNNGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
+        fg_ = l(g)
 
         @test adjacency_matrix(fg_) == adj
         @test size(node_feature(fg_)) == (out_channel, num_V)
         @test size(edge_feature(fg_)) == (out_channel, num_E)
-        @test global_feature(fg_) ≈ global_feature(fg)
+        @test global_feature(fg_) ≈ global_feature(g)
     end
 
     GraphNeuralNetworks.update(l::NewLayer{GRAPH_T}, m̄, xi, u) = rand(T, 2*out_channel, size(xi, 2))
 
     @testset "update edge/vertex" begin
         l = NewLayer{GRAPH_T}()
-        (l::NewLayer{GRAPH_T})(fg) = GraphNeuralNetworks.propagate(l, fg, +)
+        (l::NewLayer{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
-        fg = FeaturedGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
-        fg_ = l(fg)
+        g = GNNGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
+        fg_ = l(g)
 
         @test all(adjacency_matrix(fg_) .== adj)
         @test size(node_feature(fg_)) == (2*out_channel, num_V)
@@ -101,10 +101,10 @@
 
     @testset "message and update with weights" begin
         l = NewLayerW(in_channel, out_channel)
-        (l::NewLayerW{GRAPH_T})(fg) = GraphNeuralNetworks.propagate(l, fg, +)
+        (l::NewLayerW{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
-        fg = FeaturedGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
-        fg_ = l(fg)
+        g = GNNGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
+        fg_ = l(g)
 
         @test adjacency_matrix(fg_) == adj
         @test size(node_feature(fg_)) == (out_channel, num_V)

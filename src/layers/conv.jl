@@ -40,24 +40,24 @@ end
 ## but cannot compute the normalized laplacian of sparse cuda matrices yet,
 ## therefore fallback to message passing framework on gpu for the time being
  
-function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix{T}) where T
-    Ã = normalized_adjacency(fg, T; dir=:out, add_self_loops=true)
+function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
+    Ã = normalized_adjacency(g, T; dir=:out, add_self_loops=true)
     l.σ.(l.weight * x * Ã .+ l.bias)
 end
 
 message(l::GCNConv, xi, xj) = xj
 update(l::GCNConv, m, x) = m
 
-function (l::GCNConv)(fg::FeaturedGraph, x::CuMatrix{T}) where T
-    fg = add_self_loops(fg)
-    c = 1 ./ sqrt.(degree(fg, T, dir=:in))
+function (l::GCNConv)(g::GNNGraph, x::CuMatrix{T}) where T
+    g = add_self_loops(g)
+    c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'
-    _, x = propagate(l, fg, nothing, x, nothing, +)
+    _, x = propagate(l, g, nothing, x, nothing, +)
     x = x .* c'
     return l.σ.(l.weight * x .+ l.bias)
 end
 
-(l::GCNConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::GCNConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::GCNConv)
     out, in = size(l.weight)
@@ -113,11 +113,11 @@ end
 
 @functor ChebConv
 
-function (c::ChebConv)(fg::FeaturedGraph, X::AbstractMatrix{T}) where T
-    check_num_nodes(fg, X)
+function (c::ChebConv)(g::GNNGraph, X::AbstractMatrix{T}) where T
+    check_num_nodes(g, X)
     @assert size(X, 1) == size(c.weight, 2) "Input feature size must match input channel size."
     
-    L̃ = scaled_laplacian(fg, eltype(X))    
+    L̃ = scaled_laplacian(g, eltype(X))    
 
     Z_prev = X
     Z = X * L̃
@@ -130,7 +130,7 @@ function (c::ChebConv)(fg::FeaturedGraph, X::AbstractMatrix{T}) where T
     return Y .+ c.bias
 end
 
-(l::ChebConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::ChebConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::ChebConv)
     out, in, k = size(l.weight)
@@ -182,13 +182,13 @@ end
 message(gc::GraphConv, x_i, x_j, e_ij) =  x_j
 update(gc::GraphConv, m, x) = gc.σ.(gc.weight1 * x .+ gc.weight2 * m .+ gc.bias)
 
-function (gc::GraphConv)(fg::FeaturedGraph, x::AbstractMatrix)
-    check_num_nodes(fg, x)
-    _, x = propagate(gc, fg, nothing, x, nothing, +)
+function (gc::GraphConv)(g::GNNGraph, x::AbstractMatrix)
+    check_num_nodes(g, x)
+    _, x = propagate(gc, g, nothing, x, nothing, +)
     x
 end
 
-(l::GraphConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::GraphConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::GraphConv)
     in_channel = size(l.weight1, ndims(l.weight1))
@@ -251,13 +251,13 @@ function GATConv(ch::Pair{Int,Int};
     GATConv(W, b, a, negative_slope, ch, heads, concat)
 end
 
-function (gat::GATConv)(fg::FeaturedGraph, X::AbstractMatrix)
-    check_num_nodes(fg, X)
-    fg = add_self_loops(fg)
+function (gat::GATConv)(g::GNNGraph, X::AbstractMatrix)
+    check_num_nodes(g, X)
+    g = add_self_loops(g)
     chin, chout = gat.channel
     heads = gat.heads
 
-    source, target = edge_index(fg)
+    source, target = edge_index(g)
     Wx = gat.weight*X
     Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
     Wxi = NNlib.gather(Wx, target)                      # chout × nheads × nedges
@@ -281,7 +281,7 @@ function (gat::GATConv)(fg::FeaturedGraph, X::AbstractMatrix)
     return reshape(X, :, size(X, 3)) 
 end
 
-(l::GATConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::GATConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 
 function Base.show(io::IO, l::GATConv)
@@ -334,8 +334,8 @@ end
 message(l::GatedGraphConv, x_i, x_j, e_ij) = x_j
 update(l::GatedGraphConv, m, x) = m
 
-function (ggc::GatedGraphConv)(fg::FeaturedGraph, H::AbstractMatrix{S}) where {T<:AbstractVector,S<:Real}
-    check_num_nodes(fg, H)
+function (ggc::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {T<:AbstractVector,S<:Real}
+    check_num_nodes(g, H)
     m, n = size(H)
     @assert (m <= ggc.out_ch) "number of input features must less or equals to output features."
     if m < ggc.out_ch
@@ -344,13 +344,13 @@ function (ggc::GatedGraphConv)(fg::FeaturedGraph, H::AbstractMatrix{S}) where {T
     end
     for i = 1:ggc.num_layers
         M = view(ggc.weight, :, :, i) * H
-        _, M = propagate(ggc, fg, nothing, M, nothing, +)
+        _, M = propagate(ggc, g, nothing, M, nothing, +)
         H, _ = ggc.gru(H, M)
     end
     H
 end
 
-(l::GatedGraphConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::GatedGraphConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::GatedGraphConv)
     print(io, "GatedGraphConv(($(l.out_ch) => $(l.out_ch))^$(l.num_layers)")
@@ -389,13 +389,13 @@ message(ec::EdgeConv, x_i, x_j, e_ij) = ec.nn(vcat(x_i, x_j .- x_i))
 
 update(ec::EdgeConv, m, x) = m
 
-function (ec::EdgeConv)(fg::FeaturedGraph, X::AbstractMatrix)
-    check_num_nodes(fg, X)
-    _, X = propagate(ec, fg, nothing, X, nothing, ec.aggr)
+function (ec::EdgeConv)(g::GNNGraph, X::AbstractMatrix)
+    check_num_nodes(g, X)
+    _, X = propagate(ec, g, nothing, X, nothing, ec.aggr)
     X
 end
 
-(l::EdgeConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::EdgeConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::EdgeConv)
     print(io, "EdgeConv(", l.nn)
@@ -426,19 +426,19 @@ struct GINConv{R<:Real} <: MessagePassing
 end
 
 @functor GINConv
-Flux.trainable(g::GINConv) = (nn=g.nn,)
+Flux.trainable(l::GINConv) = (nn=l.nn,)
 
 function GINConv(nn; eps=0f0)
     GINConv(nn, eps)
 end
 
-message(g::GINConv, x_i, x_j) = x_j 
-update(g::GINConv, m, x) = g.nn((1 + g.eps) * x + m)
+message(l::GINConv, x_i, x_j) = x_j 
+update(l::GINConv, m, x) = l.nn((1 + l.eps) * x + m)
 
-function (g::GINConv)(fg::FeaturedGraph, X::AbstractMatrix)
-    check_num_nodes(fg, X)
-    _, X = propagate(g, fg, nothing, X, nothing, +)
+function (l::GINConv)(g::GNNGraph, X::AbstractMatrix)
+    check_num_nodes(g, X)
+    _, X = propagate(l, g, nothing, X, nothing, +)
     X
 end
 
-(l::GINConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::GINConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))

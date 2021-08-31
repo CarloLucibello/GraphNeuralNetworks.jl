@@ -16,8 +16,8 @@ using LightGraphs: AbstractGraph, outneighbors, inneighbors, is_directed, ne, nv
                   adjacency_matrix, degree
 
 export
-    # featured_graph
-    FeaturedGraph,
+    # gnngraph
+    GNNGraph,
     edge_index,
     node_feature, edge_feature, global_feature,
     adjacency_list, normalized_laplacian, scaled_laplacian,
@@ -56,7 +56,7 @@ export
     bypass_graph
 
     
-include("featuredgraph.jl")
+include("gnngraph.jl")
 include("graph_conversions.jl")
 include("utils.jl")
 

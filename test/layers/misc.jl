@@ -11,11 +11,11 @@
         ef = rand(5, E)
         gf = rand(7)
 
-        fg = FeaturedGraph(adj, nf=nf, ef=ef, gf=gf, graph_type=GRAPH_T)
+        g = GNNGraph(adj, nf=nf, ef=ef, gf=gf, graph_type=GRAPH_T)
         layer = bypass_graph(x -> x .+ 1.,
                                 x -> x .+ 2.,
                                 x -> x .+ 3.)
-        fg_ = layer(fg)
+        fg_ = layer(g)
         @test adjacency_matrix(fg_) == adj
         @test node_feature(fg_) == nf .+ 1.
         @test edge_feature(fg_) == ef .+ 2.

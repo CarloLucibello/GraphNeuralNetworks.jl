@@ -23,16 +23,16 @@ function GNN(; nin, nhidden, nout)
         Dense(nhidden, nout))
 end
 
-function (net::GNN)(fg, x)
-    x = net.conv1(fg, x)
+function (net::GNN)(g, x)
+    x = net.conv1(g, x)
     x = dropout(x, 0.5)
-    x = net.conv2(fg, x)
+    x = net.conv2(g, x)
     x = net.dense(x)
     return x
 end
 
-function eval_loss_accuracy(X, y, ids, model, fg)
-    ŷ = model(fg, X)
+function eval_loss_accuracy(X, y, ids, model, g)
+    ŷ = model(g, X)
     l = logitcrossentropy(ŷ[:,ids], y[:,ids])
     acc = mean(onecold(ŷ[:,ids] |> cpu) .== onecold(y[:,ids] |> cpu))
     return (loss = round(l, digits=4), acc = round(acc*100, digits=2))
@@ -64,7 +64,7 @@ function train(; kws...)
     end
 
     data = Cora.dataset()
-    fg = FeaturedGraph(data.adjacency_list) |> device
+    g = GNNGraph(data.adjacency_list) |> device
     X = data.node_features |> device
     y = onehotbatch(data.node_labels, 1:data.num_classes) |> device
     train_ids = data.train_indices |> device
@@ -78,11 +78,11 @@ function train(; kws...)
     ps = Flux.params(model)
     opt = ADAM(args.η)
 
-    @info "NUM NODES: $(fg.num_nodes)  NUM EDGES: $(fg.num_edges)"
+    @info "NUM NODES: $(g.num_nodes)  NUM EDGES: $(g.num_edges)"
     
     function report(epoch)
-        train = eval_loss_accuracy(X, y, train_ids, model, fg)
-        test = eval_loss_accuracy(X, y, test_ids, model, fg)        
+        train = eval_loss_accuracy(X, y, train_ids, model, g)
+        test = eval_loss_accuracy(X, y, test_ids, model, g)        
         println("Epoch: $epoch   Train: $(train)   Test: $(test)")
     end
     
@@ -90,7 +90,7 @@ function train(; kws...)
     report(0)
     for epoch in 1:args.epochs
         gs = Flux.gradient(ps) do
-            ŷ = model(fg, X)
+            ŷ = model(g, X)
             logitcrossentropy(ŷ[:,train_ids], ytrain)
         end
 

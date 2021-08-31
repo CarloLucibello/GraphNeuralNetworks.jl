@@ -20,7 +20,7 @@ struct GlobalPool{A}
     end
 end
 
-(g::GlobalPool)(X::AbstractArray) = NNlib.scatter(g.aggr, X, g.cluster)
+(l::GlobalPool)(X::AbstractArray) = NNlib.scatter(l.aggr, X, l.cluster)
 
 """
     LocalPool(aggr, cluster)

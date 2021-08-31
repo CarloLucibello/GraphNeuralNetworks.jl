@@ -7,12 +7,12 @@ makedocs(;
     modules=[GraphNeuralNetworks],
     sitename = "GraphNeuralNetworks.jl",
     pages = ["Home" => "index.md",
-             "Graphs" => "graphs.md",
-             "Message passing" => "messagepassing.md",
-             "Building models" => "models.md",
+             "GNNGraph" => "gnngraph.md",
+             "Message Passing" => "messagepassing.md",
+             "Building Models" => "models.md",
              "API Reference" =>
                [
-                "Graphs" => "api/graphs.md",
+                "GNNGraph" => "api/gnngraph.md",
                 "Convolutional Layers" => "api/conv.md",
                 "Pooling Layers" => "api/pool.md",
                ],

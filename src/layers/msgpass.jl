@@ -11,8 +11,8 @@ Related methods are [`propagate`](@ref), [`message`](@ref),
 abstract type MessagePassing end
 
 """
-    propagate(mp::MessagePassing, fg::FeaturedGraph, aggr)
-    propagate(mp::MessagePassing, fg::FeaturedGraph, E, X, u, aggr)
+    propagate(mp::MessagePassing, g::GNNGraph, aggr)
+    propagate(mp::MessagePassing, g::GNNGraph, E, X, u, aggr)
 
 Perform the sequence of operation implementing the message-passing scheme
 and updating node, edge, and global features `X`, `E`, and `u` respectively.
@@ -20,9 +20,9 @@ and updating node, edge, and global features `X`, `E`, and `u` respectively.
 The computation involved is the following:
 
 ```julia
-M = compute_batch_message(mp, fg, E, X, u) 
+M = compute_batch_message(mp, g, E, X, u) 
 E = update_edge(mp, M, E, u)
-M̄ = aggregate_neighbors(mp, aggr, fg, M)
+M̄ = aggregate_neighbors(mp, aggr, g, M)
 X = update(mp, M̄, X, u)
 u = update_global(mp, E, X, u)
 ```
@@ -33,11 +33,11 @@ and [`message`](@ref) function, than call
 this method in the forward pass:
 
 ```julia
-function (l::GNNLayer)(fg, X)
+function (l::GNNLayer)(g, X)
     ... some prepocessing if needed ...
     E = nothing
     u = nothing
-    propagate(l, fg, E, X, u, +)
+    propagate(l, g, E, X, u, +)
 end
 ```
 
@@ -45,17 +45,17 @@ See also [`message`](@ref) and [`update`](@ref).
 """
 function propagate end 
 
-function propagate(mp::MessagePassing, fg::FeaturedGraph, aggr)
-    E, X, u = propagate(mp, fg,
-                        edge_feature(fg), node_feature(fg), global_feature(fg), 
+function propagate(mp::MessagePassing, g::GNNGraph, aggr)
+    E, X, u = propagate(mp, g,
+                        edge_feature(g), node_feature(g), global_feature(g), 
                         aggr)
-    FeaturedGraph(fg, nf=X, ef=E, gf=u)
+    GNNGraph(g, nf=X, ef=E, gf=u)
 end
 
-function propagate(mp::MessagePassing, fg::FeaturedGraph, E, X, u, aggr)
-    M = compute_batch_message(mp, fg, E, X, u) 
+function propagate(mp::MessagePassing, g::GNNGraph, E, X, u, aggr)
+    M = compute_batch_message(mp, g, E, X, u) 
     E = update_edge(mp, M, E, u)
-    M̄ = aggregate_neighbors(mp, aggr, fg, M)
+    M̄ = aggregate_neighbors(mp, aggr, g, M)
     X = update(mp, M̄, X, u)
     u = update_global(mp, E, X, u)
     return E, X, u
@@ -115,8 +115,8 @@ _gather(x::Nothing, i) = nothing
 
 ## Step 1.
 
-function compute_batch_message(mp::MessagePassing, fg, E, X, u)
-    s, t = edge_index(fg)
+function compute_batch_message(mp::MessagePassing, g, E, X, u)
+    s, t = edge_index(g)
     Xi = _gather(X, t)
     Xj = _gather(X, s)
     M = message(mp, Xi, Xj, E, u)
@@ -135,12 +135,12 @@ end
 
 ##  Step 3
 
-function aggregate_neighbors(mp::MessagePassing, aggr, fg, E)
-    s, t = edge_index(fg)
+function aggregate_neighbors(mp::MessagePassing, aggr, g, E)
+    s, t = edge_index(g)
     NNlib.scatter(aggr, E, t)
 end
 
-aggregate_neighbors(mp::MessagePassing, aggr::Nothing, fg, E) = nothing
+aggregate_neighbors(mp::MessagePassing, aggr::Nothing, g, E) = nothing
 
 ## Step 4
 
