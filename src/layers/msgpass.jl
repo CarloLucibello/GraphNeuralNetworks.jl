@@ -23,7 +23,7 @@ and [`message`](@ref) function, then call
 this method in the forward pass:
 
 ```julia
-function (l::GNNLayer)(g, X)
+function (l::MyLayer)(g, X)
     ... some prepocessing if needed ...
     E = nothing
     u = nothing

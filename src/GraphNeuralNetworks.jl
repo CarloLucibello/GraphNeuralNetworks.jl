@@ -9,6 +9,7 @@ import KrylovKit
 using CUDA
 using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, @functor
+using MacroTools: @forward
 using NNlib, NNlibCUDA
 using ChainRulesCore
 import LightGraphs
