@@ -63,7 +63,7 @@ in order to [`update`](@ref) the features of node `i`.
 By default, the function returns `x_j`.
 Custom layer should specialize this method with the desired behavior.
 
-## Arguments
+# Arguments
 
 - `mp`: A gnn layer.
 - `x_i`: Features of the central node `i`.
@@ -86,7 +86,7 @@ aggregation `m̄`.
 By default, the function returns `m̄`.
 Custom layers should  specialize this method with the desired behavior.
 
-## Arguments
+# Arguments
 
 - `mp`: A gnn layer.
 - `m̄`: Aggregated edge messages from the [`message`](@ref) function.

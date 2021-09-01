@@ -6,7 +6,7 @@ their models.
 
 In what follows, we discuss two different styles for model creation:
 the *explicit modeling* style, more verbose but more flexible, 
-and the *implicity modeling* style based on [`GNNChain`](@ref), more concise but less flexible.
+and the *implicit modeling* style based on [`GNNChain`](@ref), more concise but less flexible.
 
 ## Explicit modeling
 

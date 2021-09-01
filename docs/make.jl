@@ -1,4 +1,4 @@
-using GraphNeuralNetworks
+using Flux, NNlib, GraphNeuralNetworks
 using Documenter
 
 DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup, :(using GraphNeuralNetworks); recursive=true)

@@ -12,7 +12,7 @@ where ``c_{ij} = \sqrt{N(i)\,N(j)}``.
 The input to the layer is a node feature array `X` 
 of size `(num_features, num_nodes)`.
 
-## Arguments
+# Arguments
 
 - `in`: Number of input features.
 - `out`: Number of output features.
@@ -89,7 +89,7 @@ Z^{(k)} = 2 \hat{L} Z^{(k-1)} - Z^{(k-2)}
 
 with ``\hat{L}`` the [`scaled_laplacian`](@ref).
 
-## Arguments
+# Arguments
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
@@ -151,7 +151,7 @@ Performs:
 ```
 where the aggregation type is selected by `aggr`.
 
-## Arguments
+# Arguments
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
@@ -220,7 +220,7 @@ where the attention coefficient ``\alpha_{ij}`` is given by
 ```
 with ``z_i`` a normalization factor.
 
-## Arguments
+# Arguments
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
@@ -306,7 +306,7 @@ Implements the recursion
 
  where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing through GRU. The dimension of input ``\mathbf{x}_i`` needs to be less or equal to `out`.
 
-## Arguments
+# Arguments
 
 - `out`: The dimension of output features.
 - `num_layers`: The number of gated recurrent unit.
@@ -374,7 +374,7 @@ Performs the operation
 
 where `f` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
 
-## Arguments
+# Arguments
 
 - `f`: A (possibly learnable) function acting on edge features. 
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
@@ -418,7 +418,7 @@ Graph Isomorphism convolutional layer from paper [How Powerful are Graph Neural 
 ```
 where `f` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
 
-## Arguments
+# Arguments
 
 - `f`: A (possibly learnable) function acting on node features. 
 - `eps`: Weighting factor.

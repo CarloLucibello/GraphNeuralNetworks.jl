@@ -17,7 +17,7 @@ and if names are given, `m[:name] == m[1]` etc.
 
 ## Examples
 
-```jldoctest
+```
 julia> m = GNNChain(x -> x^2, x -> x+1);
 
 julia> m(5) == 26
