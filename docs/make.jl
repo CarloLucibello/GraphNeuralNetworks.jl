@@ -16,6 +16,7 @@ makedocs(;
                 "Basic Layers" => "api/basic.md",
                 "Convolutional Layers" => "api/conv.md",
                 "Pooling Layers" => "api/pool.md",
+                "NNlib" => "api/nnlib.md",
                ],
               "Developer Notes" => "dev.md",
             ],

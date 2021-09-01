@@ -334,6 +334,9 @@ end
 message(l::GatedGraphConv, x_i, x_j, e_ij) = x_j
 update(l::GatedGraphConv, m, x) = m
 
+# remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
+@non_differentiable fill!(x...)
+
 function (ggc::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {T<:AbstractVector,S<:Real}
     check_num_nodes(g, H)
     m, n = size(H)
