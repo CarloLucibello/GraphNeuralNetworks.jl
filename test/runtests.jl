@@ -14,11 +14,11 @@ CUDA.allowscalar(false)
 include("cuda/test_utils.jl")
 
 tests = [
-    "featured_graph",
-    "layers/msgpass",
+    "gnngraph",
+    "msgpass",
+    "layers/basic",
     "layers/conv",
     "layers/pool",
-    "layers/misc",
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")

@@ -12,7 +12,7 @@ where ``c_{ij} = \sqrt{N(i)\,N(j)}``.
 The input to the layer is a node feature array `X` 
 of size `(num_features, num_nodes)`.
 
-## Arguments
+# Arguments
 
 - `in`: Number of input features.
 - `out`: Number of output features.
@@ -20,7 +20,7 @@ of size `(num_features, num_nodes)`.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
 """
-struct GCNConv{A<:AbstractMatrix, B, F} <: MessagePassing
+struct GCNConv{A<:AbstractMatrix, B, F} <: GNNLayer
     weight::A
     bias::B
     σ::F
@@ -40,24 +40,24 @@ end
 ## but cannot compute the normalized laplacian of sparse cuda matrices yet,
 ## therefore fallback to message passing framework on gpu for the time being
  
-function (l::GCNConv)(fg::FeaturedGraph, x::AbstractMatrix{T}) where T
-    Ã = normalized_adjacency(fg, T; dir=:out, add_self_loops=true)
+function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
+    Ã = normalized_adjacency(g, T; dir=:out, add_self_loops=true)
     l.σ.(l.weight * x * Ã .+ l.bias)
 end
 
 message(l::GCNConv, xi, xj) = xj
 update(l::GCNConv, m, x) = m
 
-function (l::GCNConv)(fg::FeaturedGraph, x::CuMatrix{T}) where T
-    fg = add_self_loops(fg)
-    c = 1 ./ sqrt.(degree(fg, T, dir=:in))
+function (l::GCNConv)(g::GNNGraph, x::CuMatrix{T}) where T
+    g = add_self_loops(g)
+    c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'
-    _, x = propagate(l, fg, nothing, x, nothing, +)
+    _, x = propagate(l, g, nothing, x, nothing, +)
     x = x .* c'
     return l.σ.(l.weight * x .+ l.bias)
 end
 
-(l::GCNConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::GCNConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::GCNConv)
     out, in = size(l.weight)
@@ -89,7 +89,7 @@ Z^{(k)} = 2 \hat{L} Z^{(k-1)} - Z^{(k-2)}
 
 with ``\hat{L}`` the [`scaled_laplacian`](@ref).
 
-## Arguments
+# Arguments
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
@@ -97,7 +97,7 @@ with ``\hat{L}`` the [`scaled_laplacian`](@ref).
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
 """
-struct ChebConv{A<:AbstractArray{<:Number,3}, B}
+struct ChebConv{A<:AbstractArray{<:Number,3}, B} <: GNNLayer
     weight::A
     bias::B
     k::Int
@@ -113,11 +113,11 @@ end
 
 @functor ChebConv
 
-function (c::ChebConv)(fg::FeaturedGraph, X::AbstractMatrix{T}) where T
-    check_num_nodes(fg, X)
+function (c::ChebConv)(g::GNNGraph, X::AbstractMatrix{T}) where T
+    check_num_nodes(g, X)
     @assert size(X, 1) == size(c.weight, 2) "Input feature size must match input channel size."
     
-    L̃ = scaled_laplacian(fg, eltype(X))    
+    L̃ = scaled_laplacian(g, eltype(X))    
 
     Z_prev = X
     Z = X * L̃
@@ -130,7 +130,7 @@ function (c::ChebConv)(fg::FeaturedGraph, X::AbstractMatrix{T}) where T
     return Y .+ c.bias
 end
 
-(l::ChebConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::ChebConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::ChebConv)
     out, in, k = size(l.weight)
@@ -151,7 +151,7 @@ Performs:
 ```
 where the aggregation type is selected by `aggr`.
 
-## Arguments
+# Arguments
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
@@ -160,7 +160,7 @@ where the aggregation type is selected by `aggr`.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
 """
-struct GraphConv{A<:AbstractMatrix, B} <: MessagePassing
+struct GraphConv{A<:AbstractMatrix, B} <: GNNLayer
     weight1::A
     weight2::A
     bias::B
@@ -182,13 +182,13 @@ end
 message(gc::GraphConv, x_i, x_j, e_ij) =  x_j
 update(gc::GraphConv, m, x) = gc.σ.(gc.weight1 * x .+ gc.weight2 * m .+ gc.bias)
 
-function (gc::GraphConv)(fg::FeaturedGraph, x::AbstractMatrix)
-    check_num_nodes(fg, x)
-    _, x = propagate(gc, fg, nothing, x, nothing, +)
+function (gc::GraphConv)(g::GNNGraph, x::AbstractMatrix)
+    check_num_nodes(g, x)
+    _, x = propagate(gc, g, nothing, x, nothing, +)
     x
 end
 
-(l::GraphConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::GraphConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::GraphConv)
     in_channel = size(l.weight1, ndims(l.weight1))
@@ -220,7 +220,7 @@ where the attention coefficient ``\alpha_{ij}`` is given by
 ```
 with ``z_i`` a normalization factor.
 
-## Arguments
+# Arguments
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
@@ -229,7 +229,7 @@ with ``z_i`` a normalization factor.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
 - `negative_slope::Real`: Keyword argument, the parameter of LeakyReLU.
 """
-struct GATConv{T, A<:AbstractMatrix{T}, B} <: MessagePassing
+struct GATConv{T, A<:AbstractMatrix{T}, B} <: GNNLayer
     weight::A
     bias::B
     a::A
@@ -251,13 +251,13 @@ function GATConv(ch::Pair{Int,Int};
     GATConv(W, b, a, negative_slope, ch, heads, concat)
 end
 
-function (gat::GATConv)(fg::FeaturedGraph, X::AbstractMatrix)
-    check_num_nodes(fg, X)
-    fg = add_self_loops(fg)
+function (gat::GATConv)(g::GNNGraph, X::AbstractMatrix)
+    check_num_nodes(g, X)
+    g = add_self_loops(g)
     chin, chout = gat.channel
     heads = gat.heads
 
-    source, target = edge_index(fg)
+    source, target = edge_index(g)
     Wx = gat.weight*X
     Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
     Wxi = NNlib.gather(Wx, target)                      # chout × nheads × nedges
@@ -281,7 +281,7 @@ function (gat::GATConv)(fg::FeaturedGraph, X::AbstractMatrix)
     return reshape(X, :, size(X, 3)) 
 end
 
-(l::GATConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::GATConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 
 function Base.show(io::IO, l::GATConv)
@@ -306,14 +306,14 @@ Implements the recursion
 
  where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing through GRU. The dimension of input ``\mathbf{x}_i`` needs to be less or equal to `out`.
 
-## Arguments
+# Arguments
 
 - `out`: The dimension of output features.
 - `num_layers`: The number of gated recurrent unit.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `init`: Weight initialization function.
 """
-struct GatedGraphConv{A<:AbstractArray{<:Number,3}, R} <: MessagePassing
+struct GatedGraphConv{A<:AbstractArray{<:Number,3}, R} <: GNNLayer
     weight::A
     gru::R
     out_ch::Int
@@ -334,8 +334,11 @@ end
 message(l::GatedGraphConv, x_i, x_j, e_ij) = x_j
 update(l::GatedGraphConv, m, x) = m
 
-function (ggc::GatedGraphConv)(fg::FeaturedGraph, H::AbstractMatrix{S}) where {T<:AbstractVector,S<:Real}
-    check_num_nodes(fg, H)
+# remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
+@non_differentiable fill!(x...)
+
+function (ggc::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {T<:AbstractVector,S<:Real}
+    check_num_nodes(g, H)
     m, n = size(H)
     @assert (m <= ggc.out_ch) "number of input features must less or equals to output features."
     if m < ggc.out_ch
@@ -344,13 +347,13 @@ function (ggc::GatedGraphConv)(fg::FeaturedGraph, H::AbstractMatrix{S}) where {T
     end
     for i = 1:ggc.num_layers
         M = view(ggc.weight, :, :, i) * H
-        _, M = propagate(ggc, fg, nothing, M, nothing, +)
+        _, M = propagate(ggc, g, nothing, M, nothing, +)
         H, _ = ggc.gru(H, M)
     end
     H
 end
 
-(l::GatedGraphConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::GatedGraphConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::GatedGraphConv)
     print(io, "GatedGraphConv(($(l.out_ch) => $(l.out_ch))^$(l.num_layers)")
@@ -371,12 +374,12 @@ Performs the operation
 
 where `f` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
 
-## Arguments
+# Arguments
 
 - `f`: A (possibly learnable) function acting on edge features. 
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 """
-struct EdgeConv <: MessagePassing
+struct EdgeConv <: GNNLayer
     nn
     aggr
 end
@@ -389,13 +392,13 @@ message(ec::EdgeConv, x_i, x_j, e_ij) = ec.nn(vcat(x_i, x_j .- x_i))
 
 update(ec::EdgeConv, m, x) = m
 
-function (ec::EdgeConv)(fg::FeaturedGraph, X::AbstractMatrix)
-    check_num_nodes(fg, X)
-    _, X = propagate(ec, fg, nothing, X, nothing, ec.aggr)
+function (ec::EdgeConv)(g::GNNGraph, X::AbstractMatrix)
+    check_num_nodes(g, X)
+    _, X = propagate(ec, g, nothing, X, nothing, ec.aggr)
     X
 end
 
-(l::EdgeConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::EdgeConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::EdgeConv)
     print(io, "EdgeConv(", l.nn)
@@ -415,30 +418,30 @@ Graph Isomorphism convolutional layer from paper [How Powerful are Graph Neural 
 ```
 where `f` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
 
-## Arguments
+# Arguments
 
 - `f`: A (possibly learnable) function acting on node features. 
 - `eps`: Weighting factor.
 """
-struct GINConv{R<:Real} <: MessagePassing
+struct GINConv{R<:Real} <: GNNLayer
     nn
     eps::R
 end
 
 @functor GINConv
-Flux.trainable(g::GINConv) = (nn=g.nn,)
+Flux.trainable(l::GINConv) = (nn=l.nn,)
 
 function GINConv(nn; eps=0f0)
     GINConv(nn, eps)
 end
 
-message(g::GINConv, x_i, x_j) = x_j 
-update(g::GINConv, m, x) = g.nn((1 + g.eps) * x + m)
+message(l::GINConv, x_i, x_j) = x_j 
+update(l::GINConv, m, x) = l.nn((1 + l.eps) * x + m)
 
-function (g::GINConv)(fg::FeaturedGraph, X::AbstractMatrix)
-    check_num_nodes(fg, X)
-    _, X = propagate(g, fg, nothing, X, nothing, +)
+function (l::GINConv)(g::GNNGraph, X::AbstractMatrix)
+    check_num_nodes(g, X)
+    _, X = propagate(l, g, nothing, X, nothing, +)
     X
 end
 
-(l::GINConv)(fg::FeaturedGraph) = FeaturedGraph(fg, nf = l(fg, node_feature(fg)))
+(l::GINConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))

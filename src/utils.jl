@@ -1,5 +1,5 @@
-function check_num_nodes(fg::FeaturedGraph, x::AbstractArray)
-    @assert nv(fg) == size(x, ndims(x))    
+function check_num_nodes(g::GNNGraph, x::AbstractArray)
+    @assert nv(g) == size(x, ndims(x))    
 end
 
 sort_edge_index(eindex::Tuple) = sort_edge_index(eindex...)

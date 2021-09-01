@@ -7,7 +7,7 @@ Global pooling layer.
 
 It pools all features with `aggr` operation.
 
-## Arguments
+# Arguments
 
 - `aggr`: An aggregate function applied to pool all features.
 """
@@ -20,7 +20,7 @@ struct GlobalPool{A}
     end
 end
 
-(g::GlobalPool)(X::AbstractArray) = NNlib.scatter(g.aggr, X, g.cluster)
+(l::GlobalPool)(X::AbstractArray) = NNlib.scatter(l.aggr, X, l.cluster)
 
 """
     LocalPool(aggr, cluster)
@@ -29,7 +29,7 @@ Local pooling layer.
 
 It pools features with `aggr` operation accroding to `cluster`. It is implemented with `scatter` operation.
 
-## Arguments
+# Arguments
 
 - `aggr`: An aggregate function applied to pool all features.
 - `cluster`: An index structure which indicates what features to aggregate with.
@@ -46,7 +46,7 @@ end
 
 Top-k pooling layer.
 
-## Arguments
+# Arguments
 
 - `adj`: Adjacency matrix  of a graph.
 - `k`: Top-k nodes are selected to pool together.

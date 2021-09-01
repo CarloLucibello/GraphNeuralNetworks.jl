@@ -8,20 +8,20 @@ BenchmarkTools.ratio(x, ::Missing) = 0.0
 BenchmarkTools.ratio(::Missing, ::Missing) = missing
 
 function run_single_benchmark(N, c, D, CONV; gtype=:lg)
-    g = erdos_renyi(N, c / (N-1), seed=17)
+    data = erdos_renyi(N, c / (N-1), seed=17)
     X = randn(Float32, D, N)
     
-    fg = FeaturedGraph(g; nf=X, graph_type=gtype)
-    fg_gpu = fg |> gpu    
+    g = GNNGraph(data; nf=X, graph_type=gtype)
+    g_gpu = g |> gpu    
     
     m = CONV(D => D)
     m_gpu = m |> gpu
     
     res = Dict()
-    res["CPU"] = @benchmark $m($fg)
+    res["CPU"] = @benchmark $m($g)
     
     try [GCNConv, GraphConv, GATConv]
-        res["GPU"] = @benchmark CUDA.@sync($m_gpu($fg_gpu)) teardown=(GC.gc(); CUDA.reclaim())
+        res["GPU"] = @benchmark CUDA.@sync($m_gpu($g_gpu)) teardown=(GC.gc(); CUDA.reclaim())
     catch
         res["GPU"] = missing
     end

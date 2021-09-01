@@ -1,4 +1,4 @@
-using GraphNeuralNetworks
+using Flux, NNlib, GraphNeuralNetworks
 using Documenter
 
 DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup, :(using GraphNeuralNetworks); recursive=true)
@@ -7,14 +7,17 @@ makedocs(;
     modules=[GraphNeuralNetworks],
     sitename = "GraphNeuralNetworks.jl",
     pages = ["Home" => "index.md",
-             "Graphs" => "graphs.md",
-             "Message passing" => "messagepassing.md",
-             "Building models" => "models.md",
+             "GNNGraph" => "gnngraph.md",
+             "Message Passing" => "messagepassing.md",
+             "Model Building" => "models.md",
              "API Reference" =>
                [
-                "Graphs" => "api/graphs.md",
+                "GNNGraph" => "api/gnngraph.md",
+                "Basic Layers" => "api/basic.md",
                 "Convolutional Layers" => "api/conv.md",
                 "Pooling Layers" => "api/pool.md",
+                "Message Passing" => "api/messagepassing.md",
+                "NNlib" => "api/nnlib.md",
                ],
               "Developer Notes" => "dev.md",
             ],

@@ -1,12 +1,12 @@
-# Graphs
+# Basic Layers
 
 ```@index
 Order = [:type, :function]
-Pages   = ["api/graphs.md"]
+Pages   = ["api/basics.md"]
 ```
 
 ```@autodocs
 Modules = [GraphNeuralNetworks]
-Pages   = ["featuredgraph.jl"]
+Pages   = ["layers/basic.jl"]
 Private = false
 ```

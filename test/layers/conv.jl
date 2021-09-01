@@ -8,14 +8,14 @@
             0 1 0 1
             1 0 1 0]
     
-    fg = FeaturedGraph(adj)
+    g = GNNGraph(adj)
         
     adj_single_vertex =  [0 0 0 1
                           0 0 0 0
                           0 0 0 1
                           1 0 1 0]
     
-    fg_single_vertex = FeaturedGraph(adj_single_vertex, graph_type=GRAPH_T)    
+    g_single_vertex = GNNGraph(adj_single_vertex, graph_type=GRAPH_T)    
 
     @testset "GCNConv" begin
         X = rand(T, in_channel, N)
@@ -25,24 +25,24 @@
         @test size(gc.weight) == (out_channel, in_channel)
         @test size(gc.bias) == (out_channel,)
         
-        fg = FeaturedGraph(adj, nf=X, graph_type=GRAPH_T)
-        fg_ = gc(fg)
-        @test node_feature(fg_) isa Matrix{T}
-        @test size(node_feature(fg_)) == (out_channel, N)
+        g = GNNGraph(adj, nf=X, graph_type=GRAPH_T)
+        g_ = gc(g)
+        @test node_feature(g_) isa Matrix{T}
+        @test size(node_feature(g_)) == (out_channel, N)
         @test_throws MethodError gc(X)
         
         # Test with transposed features
-        fgt = FeaturedGraph(adj, nf=Xt, graph_type=GRAPH_T)
-        fgt_ = gc(fgt)
-        @test node_feature(fgt_) isa Matrix{T}
-        @test size(node_feature(fgt_)) == (out_channel, N)
+        gt = GNNGraph(adj, nf=Xt, graph_type=GRAPH_T)
+        gt_ = gc(gt)
+        @test node_feature(gt_) isa Matrix{T}
+        @test size(node_feature(gt_)) == (out_channel, N)
 
-        g = Zygote.gradient(x -> sum(node_feature(gc(x))), fg)[1]
-        @test size(g.nf) == size(X)
+        gs = Zygote.gradient(x -> sum(node_feature(gc(x))), g)[1]
+        @test size(gs.nf) == size(X)
 
-        g = Zygote.gradient(model -> sum(node_feature(model(fg))), gc)[1]
-        @test size(g.weight) == size(gc.weight)
-        @test size(g.bias) == size(gc.bias)
+        gs = Zygote.gradient(model -> sum(node_feature(model(g))), gc)[1]
+        @test size(gs.weight) == size(gc.weight)
+        @test size(gs.bias) == size(gc.bias)
         
         @testset "bias=false" begin
             @test length(Flux.params(GCNConv(2=>3))) == 2
@@ -61,24 +61,24 @@
         @test size(cc.bias) == (out_channel,)
         @test cc.k == k
         
-        fg = FeaturedGraph(adj, nf=X, graph_type=GRAPH_T)
-        fg_ = cc(fg)
-        @test node_feature(fg_) isa Matrix{T}
-        @test size(node_feature(fg_)) == (out_channel, N)
+        g = GNNGraph(adj, nf=X, graph_type=GRAPH_T)
+        g_ = cc(g)
+        @test node_feature(g_) isa Matrix{T}
+        @test size(node_feature(g_)) == (out_channel, N)
         @test_throws MethodError cc(X)
 
         # Test with transposed features
-        fgt = FeaturedGraph(adj, nf=Xt, graph_type=GRAPH_T)
-        fgt_ = cc(fgt)
-        @test node_feature(fg_) isa Matrix{T}
-        @test size(node_feature(fgt_)) == (out_channel, N)
+        gt = GNNGraph(adj, nf=Xt, graph_type=GRAPH_T)
+        gt_ = cc(gt)
+        @test node_feature(g_) isa Matrix{T}
+        @test size(node_feature(gt_)) == (out_channel, N)
 
-        g = Zygote.gradient(x -> sum(node_feature(cc(x))), fg)[1]
-        @test size(g.nf) == size(X)
+        gs = Zygote.gradient(x -> sum(node_feature(cc(x))), g)[1]
+        @test size(gs.nf) == size(X)
 
-        g = Zygote.gradient(model -> sum(node_feature(model(fg))), cc)[1]
-        @test size(g.weight) == size(cc.weight)
-        @test size(g.bias) == size(cc.bias)
+        gs = Zygote.gradient(model -> sum(node_feature(model(g))), cc)[1]
+        @test size(gs.weight) == size(cc.weight)
+        @test size(gs.bias) == size(cc.bias)
 
         @testset "bias=false" begin
             @test length(Flux.params(ChebConv(2=>3, 3))) == 2
@@ -96,25 +96,25 @@
         @test size(gc.weight2) == (out_channel, in_channel)
         @test size(gc.bias) == (out_channel,)
 
-        fg = FeaturedGraph(adj, nf=X, graph_type=GRAPH_T)
-        fg_ = gc(fg)
-        @test node_feature(fg_) isa Matrix{T}
-        @test size(node_feature(fg_)) == (out_channel, N)
+        g = GNNGraph(adj, nf=X, graph_type=GRAPH_T)
+        g_ = gc(g)
+        @test node_feature(g_) isa Matrix{T}
+        @test size(node_feature(g_)) == (out_channel, N)
         @test_throws MethodError gc(X)
 
         # Test with transposed features
-        fgt = FeaturedGraph(adj, nf=Xt, graph_type=GRAPH_T)
-        fgt_ = gc(fgt)
-        @test node_feature(fgt_) isa Matrix{T}
-        @test size(node_feature(fgt_)) == (out_channel, N)
+        gt = GNNGraph(adj, nf=Xt, graph_type=GRAPH_T)
+        gt_ = gc(gt)
+        @test node_feature(gt_) isa Matrix{T}
+        @test size(node_feature(gt_)) == (out_channel, N)
 
-        g = Zygote.gradient(x -> sum(node_feature(gc(x))), fg)[1]
-        @test size(g.nf) == size(X)
+        gs = Zygote.gradient(x -> sum(node_feature(gc(x))), g)[1]
+        @test size(gs.nf) == size(X)
 
-        g = Zygote.gradient(model -> sum(node_feature(model(fg))), gc)[1]
-        @test size(g.weight1) == size(gc.weight1)
-        @test size(g.weight2) == size(gc.weight2)
-        @test size(g.bias) == size(gc.bias)
+        gs = Zygote.gradient(model -> sum(node_feature(model(g))), gc)[1]
+        @test size(gs.weight1) == size(gc.weight1)
+        @test size(gs.weight2) == size(gc.weight2)
+        @test size(gs.bias) == size(gc.bias)
 
         @testset "bias=false" begin
             @test length(Flux.params(GraphConv(2=>3))) == 3
@@ -128,31 +128,31 @@
         Xt = transpose(rand(T, N, in_channel))
 
         for heads = [1, 2], concat = [true, false], adj_gat in [adj, adj_single_vertex]
-            fg_gat = FeaturedGraph(adj_gat, nf=X, graph_type=GRAPH_T)
+            g_gat = GNNGraph(adj_gat, nf=X, graph_type=GRAPH_T)
             gat = GATConv(in_channel=>out_channel, heads=heads, concat=concat)
             @test size(gat.weight) == (out_channel * heads, in_channel)
             @test size(gat.bias) == (out_channel * heads,)
             @test size(gat.a) == (2*out_channel, heads)
 
-            fg_ = gat(fg_gat)
-            Y = node_feature(fg_)
+            g_ = gat(g_gat)
+            Y = node_feature(g_)
             @test Y isa Matrix{T}
             @test size(Y) == (concat ? (out_channel*heads, N) : (out_channel, N))
             @test_throws MethodError gat(X)
 
             # Test with transposed features
-            fgt = FeaturedGraph(adj_gat, nf=Xt, graph_type=GRAPH_T)
-            fgt_ = gat(fgt)
-            @test node_feature(fg_) isa Matrix{T}
-            @test size(node_feature(fgt_)) == (concat ? (out_channel*heads, N) : (out_channel, N))
+            gt = GNNGraph(adj_gat, nf=Xt, graph_type=GRAPH_T)
+            gt_ = gat(gt)
+            @test node_feature(g_) isa Matrix{T}
+            @test size(node_feature(gt_)) == (concat ? (out_channel*heads, N) : (out_channel, N))
 
-            g = Zygote.gradient(x -> sum(node_feature(gat(x))), fg_gat)[1]
-            @test size(g.nf) == size(X)
+            gs = Zygote.gradient(x -> sum(node_feature(gat(x))), g_gat)[1]
+            @test size(gs.nf) == size(X)
 
-            g = Zygote.gradient(model -> sum(node_feature(model(fg_gat))), gat)[1]
-            @test size(g.weight) == size(gat.weight)
-            @test size(g.bias) == size(gat.bias)
-            @test size(g.a) == size(gat.a)
+            gs = Zygote.gradient(model -> sum(node_feature(model(g_gat))), gat)[1]
+            @test size(gs.weight) == size(gat.weight)
+            @test size(gs.bias) == size(gat.bias)
+            @test size(gs.a) == size(gat.a)
         end
 
         @testset "bias=false" begin
@@ -168,23 +168,23 @@
         ggc = GatedGraphConv(out_channel, num_layers)
         @test size(ggc.weight) == (out_channel, out_channel, num_layers)
 
-        fg = FeaturedGraph(adj, nf=X, graph_type=GRAPH_T)
-        fg_ = ggc(fg)
-        @test node_feature(fg_) isa Matrix{T}
-        @test size(node_feature(fg_)) == (out_channel, N)
+        g = GNNGraph(adj, nf=X, graph_type=GRAPH_T)
+        g_ = ggc(g)
+        @test node_feature(g_) isa Matrix{T}
+        @test size(node_feature(g_)) == (out_channel, N)
         @test_throws MethodError ggc(X)
 
         # Test with transposed features
-        fgt = FeaturedGraph(adj, nf=Xt, graph_type=GRAPH_T)
-        fgt_ = ggc(fgt)
-        @test node_feature(fgt_) isa Matrix{T}
-        @test size(node_feature(fgt_)) == (out_channel, N)
+        gt = GNNGraph(adj, nf=Xt, graph_type=GRAPH_T)
+        gt_ = ggc(gt)
+        @test node_feature(gt_) isa Matrix{T}
+        @test size(node_feature(gt_)) == (out_channel, N)
 
-        g = Zygote.gradient(x -> sum(node_feature(ggc(x))), fg)[1]
-        @test size(g.nf) == size(X)
+        gs = Zygote.gradient(x -> sum(node_feature(ggc(x))), g)[1]
+        @test size(gs.nf) == size(X)
 
-        g = Zygote.gradient(model -> sum(node_feature(model(fg))), ggc)[1]
-        @test size(g.weight) == size(ggc.weight)
+        gs = Zygote.gradient(model -> sum(node_feature(model(g))), ggc)[1]
+        @test size(gs.weight) == size(ggc.weight)
     end
 
     @testset "EdgeConv" begin
@@ -192,44 +192,44 @@
         Xt = transpose(rand(T, N, in_channel))
         ec = EdgeConv(Dense(2*in_channel, out_channel))
 
-        fg = FeaturedGraph(adj, nf=X, graph_type=GRAPH_T)
-        fg_ = ec(fg)
-        @test node_feature(fg_) isa Matrix{T} 
-        @test size(node_feature(fg_)) == (out_channel, N)
+        g = GNNGraph(adj, nf=X, graph_type=GRAPH_T)
+        g_ = ec(g)
+        @test node_feature(g_) isa Matrix{T} 
+        @test size(node_feature(g_)) == (out_channel, N)
         @test_throws MethodError ec(X)
 
         # Test with transposed features
-        fgt = FeaturedGraph(adj, nf=Xt, graph_type=GRAPH_T)
-        fgt_ = ec(fgt)
-        @test node_feature(fgt_) isa Matrix{T}
-        @test size(node_feature(fgt_)) == (out_channel, N)
+        gt = GNNGraph(adj, nf=Xt, graph_type=GRAPH_T)
+        gt_ = ec(gt)
+        @test node_feature(gt_) isa Matrix{T}
+        @test size(node_feature(gt_)) == (out_channel, N)
 
-        g = Zygote.gradient(x -> sum(node_feature(ec(x))), fg)[1]
-        @test size(g.nf) == size(X)
+        gs = Zygote.gradient(x -> sum(node_feature(ec(x))), g)[1]
+        @test size(gs.nf) == size(X)
 
-        g = Zygote.gradient(model -> sum(node_feature(model(fg))), ec)[1]
-        @test size(g.nn.weight) == size(ec.nn.weight)
-        @test size(g.nn.bias) == size(ec.nn.bias)
+        gs = Zygote.gradient(model -> sum(node_feature(model(g))), ec)[1]
+        @test size(gs.nn.weight) == size(ec.nn.weight)
+        @test size(gs.nn.bias) == size(ec.nn.bias)
     end
 
     @testset "GINConv" begin
         X = rand(T, in_channel, N)
         nn = Dense(in_channel, out_channel)
         eps = 0.001f0
-        fg = FeaturedGraph(adj, nf=X) 
+        g = GNNGraph(adj, nf=X) 
         
         gc = GINConv(nn, eps=eps)
         @test gc.nn === nn
         
-        fg_ = gc(fg)
-        @test size(node_feature(fg_)) == (out_channel, N)
+        g_ = gc(g)
+        @test size(node_feature(g_)) == (out_channel, N)
 
-        g = Zygote.gradient(fg -> sum(node_feature(gc(fg))), fg)[1]
-        @test size(g.nf) == size(X)
+        gs = Zygote.gradient(g -> sum(node_feature(gc(g))), g)[1]
+        @test size(gs.nf) == size(X)
 
-        g = Zygote.gradient(model -> sum(node_feature(model(fg))), gc)[1]
-        @test size(g.nn.weight) == size(gc.nn.weight)
-        @test size(g.nn.bias) == size(gc.nn.bias)
+        gs = Zygote.gradient(model -> sum(node_feature(model(g))), gc)[1]
+        @test size(gs.nn.weight) == size(gc.nn.weight)
+        @test size(gs.nn.bias) == size(gc.nn.bias)
         
         @test !in(:eps, Flux.trainable(gc))
     end

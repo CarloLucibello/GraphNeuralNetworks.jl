@@ -1,5 +1,5 @@
 #===================================
-Define FeaturedGraph type as a subtype of LightGraphs' AbstractGraph.
+Define GNNGraph type as a subtype of LightGraphs' AbstractGraph.
 For the core methods to be implemented by any AbstractGraph, see
 https://juliagraphs.org/LightGraphs.jl/latest/types/#AbstractGraph-Type
 https://juliagraphs.org/LightGraphs.jl/latest/developing/#Developing-Alternate-Graph-Types
@@ -11,30 +11,30 @@ const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
 
 """
-    FeaturedGraph(g; [graph_type, dir, num_nodes, nf, ef, gf])
-    FeaturedGraph(fg::FeaturedGraph; [nf, ef, gf])
+    GNNGraph(data; [graph_type, dir, num_nodes, nf, ef, gf])
+    GNNGraph(g::GNNGraph; [nf, ef, gf])
 
 A type representing a graph structure and storing also arrays 
 that contain features associated to nodes, edges, and the whole graph. 
     
-A `FeaturedGraph` can be constructed out of different objects `g` representing
+A `GNNGraph` can be constructed out of different objects `data` representing
 the connections inside the graph, while the internal representation type
 is governed by `graph_type`. 
-When constructed from another featured graph `fg`, the internal graph representation
+When constructed from another graph `g`, the internal graph representation
 is preserved and shared. 
 
-A `FeaturedGraph` is a LightGraphs' `AbstractGraph`, therefore any functionality
+A `GNNGraph` is a LightGraphs' `AbstractGraph`, therefore any functionality
 from the LightGraphs' graph library can be used on it.
 
-## Arguments 
+# Arguments 
 
-- `g`: Some data representing the graph topology. Possible type are 
+- `data`: Some data representing the graph topology. Possible type are 
     - An adjacency matrix
     - An adjacency list.
     - A tuple containing the source and target vectors (COO representation)
     - A LightGraphs' graph.
 - `graph_type`: A keyword argument that specifies 
-                the underlying representation used by the FeaturedGraph. 
+                the underlying representation used by the GNNGraph. 
                 Currently supported values are 
     - `:coo`. Graph represented as a tuple `(source, target)`, such that the `k`-th edge 
               connects the node `source[k]` to node `target[k]`.
@@ -55,36 +55,35 @@ from the LightGraphs' graph library can be used on it.
 using Flux, GraphNeuralNetworks
 
 # Construct from adjacency list representation
-g = [[2,3], [1,4,5], [1], [2,5], [2,4]]
-fg = FeaturedGraph(g)
+data = [[2,3], [1,4,5], [1], [2,5], [2,4]]
+g = GNNGraph(data)
 
 # Number of nodes and edges
-fg.num_nodes  # 5
-fg.num_edges  # 10 
+g.num_nodes  # 5
+g.num_edges  # 10 
 
 # Same graph in COO representation
 s = [1,1,2,2,2,3,4,4,5,5]
 t = [2,3,1,4,5,3,2,5,2,4]
-fg = FeaturedGraph((s, t))
-fg = FeaturedGraph(s, t) # other convenience constructor
+g = GNNGraph(s, t)
 
 # From a LightGraphs' graph
-fg = FeaturedGraph(erdos_renyi(100, 20))
+g = GNNGraph(erdos_renyi(100, 20))
 
-# Copy featured graph while also adding node features
-fg = FeaturedGraph(fg, nf=rand(100, 5))
+# Copy graph while also adding node features
+g = GNNGraph(g, nf=rand(100, 5))
 
 # Send to gpu
-fg = fg |> gpu
+g = g |> gpu
 
 # Collect edges' source and target nodes.
 # Both source and target are vectors of length num_edges
-source, target = edge_index(fg)
+source, target = edge_index(g)
 ```
 
 See also [`graph`](@ref), [`edge_index`](@ref), [`node_feature`](@ref), [`edge_feature`](@ref), and [`global_feature`](@ref) 
 """
-struct FeaturedGraph{T<:Union{COO_T,ADJMAT_T}}
+struct GNNGraph{T<:Union{COO_T,ADJMAT_T}}
     graph::T
     num_nodes::Int
     num_edges::Int
@@ -97,9 +96,9 @@ struct FeaturedGraph{T<:Union{COO_T,ADJMAT_T}}
     # gdata::Dict{String, Any}
 end
 
-@functor FeaturedGraph
+@functor GNNGraph
 
-function FeaturedGraph(data; 
+function GNNGraph(data; 
                         num_nodes = nothing, 
                         graph_type = :coo,
                         dir = :out,
@@ -129,115 +128,115 @@ function FeaturedGraph(data;
     # gdata["g"] = gf
     
 
-    FeaturedGraph(g, num_nodes, num_edges, nf, ef, gf)
+    GNNGraph(g, num_nodes, num_edges, nf, ef, gf)
 end
 
 # COO convenience constructors
-FeaturedGraph(s::AbstractVector, t::AbstractVector, v = nothing; kws...) = FeaturedGraph((s, t, v); kws...)
-FeaturedGraph((s, t)::NTuple{2}; kws...) = FeaturedGraph((s, t, nothing); kws...)
+GNNGraph(s::AbstractVector, t::AbstractVector, v = nothing; kws...) = GNNGraph((s, t, v); kws...)
+GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
 
-# FeaturedGraph(g::AbstractGraph; kws...) = FeaturedGraph(adjacency_matrix(g, dir=:out); kws...)
+# GNNGraph(g::AbstractGraph; kws...) = GNNGraph(adjacency_matrix(g, dir=:out); kws...)
 
-function FeaturedGraph(g::AbstractGraph; kws...)
+function GNNGraph(g::AbstractGraph; kws...)
     s = LightGraphs.src.(LightGraphs.edges(g))
     t = LightGraphs.dst.(LightGraphs.edges(g)) 
-    FeaturedGraph((s, t); kws...)
+    GNNGraph((s, t); kws...)
 end
 
-function FeaturedGraph(fg::FeaturedGraph; 
-                nf=node_feature(fg), ef=edge_feature(fg), gf=global_feature(fg))
-                # ndata=copy(fg.ndata), edata=copy(fg.edata), gdata=copy(fg.gdata), # copy keeps the refs to old data 
+function GNNGraph(g::GNNGraph; 
+                nf=node_feature(g), ef=edge_feature(g), gf=global_feature(g))
+                # ndata=copy(g.ndata), edata=copy(g.edata), gdata=copy(g.gdata), # copy keeps the refs to old data 
     
-    FeaturedGraph(fg.graph, fg.num_nodes, fg.num_edges, nf, ef, gf) #   ndata, edata, gdata, 
+    GNNGraph(g.graph, g.num_nodes, g.num_edges, nf, ef, gf) #   ndata, edata, gdata, 
 end
 
 
 """
-    edge_index(fg::FeaturedGraph)
+    edge_index(g::GNNGraph)
 
 Return a tuple containing two vectors, respectively storing 
-the source and target nodes for each edges in `fg`.
+the source and target nodes for each edges in `g`.
 
 ```julia
-s, t = edge_index(fg)
+s, t = edge_index(g)
 ```
 """
-edge_index(fg::FeaturedGraph{<:COO_T}) = graph(fg)[1:2]
+edge_index(g::GNNGraph{<:COO_T}) = graph(g)[1:2]
 
-edge_index(fg::FeaturedGraph{<:ADJMAT_T}) = to_coo(graph(fg))[1][1:2]
+edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(graph(g))[1][1:2]
 
-edge_weight(fg::FeaturedGraph{<:COO_T}) = graph(fg)[3]
+edge_weight(g::GNNGraph{<:COO_T}) = graph(g)[3]
 
 """
-    graph(fg::FeaturedGraph)
+    graph(g::GNNGraph)
 
-Return the underlying implementation of the graph structure of `fg`,
+Return the underlying implementation of the graph structure of `g`,
 either an adjacency matrix or an edge list in the COO format.
 """
-graph(fg::FeaturedGraph) = fg.graph
+graph(g::GNNGraph) = g.graph
 
-LightGraphs.edges(fg::FeaturedGraph) = zip(edge_index(fg)...)
+LightGraphs.edges(g::GNNGraph) = zip(edge_index(g)...)
 
-LightGraphs.edgetype(fg::FeaturedGraph) = Tuple{Int, Int}
+LightGraphs.edgetype(g::GNNGraph) = Tuple{Int, Int}
 
-function LightGraphs.has_edge(fg::FeaturedGraph{<:COO_T}, i::Integer, j::Integer)
-    s, t = edge_index(fg)
+function LightGraphs.has_edge(g::GNNGraph{<:COO_T}, i::Integer, j::Integer)
+    s, t = edge_index(g)
     return any((s .== i) .& (t .== j))
 end
 
-LightGraphs.has_edge(fg::FeaturedGraph{<:ADJMAT_T}, i::Integer, j::Integer) = graph(fg)[i,j] != 0
+LightGraphs.has_edge(g::GNNGraph{<:ADJMAT_T}, i::Integer, j::Integer) = graph(g)[i,j] != 0
 
-LightGraphs.nv(fg::FeaturedGraph) = fg.num_nodes
-LightGraphs.ne(fg::FeaturedGraph) = fg.num_edges
-LightGraphs.has_vertex(fg::FeaturedGraph, i::Int) = 1 <= i <= fg.num_nodes
-LightGraphs.vertices(fg::FeaturedGraph) = 1:fg.num_nodes
+LightGraphs.nv(g::GNNGraph) = g.num_nodes
+LightGraphs.ne(g::GNNGraph) = g.num_edges
+LightGraphs.has_vertex(g::GNNGraph, i::Int) = 1 <= i <= g.num_nodes
+LightGraphs.vertices(g::GNNGraph) = 1:g.num_nodes
 
-function LightGraphs.outneighbors(fg::FeaturedGraph{<:COO_T}, i::Integer)
-    s, t = edge_index(fg)
+function LightGraphs.outneighbors(g::GNNGraph{<:COO_T}, i::Integer)
+    s, t = edge_index(g)
     return t[s .== i]
 end
 
-function LightGraphs.outneighbors(fg::FeaturedGraph{<:ADJMAT_T}, i::Integer)
-    A = graph(fg)
+function LightGraphs.outneighbors(g::GNNGraph{<:ADJMAT_T}, i::Integer)
+    A = graph(g)
     return findall(!=(0), A[i,:])
 end
 
-function LightGraphs.inneighbors(fg::FeaturedGraph{<:COO_T}, i::Integer)
-    s, t = edge_index(fg)
+function LightGraphs.inneighbors(g::GNNGraph{<:COO_T}, i::Integer)
+    s, t = edge_index(g)
     return s[t .== i]
 end
 
-function LightGraphs.inneighbors(fg::FeaturedGraph{<:ADJMAT_T}, i::Integer)
-    A = graph(fg)
+function LightGraphs.inneighbors(g::GNNGraph{<:ADJMAT_T}, i::Integer)
+    A = graph(g)
     return findall(!=(0), A[:,i])
 end
 
-LightGraphs.is_directed(::FeaturedGraph) = true
-LightGraphs.is_directed(::Type{FeaturedGraph}) = true
+LightGraphs.is_directed(::GNNGraph) = true
+LightGraphs.is_directed(::Type{GNNGraph}) = true
 
-function adjacency_list(fg::FeaturedGraph; dir=:out)
+function adjacency_list(g::GNNGraph; dir=:out)
     @assert dir ∈ [:out, :in]
     fneighs = dir == :out ? outneighbors : inneighbors
-    return [fneighs(fg, i) for i in 1:fg.num_nodes]
+    return [fneighs(g, i) for i in 1:g.num_nodes]
 end
 
-function LightGraphs.adjacency_matrix(fg::FeaturedGraph{<:COO_T}, T::DataType=Int; dir=:out)
-    A, n, m = to_sparse(graph(fg), T, num_nodes=fg.num_nodes)
+function LightGraphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
+    A, n, m = to_sparse(graph(g), T, num_nodes=g.num_nodes)
     @assert size(A) == (n, n)
     return dir == :out ? A : A'
 end
 
-function LightGraphs.adjacency_matrix(fg::FeaturedGraph{<:ADJMAT_T}, T::DataType=eltype(graph(fg)); dir=:out)
+function LightGraphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(graph(g)); dir=:out)
     @assert dir ∈ [:in, :out]
-    A = graph(fg) 
+    A = graph(g) 
     A = T != eltype(A) ? T.(A) : A
     return dir == :out ? A : A'
 end
 
-function LightGraphs.degree(fg::FeaturedGraph{<:COO_T}, T=Int; dir=:out)
-    s, t = edge_index(fg)
-    degs = fill!(similar(s, T, fg.num_nodes), 0)
-    o = fill!(similar(s, Int, fg.num_edges), 1)
+function LightGraphs.degree(g::GNNGraph{<:COO_T}, T=Int; dir=:out)
+    s, t = edge_index(g)
+    degs = fill!(similar(s, T, g.num_nodes), 0)
+    o = fill!(similar(s, Int, g.num_edges), 1)
     if dir ∈ [:out, :both]
         NNlib.scatter!(+, degs, o, s)
     end
@@ -247,77 +246,77 @@ function LightGraphs.degree(fg::FeaturedGraph{<:COO_T}, T=Int; dir=:out)
     return degs
 end
 
-function LightGraphs.degree(fg::FeaturedGraph{<:ADJMAT_T}, T=Int; dir=:out)
+function LightGraphs.degree(g::GNNGraph{<:ADJMAT_T}, T=Int; dir=:out)
     @assert dir ∈ (:in, :out)
-    A = adjacency_matrix(fg, T)
+    A = adjacency_matrix(g, T)
     return dir == :out ? vec(sum(A, dims=2)) : vec(sum(A, dims=1))
 end
 
-# node_feature(fg::FeaturedGraph) = fg.ndata["x"]
-# edge_feature(fg::FeaturedGraph) = fg.edata["e"]
-# global_feature(fg::FeaturedGraph) = fg.gdata["g"]
+# node_feature(g::GNNGraph) = g.ndata["x"]
+# edge_feature(g::GNNGraph) = g.edata["e"]
+# global_feature(g::GNNGraph) = g.gdata["g"]
 
 
 """
-    node_feature(fg::FeaturedGraph)
+    node_feature(g::GNNGraph)
 
-Return the node features of `fg`.
+Return the node features of `g`.
 """
-node_feature(fg::FeaturedGraph) = fg.nf
-
-"""
-    edge_feature(fg::FeaturedGraph)
-
-Return the edge features of `fg`.
-"""
-edge_feature(fg::FeaturedGraph) = fg.ef
+node_feature(g::GNNGraph) = g.nf
 
 """
-    global_feature(fg::FeaturedGraph)
+    edge_feature(g::GNNGraph)
 
-Return the global features of `fg`.
+Return the edge features of `g`.
 """
-global_feature(fg::FeaturedGraph) = fg.gf
+edge_feature(g::GNNGraph) = g.ef
 
-# function Base.getproperty(fg::FeaturedGraph, sym::Symbol)
+"""
+    global_feature(g::GNNGraph)
+
+Return the global features of `g`.
+"""
+global_feature(g::GNNGraph) = g.gf
+
+# function Base.getproperty(g::GNNGraph, sym::Symbol)
 #     if sym === :nf
-#         return fg.ndata["x"]
+#         return g.ndata["x"]
 #     elseif sym === :ef
-#         return fg.edata["e"]
+#         return g.edata["e"]
 #     elseif sym === :gf
-#         return fg.gdata["g"]
+#         return g.gdata["g"]
 #     else # fallback to getfield
-#         return getfield(fg, sym)
+#         return getfield(g, sym)
 #     end
 # end
 
-function LightGraphs.laplacian_matrix(fg::FeaturedGraph, T::DataType=Int; dir::Symbol=:out)
-    A = adjacency_matrix(fg, T; dir=dir)
+function LightGraphs.laplacian_matrix(g::GNNGraph, T::DataType=Int; dir::Symbol=:out)
+    A = adjacency_matrix(g, T; dir=dir)
     D = Diagonal(vec(sum(A; dims=2)))
     return D - A
 end
 
 """
-    normalized_laplacian(fg, T=Float32; add_self_loops=false, dir=:out)
+    normalized_laplacian(g, T=Float32; add_self_loops=false, dir=:out)
 
 Normalized Laplacian matrix of graph `g`.
 
-## Arguments
+# Arguments
 
-- `fg`: A `FeaturedGraph`.
+- `g`: A `GNNGraph`.
 - `T`: result element type.
 - `add_self_loops`: add self-loops while calculating the matrix.
 - `dir`: the edge directionality considered (:out, :in, :both).
 """
-function normalized_laplacian(fg::FeaturedGraph, T::DataType=Float32; 
+function normalized_laplacian(g::GNNGraph, T::DataType=Float32; 
                         add_self_loops::Bool=false, dir::Symbol=:out)
-    Ã = normalized_adjacency(fg, T; dir, add_self_loops)
+    Ã = normalized_adjacency(g, T; dir, add_self_loops)
     return I - Ã
 end
 
-function normalized_adjacency(fg::FeaturedGraph, T::DataType=Float32; 
+function normalized_adjacency(g::GNNGraph, T::DataType=Float32; 
                         add_self_loops::Bool=false, dir::Symbol=:out)
-    A = adjacency_matrix(fg, T; dir=dir)
+    A = adjacency_matrix(g, T; dir=dir)
     if add_self_loops
         A += I
     end
@@ -327,19 +326,19 @@ function normalized_adjacency(fg::FeaturedGraph, T::DataType=Float32;
 end
 
 @doc raw"""
-    scaled_laplacian(fg, T=Float32; dir=:out)
+    scaled_laplacian(g, T=Float32; dir=:out)
 
 Scaled Laplacian matrix of graph `g`,
 defined as ``\hat{L} = \frac{2}{\lambda_{max}} L - I`` where ``L`` is the normalized Laplacian matrix.
 
-## Arguments
+# Arguments
 
-- `fg`: A `FeaturedGraph`.
+- `g`: A `GNNGraph`.
 - `T`: result element type.
 - `dir`: the edge directionality considered (:out, :in, :both).
 """
-function scaled_laplacian(fg::FeaturedGraph, T::DataType=Float32; dir=:out)
-    L = normalized_laplacian(fg, T)
+function scaled_laplacian(g::GNNGraph, T::DataType=Float32; dir=:out)
+    L = normalized_laplacian(g, T)
     @assert issymmetric(L) "scaled_laplacian only works with symmetric matrices"
     λmax = _eigmax(L)
     return  2 / λmax * L - I
@@ -353,48 +352,48 @@ _eigmax(A) = KrylovKit.eigsolve(Symmetric(A), 1, :LR)[1][1] # also eigs(A, x0, n
 # https://discourse.julialang.org/t/cuda-eigenvalues-of-a-sparse-matrix/46851/5
 
 """
-    add_self_loops(fg::FeaturedGraph)
+    add_self_loops(g::GNNGraph)
 
-Return a featured graph with the same features as `fg`
+Return a graph with the same features as `g`
 but also adding edges connecting the nodes to themselves.
 
 Nodes with already existing
 self-loops will obtain a second self-loop.
 """
-function add_self_loops(fg::FeaturedGraph{<:COO_T})
-    s, t = edge_index(fg)
-    @assert edge_feature(fg) === nothing
-    @assert edge_weight(fg) === nothing
-    n = fg.num_nodes
+function add_self_loops(g::GNNGraph{<:COO_T})
+    s, t = edge_index(g)
+    @assert edge_feature(g) === nothing
+    @assert edge_weight(g) === nothing
+    n = g.num_nodes
     nodes = convert(typeof(s), [1:n;])
     s = [s; nodes]
     t = [t; nodes]
 
-    FeaturedGraph((s, t, nothing), fg.num_nodes, length(s),
-        node_feature(fg), edge_feature(fg), global_feature(fg))
+    GNNGraph((s, t, nothing), g.num_nodes, length(s),
+        node_feature(g), edge_feature(g), global_feature(g))
 end
 
-function add_self_loops(fg::FeaturedGraph{<:ADJMAT_T}; add_to_existing=true)
-    A = graph(fg)
-    @assert edge_feature(fg) === nothing
+function add_self_loops(g::GNNGraph{<:ADJMAT_T}; add_to_existing=true)
+    A = graph(g)
+    @assert edge_feature(g) === nothing
     A += I
-    num_edges =  fg.num_edges + fg.num_nodes
-    FeaturedGraph(A, fg.num_nodes, num_edges,
-        node_feature(fg), edge_feature(fg), global_feature(fg))
+    num_edges =  g.num_edges + g.num_nodes
+    GNNGraph(A, g.num_nodes, num_edges,
+        node_feature(g), edge_feature(g), global_feature(g))
 end
 
-function remove_self_loops(fg::FeaturedGraph{<:COO_T})
-    s, t = edge_index(fg)
+function remove_self_loops(g::GNNGraph{<:COO_T})
+    s, t = edge_index(g)
     # TODO remove these constraints
-    @assert edge_feature(fg) === nothing
-    @assert edge_weight(fg) === nothing
+    @assert edge_feature(g) === nothing
+    @assert edge_weight(g) === nothing
     
     mask_old_loops = s .!= t
     s = s[mask_old_loops]
     t = t[mask_old_loops]
 
-    FeaturedGraph((s, t, nothing), fg.num_nodes, length(s),
-        node_feature(fg), edge_feature(fg), global_feature(fg))
+    GNNGraph((s, t, nothing), g.num_nodes, length(s),
+        node_feature(g), edge_feature(g), global_feature(g))
 end
 
 @non_differentiable normalized_laplacian(x...)
@@ -403,8 +402,8 @@ end
 @non_differentiable adjacency_matrix(x...)
 @non_differentiable adjacency_list(x...)
 @non_differentiable degree(x...)
-@non_differentiable add_self_loops(x...)     # TODO this is wrong, since fg carries feature arrays, needs rrule
-@non_differentiable remove_self_loops(x...)  # TODO this is wrong, since fg carries feature arrays, needs rrule
+@non_differentiable add_self_loops(x...)     # TODO this is wrong, since g carries feature arrays, needs rrule
+@non_differentiable remove_self_loops(x...)  # TODO this is wrong, since g carries feature arrays, needs rrule
 
 # # delete when https://github.com/JuliaDiff/ChainRules.jl/pull/472 is merged
 # function ChainRulesCore.rrule(::typeof(copy), x)
