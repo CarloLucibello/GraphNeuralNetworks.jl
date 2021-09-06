@@ -1,45 +1,42 @@
 using DataStructures: nlargest
 
+@doc raw"""
+    GlobalPool(aggr)
+
+Global pooling layer for graph neural networks.
+Takes a graph and feature nodes as inputs
+and performs the operation
+
+```math
+\mathbf{u}_V = \box_{i \in V} \mathbf{x}_i
+````
+where ``V`` is the set of nodes of the input graph and 
+the type of aggregation represented by `\box` is selected by the `aggr` argument. 
+Commonly used aggregations are are `mean`, `max`, and `+`.
+
+```julia
+using GraphNeuralNetworks, LightGraphs
+
+pool = GlobalPool(mean)
+
+g = GNNGraph(random_regular_graph(10, 4))
+X = rand(32, 10)
+pool(g, X) # => 32x1 matrix
+```
 """
-    GlobalPool(aggr, dim...)
+struct GlobalPool{F}
+    aggr::F
+end
 
-Global pooling layer.
-
-It pools all features with `aggr` operation.
-
-# Arguments
-
-- `aggr`: An aggregate function applied to pool all features.
-"""
-struct GlobalPool{A}
-    aggr
-    cluster::A
-    function GlobalPool(aggr, dim...)
-        cluster = ones(Int64, dim)
-        new{typeof(cluster)}(aggr, cluster)
+function (l::GlobalPool)(g::GNNGraph, X::AbstractArray)
+    if isnothing(g.graph_indicator)
+        # assume only one graph
+        indexes = fill!(similar(X, Int, g.num_nodes), 1)     
+    else 
+        indexes = g.graph_indicator
     end
+    return NNlib.scatter(l.aggr, X, indexes)
 end
-
-(l::GlobalPool)(X::AbstractArray) = NNlib.scatter(l.aggr, X, l.cluster)
-
-"""
-    LocalPool(aggr, cluster)
-
-Local pooling layer.
-
-It pools features with `aggr` operation accroding to `cluster`. It is implemented with `scatter` operation.
-
-# Arguments
-
-- `aggr`: An aggregate function applied to pool all features.
-- `cluster`: An index structure which indicates what features to aggregate with.
-"""
-struct LocalPool{A<:AbstractArray}
-    aggr
-    cluster::A
-end
-
-(l::LocalPool)(X::AbstractArray) = NNlib.scatter(l.aggr, X, l.cluster)
 
 """
     TopKPool(adj, k, in_channel)

@@ -47,7 +47,6 @@ export
 
     # layers/pool
     GlobalPool,
-    LocalPool,
     TopKPool,
     topk_index
 
