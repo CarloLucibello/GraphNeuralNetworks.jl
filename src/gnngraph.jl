@@ -23,6 +23,11 @@ is governed by `graph_type`.
 When constructed from another graph `g`, the internal graph representation
 is preserved and shared. 
 
+A `GNNGraph` can also represent multiple graphs batched togheter 
+(see [`Flux.batch`](@ref) or [`SparseArrays.blockdiag`](@ref)).
+The field `g.graph_indicator` contains the graph membership
+of each node.
+
 A `GNNGraph` is a LightGraphs' `AbstractGraph`, therefore any functionality
 from the LightGraphs' graph library can be used on it.
 
@@ -432,6 +437,15 @@ function _catgraphs(g1::GNNGraph{<:COO_T}, g2::GNNGraph{<:COO_T})
 end
 
 # Cat public interfaces
+
+```
+    blockdiag(xs::GNNGraph...)
+
+Batch togheter multiple `GNNGraph`s into a single one 
+containing the total number of nodes and edges of the original graphs.
+
+Equivalent to [`Flux.batch`](@ref).
+```
 function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
     @assert length(gothers) >= 1
     g = g1
@@ -441,6 +455,14 @@ function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
     return g
 end
 
+```
+    batch(xs::Vector{<:GNNGraph})
+
+Batch togheter multiple `GNNGraph`s into a single one 
+containing the total number of nodes and edges of the original graphs.
+
+Equivalent to [`SparseArrays.blockdiag`](@ref).
+```
 Flux.batch(xs::Vector{<:GNNGraph}) = blockdiag(xs...)
 #########################
 
