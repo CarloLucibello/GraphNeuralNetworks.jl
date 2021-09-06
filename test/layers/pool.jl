@@ -1,16 +1,10 @@
-cluster = [1 1 1 1; 2 2 3 3; 4 4 5 5]
-X = Array(reshape(1:24, 2, 3, 4))
-
 @testset "pool" begin
     @testset "GlobalPool" begin
-        glb_cltr = [1 1 1 1; 1 1 1 1; 1 1 1 1]
-        p = GlobalPool(+, 3, 4)
-        @test p(X) == NNlib.scatter(+, X, glb_cltr)
-    end
-
-    @testset "LocalPool" begin
-        p = LocalPool(+, cluster)
-        @test p(X) == NNlib.scatter(+, X, cluster)
+        n = 10
+        X = rand(16, n)
+        g = GNNGraph(random_regular_graph(n, 4))
+        p = GlobalPool(+)
+        @test p(g, X) ≈ NNlib.scatter(+, X, ones(Int, n))
     end
 
     @testset "TopKPool" begin
