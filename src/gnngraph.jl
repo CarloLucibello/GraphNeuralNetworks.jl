@@ -11,7 +11,7 @@ const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
 
 """
-    GNNGraph(data; [graph_type, nf, ef, gf, num_nodes, num_graphs, graph_indicator, dir])
+    GNNGraph(data; [graph_type, nf, ef, gf, num_nodes, graph_indicator, dir])
     GNNGraph(g::GNNGraph; [nf, ef, gf])
 
 A type representing a graph structure and storing also arrays 
@@ -50,7 +50,6 @@ from the LightGraphs' graph library can be used on it.
 - `dir`. The assumed edge direction when given adjacency matrix or adjacency list input data `g`. 
         Possible values are `:out` and `:in`. Default `:out`.
 - `num_nodes`. The number of nodes. If not specified, inferred from `g`. Default `nothing`.
-- `num_graphs`. The number of graphs. Larger than 1 in case of batched graphs. Default `1`.
 - `graph_indicator`. For batched graphs, a vector containeing the graph assigment of each node. Default `nothing`.  
 - `nf`: Node features. Either nothing, or an array whose last dimension has size num_nodes. Default `nothing`.
 - `ef`: Edge features. Either nothing, or an array whose last dimension has size num_edges. Default `nothing`.
@@ -123,6 +122,7 @@ function GNNGraph(data;
 
     @assert graph_type ∈ [:coo, :dense, :sparse] "Invalid graph_type $graph_type requested"
     @assert dir ∈ [:in, :out]
+    
     if graph_type == :coo
         g, num_nodes, num_edges = to_coo(data; num_nodes, dir)
     elseif graph_type == :dense
@@ -130,10 +130,9 @@ function GNNGraph(data;
     elseif graph_type == :sparse
         g, num_nodes, num_edges = to_sparse(data; dir)
     end
-    if num_graphs > 1
-        @assert len(graph_indicator) = num_nodes "When batching multiple graphs `graph_indicator` should be filled with the nodes' memberships."
-    end 
-
+    
+    num_graphs = !isnothing(graph_indicator) ? maximum(graph_indicator) : 1
+    
     ## Possible future implementation of feature maps. 
     ## Currently this doesn't play well with zygote due to 
     ## https://github.com/FluxML/Zygote.jl/issues/717    
@@ -154,8 +153,8 @@ GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
 
 function GNNGraph(g::AbstractGraph; kws...)
     s = LightGraphs.src.(LightGraphs.edges(g))
-    t = LightGraphs.dst.(LightGraphs.edges(g)) 
-    GNNGraph((s, t); kws...)
+    t = LightGraphs.dst.(LightGraphs.edges(g))
+    GNNGraph((s, t); num_nodes = nv(g), kws...)
 end
 
 function GNNGraph(g::GNNGraph; 
@@ -436,18 +435,17 @@ function _catgraphs(g1::GNNGraph{<:COO_T}, g2::GNNGraph{<:COO_T})
     )
 end
 
-# Cat public interfaces
+### Cat public interfaces #############
 
-```
+"""
     blockdiag(xs::GNNGraph...)
 
 Batch togheter multiple `GNNGraph`s into a single one 
 containing the total number of nodes and edges of the original graphs.
 
 Equivalent to [`Flux.batch`](@ref).
-```
+"""
 function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
-    @assert length(gothers) >= 1
     g = g1
     for go in gothers
         g = _catgraphs(g, go)
@@ -455,16 +453,58 @@ function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
     return g
 end
 
-```
+"""
     batch(xs::Vector{<:GNNGraph})
 
 Batch togheter multiple `GNNGraph`s into a single one 
 containing the total number of nodes and edges of the original graphs.
 
 Equivalent to [`SparseArrays.blockdiag`](@ref).
-```
+"""
 Flux.batch(xs::Vector{<:GNNGraph}) = blockdiag(xs...)
 #########################
+
+"""
+    subgraph(g::GNNGraph, i)
+
+Return the subgraph of `g` induced by those nodes `v`
+for which `g.graph_indicator[v] ∈ i`. In other words, it
+extract the component graphs from a batched graph. 
+
+It also returns a vector `nodes` mapping the new nodes to the old ones. 
+The node `i` in the subgraph corresponds to the node `nodes[i]` in `g`.
+"""
+subgraph(g::GNNGraph, i::Int) = subgraph(g::GNNGraph{<:COO_T}, [i])
+
+function subgraph(g::GNNGraph{<:COO_T}, i::AbstractVector)
+    node_mask = g.graph_indicator .∈ Ref(i)
+    
+    nodes = (1:g.num_nodes)[node_mask]
+    nodemap = Dict(v => vnew for (vnew, v) in enumerate(nodes))
+
+    graphmap = Dict(i => inew for (inew, i) in enumerate(i))
+    graph_indicator = [graphmap[i] for i in g.graph_indicator[node_mask]]
+    
+    s, t, w = g.graph
+    edge_mask = s .∈ Ref(nodes) 
+    s = [nodemap[i] for i in s[edge_mask]]
+    t = [nodemap[i] for i in t[edge_mask]]
+    w = isnothing(w) ? nothing : w[edge_mask]
+    @show size(g.nf) size(node_mask)
+    nf = isnothing(g.nf) ? nothing : g.nf[:,node_mask]
+    ef = isnothing(g.ef) ? nothing : g.ef[:,edge_mask]
+    gf = isnothing(g.gf) ? nothing : g.gf[:,i]
+
+    num_nodes = length(graph_indicator)
+    num_edges = length(s)
+    num_graphs = length(i)
+
+    gnew = GNNGraph((s,t,w), 
+                num_nodes, num_edges, num_graphs,
+                graph_indicator,
+                nf, ef, gf)
+    return gnew, nodes
+end
 
 @non_differentiable normalized_laplacian(x...)
 @non_differentiable normalized_adjacency(x...)

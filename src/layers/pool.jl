@@ -24,7 +24,7 @@ X = rand(32, 10)
 pool(g, X) # => 32x1 matrix
 ```
 """
-struct GlobalPool{F}
+struct GlobalPool{F} <: GNNLayer
     aggr::F
 end
 
