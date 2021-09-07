@@ -21,7 +21,7 @@ Base.@kwdef mutable struct Args
     η = 1f-3             # learning rate
     epochs = 100          # number of epochs
     seed = 17             # set seed > 0 for reproducibility
-    use_cuda = true      # if true use cuda (if available)
+    usecuda = true      # if true use cuda (if available)
     nhidden = 128        # dimension of hidden features
     infotime = 10 	     # report every `infotime` epochs
 end
@@ -33,7 +33,7 @@ function train(; kws...)
         CUDA.seed!(args.seed)
     end
     
-    if args.use_cuda && CUDA.functional()
+    if args.usecuda && CUDA.functional()
         device = gpu
         @info "Training on GPU"
     else
