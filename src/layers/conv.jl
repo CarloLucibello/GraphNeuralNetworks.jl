@@ -147,8 +147,9 @@ Graph convolution layer from Reference: [Weisfeiler and Leman Go Neural: Higher-
 
 Performs:
 ```math
-\mathbf{x}_i' = W^1 \mathbf{x}_i + \box_{j \in \mathcal{N}(i)} W^2 \mathbf{x}_j)
+\mathbf{x}_i' = W^1 \mathbf{x}_i + \square_{j \in \mathcal{N}(i)} W^2 \mathbf{x}_j)
 ```
+
 where the aggregation type is selected by `aggr`.
 
 # Arguments
@@ -206,7 +207,7 @@ end
             concat=true,
             init=glorot_uniform    
             bias=true, 
-            negative_slope=0.2)
+            negative_slope=0.2f0)
 
 Graph attentional layer from the paper [Graph Attention Networks](https://arxiv.org/abs/1710.10903).
 
@@ -216,7 +217,7 @@ Implements the operation
 ```
 where the attention coefficient ``\alpha_{ij}`` is given by
 ```math
-\alpha_{ij} = \frac{1}{z_i} exp(LeakyReLU(\mathbf{a}^T [W \mathbf{x}_i || W \mathbf{x}_j]))
+\alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W \mathbf{x}_i || W \mathbf{x}_j]))
 ```
 with ``z_i`` a normalization factor.
 
@@ -301,7 +302,7 @@ Gated graph convolution layer from [Gated Graph Sequence Neural Networks](https:
 Implements the recursion
 ```math
 \mathbf{h}^{(0)}_i = \mathbf{x}_i || \mathbf{0} \\
-\mathbf{h}^{(l)}_i = GRU(\mathbf{h}^{(l-1)}_i, \box_{j \in N(i)} W \mathbf{h}^{(l-1)}_j)
+\mathbf{h}^{(l)}_i = GRU(\mathbf{h}^{(l-1)}_i, \square_{j \in N(i)} W \mathbf{h}^{(l-1)}_j)
 ```
 
  where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing through GRU. The dimension of input ``\mathbf{x}_i`` needs to be less or equal to `out`.
@@ -369,7 +370,7 @@ Edge convolutional layer from paper [Dynamic Graph CNN for Learning on Point Clo
 
 Performs the operation
 ```math
-\mathbf{x}_i' = \box_{j \in N(i)} f(\mathbf{x}_i || \mathbf{x}_j - \mathbf{x}_i)
+\mathbf{x}_i' = \square_{j \in N(i)} f(\mathbf{x}_i || \mathbf{x}_j - \mathbf{x}_i)
 ```
 
 where `f` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.

@@ -17,7 +17,7 @@
         @test sort(outneighbors(g, 1)) == [2, 4] 
         @test sort(inneighbors(g, 1)) == [2, 4] 
         @test is_directed(g) == true
-        s1, t1 = sort_edge_index(edge_index(g))
+        s1, t1 = GraphNeuralNetworks.sort_edge_index(edge_index(g))
         @test s1 == s
         @test t1 == t
         
@@ -65,7 +65,7 @@
         @test sort(outneighbors(g, 1)) == [2] 
         @test sort(inneighbors(g, 1)) == [4] 
         @test is_directed(g) == true
-        s1, t1 = sort_edge_index(edge_index(g))
+        s1, t1 = GraphNeuralNetworks.sort_edge_index(edge_index(g))
         @test s1 == s
         @test t1 == t
 
@@ -103,6 +103,7 @@
     end
 
     @testset "batch"  begin
+        #TODO add graph_type=GRAPH_T
         g1 = GNNGraph(random_regular_graph(10,2), nf=rand(16,10))
         g2 = GNNGraph(random_regular_graph(4,2), nf=rand(16,4))
         g3 = GNNGraph(random_regular_graph(7,2), nf=rand(16,7))
@@ -112,5 +113,25 @@
         
         g123 = Flux.batch([g1, g2, g3])
         @test g123.graph_indicator == [fill(1, 10); fill(2, 4); fill(3, 7)]
+
+        s, t = edge_index(g123)
+        @test s == [edge_index(g1)[1]; 10 .+ edge_index(g2)[1]; 14 .+ edge_index(g3)[1]] 
+        @test t == [edge_index(g1)[2]; 10 .+ edge_index(g2)[2]; 14 .+ edge_index(g3)[2]] 
+        @test g123.nf[:,11:14] ≈ g2.nf 
     end
+
+    @testset "subgraph"  begin
+        #TODO add graph_type=GRAPH_T
+        g1 = GNNGraph(random_regular_graph(10,2), nf=rand(16,10))
+        g2 = GNNGraph(random_regular_graph(4,2), nf=rand(16,4))
+        g3 = GNNGraph(random_regular_graph(7,2), nf=rand(16,7))
+        g = Flux.batch([g1, g2, g3])
+        g2b, nodemap = subgraph(g, 2)
+        
+        s, t = edge_index(g2b)
+        @test s == edge_index(g2)[1]
+        @test t == edge_index(g2)[2] 
+        @test g2b.nf ≈ g2.nf 
+    end
+
 end

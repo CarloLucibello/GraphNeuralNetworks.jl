@@ -1,5 +1,4 @@
 using GraphNeuralNetworks
-using GraphNeuralNetworks: sort_edge_index
 using Flux
 using CUDA
 using Flux: gpu, @functor
