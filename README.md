@@ -11,7 +11,7 @@ Most relevant features are:
 * It's integrated with the JuliaGraphs ecosystem.
 * Implements many common graph convolutional layers.
 * Performs fast operations on batched graphs. 
-* It's easy to define custom graph convolutional layers.
+* Makes it easy to define custom graph convolutional layers.
 
 ## Installation
 
