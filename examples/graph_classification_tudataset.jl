@@ -1,4 +1,4 @@
-# An example of semi-supervised node classification
+# An example of graph classification
 
 using Flux
 using Flux: @functor, dropout, onecold, onehotbatch, getindex

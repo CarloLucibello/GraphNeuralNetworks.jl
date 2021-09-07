@@ -13,7 +13,8 @@ Some of its noticeable features are the following:
 * CUDA support.
 * Integrated with the JuliaGraphs ecosystem.
 * Supports generic graph neural network architectures.
-* Easy to define custom graph convolutional layers.
+* Operation on batched graphs. 
+* Easily define your custom graph convolutional layers.
 
 ## Installation
 
