@@ -490,7 +490,6 @@ function subgraph(g::GNNGraph{<:COO_T}, i::AbstractVector)
     s = [nodemap[i] for i in s[edge_mask]]
     t = [nodemap[i] for i in t[edge_mask]]
     w = isnothing(w) ? nothing : w[edge_mask]
-    @show size(g.nf) size(node_mask)
     nf = isnothing(g.nf) ? nothing : g.nf[:,node_mask]
     ef = isnothing(g.ef) ? nothing : g.ef[:,edge_mask]
     gf = isnothing(g.gf) ? nothing : g.gf[:,i]

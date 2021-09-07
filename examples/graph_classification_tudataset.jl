@@ -38,15 +38,14 @@ function Base.getindex(data::GNNData, i::AbstractVector)
     return (sg, data.X[:,nodemap], data.y[i])
 end
 
-# Flux's Dataloader compatibility. 
+# Flux's Dataloader compatibility. Related PR https://github.com/FluxML/Flux.jl/pull/1683
 Flux.Data._nobs(data::GNNData) = data.g.num_graphs
 Flux.Data._getobs(data::GNNData, i) = data[i] 
 
-function getdataset(idxs)
-    data = TUDataset("MUTAG")[idxs]
-    @info "MUTAG: num_nodes: $(data.num_nodes)  num_edges: $(data.num_edges)  num_graphs: $(data.num_graphs)"
+function process_dataset(data)
     g = GNNGraph(data.source, data.target, num_nodes=data.num_nodes, graph_indicator=data.graph_indicator)
     X = Array{Float32}(onehotbatch(data.node_labels, 0:6))
+    # The dataset also has edge features but we won't be using them
     # E = Array{Float32}(onehotbatch(data.edge_labels, sort(unique(data.edge_labels))))
     y = (1 .+ Array{Float32}(data.graph_labels)) ./ 2
     @assert all(∈([0,1]), y) # binary classification 
@@ -78,12 +77,18 @@ function train(; kws...)
     end
 
     # LOAD DATA
+
+    NUM_TRAIN = 150
+    full_data = TUDataset("MUTAG")
     
-    permindx = randperm(188)
-    ntrain = 150
-    dtrain = getdataset(permindx[1:ntrain]) 
-    dtest = getdataset(permindx[ntrain+1:end]) 
+    @info "MUTAG DATASET
+            num_nodes: $(full_data.num_nodes)  
+            num_edges: $(full_data.num_edges)  
+            num_graphs: $(full_data.num_graphs)"
     
+    perm = randperm(full_data.num_graphs)
+    dtrain = process_dataset(full_data[perm[1:NUM_TRAIN]]) 
+    dtest = process_dataset(full_data[perm[NUM_TRAIN+1:end]]) 
     train_loader = DataLoader(dtrain, batchsize=args.batchsize, shuffle=true)
     test_loader = DataLoader(dtest, batchsize=args.batchsize, shuffle=false)
     
@@ -92,9 +97,9 @@ function train(; kws...)
     nin = size(dtrain.X, 1)
     nhidden = args.nhidden
     
-    model = GNNChain(GCNConv(nin => nhidden, relu),
+    model = GNNChain(GraphConv(nin => nhidden, relu),
                      Dropout(0.5),
-                     GCNConv(nhidden => nhidden, relu),
+                     GraphConv(nhidden => nhidden, relu),
                      GlobalPool(mean), 
                      Dense(nhidden, 1))  |> device
 
@@ -127,4 +132,4 @@ function train(; kws...)
     end
 end
 
-# train()
+train()
