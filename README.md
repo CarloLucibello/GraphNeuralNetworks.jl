@@ -5,16 +5,13 @@
 ![](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/CarloLucibello/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/CarloLucibello/GraphNeuralNetworks.jl)
 
-*GraphNeuralNetworks* is a graph neural network library for Julia based on the [Flux.jl](https://github.com/FluxML/Flux.jl) deep learning framework.
-
-Some of its noticeable features are the following:
-
-* Based on the Flux deep learning framework.
-* CUDA support.
-* Integrated with the JuliaGraphs ecosystem.
-* Supports generic graph neural network architectures.
-* Operation on batched graphs. 
-* Easily define your custom graph convolutional layers.
+A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
+Most relevant features are:
+* Provides CUDA support.
+* It's integrated with the JuliaGraphs ecosystem.
+* Implements many common graph convolutional layers.
+* Performs fast operations on batched graphs. 
+* It's easy to define custom graph convolutional layers.
 
 ## Installation
 
