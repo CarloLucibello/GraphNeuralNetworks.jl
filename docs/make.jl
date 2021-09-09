@@ -4,7 +4,7 @@ using Documenter
 DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup, :(using GraphNeuralNetworks); recursive=true)
 
 makedocs(;
-    modules=[GraphNeuralNetworks, NNlib],
+    modules=[GraphNeuralNetworks],
     sitename = "GraphNeuralNetworks.jl",
     pages = ["Home" => "index.md",
              "GNNGraph" => "gnngraph.md",

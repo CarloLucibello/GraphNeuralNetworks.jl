@@ -166,6 +166,26 @@ function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata)
             ndata, edata, gdata) 
 end
 
+function Base.show(io::IO, g::GNNGraph)
+    println(io, "GNNGraph:
+    num_nodes = $(g.num_nodes)
+    num_edges = $(g.num_edges)
+    num_graphs = $(g.num_graphs)
+    # feature name => array size")
+    println(io, "    ndata:")
+    for k in keys(g.ndata)
+        println(io, "        $k => $(size(g.ndata[k]))")
+    end
+    println(io, "    edata:")
+    for k in keys(g.edata)
+        println(io, "        $k => $(size(g.edata[k]))")
+    end
+    println(io, "    gdata:")
+    for k in keys(g.gdata)
+        println(io, "        $k => $(size(g.gdata[k]))")
+    end
+end
+
 """
     edge_index(g::GNNGraph)
 
