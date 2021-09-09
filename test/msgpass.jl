@@ -23,26 +23,26 @@
         l = NewLayer{GRAPH_T}()
         (l::NewLayer{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, nothing)
 
-        g = GNNGraph(adj, nf=X, graph_type=GRAPH_T)
+        g = GNNGraph(adj, ndata=X, graph_type=GRAPH_T)
         fg_ = l(g)
 
         @test adjacency_matrix(fg_) == adj
-        @test node_feature(fg_) === nothing
-        @test edge_feature(fg_)  === nothing
-        @test global_feature(fg_) === nothing
+        @test node_features(fg_) === nothing
+        @test edge_features(fg_)  === nothing
+        @test global_features(fg_) === nothing
     end
 
     @testset "neighbor aggregation (+)" begin
         l = NewLayer{GRAPH_T}()
         (l::NewLayer{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
-        g = GNNGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
+        g = GNNGraph(adj, ndata=X, edata=E, gdata=u, graph_type=GRAPH_T)
         fg_ = l(g)
 
         @test adjacency_matrix(fg_) == adj
-        @test size(node_feature(fg_)) == (in_channel, num_V)
-        @test edge_feature(fg_) ≈ E
-        @test global_feature(fg_) ≈ u
+        @test size(node_features(fg_)) == (in_channel, num_V)
+        @test edge_features(fg_) ≈ E
+        @test global_features(fg_) ≈ u
     end
 
     GraphNeuralNetworks.message(l::NewLayer{GRAPH_T}, xi, xj, e, u) = ones(T, out_channel, size(e,2))
@@ -51,13 +51,13 @@
         l = NewLayer{GRAPH_T}()
         (l::NewLayer{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
-        g = GNNGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
+        g = GNNGraph(adj, ndata=X, edata=E, gdata=u, graph_type=GRAPH_T)
         fg_ = l(g)
 
         @test adjacency_matrix(fg_) == adj
-        @test size(node_feature(fg_)) == (out_channel, num_V)
-        @test edge_feature(fg_) ≈ edge_feature(g)
-        @test global_feature(fg_) ≈ global_feature(g)
+        @test size(node_features(fg_)) == (out_channel, num_V)
+        @test edge_features(fg_) ≈ edge_features(g)
+        @test global_features(fg_) ≈ global_features(g)
     end
 
     GraphNeuralNetworks.update_edge(l::NewLayer{GRAPH_T}, m, e) = m
@@ -66,13 +66,13 @@
         l = NewLayer{GRAPH_T}()
         (l::NewLayer{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
-        g = GNNGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
+        g = GNNGraph(adj, ndata=X, edata=E, gdata=u, graph_type=GRAPH_T)
         fg_ = l(g)
 
         @test adjacency_matrix(fg_) == adj
-        @test size(node_feature(fg_)) == (out_channel, num_V)
-        @test size(edge_feature(fg_)) == (out_channel, num_E)
-        @test global_feature(fg_) ≈ global_feature(g)
+        @test size(node_features(fg_)) == (out_channel, num_V)
+        @test size(edge_features(fg_)) == (out_channel, num_E)
+        @test global_features(fg_) ≈ global_features(g)
     end
 
     GraphNeuralNetworks.update(l::NewLayer{GRAPH_T}, m̄, xi, u) = rand(T, 2*out_channel, size(xi, 2))
@@ -81,13 +81,13 @@
         l = NewLayer{GRAPH_T}()
         (l::NewLayer{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
-        g = GNNGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
+        g = GNNGraph(adj, ndata=X, edata=E, gdata=u, graph_type=GRAPH_T)
         fg_ = l(g)
 
         @test all(adjacency_matrix(fg_) .== adj)
-        @test size(node_feature(fg_)) == (2*out_channel, num_V)
-        @test size(edge_feature(fg_)) == (out_channel, num_E)
-        @test size(global_feature(fg_)) == (in_channel,)
+        @test size(node_features(fg_)) == (2*out_channel, num_V)
+        @test size(edge_features(fg_)) == (out_channel, num_E)
+        @test size(global_features(fg_)) == (in_channel,)
     end
 
     struct NewLayerW{G}
@@ -103,12 +103,12 @@
         l = NewLayerW(in_channel, out_channel)
         (l::NewLayerW{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
-        g = GNNGraph(adj, nf=X, ef=E, gf=u, graph_type=GRAPH_T)
+        g = GNNGraph(adj, ndata=X, edata=E, gdata=u, graph_type=GRAPH_T)
         fg_ = l(g)
 
         @test adjacency_matrix(fg_) == adj
-        @test size(node_feature(fg_)) == (out_channel, num_V)
-        @test edge_feature(fg_) === E
-        @test global_feature(fg_) === u
+        @test size(node_features(fg_)) == (out_channel, num_V)
+        @test edge_features(fg_) === E
+        @test global_features(fg_) === u
     end
 end

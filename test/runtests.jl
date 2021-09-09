@@ -13,9 +13,9 @@ CUDA.allowscalar(false)
 include("cuda/test_utils.jl")
 
 tests = [
-    "gnngraph",
-    "msgpass",
-    "layers/basic",
+    # "gnngraph",
+    # "msgpass",
+    # "layers/basic",
     "layers/conv",
     "layers/pool",
 ]
@@ -23,7 +23,9 @@ tests = [
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
 
 # Testing all graph types. :sparse is a bit broken at the moment
-@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :sparse, :dense)
+# @testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :sparse, :dense)
+@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo,)
+
     global GRAPH_T = graph_type
     for t in tests
         include("$t.jl")

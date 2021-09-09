@@ -104,9 +104,9 @@
 
     @testset "batch"  begin
         #TODO add graph_type=GRAPH_T
-        g1 = GNNGraph(random_regular_graph(10,2), nf=rand(16,10))
-        g2 = GNNGraph(random_regular_graph(4,2), nf=rand(16,4))
-        g3 = GNNGraph(random_regular_graph(7,2), nf=rand(16,7))
+        g1 = GNNGraph(random_regular_graph(10,2), ndata=rand(16,10))
+        g2 = GNNGraph(random_regular_graph(4,2), ndata=rand(16,4))
+        g3 = GNNGraph(random_regular_graph(7,2), ndata=rand(16,7))
         
         g12 = Flux.batch([g1, g2])
         g12b = blockdiag(g1, g2)
@@ -117,21 +117,21 @@
         s, t = edge_index(g123)
         @test s == [edge_index(g1)[1]; 10 .+ edge_index(g2)[1]; 14 .+ edge_index(g3)[1]] 
         @test t == [edge_index(g1)[2]; 10 .+ edge_index(g2)[2]; 14 .+ edge_index(g3)[2]] 
-        @test g123.nf[:,11:14] ≈ g2.nf 
+        @test node_features(g123)[:,11:14] ≈ node_features(g2) 
     end
 
     @testset "subgraph"  begin
         #TODO add graph_type=GRAPH_T
-        g1 = GNNGraph(random_regular_graph(10,2), nf=rand(16,10))
-        g2 = GNNGraph(random_regular_graph(4,2), nf=rand(16,4))
-        g3 = GNNGraph(random_regular_graph(7,2), nf=rand(16,7))
+        g1 = GNNGraph(random_regular_graph(10,2), ndata=rand(16,10))
+        g2 = GNNGraph(random_regular_graph(4,2), ndata=rand(16,4))
+        g3 = GNNGraph(random_regular_graph(7,2), ndata=rand(16,7))
         g = Flux.batch([g1, g2, g3])
         g2b, nodemap = subgraph(g, 2)
         
         s, t = edge_index(g2b)
         @test s == edge_index(g2)[1]
         @test t == edge_index(g2)[2] 
-        @test g2b.nf ≈ g2.nf 
+        @test node_features(g2b) ≈ node_features(g2) 
     end
 
 end

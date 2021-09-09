@@ -57,8 +57,6 @@ function (l::GCNConv)(g::GNNGraph, x::CuMatrix{T}) where T
     return l.σ.(l.weight * x .+ l.bias)
 end
 
-(l::GCNConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
-
 function Base.show(io::IO, l::GCNConv)
     out, in = size(l.weight)
     print(io, "GCNConv($in => $out")
@@ -130,8 +128,6 @@ function (c::ChebConv)(g::GNNGraph, X::AbstractMatrix{T}) where T
     return Y .+ c.bias
 end
 
-(l::ChebConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
-
 function Base.show(io::IO, l::ChebConv)
     out, in, k = size(l.weight)
     print(io, "ChebConv(", in, " => ", out)
@@ -188,8 +184,6 @@ function (gc::GraphConv)(g::GNNGraph, x::AbstractMatrix)
     _, x = propagate(gc, g, nothing, x, nothing, +)
     x
 end
-
-(l::GraphConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::GraphConv)
     in_channel = size(l.weight1, ndims(l.weight1))
@@ -282,8 +276,6 @@ function (gat::GATConv)(g::GNNGraph, X::AbstractMatrix)
     return reshape(X, :, size(X, 3)) 
 end
 
-(l::GATConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
-
 
 function Base.show(io::IO, l::GATConv)
     in_channel = size(l.weight, ndims(l.weight))
@@ -354,8 +346,6 @@ function (ggc::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {T<:Abst
     H
 end
 
-(l::GatedGraphConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
-
 function Base.show(io::IO, l::GatedGraphConv)
     print(io, "GatedGraphConv(($(l.out_ch) => $(l.out_ch))^$(l.num_layers)")
     print(io, ", aggr=", l.aggr)
@@ -398,8 +388,6 @@ function (ec::EdgeConv)(g::GNNGraph, X::AbstractMatrix)
     _, X = propagate(ec, g, nothing, X, nothing, ec.aggr)
     X
 end
-
-(l::EdgeConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))
 
 function Base.show(io::IO, l::EdgeConv)
     print(io, "EdgeConv(", l.nn)
@@ -444,5 +432,3 @@ function (l::GINConv)(g::GNNGraph, X::AbstractMatrix)
     _, X = propagate(l, g, nothing, X, nothing, +)
     X
 end
-
-(l::GINConv)(g::GNNGraph) = GNNGraph(g, nf = l(g, node_feature(g)))

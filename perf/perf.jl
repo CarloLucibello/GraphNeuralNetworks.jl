@@ -11,7 +11,7 @@ function run_single_benchmark(N, c, D, CONV; gtype=:lg)
     data = erdos_renyi(N, c / (N-1), seed=17)
     X = randn(Float32, D, N)
     
-    g = GNNGraph(data; nf=X, graph_type=gtype)
+    g = GNNGraph(data; ndata=X, graph_type=gtype)
     g_gpu = g |> gpu    
     
     m = CONV(D => D)

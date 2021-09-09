@@ -20,10 +20,10 @@ GraphNeuralNetworks.message(n::NewCudaLayer, x_i, x_j, e_ij) = n.weight * x_j
 GraphNeuralNetworks.update(::NewCudaLayer, m, x) = m
 
 X = rand(T, in_channel, N) |> gpu
-g = GNNGraph(adj, nf=X, graph_type=GRAPH_T)
+g = GNNGraph(adj, ndata=X, graph_type=GRAPH_T)
 l = NewCudaLayer(out_channel, in_channel) |> gpu
 
 @testset "cuda/msgpass" begin
     g_ = l(g)
-    @test size(node_feature(g_)) == (out_channel, N)
+    @test size(node_features(g_)) == (out_channel, N)
 end

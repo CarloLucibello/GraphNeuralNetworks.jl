@@ -1,8 +1,5 @@
 module GraphNeuralNetworks
 
-using Core: apply_type
-using NNlib: similar
-using LinearAlgebra: similar, fill!
 using Statistics: mean
 using LinearAlgebra
 using SparseArrays
@@ -12,17 +9,17 @@ using CUDA
 using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, @functor
 using MacroTools: @forward
+using LearnBase: getobs
 using NNlib, NNlibCUDA
 using ChainRulesCore
 import LightGraphs
-using LightGraphs: AbstractGraph, outneighbors, inneighbors, is_directed, ne, nv, 
-                  adjacency_matrix, degree
+using LightGraphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree
 
 export
     # gnngraph
     GNNGraph,
     edge_index,
-    node_feature, edge_feature, global_feature,
+    node_features, edge_features, global_features,
     adjacency_list, normalized_laplacian, scaled_laplacian,
     add_self_loops, remove_self_loops,
     subgraph,
@@ -50,7 +47,6 @@ export
     GlobalPool,
     TopKPool,
     topk_index
-
 
 
     
