@@ -79,11 +79,11 @@ g = GNNGraph(s, t)
 # From a LightGraphs' graph
 g = GNNGraph(erdos_renyi(100, 20))
 
-# Add node 2 node feature arrays
+# Add 2 node feature arrays
 g = GNNGraph(g, ndata = (X = rand(100, g.num_nodes), y = rand(g.num_nodes)))
 
 # Add node features and edge features with default names `X` and `E` 
-g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_nodes))
+g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_edges))
 
 g.ndata.X
 g.ndata.E
