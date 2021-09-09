@@ -14,14 +14,16 @@ const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
     GNNGraph(data; [graph_type, ndata, edata, gdata, num_nodes, graph_indicator, dir])
     GNNGraph(g::GNNGraph; [ndata, edata, gdata])
 
-A type representing a graph structure and storing also arrays 
-that contain features associated to nodes, edges, and the whole graph. 
-    
-A `GNNGraph` can be constructed out of different objects `data` representing
-the connections inside the graph, while the internal representation type
-is governed by `graph_type`. 
-When constructed from another graph `g`, the internal graph representation
-is preserved and shared. 
+A type representing a graph structure and storing also 
+feature arrays associated to nodes, edges, and to the whole graph (global features). 
+
+A `GNNGraph` can be constructed out of different objects `data` expressing
+the connections inside the graph. The internal representation type
+is determined by `graph_type`.
+
+When constructed from another `GNNGraph`, the internal graph representation
+is preserved and shared. The node/edge/global features are transmitted
+as well, unless explicitely changed though keyword arguments.
 
 A `GNNGraph` can also represent multiple graphs batched togheter 
 (see [`Flux.batch`](@ref) or [`SparseArrays.blockdiag`](@ref)).
@@ -64,9 +66,10 @@ using Flux, GraphNeuralNetworks
 data = [[2,3], [1,4,5], [1], [2,5], [2,4]]
 g = GNNGraph(data)
 
-# Number of nodes and edges
+# Number of nodes, edges, and batched graphs
 g.num_nodes  # 5
 g.num_edges  # 10 
+g.num_graphs # 1 
 
 # Same graph in COO representation
 s = [1,1,2,2,2,3,4,4,5,5]
@@ -76,8 +79,14 @@ g = GNNGraph(s, t)
 # From a LightGraphs' graph
 g = GNNGraph(erdos_renyi(100, 20))
 
-# Copy graph while also adding node features
-g = GNNGraph(g, ndata = (x = rand(100, g.num_nodes),))
+# Add node 2 node feature arrays
+g = GNNGraph(g, ndata = (X = rand(100, g.num_nodes), y = rand(g.num_nodes)))
+
+# Add node features and edge features with default names `X` and `E` 
+g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_nodes))
+
+g.ndata.X
+g.ndata.E
 
 # Send to gpu
 g = g |> gpu
