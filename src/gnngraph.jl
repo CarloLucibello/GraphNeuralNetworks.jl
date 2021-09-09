@@ -287,7 +287,7 @@ function normalized_adjacency(g::GNNGraph, T::DataType=Float32;
                         add_self_loops::Bool=false, dir::Symbol=:out)
     A = adjacency_matrix(g, T; dir=dir)
     if add_self_loops
-        A += I
+        A = A + I
     end
     degs = vec(sum(A; dims=2))
     inv_sqrtD = Diagonal(inv.(sqrt.(degs)))
@@ -345,9 +345,9 @@ function add_self_loops(g::GNNGraph{<:COO_T})
 end
 
 function add_self_loops(g::GNNGraph{<:ADJMAT_T})
-    A = adjaceny_matrix(g)
+    A = g.graph
     @assert g.edata === (;)
-    A += I
+    A = A + I
     num_edges =  g.num_edges + g.num_nodes
     GNNGraph(A, 
             g.num_nodes, num_edges, g.num_graphs, 
