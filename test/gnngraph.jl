@@ -134,4 +134,48 @@
         @test node_features(g2b) ≈ node_features(g2) 
     end
 
+    @testset "Features" begin
+        g = GNNGraph(sprand(10, 10, 0.3), graph_type=GRAPH_T)
+        
+        # default names
+        X = rand(10, g.num_nodes)
+        E = rand(10, g.num_edges)
+        U = rand(10, g.num_graphs)
+        
+        g = GNNGraph(g, ndata=X, edata=E, gdata=U)
+        @test g.ndata.X === X
+        @test g.edata.E === E
+        @test g.gdata.U === U
+
+        # Check no args
+        g = GNNGraph(g)
+        @test g.ndata.X === X
+        @test g.edata.E === E
+        @test g.gdata.U === U
+
+        # multiple features names
+        g = GNNGraph(g, ndata=(x=2X, g.ndata...), edata=(e=2E, g.edata...), gdata=(u=2U, g.gdata...))
+        @test g.ndata.X === X
+        @test g.edata.E === E
+        @test g.gdata.U === U
+        @test g.ndata.x ≈ 2X
+        @test g.edata.e ≈ 2E
+        @test g.gdata.u ≈ 2U
+    end 
+
+    @testset "LearnBase and DataLoader compat" begin
+        n, m, num_graphs = 10, 30, 50
+        X = rand(10, n)
+        E = rand(10, m)
+        U = rand(10, 1)
+        g = Flux.batch([GNNGraph(erdos_renyi(10, 30), ndata=rand(10, n), edata=rand(10, m), gdata=rand(10, 1)) 
+                        for _ in 1:num_graphs])
+        
+        @test LearnBase.getobs(g, 3) == subgraph(g, 3)[1]
+        @test LearnBase.getobs(g, 3:5) == subgraph(g, 3:5)[1]
+        @test LearnBase.nobs(g) == g.num_graphs
+        
+        d = Flux.Data.DataLoader(g, batchsize = 2, shuffle=false)
+        @test first(d) == subgraph(g, 1:2)[1]
+    end
 end
