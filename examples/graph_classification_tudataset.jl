@@ -73,11 +73,8 @@ function train(; kws...)
     
     gfull = getdataset()
 
-    @info "MUTAG DATASET
-            num_nodes: $(gfull.num_nodes)  
-            num_edges: $(gfull.num_edges)  
-            num_graphs: $(gfull.num_graphs)"
-
+    @info gfull
+    
     perm = randperm(gfull.num_graphs)
     gtrain = getobs(gfull, perm[1:NUM_TRAIN])
     gtest = getobs(gfull, perm[NUM_TRAIN+1:end]) 
