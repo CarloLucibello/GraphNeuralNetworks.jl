@@ -42,14 +42,13 @@ We have also seen some useful methods such as [`adjacency_matrix`](@ref) and [`e
 ## Data Features
 
 ```julia
-GNNGraph(sprand(10, 0.3), ndata = (; X=rand(32, 10)))
+GNNGraph(erods_renyi(10,  30), ndata = (; X=rand(Float32, 32, 10)))
 # or equivalently
-GNNGraph(sprand(10, 0.3), ndata=rand(32, 10))
+GNNGraph(sprand(10, 0.3), ndata=rand(Float32, 32, 10))
 
+g = GNNGraph(sprand(10, 0.3), ndata = (X=rand(Float32, 32, 10), y=rand(Float32, 10)))
 
-g = GNNGraph(sprand(10, 0.3), ndata = (X=rand(32, 10), y=rand(10)))
-
-g = GNNGraph(g, edata=rand(6, g.num_edges))
+g = GNNGraph(g, edata=rand(Float32, 6, g.num_edges))
 ```
 
 
@@ -64,16 +63,36 @@ g = remove_self_loops(g)
 ## Batches and Subgraphs
 
 ```julia
-g = Flux.batch([g1, g2, g3])
+using Flux
 
-subgraph(g, 2:3)
+gall = Flux.batch([GNNGraph(erdos_renyi(10, 30), ndata=rand(3,10)) for _ in 1:100])
+
+subgraph(gall, 2:3)
+
+
+# DataLoader compatibility
+train_loader = Flux.Data.DataLoader(gall, batchsize=16, shuffle=true)
+
+for g for gall
+    @assert g.num_graphs == 16
+    @assert g.num_nodes == 160
+    @assert size(g.ndata.X) = (3, 160)    
+    .....
+end
 ```
-
 
 ## LightGraphs integration
 
 ```julia
 @assert LightGraphs.isdirected(g)
+```
+
+## GPU movement
+
+```julia
+using Flux: gpu
+
+g |> gpu
 ```
 
 ## Other methods
