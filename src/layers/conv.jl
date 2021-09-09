@@ -46,13 +46,13 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
 end
 
 message(l::GCNConv, xi, xj) = xj
-update(l::GCNConv, m, x) = m
+update(l::GCNConv, x, m) = m
 
 function (l::GCNConv)(g::GNNGraph, x::CuMatrix{T}) where T
     g = add_self_loops(g)
     c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'
-    _, x = propagate(l, g, nothing, x, nothing, +)
+    x, _ = propagate(l, g, +, x)
     x = x .* c'
     return l.σ.(l.weight * x .+ l.bias)
 end
@@ -176,12 +176,12 @@ function GraphConv(ch::Pair{Int,Int}, σ=identity, aggr=+;
     GraphConv(W1, W2, b, σ, aggr)
 end
 
-message(gc::GraphConv, x_i, x_j, e_ij) =  x_j
-update(gc::GraphConv, m, x) = gc.σ.(gc.weight1 * x .+ gc.weight2 * m .+ gc.bias)
+message(l::GraphConv, x_i, x_j, e_ij) =  x_j
+update(l::GraphConv, x, m) = l.σ.(l.weight1 * x .+ l.weight2 * m .+ l.bias)
 
-function (gc::GraphConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::GraphConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    _, x = propagate(gc, g, nothing, x, nothing, +)
+    x, _ = propagate(l, g, +, x)
     x
 end
 
@@ -325,23 +325,23 @@ end
 
 
 message(l::GatedGraphConv, x_i, x_j, e_ij) = x_j
-update(l::GatedGraphConv, m, x) = m
+update(l::GatedGraphConv, x, m) = m
 
 # remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
 @non_differentiable fill!(x...)
 
-function (ggc::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {T<:AbstractVector,S<:Real}
+function (l::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {T<:AbstractVector,S<:Real}
     check_num_nodes(g, H)
     m, n = size(H)
-    @assert (m <= ggc.out_ch) "number of input features must less or equals to output features."
-    if m < ggc.out_ch
-        Hpad = similar(H, S, ggc.out_ch - m, n)
+    @assert (m <= l.out_ch) "number of input features must less or equals to output features."
+    if m < l.out_ch
+        Hpad = similar(H, S, l.out_ch - m, n)
         H = vcat(H, fill!(Hpad, 0))
     end
-    for i = 1:ggc.num_layers
-        M = view(ggc.weight, :, :, i) * H
-        _, M = propagate(ggc, g, nothing, M, nothing, +)
-        H, _ = ggc.gru(H, M)
+    for i = 1:l.num_layers
+        M = view(l.weight, :, :, i) * H
+        M, _ = propagate(l, g, +, M)
+        H, _ = l.gru(H, M)
     end
     H
 end
@@ -379,13 +379,13 @@ end
 
 EdgeConv(nn; aggr=max) = EdgeConv(nn, aggr)
 
-message(ec::EdgeConv, x_i, x_j, e_ij) = ec.nn(vcat(x_i, x_j .- x_i))
+message(l::EdgeConv, x_i, x_j, e_ij) = l.nn(vcat(x_i, x_j .- x_i))
 
-update(ec::EdgeConv, m, x) = m
+update(l::EdgeConv, x, m) = m
 
-function (ec::EdgeConv)(g::GNNGraph, X::AbstractMatrix)
+function (l::EdgeConv)(g::GNNGraph, X::AbstractMatrix)
     check_num_nodes(g, X)
-    _, X = propagate(ec, g, nothing, X, nothing, ec.aggr)
+    X, _ = propagate(l, g, +, X)
     X
 end
 
@@ -425,10 +425,10 @@ function GINConv(nn; eps=0f0)
 end
 
 message(l::GINConv, x_i, x_j) = x_j 
-update(l::GINConv, m, x) = l.nn((1 + l.eps) * x + m)
+update(l::GINConv, x, m) = l.nn((1 + l.eps) * x + m)
 
 function (l::GINConv)(g::GNNGraph, X::AbstractMatrix)
     check_num_nodes(g, X)
-    _, X = propagate(l, g, nothing, X, nothing, +)
+    X, _ = propagate(l, g, +, X)
     X
 end
