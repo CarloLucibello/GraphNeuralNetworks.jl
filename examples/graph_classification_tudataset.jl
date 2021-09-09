@@ -7,6 +7,7 @@ using Flux.Data: DataLoader
 using GraphNeuralNetworks
 using MLDatasets: TUDataset
 using Statistics, Random
+using LearnBase: getobs
 using CUDA
 CUDA.allowscalar(false)
 
@@ -14,42 +15,31 @@ function eval_loss_accuracy(model, data_loader, device)
     loss = 0.
     acc = 0.
     ntot = 0
-    for (g, X, y) in data_loader
-        g, X, y = g |> device, X |> device, y |> device
-        n = length(y) 
-        ŷ = model(g, X) |> vec
+    for g in data_loader
+        g = g |> device
+        n = g.num_graphs
+        y = g.gdata.y
+        ŷ = model(g, g.ndata.X) |> vec
         loss += logitbinarycrossentropy(ŷ, y) * n 
         acc += mean((2 .* ŷ .- 1) .* (2 .* y .- 1) .> 0) * n
         ntot += n
-    end        
+    end 
     return (loss = round(loss/ntot, digits=4), acc = round(acc*100/ntot, digits=2))
 end
 
-struct GNNData
-    g
-    X
-    y
-end
-
-Base.getindex(data::GNNData, i::Int) = getindex(data, [i])
-
-function Base.getindex(data::GNNData, i::AbstractVector)
-    sg, nodemap = subgraph(data.g, i)
-    return (sg, data.X[:,nodemap], data.y[i])
-end
-
-# Flux's Dataloader compatibility. Related PR https://github.com/FluxML/Flux.jl/pull/1683
-Flux.Data._nobs(data::GNNData) = data.g.num_graphs
-Flux.Data._getobs(data::GNNData, i) = data[i] 
-
-function process_dataset(data)
-    g = GNNGraph(data.source, data.target, num_nodes=data.num_nodes, graph_indicator=data.graph_indicator)
+function getdataset()
+    data = TUDataset("MUTAG")
+    
     X = Array{Float32}(onehotbatch(data.node_labels, 0:6))
-    # The dataset also has edge features but we won't be using them
-    # E = Array{Float32}(onehotbatch(data.edge_labels, sort(unique(data.edge_labels))))
     y = (1 .+ Array{Float32}(data.graph_labels)) ./ 2
     @assert all(∈([0,1]), y) # binary classification 
-    return GNNData(g, X, y)
+    # The dataset also has edge features but we won't be using them
+    E = Array{Float32}(onehotbatch(data.edge_labels, sort(unique(data.edge_labels))))
+    
+    return GNNGraph(data.source, data.target, 
+                num_nodes=data.num_nodes, 
+                graph_indicator=data.graph_indicator,
+                ndata=(; X), edata=(; E), gdata=(; y))
 end
 
 # arguments for the `train` function 
@@ -78,23 +68,25 @@ function train(; kws...)
 
     # LOAD DATA
 
+    
     NUM_TRAIN = 150
-    full_data = TUDataset("MUTAG")
     
+    gfull = getdataset()
+
     @info "MUTAG DATASET
-            num_nodes: $(full_data.num_nodes)  
-            num_edges: $(full_data.num_edges)  
-            num_graphs: $(full_data.num_graphs)"
-    
-    perm = randperm(full_data.num_graphs)
-    dtrain = process_dataset(full_data[perm[1:NUM_TRAIN]]) 
-    dtest = process_dataset(full_data[perm[NUM_TRAIN+1:end]]) 
-    train_loader = DataLoader(dtrain, batchsize=args.batchsize, shuffle=true)
-    test_loader = DataLoader(dtest, batchsize=args.batchsize, shuffle=false)
+            num_nodes: $(gfull.num_nodes)  
+            num_edges: $(gfull.num_edges)  
+            num_graphs: $(gfull.num_graphs)"
+
+    perm = randperm(gfull.num_graphs)
+    gtrain = getobs(gfull, perm[1:NUM_TRAIN])
+    gtest = getobs(gfull, perm[NUM_TRAIN+1:end]) 
+    train_loader = DataLoader(gtrain, batchsize=args.batchsize, shuffle=true)
+    test_loader = DataLoader(gtest, batchsize=args.batchsize, shuffle=false)
     
     # DEFINE MODEL
 
-    nin = size(dtrain.X, 1)
+    nin = size(gtrain.ndata.X, 1)
     nhidden = args.nhidden
     
     model = GNNChain(GraphConv(nin => nhidden, relu),
@@ -119,11 +111,11 @@ function train(; kws...)
     
     report(0)
     for epoch in 1:args.epochs
-        for (g, X, y) in train_loader
-            g, X, y = g |> device, X |> device, y |> device
+        for g in train_loader
+            g = g |> device
             gs = Flux.gradient(ps) do
-                ŷ = model(g, X) |> vec
-                logitbinarycrossentropy(ŷ, y)
+                ŷ = model(g, g.ndata.X) |> vec
+                logitbinarycrossentropy(ŷ, g.gdata.y)
             end
             Flux.Optimise.update!(opt, ps, gs)
         end
@@ -132,4 +124,4 @@ function train(; kws...)
     end
 end
 
-train()
+# train()

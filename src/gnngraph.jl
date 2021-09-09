@@ -418,7 +418,17 @@ containing the total number of nodes and edges of the original graphs.
 Equivalent to [`SparseArrays.blockdiag`](@ref).
 """
 Flux.batch(xs::Vector{<:GNNGraph}) = blockdiag(xs...)
+
+### LearnBase compatibility
+LearnBase.nobs(g::GNNGraph) = g.num_graphs 
+LearnBase.getobs(g::GNNGraph, i) = subgraph(g, i)[1]
+
+# Flux's Dataloader compatibility. Related PR https://github.com/FluxML/Flux.jl/pull/1683
+Flux.Data._nobs(g::GNNGraph) = g.num_graphs
+Flux.Data._getobs(g::GNNGraph, i) = subgraph(g, i)[1]
+
 #########################
+Base.:(==)(g1::GNNGraph, g2::GNNGraph) = all(k -> getfield(g1,k)==getfield(g2,k), fieldnames(typeof(g1)))
 
 """
     subgraph(g::GNNGraph, i)
@@ -432,7 +442,12 @@ The node `i` in the subgraph corresponds to the node `nodes[i]` in `g`.
 """
 subgraph(g::GNNGraph, i::Int) = subgraph(g::GNNGraph{<:COO_T}, [i])
 
-function subgraph(g::GNNGraph{<:COO_T}, i::AbstractVector)
+function subgraph(g::GNNGraph{<:COO_T}, i::AbstractVector{Int})
+    if g.graph_indicator === nothing
+        @assert i == [1]
+        return g
+    end
+
     node_mask = g.graph_indicator .∈ Ref(i)
     
     nodes = (1:g.num_nodes)[node_mask]
@@ -446,8 +461,9 @@ function subgraph(g::GNNGraph{<:COO_T}, i::AbstractVector)
     s = [nodemap[i] for i in s[edge_mask]]
     t = [nodemap[i] for i in t[edge_mask]]
     w = isnothing(w) ? nothing : w[edge_mask]
+    
     ndata = getobs(g.ndata, node_mask)
-    edata = getobs(g.ndata, edge_mask)
+    edata = getobs(g.edata, edge_mask)
     gdata = getobs(g.gdata, i)
 
     num_nodes = length(graph_indicator)
@@ -461,7 +477,6 @@ function subgraph(g::GNNGraph{<:COO_T}, i::AbstractVector)
     return gnew, nodes
 end
 
-### TO DEPRECATE ?? ###
 function node_features(g::GNNGraph)
     if isempty(g.ndata)
         return nothing
@@ -491,7 +506,6 @@ function global_features(g::GNNGraph)
         return g.gdata[1]
     end
 end
-#########
 
 
 @non_differentiable normalized_laplacian(x...)

@@ -7,8 +7,9 @@ import KrylovKit
 using Base: tail
 using CUDA
 using Flux
-using Flux: glorot_uniform, leakyrelu, GRUCell, @functor
+using Flux: glorot_uniform, leakyrelu, GRUCell, @functor, batch
 using MacroTools: @forward
+import LearnBase
 using LearnBase: getobs
 using NNlib, NNlibCUDA
 using ChainRulesCore
@@ -26,6 +27,8 @@ export
 
     # from LightGraphs
     adjacency_matrix, 
+    # from SparseArrays
+    sprand, sparse, 
 
     # msgpass
     # update, update_edge, update_global, message, propagate,
