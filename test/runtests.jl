@@ -24,6 +24,7 @@ tests = [
 
 # Testing all graph types. :sparse is a bit broken at the moment
 @testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :sparse, :dense)
+
     global GRAPH_T = graph_type
     for t in tests
         include("$t.jl")

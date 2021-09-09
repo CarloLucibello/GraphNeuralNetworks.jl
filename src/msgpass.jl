@@ -36,19 +36,20 @@ See also [`message`](@ref) and [`update`](@ref).
 function propagate end 
 
 function propagate(mp, g::GNNGraph, aggr)
-    E, X, u = propagate(mp, g,
-                        edge_feature(g), node_feature(g), global_feature(g), 
+    E, X, U = propagate(mp, g,
+                        edge_features(g), node_features(g), global_features(g), 
                         aggr)
-    GNNGraph(g, nf=X, ef=E, gf=u)
+    GNNGraph(g, ndata=X, edata=E, gdata=U)
 end
 
-function propagate(mp, g::GNNGraph, E, X, u, aggr)
-    M = compute_batch_message(mp, g, E, X, u) 
-    E = update_edge(mp, M, E, u)
+function propagate(mp, g::GNNGraph, E, X, U, aggr)
+    # TODO consider g.graph_indicator in propagating U
+    M = compute_batch_message(mp, g, E, X, U) 
+    E = update_edge(mp, M, E, U)
     M̄ = aggregate_neighbors(mp, aggr, g, M)
-    X = update(mp, M̄, X, u)
-    u = update_global(mp, E, X, u)
-    return E, X, u
+    X = update(mp, M̄, X, U)
+    U = update_global(mp, E, X, U)
+    return E, X, U
 end
 
 """

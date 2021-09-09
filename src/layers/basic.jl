@@ -7,6 +7,9 @@ See also [`GNNChain`](@ref).
 """
 abstract type GNNLayer end
 
+#TODO extend to store also edge and global features
+(l::GNNLayer)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g)))
+
 """
     GNNChain(layers...)
     GNNChain(name = layer, ...)
@@ -39,7 +42,7 @@ julia> m(g, x)
  -0.0134364  -0.0120716  -0.0172505
 ```
 """
-struct GNNChain{T}
+struct GNNChain{T} <: GNNLayer
   layers::T
 
   GNNChain(xs...) = new{typeof(xs)}(xs)
