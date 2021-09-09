@@ -2,32 +2,30 @@
 # "Relational inductive biases, deep learning, and graph networks"
 
 """
-    propagate(mp, g::GNNGraph, aggr)
-    propagate(mp, g::GNNGraph, E, X, u, aggr)
+    propagate(mp, g, X, E, U, aggr)
 
-Perform the sequence of operation implementing the message-passing scheme
-and updating node, edge, and global features `X`, `E`, and `u` respectively.
+Perform the sequence of operations implementing the message-passing scheme
+on graph `g` with convolution layer `mp`. 
+Updates the node, edge, and global features `X`, `E`, and `U` respectively.
 
 The computation involved is the following:
 
 ```julia
-M = compute_batch_message(mp, g, E, X, u) 
-E = update_edge(mp, M, E, u)
+M = compute_batch_message(mp, g, X, E, U) 
 M̄ = aggregate_neighbors(mp, aggr, g, M)
-X = update(mp, M̄, X, u)
-u = update_global(mp, E, X, u)
+X′ = update(mp, X, M̄, U)
+E′ = update_edge(mp, M, E, U)
+U′ = update_global(mp, U, X′, E′)
 ```
 
 Custom layers typically define their own [`update`](@ref)
-and [`message`](@ref) function, then call
+and [`message`](@ref) functions, then call
 this method in the forward pass:
 
 ```julia
 function (l::MyLayer)(g, X)
     ... some prepocessing if needed ...
-    E = nothing
-    u = nothing
-    propagate(l, g, E, X, u, +)
+    propagate(l, g, X, E, U, +)
 end
 ```
 
@@ -36,8 +34,8 @@ See also [`message`](@ref) and [`update`](@ref).
 function propagate end 
 
 function propagate(mp, g::GNNGraph, aggr)
-    E, X, U = propagate(mp, g,
-                        edge_features(g), node_features(g), global_features(g), 
+    X, E, U = propagate(mp, g,
+                        node_features(g), edge_features(g), global_features(g), 
                         aggr)
     GNNGraph(g, ndata=X, edata=E, gdata=U)
 end
