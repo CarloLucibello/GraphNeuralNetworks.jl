@@ -133,10 +133,6 @@ function GNNGraph(data;
             ndata, edata, gdata)
 end
 
-normalize_graphdata(data::NamedTuple, s) = data
-normalize_graphdata(data::Nothing, s) = NamedTuple()
-normalize_graphdata(data, s) = NamedTuple{(s,)}((data,)) 
-
 # COO convenience constructors
 GNNGraph(s::AbstractVector, t::AbstractVector, v = nothing; kws...) = GNNGraph((s, t, v); kws...)
 GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
@@ -161,7 +157,6 @@ function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata)
             ndata, edata, gdata) 
 end
 
-
 """
     edge_index(g::GNNGraph)
 
@@ -172,19 +167,11 @@ the source and target nodes for each edges in `g`.
 s, t = edge_index(g)
 ```
 """
-edge_index(g::GNNGraph{<:COO_T}) = graph(g)[1:2]
+edge_index(g::GNNGraph{<:COO_T}) = g.graph[1:2]
 
-edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(graph(g))[1][1:2]
+edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph)[1][1:2]
 
-edge_weight(g::GNNGraph{<:COO_T}) = graph(g)[3]
-
-"""
-    graph(g::GNNGraph)
-
-Return the underlying implementation of the graph structure of `g`,
-either an adjacency matrix or an edge list in the COO format.
-"""
-graph(g::GNNGraph) = g.graph
+edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
 
 LightGraphs.edges(g::GNNGraph) = zip(edge_index(g)...)
 
@@ -195,7 +182,7 @@ function LightGraphs.has_edge(g::GNNGraph{<:COO_T}, i::Integer, j::Integer)
     return any((s .== i) .& (t .== j))
 end
 
-LightGraphs.has_edge(g::GNNGraph{<:ADJMAT_T}, i::Integer, j::Integer) = graph(g)[i,j] != 0
+LightGraphs.has_edge(g::GNNGraph{<:ADJMAT_T}, i::Integer, j::Integer) = g.graph[i,j] != 0
 
 LightGraphs.nv(g::GNNGraph) = g.num_nodes
 LightGraphs.ne(g::GNNGraph) = g.num_edges
@@ -208,7 +195,7 @@ function LightGraphs.outneighbors(g::GNNGraph{<:COO_T}, i::Integer)
 end
 
 function LightGraphs.outneighbors(g::GNNGraph{<:ADJMAT_T}, i::Integer)
-    A = graph(g)
+    A = g.graph
     return findall(!=(0), A[i,:])
 end
 
@@ -218,7 +205,7 @@ function LightGraphs.inneighbors(g::GNNGraph{<:COO_T}, i::Integer)
 end
 
 function LightGraphs.inneighbors(g::GNNGraph{<:ADJMAT_T}, i::Integer)
-    A = graph(g)
+    A = g.graph
     return findall(!=(0), A[:,i])
 end
 
@@ -232,14 +219,14 @@ function adjacency_list(g::GNNGraph; dir=:out)
 end
 
 function LightGraphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
-    A, n, m = to_sparse(graph(g), T, num_nodes=g.num_nodes)
+    A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
     @assert size(A) == (n, n)
     return dir == :out ? A : A'
 end
 
-function LightGraphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(graph(g)); dir=:out)
+function LightGraphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g.graph); dir=:out)
     @assert dir ∈ [:in, :out]
-    A = graph(g) 
+    A = g.graph
     A = T != eltype(A) ? T.(A) : A
     return dir == :out ? A : A'
 end

@@ -19,3 +19,8 @@ function cat_features(x1::NamedTuple, x2::NamedTuple)
     
     NamedTuple(k => cat_features(getfield(x1,k), getfield(x2,k)) for k in keys(x1))
 end
+
+# Turns generic type into named tuple
+normalize_graphdata(data::NamedTuple, s::Symbol) = data
+normalize_graphdata(data::Nothing, s::Symbol) = NamedTuple()
+normalize_graphdata(data, s::Symbol) = NamedTuple{(s,)}((data,)) 
