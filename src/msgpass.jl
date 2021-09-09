@@ -2,10 +2,11 @@
 # "Relational inductive biases, deep learning, and graph networks"
 
 """
-    propagate(mp, g, X, E, U, aggr)
+    propagate(mp, g, aggr, [X, E, U]) -> X′, E′, U′
+    propagate(mp, g, aggr) -> g′
 
 Perform the sequence of operations implementing the message-passing scheme
-on graph `g` with convolution layer `mp`. 
+of gnn layer `mp` on graph `g` . 
 Updates the node, edge, and global features `X`, `E`, and `U` respectively.
 
 The computation involved is the following:
@@ -14,7 +15,7 @@ The computation involved is the following:
 M = compute_batch_message(mp, g, X, E, U) 
 M̄ = aggregate_neighbors(mp, aggr, g, M)
 X′ = update(mp, X, M̄, U)
-E′ = update_edge(mp, M, E, U)
+E′ = update_edge(mp, E, M, U)
 U′ = update_global(mp, U, X′, E′)
 ```
 
@@ -25,7 +26,7 @@ this method in the forward pass:
 ```julia
 function (l::MyLayer)(g, X)
     ... some prepocessing if needed ...
-    propagate(l, g, X, E, U, +)
+    propagate(l, g, +, X, E, U)
 end
 ```
 
@@ -34,20 +35,20 @@ See also [`message`](@ref) and [`update`](@ref).
 function propagate end 
 
 function propagate(mp, g::GNNGraph, aggr)
-    X, E, U = propagate(mp, g,
-                        node_features(g), edge_features(g), global_features(g), 
-                        aggr)
-    GNNGraph(g, ndata=X, edata=E, gdata=U)
+    X, E, U = propagate(mp, g, aggr, 
+                node_features(g), edge_features(g), global_features(g))
+    
+    return GNNGraph(g, ndata=X, edata=E, gdata=U)
 end
 
-function propagate(mp, g::GNNGraph, E, X, U, aggr)
+function propagate(mp, g::GNNGraph, aggr, X, E=nothing, U=nothing)
     # TODO consider g.graph_indicator in propagating U
-    M = compute_batch_message(mp, g, E, X, U) 
-    E = update_edge(mp, M, E, U)
-    M̄ = aggregate_neighbors(mp, aggr, g, M)
-    X = update(mp, M̄, X, U)
-    U = update_global(mp, E, X, U)
-    return E, X, U
+    M = compute_batch_message(mp, g, X, E, U) 
+    M̄ = aggregate_neighbors(mp, g, aggr, M)
+    X′ = update(mp, X, M̄, U)
+    E′ = update_edge(mp, E, M, U)
+    U′ = update_global(mp, U, X′, E′)
+    return X′, E′, U′
 end
 
 """
@@ -55,7 +56,7 @@ end
 
 Message function for the message-passing scheme,
 returning the message from node `j` to node `i` .
-In the message-passing scheme. the incoming messages 
+In the message-passing scheme, the incoming messages 
 from the neighborhood of `i` will later be aggregated
 in order to [`update`](@ref) the features of node `i`.
 
@@ -75,7 +76,7 @@ See also [`update`](@ref) and [`propagate`](@ref).
 function message end 
 
 """
-    update(mp, m̄, x, [u])
+    update(mp, x, m̄, [u])
 
 Update function for the message-passing scheme,
 returning a new set of node features `x′` based on old 
@@ -96,47 +97,45 @@ See also [`message`](@ref) and [`propagate`](@ref).
 """
 function update end
 
-
 _gather(x, i) = NNlib.gather(x, i)
 _gather(x::Nothing, i) = nothing
 
 ## Step 1.
 
-function compute_batch_message(mp, g, E, X, u)
+function compute_batch_message(mp, g, X, E, U)
     s, t = edge_index(g)
     Xi = _gather(X, t)
     Xj = _gather(X, s)
-    M = message(mp, Xi, Xj, E, u)
+    M = message(mp, Xi, Xj, E, U)
     return M
 end
 
-# @inline message(mp, i, j, x_i, x_j, e_ij, u) = message(mp, x_i, x_j, e_ij, u) # TODO add in the future
 @inline message(mp, x_i, x_j, e_ij, u) = message(mp, x_i, x_j, e_ij)
 @inline message(mp, x_i, x_j, e_ij) = message(mp, x_i, x_j)
 @inline message(mp, x_i, x_j) = x_j
 
-## Step 2
+##  Step 2
 
-@inline update_edge(mp, M, E, u) = update_edge(mp, M, E)
-@inline update_edge(mp, M, E) = E
-
-##  Step 3
-
-function aggregate_neighbors(mp, aggr, g, E)
+function aggregate_neighbors(mp, g, aggr, E)
     s, t = edge_index(g)
     NNlib.scatter(aggr, E, t)
 end
 
-aggregate_neighbors(mp, aggr::Nothing, g, E) = nothing
+aggregate_neighbors(mp, g, aggr::Nothing, E) = nothing
+
+## Step 3
+
+@inline update(mp, x, m̄, u) = update(mp, x, m̄)
+@inline update(mp, x, m̄) = m̄
 
 ## Step 4
 
-# @inline update(mp, i, m̄, x, u) = update(mp, m, x, u)
-@inline update(mp, m̄, x, u) = update(mp, m̄, x)
-@inline update(mp, m̄, x) = m̄
+@inline update_edge(mp, E, M, U) = update_edge(mp, E, M)
+@inline update_edge(mp, E, M) = E
 
 ## Step 5
 
-@inline update_global(mp, E, X, u) = u
+@inline update_global(mp, U, X, E) = update_global(mp, U, X)
+@inline update_global(mp, U, X) = U
 
 ### end steps ###
