@@ -2,9 +2,9 @@ using GraphNeuralNetworks
 using Flux
 using CUDA
 using Flux: gpu, @functor
-using Flux: @functor
 using LinearAlgebra, Statistics, Random
 using NNlib
+using LearnBase
 using LightGraphs
 using Zygote
 using Test
