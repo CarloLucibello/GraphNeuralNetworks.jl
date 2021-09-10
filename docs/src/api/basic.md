@@ -2,11 +2,11 @@
 
 ```@index
 Order = [:type, :function]
-Pages   = ["api/basics.md"]
+Modules = [GraphNeuralNetworks, LightGraphs, Flux, NNlib]
+Pages = ["api/basics.md"]
 ```
 
-```@autodocs
-Modules = [GraphNeuralNetworks]
-Pages   = ["layers/basic.jl"]
-Private = false
+```@docs
+GNNLayer
+GNNChain
 ```

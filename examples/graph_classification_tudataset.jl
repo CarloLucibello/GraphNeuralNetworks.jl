@@ -21,7 +21,7 @@ function eval_loss_accuracy(model, data_loader, device)
         y = g.gdata.y
         ŷ = model(g, g.ndata.X) |> vec
         loss += logitbinarycrossentropy(ŷ, y) * n 
-        acc += mean((2 .* ŷ .- 1) .* (2 .* y .- 1) .> 0) * n
+        acc += mean((ŷ .> 0) .== y) * n
         ntot += n
     end 
     return (loss = round(loss/ntot, digits=4), acc = round(acc*100/ntot, digits=2))

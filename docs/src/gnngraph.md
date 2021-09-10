@@ -67,7 +67,7 @@ using Flux
 
 gall = Flux.batch([GNNGraph(erdos_renyi(10, 30), ndata=rand(3,10)) for _ in 1:100])
 
-subgraph(gall, 2:3)
+getgraph(gall, 2:3)
 
 
 # DataLoader compatibility

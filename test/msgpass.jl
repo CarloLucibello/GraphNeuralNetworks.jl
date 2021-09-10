@@ -29,7 +29,7 @@
         @test adjacency_matrix(g_) == adj
         @test node_features(g_) === nothing
         @test edge_features(g_)  === nothing
-        @test global_features(g_) === nothing
+        @test graph_features(g_) === nothing
     end
 
     @testset "neighbor aggregation (+)" begin
@@ -42,7 +42,7 @@
         @test adjacency_matrix(g_) == adj
         @test size(node_features(g_)) == (in_channel, num_V)
         @test edge_features(g_) ≈ E
-        @test global_features(g_) ≈ U
+        @test graph_features(g_) ≈ U
     end
 
     GraphNeuralNetworks.message(l::NewLayer{GRAPH_T}, xi, xj, e, U) = ones(T, out_channel, size(e,2))
@@ -57,7 +57,7 @@
         @test adjacency_matrix(g_) == adj
         @test size(node_features(g_)) == (out_channel, num_V)
         @test edge_features(g_) ≈ edge_features(g)
-        @test global_features(g_) ≈ global_features(g)
+        @test graph_features(g_) ≈ graph_features(g)
     end
 
     GraphNeuralNetworks.update_edge(l::NewLayer{GRAPH_T}, e, m) = m
@@ -72,7 +72,7 @@
         @test adjacency_matrix(g_) == adj
         @test size(node_features(g_)) == (out_channel, num_V)
         @test size(edge_features(g_)) == (out_channel, num_E)
-        @test global_features(g_) ≈ global_features(g)
+        @test graph_features(g_) ≈ graph_features(g)
     end
 
     GraphNeuralNetworks.update(l::NewLayer{GRAPH_T}, m̄, xi, U) = rand(T, 2*out_channel, size(xi, 2))
@@ -87,7 +87,7 @@
         @test all(adjacency_matrix(g_) .== adj)
         @test size(node_features(g_)) == (2*out_channel, num_V)
         @test size(edge_features(g_)) == (out_channel, num_E)
-        @test size(global_features(g_)) == (in_channel,)
+        @test size(graph_features(g_)) == (in_channel,)
     end
 
     struct NewLayerW{G}
@@ -109,6 +109,6 @@
         @test adjacency_matrix(g_) == adj
         @test size(node_features(g_)) == (out_channel, num_V)
         @test edge_features(g_) === E
-        @test global_features(g_) === U
+        @test graph_features(g_) === U
     end
 end

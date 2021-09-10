@@ -20,10 +20,10 @@ export
     # gnngraph
     GNNGraph,
     edge_index,
-    node_features, edge_features, global_features,
+    node_features, edge_features, graph_features,
     adjacency_list, normalized_laplacian, scaled_laplacian,
     add_self_loops, remove_self_loops,
-    subgraph,
+    getgraph,
 
     # from LightGraphs
     adjacency_matrix, 
@@ -31,7 +31,7 @@ export
     sprand, sparse, 
 
     # msgpass
-    # update, update_edge, update_global, message, propagate,
+    # update, update_edge, message, propagate,
 
     # layers/basic
     GNNLayer,

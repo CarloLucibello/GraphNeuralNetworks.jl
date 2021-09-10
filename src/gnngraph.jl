@@ -10,7 +10,7 @@ const ADJLIST_T = AbstractVector{T} where T <: AbstractVector
 const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
 
-"""
+""" 
     GNNGraph(data; [graph_type, ndata, edata, gdata, num_nodes, graph_indicator, dir])
     GNNGraph(g::GNNGraph; [ndata, edata, gdata])
 
@@ -416,9 +416,6 @@ end
 """
     blockdiag(xs::GNNGraph...)
 
-Batch togheter multiple `GNNGraph`s into a single one 
-containing the total number of nodes and edges of the original graphs.
-
 Equivalent to [`Flux.batch`](@ref).
 """
 function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
@@ -432,7 +429,7 @@ end
 """
     batch(xs::Vector{<:GNNGraph})
 
-Batch togheter multiple `GNNGraph`s into a single one 
+Batch together multiple `GNNGraph`s into a single one 
 containing the total number of nodes and edges of the original graphs.
 
 Equivalent to [`SparseArrays.blockdiag`](@ref).
@@ -441,28 +438,28 @@ Flux.batch(xs::Vector{<:GNNGraph}) = blockdiag(xs...)
 
 ### LearnBase compatibility
 LearnBase.nobs(g::GNNGraph) = g.num_graphs 
-LearnBase.getobs(g::GNNGraph, i) = subgraph(g, i)[1]
+LearnBase.getobs(g::GNNGraph, i) = getgraph(g, i)[1]
 
 # Flux's Dataloader compatibility. Related PR https://github.com/FluxML/Flux.jl/pull/1683
 Flux.Data._nobs(g::GNNGraph) = g.num_graphs
-Flux.Data._getobs(g::GNNGraph, i) = subgraph(g, i)[1]
+Flux.Data._getobs(g::GNNGraph, i) = getgraph(g, i)[1]
 
 #########################
 Base.:(==)(g1::GNNGraph, g2::GNNGraph) = all(k -> getfield(g1,k)==getfield(g2,k), fieldnames(typeof(g1)))
 
 """
-    subgraph(g::GNNGraph, i)
+    getgraph(g::GNNGraph, i)
 
-Return the subgraph of `g` induced by those nodes `v`
+Return the getgraph of `g` induced by those nodes `v`
 for which `g.graph_indicator[v] ∈ i`. In other words, it
 extract the component graphs from a batched graph. 
 
 It also returns a vector `nodes` mapping the new nodes to the old ones. 
-The node `i` in the subgraph corresponds to the node `nodes[i]` in `g`.
+The node `i` in the getgraph corresponds to the node `nodes[i]` in `g`.
 """
-subgraph(g::GNNGraph, i::Int) = subgraph(g::GNNGraph{<:COO_T}, [i])
+getgraph(g::GNNGraph, i::Int) = getgraph(g::GNNGraph{<:COO_T}, [i])
 
-function subgraph(g::GNNGraph{<:COO_T}, i::AbstractVector{Int})
+function getgraph(g::GNNGraph{<:COO_T}, i::AbstractVector{Int})
     if g.graph_indicator === nothing
         @assert i == [1]
         return g
@@ -517,7 +514,7 @@ function edge_features(g::GNNGraph)
     end
 end
 
-function global_features(g::GNNGraph)
+function graph_features(g::GNNGraph)
     if isempty(g.gdata)
         return nothing
     elseif length(g.gdata) > 1
