@@ -1,7 +1,7 @@
 # Message Passing
 
 ```@docs
-GraphNeuralNetworks.message
+GraphNeuralNetworks.compute_message
 GraphNeuralNetworks.update_node
 GraphNeuralNetworks.propagate
 ```

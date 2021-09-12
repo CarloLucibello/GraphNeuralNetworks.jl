@@ -19,7 +19,7 @@ e′ = update_edge(l, m, e)
 ```
 
 Custom layers typically define their own [`update_node`](@ref)
-and [`message`](@ref) functions, then call
+and [`compute_message`](@ref) functions, then call
 this method in the forward pass:
 
 # Usage example
@@ -43,7 +43,7 @@ function GNNConv(ch::Pair{Int,Int}, σ=identity;
     GNNConv(W, b, σ, aggr)
 end
 
-message(l::GNNConv, x_i, x_j, e_ij) = l.W * x_j
+compute_message(l::GNNConv, x_i, x_j, e_ij) = l.W * x_j
 update_node(l::GNNConv, m̄, x) = l.σ.(m̄ .+ l.bias)
 
 function (l::GNNConv)(g::GNNGraph, x::AbstractMatrix)
@@ -52,7 +52,7 @@ function (l::GNNConv)(g::GNNGraph, x::AbstractMatrix)
 end
 ```
 
-See also [`message`](@ref) and [`update_node`](@ref).
+See also [`compute_message`](@ref) and [`update_node`](@ref).
 """
 function propagate end 
 
@@ -96,7 +96,7 @@ Custom layer should specialize this method with the desired behavior.
 
 See also [`update_node`](@ref) and [`propagate`](@ref).
 """
-function message end 
+function compute_message end 
 
 @inline compute_message(l, x_i, x_j, e_ij) = compute_message(l, x_i, x_j)
 @inline compute_message(l, x_i, x_j) = x_j
@@ -133,7 +133,7 @@ features `x` and the aggregated message `m̄` from the neighborhood.
 By default, the function returns `m̄`.
 Custom layers should  specialize this method with the desired behavior.
 
-See also [`message`](@ref), [`update_edge`](@ref), and [`propagate`](@ref).
+See also [`compute_message`](@ref), [`update_edge`](@ref), and [`propagate`](@ref).
 """
 function update_node end
 
@@ -153,7 +153,7 @@ from the [`message`](@ref) function.
 By default, the function returns `e`.
 Custom layers should specialize this method with the desired behavior.
 
-See also [`message`](@ref), [`update_node`](@ref), and [`propagate`](@ref).
+See also [`compute_message`](@ref), [`update_node`](@ref), and [`propagate`](@ref).
 """
 function update_edge end
 
