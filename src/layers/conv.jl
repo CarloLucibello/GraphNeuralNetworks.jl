@@ -45,7 +45,7 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
     l.σ.(l.weight * x * Ã .+ l.bias)
 end
 
-message(l::GCNConv, xi, xj, eij) = xj
+compute_message(l::GCNConv, xi, xj, eij) = xj
 update_node(l::GCNConv, m, x) = m
 
 function (l::GCNConv)(g::GNNGraph, x::CuMatrix{T}) where T
@@ -176,7 +176,7 @@ function GraphConv(ch::Pair{Int,Int}, σ=identity, aggr=+;
     GraphConv(W1, W2, b, σ, aggr)
 end
 
-message(l::GraphConv, x_i, x_j, e_ij) =  x_j
+compute_message(l::GraphConv, x_i, x_j, e_ij) =  x_j
 update_node(l::GraphConv, m, x) = l.σ.(l.weight1 * x .+ l.weight2 * m .+ l.bias)
 
 function (l::GraphConv)(g::GNNGraph, x::AbstractMatrix)
@@ -326,7 +326,7 @@ function GatedGraphConv(out_ch::Int, num_layers::Int;
 end
 
 
-message(l::GatedGraphConv, x_i, x_j, e_ij) = x_j
+compute_message(l::GatedGraphConv, x_i, x_j, e_ij) = x_j
 update_node(l::GatedGraphConv, m, x) = m
 
 # remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
@@ -381,7 +381,7 @@ end
 
 EdgeConv(nn; aggr=max) = EdgeConv(nn, aggr)
 
-message(l::EdgeConv, x_i, x_j, e_ij) = l.nn(vcat(x_i, x_j .- x_i))
+compute_message(l::EdgeConv, x_i, x_j, e_ij) = l.nn(vcat(x_i, x_j .- x_i))
 
 update_node(l::EdgeConv, m, x) = m
 
@@ -426,7 +426,7 @@ function GINConv(nn; eps=0f0)
     GINConv(nn, eps)
 end
 
-message(l::GINConv, x_i, x_j, e_ij) = x_j 
+compute_message(l::GINConv, x_i, x_j, e_ij) = x_j 
 update_node(l::GINConv, m, x) = l.nn((1 + l.eps) * x + m)
 
 function (l::GINConv)(g::GNNGraph, X::AbstractMatrix)

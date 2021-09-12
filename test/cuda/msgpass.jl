@@ -17,7 +17,7 @@
     @functor NewCudaLayer
 
     (l::NewCudaLayer)(g, X) = GraphNeuralNetworks.propagate(l, g, +, X)
-    GraphNeuralNetworks.message(n::NewCudaLayer, x_i, x_j, e_ij) = n.weight * x_j
+    GraphNeuralNetworks.compute_message(n::NewCudaLayer, x_i, x_j, e_ij) = n.weight * x_j
     GraphNeuralNetworks.update_node(::NewCudaLayer, m, x) = m
 
     X = rand(T, in_channel, N) |> gpu

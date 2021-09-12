@@ -12,7 +12,7 @@ with updated feautres.
 The computational steps are the following:
 
 ```julia
-m = compute_batch_message(l, g, x, e)  # calls `message`
+m = compute_batch_message(l, g, x, e)  # calls `compute_message`
 m̄ = aggregate_neighbors(l, aggr, g, m)
 x′ = update_node(l, m̄, x)
 e′ = update_edge(l, m, e)
@@ -72,7 +72,7 @@ end
 ## Step 1.
 
 """
-    message(l, x_i, x_j, [e_ij])
+    compute_message(l, x_i, x_j, [e_ij])
 
 Message function for the message-passing scheme,
 returning the message from node `j` to node `i` .
@@ -81,7 +81,7 @@ from the neighborhood of `i` will later be aggregated
 in order to update (see [`update_node`](@ref)) the features of node `i`.
 
 The function operates on batches of edges, therefore
-`x_i`, `x_j`, and `e_ij` are tensors whose last dimention
+`x_i`, `x_j`, and `e_ij` are tensors whose last dimension
 is the batch size. 
 
 By default, the function returns `x_j`.
@@ -98,8 +98,8 @@ See also [`update_node`](@ref) and [`propagate`](@ref).
 """
 function message end 
 
-@inline message(l, x_i, x_j, e_ij) = message(l, x_i, x_j)
-@inline message(l, x_i, x_j) = x_j
+@inline compute_message(l, x_i, x_j, e_ij) = compute_message(l, x_i, x_j)
+@inline compute_message(l, x_i, x_j) = x_j
 
 _gather(x, i) = NNlib.gather(x, i)
 _gather(x::Nothing, i) = nothing
@@ -108,7 +108,7 @@ function compute_batch_message(l, g, x, e)
     s, t = edge_index(g)
     xi = _gather(x, t)
     xj = _gather(x, s)
-    m = message(l, xi, xj, e)
+    m = compute_message(l, xi, xj, e)
     return m
 end
 

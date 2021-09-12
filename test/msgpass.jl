@@ -51,7 +51,7 @@
     @testset "custom message and neighbor aggregation" begin
         struct NewLayer3{G} end
         
-        GraphNeuralNetworks.message(l::NewLayer3{GRAPH_T}, xi, xj, e) = ones(T, out_channel, size(e,2))
+        GraphNeuralNetworks.compute_message(l::NewLayer3{GRAPH_T}, xi, xj, e) = ones(T, out_channel, size(e,2))
         (l::NewLayer3{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
         
@@ -70,7 +70,7 @@
         struct NewLayer4{G} end
 
         GraphNeuralNetworks.update_edge(l::NewLayer4{GRAPH_T}, m, e) = m
-        GraphNeuralNetworks.message(l::NewLayer4{GRAPH_T}, xi, xj, e) = ones(T, out_channel, size(e,2))
+        GraphNeuralNetworks.compute_message(l::NewLayer4{GRAPH_T}, xi, xj, e) = ones(T, out_channel, size(e,2))
         (l::NewLayer4{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
         
         l = NewLayer4{GRAPH_T}()
@@ -89,7 +89,7 @@
 
         GraphNeuralNetworks.update_node(l::NewLayer5{GRAPH_T}, m̄, xi) = rand(T, 2*out_channel, size(xi, 2))
         GraphNeuralNetworks.update_edge(l::NewLayer5{GRAPH_T}, m, e) = m
-        GraphNeuralNetworks.message(l::NewLayer5{GRAPH_T}, xi, xj, e) = ones(T, out_channel, size(e,2))
+        GraphNeuralNetworks.compute_message(l::NewLayer5{GRAPH_T}, xi, xj, e) = ones(T, out_channel, size(e,2))
         (l::NewLayer5{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
         l = NewLayer5{GRAPH_T}()
@@ -110,7 +110,7 @@
 
         NewLayerW(in, out) = NewLayerW{GRAPH_T}(randn(T, out, in))
 
-        GraphNeuralNetworks.message(l::NewLayerW{GRAPH_T}, x_i, x_j, e_ij) = l.weight * x_j
+        GraphNeuralNetworks.compute_message(l::NewLayerW{GRAPH_T}, x_i, x_j, e_ij) = l.weight * x_j
         GraphNeuralNetworks.update_node(l::NewLayerW{GRAPH_T}, m, x) = l.weight * x + m
 
         l = NewLayerW(in_channel, out_channel)
