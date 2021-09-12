@@ -120,13 +120,13 @@
         @test node_features(g123)[:,11:14] ≈ node_features(g2) 
     end
 
-    @testset "subgraph"  begin
+    @testset "getgraph"  begin
         #TODO add graph_type=GRAPH_T
         g1 = GNNGraph(random_regular_graph(10,2), ndata=rand(16,10))
         g2 = GNNGraph(random_regular_graph(4,2), ndata=rand(16,4))
         g3 = GNNGraph(random_regular_graph(7,2), ndata=rand(16,7))
         g = Flux.batch([g1, g2, g3])
-        g2b, nodemap = subgraph(g, 2)
+        g2b, nodemap = getgraph(g, 2)
         
         s, t = edge_index(g2b)
         @test s == edge_index(g2)[1]
@@ -171,11 +171,11 @@
         g = Flux.batch([GNNGraph(erdos_renyi(10, 30), ndata=rand(10, n), edata=rand(10, m), gdata=rand(10, 1)) 
                         for _ in 1:num_graphs])
         
-        @test LearnBase.getobs(g, 3) == subgraph(g, 3)[1]
-        @test LearnBase.getobs(g, 3:5) == subgraph(g, 3:5)[1]
+        @test LearnBase.getobs(g, 3) == getgraph(g, 3)[1]
+        @test LearnBase.getobs(g, 3:5) == getgraph(g, 3:5)[1]
         @test LearnBase.nobs(g) == g.num_graphs
         
         d = Flux.Data.DataLoader(g, batchsize = 2, shuffle=false)
-        @test first(d) == subgraph(g, 1:2)[1]
+        @test first(d) == getgraph(g, 1:2)[1]
     end
 end

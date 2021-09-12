@@ -10,3 +10,8 @@ Modules = [GraphNeuralNetworks]
 Pages   = ["gnngraph.jl"]
 Private = false
 ```
+```@docs
+Flux.batch
+SparseArrays.blockdiag
+LightGraphs.adjacency_matrix
+```

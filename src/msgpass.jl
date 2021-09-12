@@ -1,64 +1,88 @@
-# Adapted message passing from paper 
-# "Relational inductive biases, deep learning, and graph networks"
-
 """
-    propagate(l, g, aggr, [X, E, U]) -> X′, E′, U′
+    propagate(l, g, aggr, [x, e]) -> x′, e′
     propagate(l, g, aggr) -> g′
 
-Perform the sequence of operations implementing the message-passing scheme
-of gnn layer `l` on graph `g` . 
-Updates the node, edge, and global features `X`, `E`, and `U` respectively.
+Performs the message-passing for GNN layer `l` on graph `g` . 
+Returns updated node and edge features `x` and `e`.
 
-The computation involved is the following:
+In case no input and edge features are given as input, 
+extracts them from `g` and returns the same graph
+with updated feautres.
+
+The computational steps are the following:
 
 ```julia
-M = compute_batch_message(l, g, X, E, U) 
-M̄ = aggregate_neighbors(l, aggr, g, M)
-X′ = update(l, X, M̄, U)
-E′ = update_edge(l, E, M, U)
-U′ = update_global(l, U, X′, E′)
+m = compute_batch_message(l, g, x, e)  # calls `compute_message`
+m̄ = aggregate_neighbors(l, aggr, g, m)
+x′ = update_node(l, m̄, x)
+e′ = update_edge(l, m, e)
 ```
 
-Custom layers typically define their own [`update`](@ref)
-and [`message`](@ref) functions, then call
+Custom layers typically define their own [`update_node`](@ref)
+and [`compute_message`](@ref) functions, then call
 this method in the forward pass:
 
-```julia
-function (l::MyLayer)(g, X)
-    ... some prepocessing if needed ...
-    propagate(l, g, +, X, E, U)
+# Usage example
+
+```
+using GraphNeuralNetworks, Flux
+
+struct GNNConv <: GNNLayer
+    W
+    b
+    σ
+end
+
+Flux.@functor GNNConv
+
+function GNNConv(ch::Pair{Int,Int}, σ=identity;
+                 init=glorot_uniform, bias::Bool=true)
+    in, out = ch
+    W = init(out, in)
+    b = Flux.create_bias(W, bias, out)
+    GNNConv(W, b, σ, aggr)
+end
+
+compute_message(l::GNNConv, x_i, x_j, e_ij) = l.W * x_j
+update_node(l::GNNConv, m̄, x) = l.σ.(m̄ .+ l.bias)
+
+function (l::GNNConv)(g::GNNGraph, x::AbstractMatrix)
+    x, _ = propagate(l, g, +, x)
+    return x
 end
 ```
 
-See also [`message`](@ref) and [`update`](@ref).
+See also [`compute_message`](@ref) and [`update_node`](@ref).
 """
 function propagate end 
 
 function propagate(l, g::GNNGraph, aggr)
-    X, E, U = propagate(l, g, aggr, 
-                node_features(g), edge_features(g), global_features(g))
-    
-    return GNNGraph(g, ndata=X, edata=E, gdata=U)
+    x, e = propagate(l, g, aggr, node_features(g), edge_features(g))
+    return GNNGraph(g, ndata=x, edata=e)
 end
 
-function propagate(l, g::GNNGraph, aggr, X, E=nothing, U=nothing)
-    # TODO consider g.graph_indicator in propagating U
-    M = compute_batch_message(l, g, X, E, U) 
-    M̄ = aggregate_neighbors(l, g, aggr, M)
-    X′ = update(l, X, M̄, U)
-    E′ = update_edge(l, E, M, U)
-    U′ = update_global(l, U, X′, E′)
-    return X′, E′, U′
+function propagate(l, g::GNNGraph, aggr, x, e=nothing)
+    m = compute_batch_message(l, g, x, e) 
+    m̄ = aggregate_neighbors(l, g, aggr, m)
+    x′ = update_node(l, m̄, x)
+    e′ = update_edge(l, m, e)
+    return x′, e′
 end
+
+## Step 1.
 
 """
-    message(l, x_i, x_j, [e_ij, u])
+    compute_message(l, x_i, x_j, [e_ij])
 
 Message function for the message-passing scheme,
 returning the message from node `j` to node `i` .
 In the message-passing scheme, the incoming messages 
 from the neighborhood of `i` will later be aggregated
-in order to [`update`](@ref) the features of node `i`.
+in order to update (see [`update_node`](@ref)) the features of node `i`.
+
+The function operates on batches of edges, therefore
+`x_i`, `x_j`, and `e_ij` are tensors whose last dimension
+is the batch size. 
 
 By default, the function returns `x_j`.
 Custom layer should specialize this method with the desired behavior.
@@ -68,74 +92,71 @@ Custom layer should specialize this method with the desired behavior.
 - `l`: A gnn layer.
 - `x_i`: Features of the central node `i`.
 - `x_j`: Features of the neighbor `j` of node `i`.
-- `e_ij`: Features of edge (`i`, `j`).
-- `u`: Global features.
+- `e_ij`: Features of edge `(i,j)`.
 
-See also [`update`](@ref) and [`propagate`](@ref).
+See also [`update_node`](@ref) and [`propagate`](@ref).
 """
-function message end 
+function compute_message end 
 
-"""
-    update(l, x, m̄, [u])
-
-Update function for the message-passing scheme,
-returning a new set of node features `x′` based on old 
-features `x` and the incoming message from the neighborhood
-aggregation `m̄`.
-
-By default, the function returns `m̄`.
-Custom layers should  specialize this method with the desired behavior.
-
-# Arguments
-
-- `l`: A gnn layer.
-- `m̄`: Aggregated edge messages from the [`message`](@ref) function.
-- `x`: Node features to be updated.
-- `u`: Global features.
-
-See also [`message`](@ref) and [`propagate`](@ref).
-"""
-function update end
+@inline compute_message(l, x_i, x_j, e_ij) = compute_message(l, x_i, x_j)
+@inline compute_message(l, x_i, x_j) = x_j
 
 _gather(x, i) = NNlib.gather(x, i)
 _gather(x::Nothing, i) = nothing
 
-## Step 1.
-
-function compute_batch_message(l, g, X, E, U)
+function compute_batch_message(l, g, x, e)
     s, t = edge_index(g)
-    Xi = _gather(X, t)
-    Xj = _gather(X, s)
-    M = message(l, Xi, Xj, E, U)
-    return M
+    xi = _gather(x, t)
+    xj = _gather(x, s)
+    m = compute_message(l, xi, xj, e)
+    return m
 end
-
-@inline message(l, x_i, x_j, e_ij, u) = message(l, x_i, x_j, e_ij)
-@inline message(l, x_i, x_j, e_ij) = message(l, x_i, x_j)
-@inline message(l, x_i, x_j) = x_j
 
 ##  Step 2
 
-function aggregate_neighbors(l, g, aggr, E)
+function aggregate_neighbors(l, g, aggr, e)
     s, t = edge_index(g)
-    NNlib.scatter(aggr, E, t)
+    NNlib.scatter(aggr, e, t)
 end
 
-aggregate_neighbors(l, g, aggr::Nothing, E) = nothing
+aggregate_neighbors(l, g, aggr::Nothing, e) = nothing
 
 ## Step 3
 
-@inline update(l, x, m̄, u) = update(l, x, m̄)
-@inline update(l, x, m̄) = m̄
+"""
+    update_node(l, m̄, x)
+
+Node update function for the GNN layer `l`,
+returning a new set of node features `x′` based on old 
+features `x` and the aggregated message `m̄` from the neighborhood.
+
+By default, the function returns `m̄`.
+Custom layers should  specialize this method with the desired behavior.
+
+See also [`compute_message`](@ref), [`update_edge`](@ref), and [`propagate`](@ref).
+"""
+function update_node end
+
+@inline update_node(l, m̄, x) = m̄
 
 ## Step 4
 
-@inline update_edge(l, E, M, U) = update_edge(l, E, M)
-@inline update_edge(l, E, M) = E
 
-## Step 5
+"""
+    update_edge(l, m, e)
 
-@inline update_global(l, U, X, E) = update_global(l, U, X)
-@inline update_global(l, U, X) = U
+Edge update function for the GNN layer `l`,
+returning a new set of edge features `e′` based on old 
+features `e` and the newly computed messages `m`
+from the [`message`](@ref) function.
+
+By default, the function returns `e`.
+Custom layers should specialize this method with the desired behavior.
+
+See also [`compute_message`](@ref), [`update_node`](@ref), and [`propagate`](@ref).
+"""
+function update_edge end
+
+@inline update_edge(l, m, e) = e
 
 ### end steps ###

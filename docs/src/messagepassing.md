@@ -2,6 +2,3 @@
 
 TODO
 
-```@docs
-propagate
-```
