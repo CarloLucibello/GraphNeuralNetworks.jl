@@ -133,6 +133,7 @@
             @test size(gat.weight) == (out_channel * heads, in_channel)
             @test size(gat.bias) == (out_channel * heads,)
             @test size(gat.a) == (2*out_channel, heads)
+            @test length(Flux.trainable(gat)) == 3
 
             g_ = gat(g_gat)
             Y = node_features(g_)

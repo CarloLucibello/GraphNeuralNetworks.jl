@@ -45,8 +45,8 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
     l.σ.(l.weight * x * Ã .+ l.bias)
 end
 
-message(l::GCNConv, xi, xj) = xj
-update(l::GCNConv, x, m) = m
+message(l::GCNConv, xi, xj, eij) = xj
+update_node(l::GCNConv, m, x) = m
 
 function (l::GCNConv)(g::GNNGraph, x::CuMatrix{T}) where T
     g = add_self_loops(g)
@@ -177,11 +177,11 @@ function GraphConv(ch::Pair{Int,Int}, σ=identity, aggr=+;
 end
 
 message(l::GraphConv, x_i, x_j, e_ij) =  x_j
-update(l::GraphConv, x, m) = l.σ.(l.weight1 * x .+ l.weight2 * m .+ l.bias)
+update_node(l::GraphConv, m, x) = l.σ.(l.weight1 * x .+ l.weight2 * m .+ l.bias)
 
 function (l::GraphConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    x, _ = propagate(l, g, +, x)
+    x, _ = propagate(l, g, l.aggr, x)
     x
 end
 
@@ -235,6 +235,7 @@ struct GATConv{T, A<:AbstractMatrix{T}, B} <: GNNLayer
 end
 
 @functor GATConv
+Flux.trainable(l::GATConv) = (l.weight, l.bias, l.a)
 
 function GATConv(ch::Pair{Int,Int};
                  heads::Int=1, concat::Bool=true, negative_slope=0.2f0,
@@ -316,6 +317,7 @@ end
 
 @functor GatedGraphConv
 
+
 function GatedGraphConv(out_ch::Int, num_layers::Int;
                         aggr=+, init=glorot_uniform)
     w = init(out_ch, out_ch, num_layers)
@@ -325,7 +327,7 @@ end
 
 
 message(l::GatedGraphConv, x_i, x_j, e_ij) = x_j
-update(l::GatedGraphConv, x, m) = m
+update_node(l::GatedGraphConv, m, x) = m
 
 # remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
 @non_differentiable fill!(x...)
@@ -340,7 +342,7 @@ function (l::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {T<:Abstra
     end
     for i = 1:l.num_layers
         M = view(l.weight, :, :, i) * H
-        M, _ = propagate(l, g, +, M)
+        M, _ = propagate(l, g, l.aggr, M)
         H, _ = l.gru(H, M)
     end
     H
@@ -381,11 +383,11 @@ EdgeConv(nn; aggr=max) = EdgeConv(nn, aggr)
 
 message(l::EdgeConv, x_i, x_j, e_ij) = l.nn(vcat(x_i, x_j .- x_i))
 
-update(l::EdgeConv, x, m) = m
+update_node(l::EdgeConv, m, x) = m
 
 function (l::EdgeConv)(g::GNNGraph, X::AbstractMatrix)
     check_num_nodes(g, X)
-    X, _ = propagate(l, g, +, X)
+    X, _ = propagate(l, g, l.aggr, X)
     X
 end
 
@@ -424,8 +426,8 @@ function GINConv(nn; eps=0f0)
     GINConv(nn, eps)
 end
 
-message(l::GINConv, x_i, x_j) = x_j 
-update(l::GINConv, x, m) = l.nn((1 + l.eps) * x + m)
+message(l::GINConv, x_i, x_j, e_ij) = x_j 
+update_node(l::GINConv, m, x) = l.nn((1 + l.eps) * x + m)
 
 function (l::GINConv)(g::GNNGraph, X::AbstractMatrix)
     check_num_nodes(g, X)

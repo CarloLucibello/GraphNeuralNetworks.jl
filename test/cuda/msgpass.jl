@@ -18,7 +18,7 @@
 
     (l::NewCudaLayer)(g, X) = GraphNeuralNetworks.propagate(l, g, +, X)
     GraphNeuralNetworks.message(n::NewCudaLayer, x_i, x_j, e_ij) = n.weight * x_j
-    GraphNeuralNetworks.update(::NewCudaLayer, x, m) = m
+    GraphNeuralNetworks.update_node(::NewCudaLayer, m, x) = m
 
     X = rand(T, in_channel, N) |> gpu
     g = GNNGraph(adj, ndata=X, graph_type=GRAPH_T)

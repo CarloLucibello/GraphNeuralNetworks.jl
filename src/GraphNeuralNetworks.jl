@@ -31,7 +31,7 @@ export
     sprand, sparse, 
 
     # msgpass
-    # update, update_edge, message, propagate,
+    # update_node, update_edge, message, propagate,
 
     # layers/basic
     GNNLayer,

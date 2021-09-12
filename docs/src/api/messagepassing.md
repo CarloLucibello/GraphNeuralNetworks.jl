@@ -2,6 +2,6 @@
 
 ```@docs
 GraphNeuralNetworks.message
-GraphNeuralNetworks.update
+GraphNeuralNetworks.update_node
 GraphNeuralNetworks.propagate
 ```
