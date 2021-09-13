@@ -59,7 +59,7 @@ from the LightGraphs' graph library can be used on it.
 
 # Usage. 
 
-```
+```julia
 using Flux, GraphNeuralNetworks
 
 # Construct from adjacency list representation

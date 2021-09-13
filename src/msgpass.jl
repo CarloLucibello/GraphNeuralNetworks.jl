@@ -24,7 +24,7 @@ this method in the forward pass:
 
 # Usage example
 
-```
+```julia
 using GraphNeuralNetworks, Flux
 
 struct GNNConv <: GNNLayer
@@ -101,7 +101,9 @@ function compute_message end
 @inline compute_message(l, x_i, x_j, e_ij) = compute_message(l, x_i, x_j)
 @inline compute_message(l, x_i, x_j) = x_j
 
-_gather(x, i) = NNlib.gather(x, i)
+_gather(x::NamedTuple, i) = map(x -> _gather(x, i), x)
+_gather(x::Tuple, i) = map(x -> _gather(x, i), x)
+_gather(x::AbstractArray, i) = NNlib.gather(x, i)
 _gather(x::Nothing, i) = nothing
 
 function compute_batch_message(l, g, x, e)
@@ -114,9 +116,14 @@ end
 
 ##  Step 2
 
+_scatter(aggr, e::NamedTuple, t) = map(e -> _scatter(aggr, e, t), e)
+_scatter(aggr, e::Tuple, t) = map(e -> _scatter(aggr, e, t), e)
+_scatter(aggr, e::AbstractArray, t) = NNlib.scatter(aggr, e, t)
+_scatter(aggr, e::Nothing, t) = nothing
+
 function aggregate_neighbors(l, g, aggr, e)
     s, t = edge_index(g)
-    NNlib.scatter(aggr, e, t)
+    _scatter(aggr, e, t)
 end
 
 aggregate_neighbors(l, g, aggr::Nothing, e) = nothing

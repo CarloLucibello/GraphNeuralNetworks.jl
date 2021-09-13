@@ -1,3 +1,5 @@
+import GraphNeuralNetworks: compute_message, update_node, update_edge, propagate
+
 @testset "message passing" begin 
     in_channel = 10
     out_channel = 5
@@ -113,9 +115,9 @@
         GraphNeuralNetworks.compute_message(l::NewLayerW{GRAPH_T}, x_i, x_j, e_ij) = l.weight * x_j
         GraphNeuralNetworks.update_node(l::NewLayerW{GRAPH_T}, m, x) = l.weight * x + m
 
-        l = NewLayerW(in_channel, out_channel)
         (l::NewLayerW{GRAPH_T})(g) = GraphNeuralNetworks.propagate(l, g, +)
 
+        l = NewLayerW(in_channel, out_channel)
         g = GNNGraph(adj, ndata=X, edata=E, gdata=U, graph_type=GRAPH_T)
         g_ = l(g)
 
@@ -123,5 +125,38 @@
         @test size(node_features(g_)) == (out_channel, num_V)
         @test edge_features(g_) === E
         @test graph_features(g_) === U
+    end
+
+    @testset "NamedTuples" begin
+        struct NewLayerNT{G}
+            W
+        end
+        
+        NewLayerNT(in, out) = NewLayerW{GRAPH_T}(randn(T, out, in))
+        
+        function compute_message(l::NewLayerW{GRAPH_T}, di, dj, dij)
+            a = l.W * (di.x .+ dj.x) + dij.e
+            b = l.W * di.x
+            return (; a, b)
+        end
+        function update_node(l::NewLayerW{GRAPH_T}, m, x) 
+            return (α=l.W * x + m.a + m.b, β=m)
+        end
+        function update_edge(l::NewLayerW{GRAPH_T}, m, e) 
+            return m.a
+        end
+
+        function (::NewLayerNT)(l, g, x, e)
+            x, e = propagate(l, g, (; x), (; e))
+            return x.α .+ x.β.a, e
+        end
+
+
+        l = NewLayerNT(in_channel, out_channel)
+        g = GNNGraph(adj, graph_type=GRAPH_T)
+        X′, E′ = l(g, X, E)
+
+        @test size(X′) == (out_channel, num_V)
+        @test size(E′) == (out_channel, num_E)
     end
 end
