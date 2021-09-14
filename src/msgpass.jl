@@ -13,7 +13,7 @@ The computational steps are the following:
 
 ```julia
 m = compute_batch_message(l, g, x, e)  # calls `compute_message`
-m̄ = aggregate_neighbors(l, aggr, g, m)
+m̄ = aggregate_neighbors(g, aggr, m)
 x′ = update_node(l, m̄, x)
 e′ = update_edge(l, m, e)
 ```
@@ -63,7 +63,7 @@ end
 
 function propagate(l, g::GNNGraph, aggr, x, e=nothing)
     m = compute_batch_message(l, g, x, e) 
-    m̄ = aggregate_neighbors(l, g, aggr, m)
+    m̄ = aggregate_neighbors(g, aggr, m)
     x′ = update_node(l, m̄, x)
     e′ = update_edge(l, m, e)
     return x′, e′
@@ -74,15 +74,17 @@ end
 """
     compute_message(l, x_i, x_j, [e_ij])
 
-Message function for the message-passing scheme,
-returning the message from node `j` to node `i` .
+Message function for the message-passing scheme
+started by [`propagate`](@ref).
+Returns the message from node `j` to node `i` .
 In the message-passing scheme, the incoming messages 
 from the neighborhood of `i` will later be aggregated
 in order to update (see [`update_node`](@ref)) the features of node `i`.
 
 The function operates on batches of edges, therefore
 `x_i`, `x_j`, and `e_ij` are tensors whose last dimension
-is the batch size. 
+is the batch size, or can be tuple/namedtuples of 
+such tensors, according to the input to propagate.
 
 By default, the function returns `x_j`.
 Custom layer should specialize this method with the desired behavior.
@@ -106,7 +108,7 @@ _gather(x::Tuple, i) = map(x -> _gather(x, i), x)
 _gather(x::AbstractArray, i) = NNlib.gather(x, i)
 _gather(x::Nothing, i) = nothing
 
-function compute_batch_message(l, g, x, e)
+function compute_batch_message(l, g::GNNGraph, x, e)
     s, t = edge_index(g)
     xi = _gather(x, t)
     xj = _gather(x, s)
@@ -121,12 +123,12 @@ _scatter(aggr, e::Tuple, t) = map(e -> _scatter(aggr, e, t), e)
 _scatter(aggr, e::AbstractArray, t) = NNlib.scatter(aggr, e, t)
 _scatter(aggr, e::Nothing, t) = nothing
 
-function aggregate_neighbors(l, g, aggr, e)
+function aggregate_neighbors(g::GNNGraph, aggr, e)
     s, t = edge_index(g)
     _scatter(aggr, e, t)
 end
 
-aggregate_neighbors(l, g, aggr::Nothing, e) = nothing
+aggregate_neighbors(g::GNNGraph, aggr::Nothing, e) = nothing
 
 ## Step 3
 
@@ -136,6 +138,9 @@ aggregate_neighbors(l, g, aggr::Nothing, e) = nothing
 Node update function for the GNN layer `l`,
 returning a new set of node features `x′` based on old 
 features `x` and the aggregated message `m̄` from the neighborhood.
+
+The input `m̄` is an array, a tuple or a named tuple, 
+reflecting the output of [`compute_message`](@ref).
 
 By default, the function returns `m̄`.
 Custom layers should  specialize this method with the desired behavior.
@@ -155,7 +160,7 @@ function update_node end
 Edge update function for the GNN layer `l`,
 returning a new set of edge features `e′` based on old 
 features `e` and the newly computed messages `m`
-from the [`message`](@ref) function.
+from the [`compute_message`](@ref) function.
 
 By default, the function returns `e`.
 Custom layers should specialize this method with the desired behavior.

@@ -132,25 +132,24 @@ import GraphNeuralNetworks: compute_message, update_node, update_edge, propagate
             W
         end
         
-        NewLayerNT(in, out) = NewLayerW{GRAPH_T}(randn(T, out, in))
+        NewLayerNT(in, out) = NewLayerNT{GRAPH_T}(randn(T, out, in))
         
-        function compute_message(l::NewLayerW{GRAPH_T}, di, dj, dij)
-            a = l.W * (di.x .+ dj.x) + dij.e
+        function GraphNeuralNetworks.compute_message(l::NewLayerNT{GRAPH_T}, di, dj, dij)
+            a = l.W * (di.x .+ dj.x .+ dij.e) 
             b = l.W * di.x
             return (; a, b)
         end
-        function update_node(l::NewLayerW{GRAPH_T}, m, x) 
-            return (α=l.W * x + m.a + m.b, β=m)
+        function GraphNeuralNetworks.update_node(l::NewLayerNT{GRAPH_T}, m, d) 
+            return (α=l.W * d.x + m.a + m.b, β=m)
         end
-        function update_edge(l::NewLayerW{GRAPH_T}, m, e) 
+        function GraphNeuralNetworks.update_edge(l::NewLayerNT{GRAPH_T}, m, e) 
             return m.a
         end
 
-        function (::NewLayerNT)(l, g, x, e)
-            x, e = propagate(l, g, (; x), (; e))
+        function (::NewLayerNT{GRAPH_T})(g, x, e)
+            x, e = propagate(l, g, mean, (; x), (; e))
             return x.α .+ x.β.a, e
         end
-
 
         l = NewLayerNT(in_channel, out_channel)
         g = GNNGraph(adj, graph_type=GRAPH_T)
