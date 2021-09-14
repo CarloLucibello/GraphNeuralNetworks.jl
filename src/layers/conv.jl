@@ -196,7 +196,7 @@ end
 
 
 @doc raw"""
-    GATConv(in => out;
+    GATConv(in => out, , σ=identity;
             heads=1,
             concat=true,
             init=glorot_uniform    
@@ -228,6 +228,7 @@ struct GATConv{T, A<:AbstractMatrix{T}, B} <: GNNLayer
     weight::A
     bias::B
     a::A
+    σ
     negative_slope::T
     channel::Pair{Int, Int}
     heads::Int
@@ -237,44 +238,43 @@ end
 @functor GATConv
 Flux.trainable(l::GATConv) = (l.weight, l.bias, l.a)
 
-function GATConv(ch::Pair{Int,Int};
+function GATConv(ch::Pair{Int,Int}, σ=identity;
                  heads::Int=1, concat::Bool=true, negative_slope=0.2f0,
                  init=glorot_uniform, bias::Bool=true)
     in, out = ch             
     W = init(out*heads, in)
     b = Flux.create_bias(W, bias, out*heads)
     a = init(2*out, heads)
-    GATConv(W, b, a, negative_slope, ch, heads, concat)
+    GATConv(W, b, a, σ, negative_slope, ch, heads, concat)
 end
 
-function (gat::GATConv)(g::GNNGraph, X::AbstractMatrix)
-    check_num_nodes(g, X)
+function compute_message(l::GATConv, Wxi, Wxj)
+    aWW = sum(l.a .* cat(Wxi, Wxj, dims=1), dims=1)   # 1 × nheads × nedges
+    α = exp.(leakyrelu.(aWW, l.negative_slope))       
+    return (α = α, m = α .* Wxj)
+end
+
+update_node(l::GATConv, d̄, x) = d̄.m ./ d̄.α
+
+function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
+    check_num_nodes(g, x)
     g = add_self_loops(g)
-    chin, chout = gat.channel
-    heads = gat.heads
+    chin, chout = l.channel
+    heads = l.heads
 
-    source, target = edge_index(g)
-    Wx = gat.weight*X
+    Wx = l.weight * x
     Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
-    Wxi = NNlib.gather(Wx, target)                      # chout × nheads × nedges
-    Wxj = NNlib.gather(Wx, source)
-
-    # Edge Message
-    # Computing softmax. TODO make it numerically stable
-    aWW = sum(gat.a .* cat(Wxi, Wxj, dims=1), dims=1)   # 1 × nheads × nedges
-    α = exp.(leakyrelu.(aWW, gat.negative_slope))       
-    m̄ =  NNlib.scatter(+, α .* Wxj, target)             # chout × nheads × nnodes 
-    ᾱ = NNlib.scatter(+, α, target)                     # 1 × nheads × nnodes
     
-    # Node update
-    b = reshape(gat.bias, chout, heads)
-    X = m̄ ./ ᾱ .+ b                                     # chout × nheads × nnodes 
-    if !gat.concat
-        X = sum(X, dims=2)
+    x, _ = propagate(l, g, +, Wx)                 ## chout × nheads × nnodes
+
+    b = reshape(l.bias, chout, heads)
+    x = l.σ.(x .+ b)                                      
+    if !l.concat
+        x = sum(x, dims=2)
     end
 
     # We finally return a matrix
-    return reshape(X, :, size(X, 3)) 
+    return reshape(x, :, size(x, 3)) 
 end
 
 
