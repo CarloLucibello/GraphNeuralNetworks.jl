@@ -143,7 +143,7 @@ Graph convolution layer from Reference: [Weisfeiler and Leman Go Neural: Higher-
 
 Performs:
 ```math
-\mathbf{x}_i' = W^1 \mathbf{x}_i + \square_{j \in \mathcal{N}(i)} W^2 \mathbf{x}_j)
+\mathbf{x}_i' = W_1 \mathbf{x}_i + \square_{j \in \mathcal{N}(i)} W_2 \mathbf{x}_j
 ```
 
 where the aggregation type is selected by `aggr`.

@@ -62,7 +62,7 @@ function train(; kws...)
     ps = Flux.params(model)
     opt = ADAM(args.η)
 
-    @info "NUM NODES: $(g.num_nodes)  NUM EDGES: $(g.num_edges)"
+    @info g
     
     ## LOGGING FUNCTION
     function report(epoch)
