@@ -143,24 +143,25 @@
         U = rand(10, g.num_graphs)
         
         g = GNNGraph(g, ndata=X, edata=E, gdata=U)
-        @test g.ndata.X === X
-        @test g.edata.E === E
-        @test g.gdata.U === U
+        @test g.ndata.x === X
+        @test g.edata.e === E
+        @test g.gdata.u === U
 
         # Check no args
         g = GNNGraph(g)
-        @test g.ndata.X === X
-        @test g.edata.E === E
-        @test g.gdata.U === U
+        @test g.ndata.x === X
+        @test g.edata.e === E
+        @test g.gdata.u === U
+
 
         # multiple features names
-        g = GNNGraph(g, ndata=(x=2X, g.ndata...), edata=(e=2E, g.edata...), gdata=(u=2U, g.gdata...))
-        @test g.ndata.X === X
-        @test g.edata.E === E
-        @test g.gdata.U === U
-        @test g.ndata.x ≈ 2X
-        @test g.edata.e ≈ 2E
-        @test g.gdata.u ≈ 2U
+        g = GNNGraph(g, ndata=(x2=2X, g.ndata...), edata=(e2=2E, g.edata...), gdata=(u2=2U, g.gdata...))
+        @test g.ndata.x === X
+        @test g.edata.e === E
+        @test g.gdata.u === U
+        @test g.ndata.x2 ≈ 2X
+        @test g.edata.e2 ≈ 2E
+        @test g.gdata.u2 ≈ 2U
     end 
 
     @testset "LearnBase and DataLoader compat" begin

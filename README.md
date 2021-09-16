@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/CarloLucibello/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/CarloLucibello/GraphNeuralNetworks.jl)
 
 A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
-Most relevant features are:
+Its most relevant features are:
 * Provides CUDA support.
 * It's integrated with the JuliaGraphs ecosystem.
 * Implements many common graph convolutional layers.

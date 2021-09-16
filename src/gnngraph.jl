@@ -156,9 +156,9 @@ end
 
 function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata)
 
-    ndata = normalize_graphdata(ndata, :X)
-    edata = normalize_graphdata(edata, :E)
-    gdata = normalize_graphdata(gdata, :U)
+    ndata = normalize_graphdata(ndata, :x)
+    edata = normalize_graphdata(edata, :e)
+    gdata = normalize_graphdata(gdata, :u)
     
     GNNGraph(g.graph, 
             g.num_nodes, g.num_edges, g.num_graphs, 

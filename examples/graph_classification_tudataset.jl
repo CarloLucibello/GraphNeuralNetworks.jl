@@ -19,7 +19,7 @@ function eval_loss_accuracy(model, data_loader, device)
         g = g |> device
         n = g.num_graphs
         y = g.gdata.y
-        ŷ = model(g, g.ndata.X) |> vec
+        ŷ = model(g, g.ndata.x) |> vec
         loss += logitbinarycrossentropy(ŷ, y) * n 
         acc += mean((ŷ .> 0) .== y) * n
         ntot += n
@@ -30,16 +30,16 @@ end
 function getdataset()
     data = TUDataset("MUTAG")
     
-    X = Array{Float32}(onehotbatch(data.node_labels, 0:6))
+    x = Array{Float32}(onehotbatch(data.node_labels, 0:6))
     y = (1 .+ Array{Float32}(data.graph_labels)) ./ 2
     @assert all(∈([0,1]), y) # binary classification 
     # The dataset also has edge features but we won't be using them
-    E = Array{Float32}(onehotbatch(data.edge_labels, sort(unique(data.edge_labels))))
+    e = Array{Float32}(onehotbatch(data.edge_labels, sort(unique(data.edge_labels))))
     
     return GNNGraph(data.source, data.target, 
                 num_nodes=data.num_nodes, 
                 graph_indicator=data.graph_indicator,
-                ndata=(; X), edata=(; E), gdata=(; y))
+                ndata=(; x), edata=(; e), gdata=(; y))
 end
 
 # arguments for the `train` function 
@@ -83,7 +83,7 @@ function train(; kws...)
     
     # DEFINE MODEL
 
-    nin = size(gtrain.ndata.X, 1)
+    nin = size(gtrain.ndata.x, 1)
     nhidden = args.nhidden
     
     model = GNNChain(GraphConv(nin => nhidden, relu),
@@ -111,7 +111,7 @@ function train(; kws...)
         for g in train_loader
             g = g |> device
             gs = Flux.gradient(ps) do
-                ŷ = model(g, g.ndata.X) |> vec
+                ŷ = model(g, g.ndata.x) |> vec
                 logitbinarycrossentropy(ŷ, g.gdata.y)
             end
             Flux.Optimise.update!(opt, ps, gs)
