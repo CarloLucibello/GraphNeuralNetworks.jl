@@ -22,12 +22,11 @@ respectively.
 
 Let's (re-)implement the [`GCNConv`](@ref) layer use the message passing framework.
 The convolution reads 
-```math
 
 ```math
-\mathbf{x}'_i = \sum_{j \in {i} \cup N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
+\mathbf{x}'_i = \sum_{j \in N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
 ```
-where ``c_{ij} = \sqrt{(1+|N(i)|)(1+|N(j)|)}``. We will also add a bias and an activation function.
+where ``c_{ij} = \sqrt{(|N(i)|)(|N(j)|)}``. We will also add a bias and an activation function.
 
 ```julia
 using Flux, LightGraphs, GraphNeuralNetworks
@@ -52,7 +51,6 @@ compute_message(l::GCN, xi, xj, eij) = l.weight * xj
 update_node(l::GCN, m, x) = m
 
 function (l::GCN)(g::GNNGraph, x::AbstractMatrix{T}) where T
-    g = add_self_loops(g)
     c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'
     x, _ = propagate(l, g, +, x)
@@ -60,5 +58,7 @@ function (l::GCN)(g::GNNGraph, x::AbstractMatrix{T}) where T
     return l.σ.(x .+ l.bias)
 end
 ```
+
+See the [`GATConv`](@ref) implementation [here](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/master/src/layers/conv.jl) for a more complex example.
 
 
