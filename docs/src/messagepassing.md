@@ -25,34 +25,33 @@ The convolution reads
 ```math
 
 ```math
-\mathbf{x}'_i = \sum_{j\in N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
+\mathbf{x}'_i = \sum_{j \in {i} \cup N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
 ```
-where ``c_{ij} = \sqrt{N(i)\,N(j)}``. We will also add a bias and an activation function.
+where ``c_{ij} = \sqrt{(1+|N(i)|)(1+|N(j)|)}``. We will also add a bias and an activation function.
 
 ```julia
-using Flux
-using GraphNeuralNetworks
+using Flux, LightGraphs, GraphNeuralNetworks
 import GraphNeuralNetworks: compute_message, update_node, propagate
 
-struct GCNConv{A<:AbstractMatrix, B, F} <: GNNLayer
+struct GCN{A<:AbstractMatrix, B, F} <: GNNLayer
     weight::A
     bias::B
     σ::F
 end
 
-Flux.@functor GCNConv
+Flux.@functor GCN # allow collecting params, gpu movement, etc...
 
-function GCNConv(ch::Pair{Int,Int}, σ=identity; init=glorot_uniform)
+function GCN(ch::Pair{Int,Int}, σ=identity)
     in, out = ch
-    W = init(out, in)
+    W = Flux.glorot_uniform(out, in)
     b = zeros(Float32, out)
-    GCNConv(W, b, σ)
+    GCN(W, b, σ)
 end
 
-compute_message(l::GCNConv, xi, xj, eij) = l.weight * xj
-update_node(l::GCNConv, m, x) = m
+compute_message(l::GCN, xi, xj, eij) = l.weight * xj
+update_node(l::GCN, m, x) = m
 
-function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
+function (l::GCN)(g::GNNGraph, x::AbstractMatrix{T}) where T
     g = add_self_loops(g)
     c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'

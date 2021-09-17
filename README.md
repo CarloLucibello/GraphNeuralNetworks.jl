@@ -21,4 +21,4 @@ Its most relevant features are:
 
 ## Usage
 
-Usage examples can be found in the `examples/` folder. 
+Usage examples can be found in the [examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) folder. 

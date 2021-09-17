@@ -38,7 +38,7 @@
         @test size(node_features(gt_)) == (out_channel, N)
 
         gs = Zygote.gradient(x -> sum(node_features(l(x))), g)[1]
-        @test size(gs.ndata.X) == size(X)
+        @test size(gs.ndata.x) == size(X)
 
         gs = Zygote.gradient(model -> sum(node_features(model(g))), l)[1]
         @test size(gs.weight) == size(l.weight)
@@ -74,7 +74,7 @@
         @test size(node_features(gt_)) == (out_channel, N)
 
         gs = Zygote.gradient(x -> sum(node_features(l(x))), g)[1]
-        @test size(gs.ndata.X) == size(X)
+        @test size(gs.ndata.x) == size(X)
 
         gs = Zygote.gradient(model -> sum(node_features(model(g))), l)[1]
         @test size(gs.weight) == size(l.weight)
@@ -109,7 +109,7 @@
         @test size(node_features(gt_)) == (out_channel, N)
 
         gs = Zygote.gradient(g -> sum(node_features(l(g))), g)[1]
-        @test size(gs.ndata.X) == size(X)
+        @test size(gs.ndata.x) == size(X)
 
         gs = Zygote.gradient(model -> sum(node_features(model(g))), l)[1]
         @test size(gs.weight1) == size(l.weight1)
@@ -148,7 +148,7 @@
             @test size(node_features(gt_)) == (concat ? (out_channel*heads, N) : (out_channel, N))
 
             gs = Zygote.gradient(g -> sum(node_features(gat(g))), g_gat)[1]
-            @test size(gs.ndata.X) == size(X)
+            @test size(gs.ndata.x) == size(X)
 
             gs = Zygote.gradient(model -> sum(node_features(model(g_gat))), gat)[1]
             @test size(gs.weight) == size(gat.weight)
@@ -182,7 +182,7 @@
         @test size(node_features(gt_)) == (out_channel, N)
 
         gs = Zygote.gradient(x -> sum(node_features(ggc(x))), g)[1]
-        @test size(gs.ndata.X) == size(X)
+        @test size(gs.ndata.x) == size(X)
 
         gs = Zygote.gradient(model -> sum(node_features(model(g))), ggc)[1]
         @test size(gs.weight) == size(ggc.weight)
@@ -206,7 +206,7 @@
         @test size(node_features(gt_)) == (out_channel, N)
 
         gs = Zygote.gradient(x -> sum(node_features(ec(x))), g)[1]
-        @test size(gs.ndata.X) == size(X)
+        @test size(gs.ndata.x) == size(X)
 
         gs = Zygote.gradient(model -> sum(node_features(model(g))), ec)[1]
         @test size(gs.nn.weight) == size(ec.nn.weight)
@@ -226,7 +226,7 @@
         @test size(node_features(g_)) == (out_channel, N)
 
         gs = Zygote.gradient(g -> sum(node_features(l(g))), g)[1]
-        @test size(gs.ndata.X) == size(X)
+        @test size(gs.ndata.x) == size(X)
 
         gs = Zygote.gradient(model -> sum(node_features(model(g))), l)[1]
         @test size(gs.nn.weight) == size(l.nn.weight)
