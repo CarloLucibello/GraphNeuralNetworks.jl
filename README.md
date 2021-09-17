@@ -19,8 +19,6 @@ GraphNeuralNetworks.jl is a registered julia package.
 You can easily install it through the package manager:
 
 ```julia
-julia> ]
-
 pkg> add GraphNeuralNetworks
 ```
 

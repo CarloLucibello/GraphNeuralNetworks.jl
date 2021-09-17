@@ -240,6 +240,17 @@ end
 LightGraphs.is_directed(::GNNGraph) = true
 LightGraphs.is_directed(::Type{GNNGraph}) = true
 
+"""
+    adjacency_list(g; dir=:out)
+
+Return the adjacency list representation (a vector of vectors)
+of the graph `g`.
+
+Calling `a` the adjacency list, if `dir=:out`
+`a[i]` will contain the neighbors of node `i` through
+outgoing edges. If `dir=:in`, it will contain neighbors from
+incoming edges instead.
+"""
 function adjacency_list(g::GNNGraph; dir=:out)
     @assert dir ∈ [:out, :in]
     fneighs = dir == :out ? outneighbors : inneighbors
