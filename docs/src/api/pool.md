@@ -1,9 +1,17 @@
+```@meta
+CurrentModule = GraphNeuralNetworks
+```
+
 # Pooling Layers
+
+## Index
 
 ```@index
 Order = [:type, :function]
-Pages   = ["api/pool.md"]
+Pages   = ["pool.md"]
 ```
+
+## Docs
 
 ```@autodocs
 Modules = [GraphNeuralNetworks]

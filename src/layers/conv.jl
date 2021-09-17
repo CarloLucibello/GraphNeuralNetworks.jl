@@ -66,7 +66,7 @@ end
 
 
 @doc raw"""
-    ChebConv(in=>out, k; bias=true, init=glorot_uniform)
+    ChebConv(in => out, k; bias=true, init=glorot_uniform)
 
 Chebyshev spectral graph convolutional layer from
 paper [Convolutional Neural Networks on Graphs with Fast Localized Spectral Filtering](https://arxiv.org/abs/1606.09375).

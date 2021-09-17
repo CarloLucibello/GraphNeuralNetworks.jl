@@ -1,9 +1,17 @@
+```@meta
+CurrentModule = GraphNeuralNetworks
+```
+
 # Convolutional Layers
+
+## Index 
 
 ```@index
 Order = [:type, :function]
-Pages   = ["api/conv.md"]
+Pages   = ["conv.md"]
 ```
+
+## Docs
 
 ```@autodocs
 Modules = [GraphNeuralNetworks]

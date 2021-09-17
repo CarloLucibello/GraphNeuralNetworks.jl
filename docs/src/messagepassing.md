@@ -4,7 +4,6 @@ The message passing is initiated by [`propagate`](@ref)
 and can be customized for a specific layer by overloading the methods
 [`compute_message`](@ref), [`update_node`](@ref), and [`update_edge`](@ref).
 
-
 The message passing corresponds to the following operations 
 
 ```math
@@ -26,7 +25,7 @@ The convolution reads
 ```math
 \mathbf{x}'_i = \sum_{j \in N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
 ```
-where ``c_{ij} = \sqrt{(|N(i)|)(|N(j)|)}``. We will also add a bias and an activation function.
+where ``c_{ij} = \sqrt{|N(i)||N(j)|}``. We will also add a bias and an activation function.
 
 ```julia
 using Flux, LightGraphs, GraphNeuralNetworks
@@ -60,5 +59,3 @@ end
 ```
 
 See the [`GATConv`](@ref) implementation [here](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/master/src/layers/conv.jl) for a more complex example.
-
-

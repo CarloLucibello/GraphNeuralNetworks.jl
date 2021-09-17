@@ -1,7 +1,21 @@
+```@meta
+CurrentModule = GraphNeuralNetworks
+```
+
 # Message Passing
 
+## Index
+
+```@index
+Order = [:type, :function]
+Pages   = ["messagepassing.md"]
+```
+
+## Docs
+
 ```@docs
-GraphNeuralNetworks.compute_message
-GraphNeuralNetworks.update_node
-GraphNeuralNetworks.propagate
+compute_message
+update_node
+update_edge
+propagate
 ```

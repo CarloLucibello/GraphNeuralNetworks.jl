@@ -1,10 +1,18 @@
+```@meta
+CurrentModule = GraphNeuralNetworks
+```
+
 # Basic Layers
+
+## Index
 
 ```@index
 Order = [:type, :function]
-Modules = [GraphNeuralNetworks, LightGraphs, Flux, NNlib]
+Modules = [GraphNeuralNetworks]
 Pages = ["api/basics.md"]
 ```
+
+## Docs
 
 ```@docs
 GNNLayer
