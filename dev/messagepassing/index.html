@@ -3,5 +3,31 @@
 \mathbf{m}_{j\to i} &amp;= \phi(\mathbf{x}_i, \mathbf{x}_j, \mathbf{e}_{j\to i}) \\
 \mathbf{x}_{i}&#39; &amp;= \gamma_x(\mathbf{x}_{i}, \square_{j\in N(i)}  \mathbf{m}_{j\to i})\\
 \mathbf{e}_{j\to i}^\prime &amp;=  \gamma_e(\mathbf{e}_{j \to i},\mathbf{m}_{j \to i})
-\end{aligned}\]</p><p>where <span>$\phi$</span> is expressed by the <a href="@ref"><code>compute_message</code></a> function,  <span>$\gamma_x$</span> and <span>$\gamma_e$</span> by <a href="@ref"><code>update_node</code></a> and <a href="@ref"><code>update_edge</code></a> respectively.</p><h2 id="An-example:-implementing-the-GCNConv"><a class="docs-heading-anchor" href="#An-example:-implementing-the-GCNConv">An example: implementing the GCNConv</a><a id="An-example:-implementing-the-GCNConv-1"></a><a class="docs-heading-anchor-permalink" href="#An-example:-implementing-the-GCNConv" title="Permalink"></a></h2><p>Let&#39;s (re-)implement the <a href="../api/conv/#GraphNeuralNetworks.GCNConv"><code>GCNConv</code></a> layer use the message passing framework. The convolution reads </p><p class="math-container">\[\]</p><p>math \mathbf{x}&#39;<em>i = \sum</em>{j \in {i} \cup N(i)} \frac{1}{c<em>{ij}} W \mathbf{x}</em>j</p><pre><code class="nohighlight hljs">where ``c_{ij} = \sqrt{(1+|N(i)|)(1+|N(j)|)}``. We will also add a bias and an activation function.
-</code></pre><p>julia using Flux, LightGraphs, GraphNeuralNetworks import GraphNeuralNetworks: compute<em>message, update</em>node, propagate</p><p>struct GCN{A&lt;:AbstractMatrix, B, F} &lt;: GNNLayer     weight::A     bias::B     σ::F end</p><p>Flux.@functor GCN # allow collecting params, gpu movement, etc...</p><p>function GCN(ch::Pair{Int,Int}, σ=identity)     in, out = ch     W = Flux.glorot_uniform(out, in)     b = zeros(Float32, out)     GCN(W, b, σ) end</p><p>compute<em>message(l::GCN, xi, xj, eij) = l.weight * xj update</em>node(l::GCN, m, x) = m</p><p>function (l::GCN)(g::GNNGraph, x::AbstractMatrix{T}) where T     g = add<em>self</em>loops(g)     c = 1 ./ sqrt.(degree(g, T, dir=:in))     x = x .* c&#39;     x, _ = propagate(l, g, +, x)     x = x .* c&#39;     return l.σ.(x .+ l.bias) end ```</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gnngraph/">« Graphs</a><a class="docs-footer-nextpage" href="../models/">Model Building »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.6 on <span class="colophon-date" title="Friday 17 September 2021 06:14">Friday 17 September 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+\end{aligned}\]</p><p>where <span>$\phi$</span> is expressed by the <a href="@ref"><code>compute_message</code></a> function,  <span>$\gamma_x$</span> and <span>$\gamma_e$</span> by <a href="@ref"><code>update_node</code></a> and <a href="@ref"><code>update_edge</code></a> respectively.</p><h2 id="An-example:-implementing-the-GCNConv"><a class="docs-heading-anchor" href="#An-example:-implementing-the-GCNConv">An example: implementing the GCNConv</a><a id="An-example:-implementing-the-GCNConv-1"></a><a class="docs-heading-anchor-permalink" href="#An-example:-implementing-the-GCNConv" title="Permalink"></a></h2><p>Let&#39;s (re-)implement the <a href="../api/conv/#GraphNeuralNetworks.GCNConv"><code>GCNConv</code></a> layer use the message passing framework. The convolution reads </p><p class="math-container">\[\mathbf{x}&#39;_i = \sum_{j \in N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j\]</p><p>where <span>$c_{ij} = \sqrt{(|N(i)|)(|N(j)|)}$</span>. We will also add a bias and an activation function.</p><pre><code class="language-julia hljs">using Flux, LightGraphs, GraphNeuralNetworks
+import GraphNeuralNetworks: compute_message, update_node, propagate
+
+struct GCN{A&lt;:AbstractMatrix, B, F} &lt;: GNNLayer
+    weight::A
+    bias::B
+    σ::F
+end
+
+Flux.@functor GCN # allow collecting params, gpu movement, etc...
+
+function GCN(ch::Pair{Int,Int}, σ=identity)
+    in, out = ch
+    W = Flux.glorot_uniform(out, in)
+    b = zeros(Float32, out)
+    GCN(W, b, σ)
+end
+
+compute_message(l::GCN, xi, xj, eij) = l.weight * xj
+update_node(l::GCN, m, x) = m
+
+function (l::GCN)(g::GNNGraph, x::AbstractMatrix{T}) where T
+    c = 1 ./ sqrt.(degree(g, T, dir=:in))
+    x = x .* c&#39;
+    x, _ = propagate(l, g, +, x)
+    x = x .* c&#39;
+    return l.σ.(x .+ l.bias)
+end</code></pre><p>See the <a href="../api/conv/#GraphNeuralNetworks.GATConv"><code>GATConv</code></a> implementation <a href="https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/master/src/layers/conv.jl">here</a> for a more complex example.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gnngraph/">« Graphs</a><a class="docs-footer-nextpage" href="../models/">Model Building »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.6 on <span class="colophon-date" title="Friday 17 September 2021 07:23">Friday 17 September 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
