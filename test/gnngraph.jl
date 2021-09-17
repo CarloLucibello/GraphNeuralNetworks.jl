@@ -118,6 +118,13 @@
         @test s == [edge_index(g1)[1]; 10 .+ edge_index(g2)[1]; 14 .+ edge_index(g3)[1]] 
         @test t == [edge_index(g1)[2]; 10 .+ edge_index(g2)[2]; 14 .+ edge_index(g3)[2]] 
         @test node_features(g123)[:,11:14] ≈ node_features(g2) 
+
+        # scalar graph features
+        g1 = GNNGraph(random_regular_graph(10,2), gdata=rand())
+        g2 = GNNGraph(random_regular_graph(4,2), gdata=rand())
+        g3 = GNNGraph(random_regular_graph(4,2), gdata=rand())
+        g123 = Flux.batch([g1, g2, g3])
+        @test g123.gdata.u == [g1.gdata.u, g2.gdata.u, g3.gdata.u]
     end
 
     @testset "getgraph"  begin

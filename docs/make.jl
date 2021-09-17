@@ -8,7 +8,7 @@ makedocs(;
     doctest=false, clean=true,     
     sitename = "GraphNeuralNetworks.jl",
     pages = ["Home" => "index.md",
-             "GNNGraph" => "gnngraph.md",
+             "Graphs" => "gnngraph.md",
              "Message Passing" => "messagepassing.md",
              "Model Building" => "models.md",
              "API Reference" =>

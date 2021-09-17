@@ -80,13 +80,13 @@ g = GNNGraph(s, t)
 g = GNNGraph(erdos_renyi(100, 20))
 
 # Add 2 node feature arrays
-g = GNNGraph(g, ndata = (X = rand(100, g.num_nodes), y = rand(g.num_nodes)))
+g = GNNGraph(g, ndata = (x=rand(100, g.num_nodes), y=rand(g.num_nodes)))
 
-# Add node features and edge features with default names `X` and `E` 
+# Add node features and edge features with default names `x` and `e` 
 g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_edges))
 
-g.ndata.X
-g.ndata.E
+g.ndata.x
+g.ndata.e
 
 # Send to gpu
 g = g |> gpu
@@ -132,9 +132,9 @@ function GNNGraph(data;
     
     num_graphs = !isnothing(graph_indicator) ? maximum(graph_indicator) : 1
     
-    ndata = normalize_graphdata(ndata, :X)
-    edata = normalize_graphdata(edata, :E)
-    gdata = normalize_graphdata(gdata, :U)
+    ndata = normalize_graphdata(ndata, :x)
+    edata = normalize_graphdata(edata, :e)
+    gdata = normalize_graphdata(gdata, :u)
     
     GNNGraph(g, 
             num_nodes, num_edges, num_graphs, 
@@ -170,8 +170,7 @@ function Base.show(io::IO, g::GNNGraph)
     println(io, "GNNGraph:
     num_nodes = $(g.num_nodes)
     num_edges = $(g.num_edges)
-    num_graphs = $(g.num_graphs)
-    # feature name => array size")
+    num_graphs = $(g.num_graphs)")
     println(io, "    ndata:")
     for k in keys(g.ndata)
         println(io, "        $k => $(size(g.ndata[k]))")
@@ -498,7 +497,7 @@ function node_features(g::GNNGraph)
     if isempty(g.ndata)
         return nothing
     elseif length(g.ndata) > 1
-        @error "Multiple feature arrays, access directly with g.ndata.X"
+        @error "Multiple feature arrays, access directly through `g.ndata`"
     else
         return g.ndata[1]
     end
@@ -508,7 +507,7 @@ function edge_features(g::GNNGraph)
     if isempty(g.edata)
         return nothing
     elseif length(g.edata) > 1
-        @error "Multiple feature arrays, access directly with g.edata.E"
+        @error "Multiple feature arrays, access directly through `g.edata`"
     else
         return g.edata[1]
     end
@@ -518,7 +517,7 @@ function graph_features(g::GNNGraph)
     if isempty(g.gdata)
         return nothing
     elseif length(g.gdata) > 1
-        @error "Multiple feature arrays, access directly with g.gdata.U"
+        @error "Multiple feature arrays, access directly through `g.gdata`"
     else
         return g.gdata[1]
     end

@@ -12,7 +12,7 @@ and performs the operation
 ```
 where ``V`` is the set of nodes of the input graph and 
 the type of aggregation represented by ``\square`` is selected by the `aggr` argument. 
-Commonly used aggregations are are `mean`, `max`, and `+`.
+Commonly used aggregations are `mean`, `max`, and `+`.
 
 ```julia
 using Flux, GraphNeuralNetworks, LightGraphs

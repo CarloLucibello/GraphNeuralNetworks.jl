@@ -12,6 +12,9 @@ end
 
 cat_features(x1::Nothing, x2::Nothing) = nothing 
 cat_features(x1::AbstractArray, x2::AbstractArray) = cat(x1, x2, dims=ndims(x1))
+cat_features(x1::Union{Number, AbstractVector}, x2::Union{Number, AbstractVector}) = 
+    cat(x1, x2, dims=1)
+
 
 function cat_features(x1::NamedTuple, x2::NamedTuple)
     sort(collect(keys(x1))) == sort(collect(keys(x2))) ||

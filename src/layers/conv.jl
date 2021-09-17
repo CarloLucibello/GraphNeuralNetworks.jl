@@ -5,9 +5,9 @@ Graph convolutional layer from paper [Semi-supervised Classification with Graph 
 
 Performs the operation
 ```math
-\mathbf{x}'_i = \sum_{j\in N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
+\mathbf{x}'_i = \sum_{j\in \{i\} \cup N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
 ```
-where ``c_{ij} = \sqrt{N(i)\,N(j)}``.
+where ``c_{ij} = \sqrt{(1+|N(i)|)(1+|N(j)|)}``.
 
 The input to the layer is a node feature array `X` 
 of size `(num_features, num_nodes)`.
