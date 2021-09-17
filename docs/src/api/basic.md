@@ -9,7 +9,7 @@ CurrentModule = GraphNeuralNetworks
 ```@index
 Order = [:type, :function]
 Modules = [GraphNeuralNetworks]
-Pages = ["api/basics.md"]
+Pages = ["basic.md"]
 ```
 
 ## Docs

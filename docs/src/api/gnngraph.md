@@ -10,7 +10,7 @@ Documentation page for the graph type `GNNGraph` provided GraphNeuralNetworks.jl
 
 ```@index
 Order = [:type, :function]
-Pages   = ["graphs.md"]
+Pages   = ["gnngraph.md"]
 ```
 
 ## Docs

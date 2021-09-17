@@ -8,7 +8,7 @@ CurrentModule = GraphNeuralNetworks
 
 ```@index
 Order = [:type, :function]
-Pages   = ["conv.md"]
+Pages = ["conv.md"]
 ```
 
 ## Docs
