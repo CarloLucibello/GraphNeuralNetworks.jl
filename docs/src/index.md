@@ -23,7 +23,7 @@ Usage examples on real datasets can be found in the [examples](https://github.co
 First, we create our dataset consisting in multiple random graphs and associated data features. 
 that we batch together into a unique graph.
 
-```juliarepl
+```julia
 julia> using GraphNeuralNetworks, LightGraphs, Flux, CUDA, Statistics
 
 julia> all_graphs = GNNGraph[];
@@ -51,9 +51,9 @@ GNNGraph:
 ### Model building 
 
 We concisely define our model using as a [`GNNChain`](@ref) containing 2 graph convolutaional 
-layers. If CUDA is available, our model will leave on the gpu.
+layers. If CUDA is available, our model will live on the gpu.
 
-```juliarepl
+```julia
 julia> device = CUDA.functional() ? Flux.gpu : Flux.cpu;
 
 julia> model = GNNChain(GCNConv(16 => 64),
@@ -70,15 +70,17 @@ julia> opt = ADAM(1f-4);
 
 ### Training 
 
-```juliarepl
+Finally, we use a standard Flux training pipeling to fit our dataset.
+Flux's DataLoader iterates over mini-batches of graphs 
+(batched together into a `GNNGraph` object). 
+
+```julia
 gtrain, _ = getgraph(gbatch, 1:800)
 gtest, _ = getgraph(gbatch, 801:gbatch.num_graphs)
 train_loader = Flux.Data.DataLoader(gtrain, batchsize=32, shuffle=true)
 test_loader = Flux.Data.DataLoader(gtest, batchsize=32, shuffle=false)
 
-function loss(g::GNNGraph)
-    mean((vec(model(g, g.ndata.x)) - g.gdata.y).^2)
-end
+loss(g::GNNGraph) = mean((vec(model(g, g.ndata.x)) - g.gdata.y).^2)
 
 loss(loader) = mean(loss(g |> device) for g in loader)
 
