@@ -17,6 +17,9 @@ where ``\phi`` is expressed by the [`compute_message`](@ref) function,
 ``\gamma_x`` and ``\gamma_e`` by [`update_node`](@ref) and [`update_edge`](@ref)
 respectively.
 
+The message propagation mechanism internally relies on the [`NNlib.gather`](@ref) 
+and [`NNlib.scatter`](@ref) methods.
+
 ## An example: implementing the GCNConv
 
 Let's (re-)implement the [`GCNConv`](@ref) layer use the message passing framework.
