@@ -44,7 +44,7 @@
         @test size(l.bias) == (out_channel,)
         @test l.k == k
         for g in test_graphs
-            gradtest(l, g, rtol=1e-4, broken_grad_fields=[:weight])
+            gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight])
         end
         
         @testset "bias=false" begin
@@ -72,36 +72,12 @@
 
     @testset "GATConv" begin
 
-        heads = 1
-        concat = true
-        l = GATConv(in_channel => out_channel; heads, concat)
-        for g in test_graphs
-            gradtest(l, g, rtol=1e-4)
+        for heads in (1, 2), concat in (true, false)
+            l = GATConv(in_channel => out_channel; heads, concat)
+            for g in test_graphs
+                gradtest(l, g, rtol=1e-4)
+            end
         end
-
-        heads = 2
-        concat = true
-        l = GATConv(in_channel => out_channel; heads, concat)
-        for g in test_graphs
-            gradtest(l, g, rtol=1e-4, 
-                broken_grad_fields = [:a])
-        end
-
-        heads = 1
-        concat = false
-        l = GATConv(in_channel => out_channel; heads, concat)
-        for g in test_graphs
-            gradtest(l, g, rtol=1e-4, 
-                broken_grad_fields = [:a])
-        end
-
-        heads = 2
-        concat = false
-        l = GATConv(in_channel => out_channel; heads, concat)
-        gradtest(l, test_graphs[1], atol=1e-4, rtol=1e-4, 
-                    broken_grad_fields = [:a])
-        gradtest(l, test_graphs[2], atol=1e-4, rtol=1e-4)
-        
 
         @testset "bias=false" begin
             @test length(Flux.params(GATConv(2=>3))) == 3
@@ -115,7 +91,7 @@
         @test size(l.weight) == (out_channel, out_channel, num_layers)
 
         for g in test_graphs
-            gradtest(l, g, atol=1e-5, rtol=1e-5) 
+            gradtest(l, g, rtol=1e-5) 
         end
     end
 
@@ -131,9 +107,19 @@
         eps = 0.001f0
         l = GINConv(nn, eps=eps)
         for g in test_graphs
-            gradtest(l, g, atol=1e-5, rtol=1e-5) 
+            gradtest(l, g, rtol=1e-5, exclude_grad_fields=[:eps]) 
         end
     
         @test !in(:eps, Flux.trainable(l))
+    end
+
+    @testset "NNConv" begin
+        edim = 10
+        nn = Dense(edim, out_channel * in_channel)
+        l = NNConv(in_channel => out_channel, nn)
+        for g in test_graphs
+            g = GNNGraph(g, edata=rand(T, edim, g.num_edges))
+            gradtest(l, g, rtol=1e-5) 
+        end
     end
 end

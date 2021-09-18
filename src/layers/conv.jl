@@ -196,7 +196,7 @@ end
 
 
 @doc raw"""
-    GATConv(in => out, , σ=identity;
+    GATConv(in => out, σ=identity;
             heads=1,
             concat=true,
             init=glorot_uniform    
@@ -224,7 +224,7 @@ with ``z_i`` a normalization factor.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
 - `negative_slope::Real`: Keyword argument, the parameter of LeakyReLU.
 """
-struct GATConv{T, A<:AbstractMatrix{T}, B} <: GNNLayer
+struct GATConv{T, A<:AbstractMatrix, B} <: GNNLayer
     weight::A
     bias::B
     a::A
@@ -239,12 +239,13 @@ end
 Flux.trainable(l::GATConv) = (l.weight, l.bias, l.a)
 
 function GATConv(ch::Pair{Int,Int}, σ=identity;
-                 heads::Int=1, concat::Bool=true, negative_slope=0.2f0,
+                 heads::Int=1, concat::Bool=true, negative_slope=0.2,
                  init=glorot_uniform, bias::Bool=true)
     in, out = ch             
     W = init(out*heads, in)
     b = Flux.create_bias(W, bias, out*heads)
     a = init(2*out, heads)
+    negative_slope = convert(eltype(W), negative_slope)
     GATConv(W, b, a, σ, negative_slope, ch, heads, concat)
 end
 
@@ -437,7 +438,7 @@ end
 
 
 @doc raw"""
-    NNConv(in => out, σ=identity; aggr=+, bias=true, init=glorot_uniform)
+    NNConv(in => out, f, σ=identity; aggr=+, bias=true, init=glorot_uniform)
 
 The continuous kernel-based convolutional operator from the 
 [Neural Message Passing for Quantum Chemistry](https://arxiv.org/abs/1704.01212) paper. 
@@ -447,7 +448,7 @@ This convolution is also known as the edge-conditioned convolution from the
 Performs the operation
 
 ```math
-\mathbf{x}_i' = W x_i + \square_{j \in N(i)} f_\Theta(\mathbf{e}_{j\to i})\,\mathbf{x}_j
+\mathbf{x}_i' = W \mathbf{x}_i + \square_{j \in N(i)} f_\Theta(\mathbf{e}_{j\to i})\,\mathbf{x}_j
 ```
 
 where ``f_\Theta``  denotes a learnable function (e.g. a linear layer or a multi-layer perceptron).
@@ -459,6 +460,7 @@ For convenience, also functions returning a single `(out*in, num_edges)` matrix 
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
+- ``f``: A (possibly learnable) function acting on edge features.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `σ`: Activation function.
 - `bias`: Add learnable bias.
@@ -468,31 +470,38 @@ struct NNConv <: GNNLayer
     weight
     bias
     nn
+    σ
     aggr
 end
 
 @functor NNConv
 
-function NNConv(ch::Pair{Int,Int}, σ=identity; aggr=+, bias=true, init=glorot_uniform)
+function NNConv(ch::Pair{Int,Int}, nn, σ=identity; aggr=+, bias=true, init=glorot_uniform)
     in, out = ch
     W = init(out, in)
     b = Flux.create_bias(W, bias, out)
-    return NNConv(W, b, nn, aggr)
+    return NNConv(W, b, nn, σ, aggr)
 end
 
 function compute_message(l::NNConv, x_i, x_j, e_ij) 
     nin, nedges = size(x_i)
     W = reshape(l.nn(e_ij), (:, nin, nedges))
-    return NNlib.batched_mul(W, x_j)
+    x_j = reshape(x_j, (nin, 1, nedges)) # needed by batched_mul
+    m = NNlib.batched_mul(W, x_j)
+    return reshape(m, :, nedges)
 end
 
-update_node(l::NNConv, m, x) = l.weight*x + m
+function update_node(l::NNConv, m, x)
+    l.σ.(l.weight*x .+ m .+ l.bias)
+end
 
 function (l::NNConv)(g::GNNGraph, x::AbstractMatrix, e)
-    check_num_nodes(g, X)
+    check_num_nodes(g, x)
     x, _ = propagate(l, g, l.aggr, x, e)
-    return l.σ.(x + l.bias)
+    return x
 end
+
+(l::NNConv)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g), edge_features(g)))
 
 function Base.show(io::IO, l::NNConv)
     out, in = size(l.weight)
