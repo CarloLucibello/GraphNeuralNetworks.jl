@@ -84,6 +84,19 @@
         end
     end
 
+    @testset "LightGraphs constructor" begin
+        lg = random_regular_graph(10, 4)
+        @test !LightGraphs.is_directed(lg)
+        g = GNNGraph(lg)
+        @test g.num_edges == 2*ne(lg) # g in undirected
+        @test LightGraphs.is_directed(g)
+        for e in LightGraphs.edges(lg)
+            i, j = src(e), dst(e)
+            @test has_edge(g, i, j)
+            @test has_edge(g, j, i)            
+        end
+    end
+
     @testset "add self-loops" begin
         A = [1  1  0  0
              0  0  1  0
@@ -174,9 +187,9 @@
     @testset "LearnBase and DataLoader compat" begin
         n, m, num_graphs = 10, 30, 50
         X = rand(10, n)
-        E = rand(10, m)
+        E = rand(10, 2m)
         U = rand(10, 1)
-        g = Flux.batch([GNNGraph(erdos_renyi(10, 30), ndata=rand(10, n), edata=rand(10, m), gdata=rand(10, 1)) 
+        g = Flux.batch([GNNGraph(erdos_renyi(n, m), ndata=X, edata=E, gdata=U) 
                         for _ in 1:num_graphs])
         
         @test LearnBase.getobs(g, 3) == getgraph(g, 3)[1]

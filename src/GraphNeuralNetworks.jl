@@ -38,13 +38,14 @@ export
     GNNChain,
 
     # layers/conv
-    GCNConv,
     ChebConv,
-    GraphConv,
+    EdgeConv,
     GATConv,
     GatedGraphConv,
-    EdgeConv,
+    GCNConv,
     GINConv,
+    GraphConv,
+    NNConv,
 
     # layers/pool
     GlobalPool,

@@ -7,7 +7,8 @@ See also [`GNNChain`](@ref).
 """
 abstract type GNNLayer end
 
-#TODO extend to store also edge and global features
+# Forward pass with graph-only input.
+# To be specialized by layers also needing edge features as input (e.g. NNConv). 
 (l::GNNLayer)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g)))
 
 """
