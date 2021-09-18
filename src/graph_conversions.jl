@@ -104,29 +104,37 @@ function to_sparse(A::ADJMAT_T, T::DataType=eltype(A); dir=:out, num_nodes=nothi
     @assert dir ∈ [:out, :in]
     num_nodes = size(A, 1)
     @assert num_nodes == size(A, 2)
-    num_edges = round(Int, sum(A))
+    num_edges = A isa AbstractSparseMatrix ? nnz(A) : count(!=(0), A)
     if dir == :in
         A = A'
     end
     if T != eltype(A)
         A = T.(A)
     end
-    return sparse(A), num_nodes, num_edges
+    if !(A isa AbstractSparseMatrix)
+        A = sparse(A)
+    end 
+    return A, num_nodes, num_edges
 end
 
 function to_sparse(adj_list::ADJLIST_T, T::DataType=Int; dir=:out, num_nodes=nothing)
     coo, num_nodes, num_edges = to_coo(adj_list; dir, num_nodes)
-    to_sparse(coo; dir, num_nodes)
+    return to_sparse(coo; dir, num_nodes)
 end
 
 function to_sparse(coo::COO_T, T::DataType=Int; dir=:out, num_nodes=nothing)
     s, t, eweight  = coo
+    s isa CuVector && return to_dense(coo, T; dir, num_nodes)
     eweight = isnothing(eweight) ? fill!(similar(s, T), 1) : eweight
     num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     A = sparse(s, t, eweight, num_nodes, num_nodes)
     num_edges = length(s)
-    A, num_nodes, num_edges
+    return A, num_nodes, num_edges
 end
+
+# _sparse(I, J, V, m, n) = sparse(I, J, V, m, n)
+
+# _sparse(I::CuVector, J::CuVector, V::CuVector, m, n)
 
 @non_differentiable to_coo(x...)
 @non_differentiable to_dense(x...)

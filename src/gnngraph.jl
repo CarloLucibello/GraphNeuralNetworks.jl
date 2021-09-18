@@ -348,8 +348,10 @@ function scaled_laplacian(g::GNNGraph, T::DataType=Float32; dir=:out)
 end
 
 # _eigmax(A) = eigmax(Symmetric(A)) # Doesn't work on sparse arrays
-_eigmax(A) = KrylovKit.eigsolve(Symmetric(A), 1, :LR)[1][1] # also eigs(A, x0, nev, mode) available 
-
+function _eigmax(A)
+    x0 = randn!(similar(A, float(eltype(A)), size(A, 1)))
+    KrylovKit.eigsolve(Symmetric(A), x0, 1, :LR)[1][1] # also eigs(A, x0, nev, mode) available 
+end
 # Eigenvalues for cuarray don't seem to be well supported. 
 # https://github.com/JuliaGPU/CUDA.jl/issues/154
 # https://discourse.julialang.org/t/cuda-eigenvalues-of-a-sparse-matrix/46851/5
