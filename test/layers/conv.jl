@@ -59,10 +59,10 @@
             gradtest(l, g, rtol=1e-5)
         end
 
-        # l = GraphConv(in_channel => out_channel, relu, bias=false)
-        # for g in test_graphs
-        #     gradtest(l, g)
-        # end
+        l = GraphConv(in_channel => out_channel, relu, bias=false)
+        for g in test_graphs
+            gradtest(l, g, rtol=1e-5)
+        end
         
         @testset "bias=false" begin
             @test length(Flux.params(GraphConv(2=>3))) == 3
