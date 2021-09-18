@@ -142,7 +142,6 @@ function test_approx_structs(l, l̄, l̄2; atol=1e-5, rtol=1e-5,
 end
 
 
-
 """
     to32(m)
 
@@ -166,57 +165,3 @@ function to64(m)
     f(x) = adapt(Float64, x)
     return fmap(f, m)
 end
-
-
-
-# function gpu_gradtest(l, x_cpu = nothing, args...; test_cpu = true)
-#     isnothing(x_cpu) && error("Missing input to test the layers against.")
-#     @testset "$name GPU grad tests" begin
-#       for layer in layers
-#         @testset "$layer Layer GPU grad test" begin
-  
-#           # compute output and grad of parameters
-#           l_cpu = layer(args...)
-#           ps_cpu = Flux.params(l_cpu)
-#           y_cpu, back_cpu = pullback(() -> sum(l_cpu(x_cpu)), ps_cpu)
-#           gs_cpu = back_cpu(1f0)
-  
-#           x_gpu = gpu(x_cpu)
-#           l_gpu = l_cpu |> gpu
-#           ps_gpu = Flux.params(l_gpu)
-  
-#           if typeof(l_gpu) <: BROKEN_LAYERS
-#             @test_broken gradient(() -> sum(l_gpu(x_gpu)), ps_gpu) isa Flux.Zygote.Grads
-#           else
-#             y_gpu, back_gpu = pullback(() -> sum(l_gpu(x_gpu)), ps_gpu)
-#             gs_gpu = back_gpu(1f0) # TODO many layers error out when backprop int 1, should fix
-  
-#             # compute grad of input
-#             xg_cpu = gradient(x -> sum(l_cpu(x)), x_cpu)[1]
-#             xg_gpu = gradient(x -> sum(l_gpu(x)), x_gpu)[1]
-  
-#             # test 
-#             if test_cpu
-#               @test y_gpu ≈ y_cpu rtol=1f-3 atol=1f-3
-#               if isnothing(xg_cpu)
-#                 @test isnothing(xg_gpu)
-#               else
-#                 @test Array(xg_gpu) ≈ xg_cpu rtol=1f-3 atol=1f-3
-#               end
-#             end
-#             @test gs_gpu isa Flux.Zygote.Grads
-#             for (p_cpu, p_gpu) in zip(ps_cpu, ps_gpu)
-#               if isnothing(gs_cpu[p_cpu])
-#                 @test isnothing(gs_gpu[p_gpu])
-#               else
-#                 @test gs_gpu[p_gpu] isa Flux.CUDA.CuArray
-#                 if test_cpu
-#                   @test Array(gs_gpu[p_gpu]) ≈ gs_cpu[p_cpu] rtol=1f-3 atol=1f-3
-#                 end
-#               end
-#             end
-#           end
-#         end
-#       end
-#     end
-#   end
