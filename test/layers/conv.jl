@@ -48,7 +48,9 @@
                 @test_broken test_layer(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
             else
                 test_layer(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
-                @test_broken test_layer(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=true)
+                if TEST_GPU
+                    @test_broken test_layer(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=true)
+                end
             end            
         end
         
