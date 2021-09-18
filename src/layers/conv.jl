@@ -356,20 +356,20 @@ end
 
 
 @doc raw"""
-    EdgeConv(f; aggr=max)
+    EdgeConv(nn; aggr=max)
 
 Edge convolutional layer from paper [Dynamic Graph CNN for Learning on Point Clouds](https://arxiv.org/abs/1801.07829).
 
 Performs the operation
 ```math
-\mathbf{x}_i' = \square_{j \in N(i)} f(\mathbf{x}_i || \mathbf{x}_j - \mathbf{x}_i)
+\mathbf{x}_i' = \square_{j \in N(i)} nn(\mathbf{x}_i || \mathbf{x}_j - \mathbf{x}_i)
 ```
 
-where `f` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
+where `nn` generally denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
 
 # Arguments
 
-- `f`: A (possibly learnable) function acting on edge features. 
+- `nn`: A (possibly learnable) function acting on edge features. 
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 """
 struct EdgeConv <: GNNLayer
@@ -405,13 +405,13 @@ Graph Isomorphism convolutional layer from paper [How Powerful are Graph Neural 
 
 
 ```math
-\mathbf{x}_i' = f\left((1 + \epsilon) \mathbf{x}_i + \sum_{j \in N(i)} \mathbf{x}_j \right)
+\mathbf{x}_i' = f_\Theta\left((1 + \epsilon) \mathbf{x}_i + \sum_{j \in N(i)} \mathbf{x}_j \right)
 ```
-where `f` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
+where ``f_\Theta`` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
 
 # Arguments
 
-- `f`: A (possibly learnable) function acting on node features. 
+- ``f``: A (possibly learnable) function acting on node features. 
 - `eps`: Weighting factor.
 """
 struct GINConv{R<:Real} <: GNNLayer
@@ -433,4 +433,70 @@ function (l::GINConv)(g::GNNGraph, X::AbstractMatrix)
     check_num_nodes(g, X)
     X, _ = propagate(l, g, +, X)
     X
+end
+
+
+@doc raw"""
+    NNConv(in => out, σ=identity; aggr=+, bias=true, init=glorot_uniform)
+
+The continuous kernel-based convolutional operator from the 
+[Neural Message Passing for Quantum Chemistry](https://arxiv.org/abs/1704.01212) paper. 
+This convolution is also known as the edge-conditioned convolution from the 
+[Dynamic Edge-Conditioned Filters in Convolutional Neural Networks on Graphs](https://arxiv.org/abs/1704.02901) paper.
+
+Performs the operation
+
+```math
+\mathbf{x}_i' = W x_i + \square_{j \in N(i)} f_\Theta(\mathbf{e}_{j\to i})\,\mathbf{x}_j
+```
+
+where ``f_\Theta``  denotes a learnable function (e.g. a linear layer or a multi-layer perceptron).
+Given an input of batched edge features `e` of size `(num_edge_features, num_edges)`, 
+the function `f` will return an batched matrices array whose size is `(out, in, num_edges)`.
+For convenience, also functions returning a single `(out*in, num_edges)` matrix are allowed.
+
+# Arguments
+
+- `in`: The dimension of input features.
+- `out`: The dimension of output features.
+- `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+- `σ`: Activation function.
+- `bias`: Add learnable bias.
+- `init`: Weights' initializer.
+"""
+struct NNConv <: GNNLayer
+    weight
+    bias
+    nn
+    aggr
+end
+
+@functor NNConv
+
+function NNConv(ch::Pair{Int,Int}, σ=identity; aggr=+, bias=true, init=glorot_uniform)
+    in, out = ch
+    W = init(out, in)
+    b = Flux.create_bias(W, bias, out)
+    return NNConv(W, b, nn, aggr)
+end
+
+function compute_message(l::NNConv, x_i, x_j, e_ij) 
+    nin, nedges = size(x_i)
+    W = reshape(l.nn(e_ij), (:, nin, nedges))
+    return NNlib.batched_mul(W, x_j)
+end
+
+update_node(l::NNConv, m, x) = l.weight*x + m
+
+function (l::NNConv)(g::GNNGraph, x::AbstractMatrix, e)
+    check_num_nodes(g, X)
+    x, _ = propagate(l, g, l.aggr, x, e)
+    return l.σ.(x + l.bias)
+end
+
+function Base.show(io::IO, l::NNConv)
+    out, in = size(l.weight)
+    print(io, "NNConv( $in => $out")
+    print(io, ", aggr=", l.aggr)
+    print(io, ")")
 end

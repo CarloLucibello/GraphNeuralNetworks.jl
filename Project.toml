@@ -33,8 +33,10 @@ NNlibCUDA = "0.1"
 julia = "1.6"
 
 [extras]
+ChainRulesTestUtils = "cdddcdb0-9152-4a09-a978-84456f9df70a"
+FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [targets]
-test = ["Test", "Zygote"]
+test = ["Test", "Zygote", "FiniteDifferences", "ChainRulesTestUtils"]

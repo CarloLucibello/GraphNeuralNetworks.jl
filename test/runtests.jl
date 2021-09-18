@@ -10,6 +10,7 @@ using Zygote
 using Test
 CUDA.allowscalar(false)
 
+include("test_utils.jl")
 include("cuda/test_utils.jl")
 
 tests = [
