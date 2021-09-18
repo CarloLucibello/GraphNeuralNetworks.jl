@@ -412,7 +412,7 @@ where ``f_\Theta`` typically denotes a learnable function, e.g. a linear layer o
 
 # Arguments
 
-- ``f``: A (possibly learnable) function acting on node features. 
+- `f`: A (possibly learnable) function acting on node features. 
 - `eps`: Weighting factor.
 """
 struct GINConv{R<:Real} <: GNNLayer
@@ -460,7 +460,7 @@ For convenience, also functions returning a single `(out*in, num_edges)` matrix 
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
-- ``f``: A (possibly learnable) function acting on edge features.
+- `f`: A (possibly learnable) function acting on edge features.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `σ`: Activation function.
 - `bias`: Add learnable bias.
