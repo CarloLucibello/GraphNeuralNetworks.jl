@@ -30,10 +30,10 @@
             gradtest(l, g, rtol=1e-5)
         end
 
-        # l = GCNConv(in_channel => out_channel, relu, bias=false)
-        # for g in test_graphs
-        #     gradtest(l, g)
-        # end
+        l = GCNConv(in_channel => out_channel, tanh, bias=false)
+        for g in test_graphs
+            gradtest(l, g)
+        end
     end
 
 
@@ -44,7 +44,8 @@
         @test size(l.bias) == (out_channel,)
         @test l.k == k
         for g in test_graphs
-            gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight])
+            gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
+            @test_broken gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=true)
         end
         
         @testset "bias=false" begin
@@ -116,7 +117,14 @@
     @testset "NNConv" begin
         edim = 10
         nn = Dense(edim, out_channel * in_channel)
+        
         l = NNConv(in_channel => out_channel, nn)
+        for g in test_graphs
+            g = GNNGraph(g, edata=rand(T, edim, g.num_edges))
+            gradtest(l, g, rtol=1e-5) 
+        end
+        
+        l = NNConv(in_channel => out_channel, nn, tanh, bias=false, aggr=mean)
         for g in test_graphs
             g = GNNGraph(g, edata=rand(T, edim, g.num_edges))
             gradtest(l, g, rtol=1e-5) 

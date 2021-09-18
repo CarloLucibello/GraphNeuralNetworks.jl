@@ -32,7 +32,7 @@ function GCNConv(ch::Pair{Int,Int}, σ=identity;
                  init=glorot_uniform, bias::Bool=true)
     in, out = ch
     W = init(out, in)
-    b = Flux.create_bias(W, bias, out)
+    b = bias ? Flux.create_bias(W, true, out) : false
     GCNConv(W, b, σ)
 end
 
@@ -105,7 +105,7 @@ function ChebConv(ch::Pair{Int,Int}, k::Int;
                   init=glorot_uniform, bias::Bool=true)
     in, out = ch
     W = init(out, in, k)
-    b = Flux.create_bias(W, bias, out)
+    b = bias ? Flux.create_bias(W, true, out) : false
     ChebConv(W, b, k)
 end
 
@@ -172,7 +172,7 @@ function GraphConv(ch::Pair{Int,Int}, σ=identity, aggr=+;
     in, out = ch
     W1 = init(out, in)
     W2 = init(out, in)
-    b = Flux.create_bias(W1, bias, out)
+    b = bias ? Flux.create_bias(W1, true, out) : false
     GraphConv(W1, W2, b, σ, aggr)
 end
 
@@ -243,7 +243,7 @@ function GATConv(ch::Pair{Int,Int}, σ=identity;
                  init=glorot_uniform, bias::Bool=true)
     in, out = ch             
     W = init(out*heads, in)
-    b = Flux.create_bias(W, bias, out*heads)
+    b = bias ? Flux.create_bias(W, true, out*heads) : false
     a = init(2*out, heads)
     negative_slope = convert(eltype(W), negative_slope)
     GATConv(W, b, a, σ, negative_slope, ch, heads, concat)
@@ -479,7 +479,7 @@ end
 function NNConv(ch::Pair{Int,Int}, nn, σ=identity; aggr=+, bias=true, init=glorot_uniform)
     in, out = ch
     W = init(out, in)
-    b = Flux.create_bias(W, bias, out)
+    b = bias ? Flux.create_bias(W, true, out) : false
     return NNConv(W, b, nn, σ, aggr)
 end
 

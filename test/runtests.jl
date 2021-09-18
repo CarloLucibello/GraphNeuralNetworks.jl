@@ -11,7 +11,7 @@ using Test
 CUDA.allowscalar(false)
 
 include("test_utils.jl")
-include("cuda/test_utils.jl")
+# include("cuda/test_utils.jl")
 
 tests = [
     "gnngraph",
@@ -24,13 +24,15 @@ tests = [
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
 
 # Testing all graph types. :sparse is a bit broken at the moment
-@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :sparse, :dense)
+@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo,)
 
     global GRAPH_T = graph_type
+    global TEST_GPU = CUDA.functional() && GRAPH_T != :sparse
+
     for t in tests
         include("$t.jl")
 
-        if CUDA.functional() && GRAPH_T != :sparse && isfile("cuda/$t.jl")
+        if TEST_GPU && isfile("cuda/$t.jl")
             include("cuda/$t.jl")
         end
     end
