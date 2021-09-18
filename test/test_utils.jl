@@ -12,7 +12,7 @@ function FiniteDifferences.to_vec(x::Integer)
     return Int[x], Integer_from_vec
 end
 
-function gradtest(l, g::GNNGraph; atol=1e-7, rtol=1e-5,
+function test_layer(l, g::GNNGraph; atol=1e-7, rtol=1e-5,
                                  exclude_grad_fields=[],
                                  broken_grad_fields=[],
                                  verbose = false,

@@ -27,12 +27,12 @@
     @testset "GCNConv" begin
         l = GCNConv(in_channel => out_channel)
         for g in test_graphs
-            gradtest(l, g, rtol=1e-5)
+            test_layer(l, g, rtol=1e-5)
         end
 
         l = GCNConv(in_channel => out_channel, tanh, bias=false)
         for g in test_graphs
-            gradtest(l, g, rtol=1e-5)
+            test_layer(l, g, rtol=1e-5)
         end
     end
 
@@ -45,10 +45,10 @@
         @test l.k == k
         for g in test_graphs
             if g === g_single_vertex && GRAPH_T == :dense
-                @test_broken gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
+                @test_broken test_layer(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
             else
-                gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
-                @test_broken gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=true)
+                test_layer(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
+                @test_broken test_layer(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=true)
             end            
         end
         
@@ -61,12 +61,12 @@
     @testset "GraphConv" begin
         l = GraphConv(in_channel => out_channel)
         for g in test_graphs
-            gradtest(l, g, rtol=1e-5)
+            test_layer(l, g, rtol=1e-5)
         end
 
         l = GraphConv(in_channel => out_channel, relu, bias=false)
         for g in test_graphs
-            gradtest(l, g, rtol=1e-5)
+            test_layer(l, g, rtol=1e-5)
         end
         
         @testset "bias=false" begin
@@ -80,7 +80,7 @@
         for heads in (1, 2), concat in (true, false)
             l = GATConv(in_channel => out_channel; heads, concat)
             for g in test_graphs
-                gradtest(l, g, rtol=1e-4)
+                test_layer(l, g, rtol=1e-4)
             end
         end
 
@@ -96,14 +96,14 @@
         @test size(l.weight) == (out_channel, out_channel, num_layers)
 
         for g in test_graphs
-            gradtest(l, g, rtol=1e-5) 
+            test_layer(l, g, rtol=1e-5) 
         end
     end
 
     @testset "EdgeConv" begin
         l = EdgeConv(Dense(2*in_channel, out_channel), aggr=+)
         for g in test_graphs
-            gradtest(l, g, rtol=1e-5)
+            test_layer(l, g, rtol=1e-5)
         end
     end
 
@@ -112,7 +112,7 @@
         eps = 0.001f0
         l = GINConv(nn, eps=eps)
         for g in test_graphs
-            gradtest(l, g, rtol=1e-5, exclude_grad_fields=[:eps]) 
+            test_layer(l, g, rtol=1e-5, exclude_grad_fields=[:eps]) 
         end
     
         @test !in(:eps, Flux.trainable(l))
@@ -125,13 +125,13 @@
         l = NNConv(in_channel => out_channel, nn)
         for g in test_graphs
             g = GNNGraph(g, edata=rand(T, edim, g.num_edges))
-            gradtest(l, g, rtol=1e-5) 
+            test_layer(l, g, rtol=1e-5) 
         end
         
         l = NNConv(in_channel => out_channel, nn, tanh, bias=false, aggr=mean)
         for g in test_graphs
             g = GNNGraph(g, edata=rand(T, edim, g.num_edges))
-            gradtest(l, g, rtol=1e-5) 
+            test_layer(l, g, rtol=1e-5) 
         end
     end
 end
