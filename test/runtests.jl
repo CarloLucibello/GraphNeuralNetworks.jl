@@ -1,7 +1,7 @@
 using GraphNeuralNetworks
 using Flux
 using CUDA
-using Flux: gpu, @functor
+using Flux: gpu, @functor, f64, f32
 using LinearAlgebra, Statistics, Random
 using NNlib
 using LearnBase

@@ -27,7 +27,7 @@
     @testset "GCNConv" begin
         l = GCNConv(in_channel => out_channel)
         for g in test_graphs
-            gradtest(l, g)
+            gradtest(l, g, rtol=1e-5)
         end
 
         # l = GCNConv(in_channel => out_channel, relu, bias=false)
@@ -44,7 +44,7 @@
         @test size(l.bias) == (out_channel,)
         @test l.k == k
         for g in test_graphs
-            gradtest(l, g, rtol=1) #TODO broken
+            gradtest(l, g, rtol=1e-4, broken_grad_fields=[:weight])
         end
         
         @testset "bias=false" begin
@@ -56,7 +56,7 @@
     @testset "GraphConv" begin
         l = GraphConv(in_channel => out_channel)
         for g in test_graphs
-            gradtest(l, g, rtol=1e-3)
+            gradtest(l, g, rtol=1e-5)
         end
 
         # l = GraphConv(in_channel => out_channel, relu, bias=false)
@@ -72,17 +72,36 @@
 
     @testset "GATConv" begin
 
-        for heads = [1, 2], concat = [true, false]
-            l = GATConv(in_channel => out_channel; heads, concat)
-            for g in test_graphs
-                gradtest(l, g, atol=1e-3, rtol=1e-2) #TODO 
-            end
-    
-            # l = GraphConv(in_channel => out_channel, relu, bias=false)
-            # for g in test_graphs
-            #     gradtest(l, g)
-            # end
+        heads = 1
+        concat = true
+        l = GATConv(in_channel => out_channel; heads, concat)
+        for g in test_graphs
+            gradtest(l, g, rtol=1e-4)
         end
+
+        heads = 2
+        concat = true
+        l = GATConv(in_channel => out_channel; heads, concat)
+        for g in test_graphs
+            gradtest(l, g, rtol=1e-4, 
+                broken_grad_fields = [:a])
+        end
+
+        heads = 1
+        concat = false
+        l = GATConv(in_channel => out_channel; heads, concat)
+        for g in test_graphs
+            gradtest(l, g, rtol=1e-4, 
+                broken_grad_fields = [:a])
+        end
+
+        heads = 2
+        concat = false
+        l = GATConv(in_channel => out_channel; heads, concat)
+        gradtest(l, test_graphs[1], atol=1e-4, rtol=1e-4, 
+                    broken_grad_fields = [:a])
+        gradtest(l, test_graphs[2], atol=1e-4, rtol=1e-4)
+        
 
         @testset "bias=false" begin
             @test length(Flux.params(GATConv(2=>3))) == 3
@@ -101,9 +120,9 @@
     end
 
     @testset "EdgeConv" begin
-        l = EdgeConv(Dense(2*in_channel, out_channel))
+        l = EdgeConv(Dense(2*in_channel, out_channel), aggr=+)
         for g in test_graphs
-            gradtest(l, g, atol=1e-5, rtol=1e-5) 
+            gradtest(l, g, rtol=1e-5)
         end
     end
 

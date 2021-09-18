@@ -2,7 +2,17 @@ using ChainRulesTestUtils, FiniteDifferences, Zygote
 
 const rule_config = Zygote.ZygoteRuleConfig()
 
-function gradtest(l, g::GNNGraph; atol=1e-9, rtol=1e-5)
+# Using this until https://github.com/JuliaDiff/FiniteDifferences.jl/issues/188
+# is fixed
+function FiniteDifferences.to_vec(x::Integer)
+    Integer_from_vec(v) = x
+    return Int[x], Integer_from_vec
+end
+
+function gradtest(l, g::GNNGraph; atol=1e-7, rtol=1e-5,
+                                 exclude_grad_fields=[],
+                                 broken_grad_fields=[]
+                                )
     # TODO these give errors, probably some bugs in ChainRulesTestUtils
     # test_rrule(rule_config, x -> l(g, x), x; rrule_f=rrule_via_ad, check_inferred=false)
     # test_rrule(rule_config, l -> l(g, x), l; rrule_f=rrule_via_ad, check_inferred=false)
@@ -27,27 +37,35 @@ function gradtest(l, g::GNNGraph; atol=1e-9, rtol=1e-5)
     # TEST LAYER GRADIENT - l(g, x) 
     l̄ = gradient(l -> sum(l(g, x)), l)[1]
     l̄_fd = FiniteDifferences.grad(fdm, l -> sum(l(g, x)), l)[1]
-    test_approx_structs(l, l̄, l̄_fd; atol, rtol)
-
+    test_approx_structs(l, l̄, l̄_fd; atol, rtol, broken_grad_fields, exclude_grad_fields)
     # TEST LAYER GRADIENT - l(g)
     l̄ = gradient(l -> sum(l(g).ndata.x), l)[1]
     l̄_fd = FiniteDifferences.grad(fdm, l -> sum(l(g).ndata.x), l)[1]
-    test_approx_structs(l, l̄, l̄_fd; atol, rtol)
+    test_approx_structs(l, l̄, l̄_fd; atol, rtol, broken_grad_fields, exclude_grad_fields)
 end
 
-function test_approx_structs(l, l̄, l̄_fd; atol=1e-9, rtol=1e-5)
+function test_approx_structs(l, l̄, l̄_fd; atol=1e-5, rtol=1e-5, 
+            broken_grad_fields=[],
+            exclude_grad_fields=[])
     for f in fieldnames(typeof(l))
+        f ∈ exclude_grad_fields && continue
         f̄, f̄_fd = getfield(l̄, f), getfield(l̄_fd, f)
         if isnothing(f̄)
-            @show f̄ f̄_fd
+            # @show f f̄_fd
             @test !(f̄_fd isa AbstractArray) || isapprox(f̄_fd, fill!(similar(f̄_fd), 0); atol=atol, rtol=rtol)
         elseif f̄ isa Union{AbstractArray, Number}
             @test eltype(f̄) == eltype(getfield(l, f))
-            @test f̄ ≈ f̄_fd   atol=atol rtol=rtol
+            if f ∈ broken_grad_fields
+                @test_broken f̄ ≈ f̄_fd   atol=atol rtol=rtol
+            else
+                # @show f getfield(l, f) f̄ f̄_fd broken_grad_fields
+                @test f̄ ≈ f̄_fd   atol=atol rtol=rtol
+            end
         else
-            test_approx_structs(getfield(l, f), f̄, f̄_fd)
+            test_approx_structs(getfield(l, f), f̄, f̄_fd; broken_grad_fields)
         end
     end
+    return true
 end
 
 
