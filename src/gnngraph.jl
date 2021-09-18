@@ -151,6 +151,10 @@ GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
 function GNNGraph(g::AbstractGraph; kws...)
     s = LightGraphs.src.(LightGraphs.edges(g))
     t = LightGraphs.dst.(LightGraphs.edges(g))
+    if !LightGraphs.is_directed(g) 
+        # add reverse edges since GNNGraph are directed
+        s, t = [s; t], [t; s]
+    end
     GNNGraph((s, t); num_nodes = LightGraphs.nv(g), kws...)
 end
 
