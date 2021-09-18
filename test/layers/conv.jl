@@ -32,7 +32,7 @@
 
         l = GCNConv(in_channel => out_channel, tanh, bias=false)
         for g in test_graphs
-            gradtest(l, g)
+            gradtest(l, g, rtol=1e-5)
         end
     end
 
@@ -44,8 +44,12 @@
         @test size(l.bias) == (out_channel,)
         @test l.k == k
         for g in test_graphs
-            gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
-            @test_broken gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=true)
+            if g === g_single_vertex && GRAPH_T == :dense
+                @test_broken gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
+            else
+                gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
+                @test_broken gradtest(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=true)
+            end            
         end
         
         @testset "bias=false" begin

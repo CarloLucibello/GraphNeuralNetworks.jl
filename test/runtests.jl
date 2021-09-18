@@ -1,7 +1,7 @@
 using GraphNeuralNetworks
 using Flux
 using CUDA
-using Flux: gpu, @functor, f64, f32
+using Flux: gpu, @functor
 using LinearAlgebra, Statistics, Random
 using NNlib
 using LearnBase
@@ -11,7 +11,6 @@ using Test
 CUDA.allowscalar(false)
 
 include("test_utils.jl")
-# include("cuda/test_utils.jl")
 
 tests = [
     "gnngraph",
@@ -24,7 +23,7 @@ tests = [
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
 
 # Testing all graph types. :sparse is a bit broken at the moment
-@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo,)
+@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo,:sparse,:dense)
 
     global GRAPH_T = graph_type
     global TEST_GPU = CUDA.functional() && GRAPH_T != :sparse

@@ -338,7 +338,10 @@ defined as ``\hat{L} = \frac{2}{\lambda_{max}} L - I`` where ``L`` is the normal
 """
 function scaled_laplacian(g::GNNGraph, T::DataType=Float32; dir=:out)
     L = normalized_laplacian(g, T)
-    @assert issymmetric(L) "scaled_laplacian only works with symmetric matrices"
+    if !issymmetric(L)
+        @show norm(L - L')
+    end
+    # @assert issymmetric(L) "scaled_laplacian only works with symmetric matrices"
     λmax = _eigmax(L)
     return  2 / λmax * L - I
 end
