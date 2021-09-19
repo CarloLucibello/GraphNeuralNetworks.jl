@@ -26,8 +26,16 @@ g = GNNGraph(erdos_renyi(10,  30), ndata = rand(Float32, 32, 10))
 g = GNNGraph(erdos_renyi(10,  30), ndata = (; x=rand(Float32, 32, 10), y=rand(Float32, 10)))
 
 
-# Attach an array with edge features
+# Attach an array with edge features.
+# Since `GNNGraph`s are directed, the number of edges
+# will be double that of the original LightGraphs&#39; undirected graph.
+g = GNNGraph(erdos_renyi(10,  30), edata = rand(Float32, 60))
+@assert g.num_edges == 60
+
+# If we pass only half of the edge features, they will be copied
+# on the reversed edges.
 g = GNNGraph(erdos_renyi(10,  30), edata = rand(Float32, 30))
+
 
 # Create a new graph from previous one, inheriting edge data
 # but replacing node data
@@ -38,9 +46,9 @@ g′ = remove_self_loops(g)</code></pre><h2 id="Batches-and-Subgraphs"><a class=
 gall = Flux.batch([GNNGraph(erdos_renyi(10, 30), ndata=rand(Float32,3,10)) for _ in 1:160])
 
 g23 = getgraph(gall, 2:3)
-@assert g23.num_graphs == 16
-@assert g23.num_nodes == 32
-@assert g23.num_edges == 60
+@assert g23.num_graphs == 2
+@assert g23.num_nodes == 20
+@assert g23.num_edges == 120 # 30 undirected edges x 2 graphs
 
 
 # DataLoader compatibility
@@ -53,4 +61,4 @@ for g in train_loader
     .....
 end</code></pre><h2 id="JuliaGraphs-ecosystem-integration"><a class="docs-heading-anchor" href="#JuliaGraphs-ecosystem-integration">JuliaGraphs ecosystem integration</a><a id="JuliaGraphs-ecosystem-integration-1"></a><a class="docs-heading-anchor-permalink" href="#JuliaGraphs-ecosystem-integration" title="Permalink"></a></h2><p>Since <code>GNNGraph &lt;: LightGraphs.AbstractGraph</code>, we can use any functionality from LightGraphs. </p><pre><code class="language-julia hljs">@assert LightGraphs.isdirected(g)</code></pre><h2 id="GPU-movement"><a class="docs-heading-anchor" href="#GPU-movement">GPU movement</a><a id="GPU-movement-1"></a><a class="docs-heading-anchor-permalink" href="#GPU-movement" title="Permalink"></a></h2><p>Move a <code>GNNGraph</code> to a CUDA device using <code>Flux.gpu</code> method. </p><pre><code class="language-julia hljs">using Flux: gpu
 
-g_gpu = g |&gt; gpu</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../messagepassing/">Message Passing »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.6 on <span class="colophon-date" title="Sunday 19 September 2021 07:12">Sunday 19 September 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+g_gpu = g |&gt; gpu</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../messagepassing/">Message Passing »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.6 on <span class="colophon-date" title="Sunday 19 September 2021 15:00">Sunday 19 September 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
