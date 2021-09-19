@@ -124,20 +124,20 @@ function GNNGraph(data;
     @assert dir ∈ [:in, :out]
     
     if graph_type == :coo
-        g, num_nodes, num_edges = to_coo(data; num_nodes, dir)
+        graph, num_nodes, num_edges = to_coo(data; num_nodes, dir)
     elseif graph_type == :dense
-        g, num_nodes, num_edges = to_dense(data; dir)
+        graph, num_nodes, num_edges = to_dense(data; dir)
     elseif graph_type == :sparse
-        g, num_nodes, num_edges = to_sparse(data; dir)
+        graph, num_nodes, num_edges = to_sparse(data; dir)
     end
     
     num_graphs = !isnothing(graph_indicator) ? maximum(graph_indicator) : 1
     
-    ndata = normalize_graphdata(ndata, :x)
-    edata = normalize_graphdata(edata, :e)
-    gdata = normalize_graphdata(gdata, :u)
+    ndata = normalize_graphdata(ndata, default_name=:x, n=num_nodes)
+    edata = normalize_graphdata(edata, default_name=:e, n=num_edges, duplicate_if_needed=true)
+    gdata = normalize_graphdata(gdata, default_name=:u, n=num_graphs)
     
-    GNNGraph(g, 
+    GNNGraph(graph, 
             num_nodes, num_edges, num_graphs, 
             graph_indicator,
             ndata, edata, gdata)
@@ -149,21 +149,22 @@ GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
 
 # GNNGraph(g::AbstractGraph; kws...) = GNNGraph(adjacency_matrix(g, dir=:out); kws...)
 
-function GNNGraph(g::AbstractGraph; kws...)
+function GNNGraph(g::AbstractGraph; edata=(;), kws...)
     s = LightGraphs.src.(LightGraphs.edges(g))
     t = LightGraphs.dst.(LightGraphs.edges(g))
     if !LightGraphs.is_directed(g) 
         # add reverse edges since GNNGraph are directed
-        s, t = [s; t], [t; s]
+        s, t = [s; t], [t; s]    
     end
-    GNNGraph((s, t); num_nodes = LightGraphs.nv(g), kws...)
+    GNNGraph((s, t); edata, num_nodes=LightGraphs.nv(g), kws...)
 end
+
 
 function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata)
 
-    ndata = normalize_graphdata(ndata, :x)
-    edata = normalize_graphdata(edata, :e)
-    gdata = normalize_graphdata(gdata, :u)
+    ndata = normalize_graphdata(ndata, default_name=:x, n=g.num_nodes)
+    edata = normalize_graphdata(edata, default_name=:e, n=g.num_edges, duplicate_if_needed=true)
+    gdata = normalize_graphdata(gdata, default_name=:u, n=g.num_graphs)
     
     GNNGraph(g.graph, 
             g.num_nodes, g.num_edges, g.num_graphs, 

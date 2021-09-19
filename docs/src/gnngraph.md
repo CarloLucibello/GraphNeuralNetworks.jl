@@ -45,8 +45,16 @@ g = GNNGraph(erdos_renyi(10,  30), ndata = rand(Float32, 32, 10))
 g = GNNGraph(erdos_renyi(10,  30), ndata = (; x=rand(Float32, 32, 10), y=rand(Float32, 10)))
 
 
-# Attach an array with edge features
+# Attach an array with edge features.
+# Since `GNNGraph`s are directed, the number of edges
+# will be double that of the original LightGraphs' undirected graph.
+g = GNNGraph(erdos_renyi(10,  30), edata = rand(Float32, 60))
+@assert g.num_edges == 60
+
+# If we pass only half of the edge features, they will be copied
+# on the reversed edges.
 g = GNNGraph(erdos_renyi(10,  30), edata = rand(Float32, 30))
+
 
 # Create a new graph from previous one, inheriting edge data
 # but replacing node data
