@@ -9,6 +9,7 @@ const COO_T = Tuple{T, T, V} where {T <: AbstractVector, V}
 const ADJLIST_T = AbstractVector{T} where T <: AbstractVector
 const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
+const CUMAT_T = Union{AnyCuMatrix, CUDA.CUSPARSE.CuSparseMatrix}
 
 """ 
     GNNGraph(data; [graph_type, ndata, edata, gdata, num_nodes, graph_indicator, dir])
@@ -349,9 +350,13 @@ end
 
 # _eigmax(A) = eigmax(Symmetric(A)) # Doesn't work on sparse arrays
 function _eigmax(A)
-    x0 = randn!(similar(A, float(eltype(A)), size(A, 1)))
+    x0 = _rand_dense_vector(A)
     KrylovKit.eigsolve(Symmetric(A), x0, 1, :LR)[1][1] # also eigs(A, x0, nev, mode) available 
 end
+
+_rand_dense_vector(A::AbstractMatrix{T}) where T = randn(float(T), size(A, 1))
+_rand_dense_vector(A::CUMAT_T)= CUDA.randn(size(A, 1))
+
 # Eigenvalues for cuarray don't seem to be well supported. 
 # https://github.com/JuliaGPU/CUDA.jl/issues/154
 # https://discourse.julialang.org/t/cuda-eigenvalues-of-a-sparse-matrix/46851/5
