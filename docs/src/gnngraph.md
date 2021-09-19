@@ -78,9 +78,9 @@ using Flux
 gall = Flux.batch([GNNGraph(erdos_renyi(10, 30), ndata=rand(Float32,3,10)) for _ in 1:160])
 
 g23 = getgraph(gall, 2:3)
-@assert g23.num_graphs == 16
-@assert g23.num_nodes == 32
-@assert g23.num_edges == 60
+@assert g23.num_graphs == 2
+@assert g23.num_nodes == 20
+@assert g23.num_edges == 120 # 30 undirected edges x 2 graphs
 
 
 # DataLoader compatibility
