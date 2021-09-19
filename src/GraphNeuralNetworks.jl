@@ -1,7 +1,7 @@
 module GraphNeuralNetworks
 
 using Statistics: mean
-using LinearAlgebra
+using LinearAlgebra, Random
 using SparseArrays
 import KrylovKit
 using Base: tail

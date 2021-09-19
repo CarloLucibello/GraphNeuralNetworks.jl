@@ -9,6 +9,7 @@ const COO_T = Tuple{T, T, V} where {T <: AbstractVector, V}
 const ADJLIST_T = AbstractVector{T} where T <: AbstractVector
 const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
+const CUMAT_T = Union{AnyCuMatrix, CUDA.CUSPARSE.CuSparseMatrix}
 
 """ 
     GNNGraph(data; [graph_type, ndata, edata, gdata, num_nodes, graph_indicator, dir])
@@ -262,7 +263,11 @@ function adjacency_list(g::GNNGraph; dir=:out)
 end
 
 function LightGraphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
-    A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
+    if g.graph[1] isa CuVector
+        A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
+    else
+        A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
+    end
     @assert size(A) == (n, n)
     return dir == :out ? A : A'
 end
@@ -348,7 +353,13 @@ function scaled_laplacian(g::GNNGraph, T::DataType=Float32; dir=:out)
 end
 
 # _eigmax(A) = eigmax(Symmetric(A)) # Doesn't work on sparse arrays
-_eigmax(A) = KrylovKit.eigsolve(Symmetric(A), 1, :LR)[1][1] # also eigs(A, x0, nev, mode) available 
+function _eigmax(A)
+    x0 = _rand_dense_vector(A)
+    KrylovKit.eigsolve(Symmetric(A), x0, 1, :LR)[1][1] # also eigs(A, x0, nev, mode) available 
+end
+
+_rand_dense_vector(A::AbstractMatrix{T}) where T = randn(float(T), size(A, 1))
+_rand_dense_vector(A::CUMAT_T)= CUDA.randn(size(A, 1))
 
 # Eigenvalues for cuarray don't seem to be well supported. 
 # https://github.com/JuliaGPU/CUDA.jl/issues/154
