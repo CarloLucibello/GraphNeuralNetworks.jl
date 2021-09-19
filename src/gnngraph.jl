@@ -263,7 +263,11 @@ function adjacency_list(g::GNNGraph; dir=:out)
 end
 
 function LightGraphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
-    A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
+    if g.graph[1] isa CuVector
+        A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
+    else
+        A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
+    end
     @assert size(A) == (n, n)
     return dir == :out ? A : A'
 end

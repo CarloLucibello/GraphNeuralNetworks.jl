@@ -124,7 +124,6 @@ end
 
 function to_sparse(coo::COO_T, T::DataType=Int; dir=:out, num_nodes=nothing)
     s, t, eweight  = coo
-    s isa CuVector && return to_dense(coo, T; dir, num_nodes)
     eweight = isnothing(eweight) ? fill!(similar(s, T), 1) : eweight
     num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     A = sparse(s, t, eweight, num_nodes, num_nodes)
