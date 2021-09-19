@@ -280,7 +280,7 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
     if !l.concat
         x = mean(x, dims=2)
     end
-    x = reshape(x, :, size(x, 3))
+    x = reshape(x, :, size(x, 3))  # return a matrix
     x = l.σ.(x .+ l.bias)                                      
 
     return x  
