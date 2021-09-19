@@ -132,9 +132,6 @@ function to_sparse(coo::COO_T, T::DataType=Int; dir=:out, num_nodes=nothing)
     return A, num_nodes, num_edges
 end
 
-# _sparse(I, J, V, m, n) = sparse(I, J, V, m, n)
-
-# _sparse(I::CuVector, J::CuVector, V::CuVector, m, n)
 
 @non_differentiable to_coo(x...)
 @non_differentiable to_dense(x...)
