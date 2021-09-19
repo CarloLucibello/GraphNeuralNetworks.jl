@@ -12,11 +12,12 @@ function FiniteDifferences.to_vec(x::Integer)
     return Int[x], Integer_from_vec
 end
 
-function test_layer(l, g::GNNGraph; atol=1e-7, rtol=1e-5,
-                                 exclude_grad_fields=[],
-                                 broken_grad_fields=[],
+function test_layer(l, g::GNNGraph; atol = 1e-7, rtol = 1e-5,
+                                 exclude_grad_fields = [],
+                                 broken_grad_fields =[],
                                  verbose = false,
                                  test_gpu = TEST_GPU,
+                                 outsize = nothing,
                                 )
 
     # TODO these give errors, probably some bugs in ChainRulesTestUtils
@@ -29,7 +30,7 @@ function test_layer(l, g::GNNGraph; atol=1e-7, rtol=1e-5,
     x = node_features(g)
     e = edge_features(g)
 
-    x64, e64, l64, g64 = to64.([x, e, l, g]) 
+    x64, e64, l64, g64 = to64.([x, e, l, g]) # needed for accurate FiniteDifferences' grad
     xgpu, egpu, lgpu, ggpu = gpu.([x, e, l, g]) 
 
     f(l, g) = l(g)
@@ -45,7 +46,11 @@ function test_layer(l, g::GNNGraph; atol=1e-7, rtol=1e-5,
     # TEST OUTPUT
     y = f(l, g, x)
     @test eltype(y) == eltype(x)
-    
+    @test all(isfinite, y)
+    if !isnothing(outsize)
+        @test size(y) == outsize
+    end
+ 
     g′ = f(l, g)
     @test g′.ndata.x ≈ y
     

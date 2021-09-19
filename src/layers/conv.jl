@@ -142,7 +142,7 @@ end
 
 
 @doc raw"""
-    GraphConv(in => out, σ=identity, aggr=+; bias=true, init=glorot_uniform)
+    GraphConv(in => out, σ=identity; aggr=+, bias=true, init=glorot_uniform)
 
 Graph convolution layer from Reference: [Weisfeiler and Leman Go Neural: Higher-order Graph Neural Networks](https://arxiv.org/abs/1810.02244).
 
@@ -172,7 +172,7 @@ end
 
 @functor GraphConv
 
-function GraphConv(ch::Pair{Int,Int}, σ=identity, aggr=+;
+function GraphConv(ch::Pair{Int,Int}, σ=identity; aggr=+,
                    init=glorot_uniform, bias::Bool=true)
     in, out = ch
     W1 = init(out, in)
@@ -214,9 +214,9 @@ Implements the operation
 ```math
 \mathbf{x}_i' = \sum_{j \in N(i)} \alpha_{ij} W \mathbf{x}_j
 ```
-where the attention coefficient ``\alpha_{ij}`` is given by
+where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
-\alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W \mathbf{x}_i || W \mathbf{x}_j]))
+\alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W \mathbf{x}_i \,\|\, W \mathbf{x}_j]))
 ```
 with ``z_i`` a normalization factor.
 
@@ -225,9 +225,9 @@ with ``z_i`` a normalization factor.
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
 - `bias::Bool`: Keyword argument, whether to learn the additive bias.
-- `heads`: Number attention heads 
+- `heads`: Number attention heads.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
-- `negative_slope::Real`: Keyword argument, the parameter of LeakyReLU.
+- `negative_slope`: The parameter of LeakyReLU.
 """
 struct GATConv{T, A<:AbstractMatrix, B} <: GNNLayer
     weight::A
@@ -248,14 +248,18 @@ function GATConv(ch::Pair{Int,Int}, σ=identity;
                  init=glorot_uniform, bias::Bool=true)
     in, out = ch             
     W = init(out*heads, in)
-    b = bias ? Flux.create_bias(W, true, out*heads) : false
+    if concat 
+        b = bias ? Flux.create_bias(W, true, out*heads) : false
+    else
+        b = bias ? Flux.create_bias(W, true, out) : false
+    end
     a = init(2*out, heads)
     negative_slope = convert(eltype(W), negative_slope)
     GATConv(W, b, a, σ, negative_slope, ch, heads, concat)
 end
 
 function compute_message(l::GATConv, Wxi, Wxj)
-    aWW = sum(l.a .* cat(Wxi, Wxj, dims=1), dims=1)   # 1 × nheads × nedges
+    aWW = sum(l.a .* vcat(Wxi, Wxj), dims=1)   # 1 × nheads × nedges
     α = exp.(leakyrelu.(aWW, l.negative_slope))       
     return (α = α, m = α .* Wxj)
 end
@@ -273,14 +277,13 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
     
     x, _ = propagate(l, g, +, Wx)                 ## chout × nheads × nnodes
 
-    b = reshape(l.bias, chout, heads)
-    x = l.σ.(x .+ b)                                      
     if !l.concat
-        x = sum(x, dims=2)
+        x = mean(x, dims=2)
     end
+    x = reshape(x, :, size(x, 3))
+    x = l.σ.(x .+ l.bias)                                      
 
-    # We finally return a matrix
-    return reshape(x, :, size(x, 3)) 
+    return x  
 end
 
 
@@ -511,6 +514,63 @@ end
 function Base.show(io::IO, l::NNConv)
     out, in = size(l.weight)
     print(io, "NNConv( $in => $out")
+    print(io, ", aggr=", l.aggr)
+    print(io, ")")
+end
+
+
+@doc raw"""
+    SAGEConv(in => out, σ=identity; aggr=mean, bias=true, init=glorot_uniform)
+
+GraphSAGE convolution layer from paper [Inductive Representation Learning on Large Graphs](https://arxiv.org/pdf/1706.02216.pdf).
+
+Performs:
+```math
+\mathbf{x}_i' = W [\mathbf{x}_i \,\|\, \square_{j \in \mathcal{N}(i)} \mathbf{x}_j]
+```
+
+where the aggregation type is selected by `aggr`.
+
+# Arguments
+
+- `in`: The dimension of input features.
+- `out`: The dimension of output features.
+- `σ`: Activation function.
+- `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+- `bias`: Add learnable bias.
+- `init`: Weights' initializer.
+"""
+struct SAGEConv{A<:AbstractMatrix, B} <: GNNLayer
+    weight::A
+    bias::B
+    σ
+    aggr
+end
+
+@functor SAGEConv
+
+function SAGEConv(ch::Pair{Int,Int}, σ=identity; aggr=mean,
+                   init=glorot_uniform, bias::Bool=true)
+    in, out = ch
+    W = init(out, 2*in)
+    b = bias ? Flux.create_bias(W, true, out) : false
+    SAGEConv(W, b, σ, aggr)
+end
+
+compute_message(l::SAGEConv, x_i, x_j, e_ij) =  x_j
+update_node(l::SAGEConv, m, x) = l.σ.(l.weight * vcat(x, m) .+ l.bias)
+
+function (l::SAGEConv)(g::GNNGraph, x::AbstractMatrix)
+    check_num_nodes(g, x)
+    x, _ = propagate(l, g, l.aggr, x)
+    x
+end
+
+function Base.show(io::IO, l::SAGEConv)
+    in_channel = size(l.weight1, ndims(l.weight1))
+    out_channel = size(l.weight1, ndims(l.weight1)-1)
+    print(io, "SAGEConv(", in_channel, " => ", out_channel)
+    l.σ == identity || print(io, ", ", l.σ)
     print(io, ", aggr=", l.aggr)
     print(io, ")")
 end
