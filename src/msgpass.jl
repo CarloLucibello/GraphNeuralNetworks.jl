@@ -118,17 +118,17 @@ end
 
 ##  Step 2
 
-_scatter(aggr, e::NamedTuple, t) = map(e -> _scatter(aggr, e, t), e)
-_scatter(aggr, e::Tuple, t) = map(e -> _scatter(aggr, e, t), e)
-_scatter(aggr, e::AbstractArray, t) = NNlib.scatter(aggr, e, t)
-_scatter(aggr, e::Nothing, t) = nothing
+_scatter(aggr, m::NamedTuple, t) = map(m -> _scatter(aggr, m, t), m)
+_scatter(aggr, m::Tuple, t) = map(m -> _scatter(aggr, m, t), m)
+_scatter(aggr, m::AbstractArray, t) = NNlib.scatter(aggr, m, t)
+_scatter(aggr, m::Nothing, t) = nothing
 
-function aggregate_neighbors(g::GNNGraph, aggr, e)
+function aggregate_neighbors(g::GNNGraph, aggr, m)
     s, t = edge_index(g)
-    _scatter(aggr, e, t)
+    _scatter(aggr, m, t)
 end
 
-aggregate_neighbors(g::GNNGraph, aggr::Nothing, e) = nothing
+aggregate_neighbors(g::GNNGraph, aggr::Nothing, m) = nothing
 
 ## Step 3
 
@@ -172,3 +172,34 @@ function update_edge end
 @inline update_edge(l, m, e) = e
 
 ### end steps ###
+
+
+
+"""
+Fuses together the message and the aggregation step:
+
+```julia
+s, t = edge_index(g)
+xi = gather(x, t)
+xj = gather(x, s)
+m = compute_message(l, xi, xj, e)
+m̄ = scatter(aggr, m, t)
+```
+"""
+function message_and_aggregate(dout::Int, g::GNNGraph, f, aggr, x::AbstractMatrix{T}) where T
+    din, nnodes = size(x)
+    s, t = edge_index(g)
+    m̄ = similar(x, T, (dout, nnodes))
+    fill!(m̄, NNlib.scatter_empty(aggr, T))
+    
+    for k in CartesianIndices(s)
+        xi = view(x, :, t[k])
+        xj = view(x, :, s[k])
+        # eij = _view(e, :, k)
+        m = f(xi, xj)
+        # m = f(xi, xj, eij)
+
+        m̄_v = view(m̄, :, t[k])
+        m̄_v .= (op).(m̄_v, m)
+    end
+end
