@@ -13,9 +13,9 @@ CUDA.allowscalar(false)
 include("test_utils.jl")
 
 tests = [
-    # "gnngraph",
-    # "msgpass",
-    # "layers/basic",
+    "gnngraph",
+    "msgpass",
+    "layers/basic",
     "layers/conv",
     "layers/pool",
 ]
