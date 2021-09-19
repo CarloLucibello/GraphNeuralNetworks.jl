@@ -34,8 +34,10 @@
         for g in test_graphs
             test_layer(l, g, rtol=1e-5)
         end
-    end
 
+        l = GCNConv(in_channel => out_channel, add_self_loops=false)
+        test_layer(l, g1, rtol=1e-5)
+    end
 
     @testset "ChebConv" begin
         k = 6

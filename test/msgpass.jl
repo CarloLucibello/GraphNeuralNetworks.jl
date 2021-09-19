@@ -101,7 +101,7 @@ import GraphNeuralNetworks: compute_message, update_node, update_edge, propagate
         @test all(adjacency_matrix(g_) .== adj)
         @test size(node_features(g_)) == (2*out_channel, num_V)
         @test size(edge_features(g_)) == (out_channel, num_E)
-        @test size(graph_features(g_)) == (in_channel,)
+        @test size(graph_features(g_)) == (in_channel, 1)
     end
 
     @testset "message and update with weights" begin
@@ -124,7 +124,7 @@ import GraphNeuralNetworks: compute_message, update_node, update_edge, propagate
         @test adjacency_matrix(g_) == adj
         @test size(node_features(g_)) == (out_channel, num_V)
         @test edge_features(g_) === E
-        @test graph_features(g_) === U
+        @test vec(graph_features(g_)) ≈ U
     end
 
     @testset "NamedTuples" begin
