@@ -1,13 +1,13 @@
 @doc raw"""
-    GCNConv(in => out, σ=identity; bias=true, init=glorot_uniform)
+    GCNConv(in => out, σ=identity; bias=true, init=glorot_uniform, add_self_loops=true)
 
 Graph convolutional layer from paper [Semi-supervised Classification with Graph Convolutional Networks](https://arxiv.org/abs/1609.02907).
 
 Performs the operation
 ```math
-\mathbf{x}'_i = \sum_{j\in \{i\} \cup N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
+\mathbf{x}'_i = \sum_{j\in N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
 ```
-where ``c_{ij} = \sqrt{(1+|N(i)|)(1+|N(j)|)}``.
+where ``c_{ij} = \sqrt{|N(i)||N(j)|}``.
 
 The input to the layer is a node feature array `X` 
 of size `(num_features, num_nodes)`.
@@ -19,29 +19,32 @@ of size `(num_features, num_nodes)`.
 - `σ`: Activation function.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+- `add_self_loops`: Add self loops to the graph before performing the convolution.
 """
 struct GCNConv{A<:AbstractMatrix, B, F} <: GNNLayer
     weight::A
     bias::B
     σ::F
+    add_self_loops::Bool
 end
 
 @functor GCNConv
 
 function GCNConv(ch::Pair{Int,Int}, σ=identity;
-                 init=glorot_uniform, bias::Bool=true)
+                 init=glorot_uniform, bias::Bool=true,
+                 add_self_loops=true)
     in, out = ch
     W = init(out, in)
     b = bias ? Flux.create_bias(W, true, out) : false
-    GCNConv(W, b, σ)
+    GCNConv(W, b, σ, add_self_loops)
 end
 
 ## Matrix operations are more performant, 
-## but cannot compute the normalized laplacian of sparse cuda matrices yet,
+## but cannot compute the normalized adjacency of sparse cuda matrices yet,
 ## therefore fallback to message passing framework on gpu for the time being
  
 function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
-    Ã = normalized_adjacency(g, T; dir=:out, add_self_loops=true)
+    Ã = normalized_adjacency(g, T; dir=:out, l.add_self_loops)
     l.σ.(l.weight * x * Ã .+ l.bias)
 end
 
@@ -49,7 +52,9 @@ compute_message(l::GCNConv, xi, xj, eij) = xj
 update_node(l::GCNConv, m, x) = m
 
 function (l::GCNConv)(g::GNNGraph, x::CuMatrix{T}) where T
-    g = add_self_loops(g)
+    if l.add_self_loops
+        g = add_self_loops(g)
+    end
     c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'
     x, _ = propagate(l, g, +, x)

@@ -38,7 +38,7 @@ julia> for _ in 1:1000
 julia> gbatch = Flux.batch(all_graphs)
 GNNGraph:
     num_nodes = 10000
-    num_edges = 20000
+    num_edges = 40000
     num_graphs = 1000
     ndata:
         x => (16, 10000)

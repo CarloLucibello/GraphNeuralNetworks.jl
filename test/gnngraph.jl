@@ -182,6 +182,21 @@
         @test g.ndata.x2 ≈ 2X
         @test g.edata.e2 ≈ 2E
         @test g.gdata.u2 ≈ 2U
+
+        # Dimension checks
+        @test_throws AssertionError GNNGraph(erdos_renyi(10,  30), edata=rand(29), graph_type=GRAPH_T)
+        @test_throws AssertionError GNNGraph(erdos_renyi(10,  30), edata=rand(2, 29), graph_type=GRAPH_T)
+        @test_throws AssertionError GNNGraph(erdos_renyi(10,  30), edata=(; x=rand(30), y=rand(29)), graph_type=GRAPH_T)
+
+        # Copy features on reverse edge
+        e = rand(30)
+        g = GNNGraph(erdos_renyi(10,  30), edata=e, graph_type=GRAPH_T)
+        @test g.edata.e == [e; e]
+
+
+        # Attach non array data
+        g = GNNGraph(erdos_renyi(10,  30), edata="ciao", graph_type=GRAPH_T)
+        @test g.edata.e == "ciao"
     end 
 
     @testset "LearnBase and DataLoader compat" begin
