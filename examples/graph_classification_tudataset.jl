@@ -1,13 +1,12 @@
 # An example of graph classification
 
 using Flux
-using Flux: @functor, dropout, onecold, onehotbatch, getindex, cpu, gpu
+using Flux:onecold, onehotbatch
 using Flux.Losses: logitbinarycrossentropy
 using Flux.Data: DataLoader
 using GraphNeuralNetworks
 using MLDatasets: TUDataset
 using Statistics, Random
-using LearnBase: getobs
 using CUDA
 CUDA.allowscalar(false)
 
@@ -76,8 +75,8 @@ function train(; kws...)
     @info gfull
     
     perm = randperm(gfull.num_graphs)
-    gtrain = getobs(gfull, perm[1:NUM_TRAIN])
-    gtest = getobs(gfull, perm[NUM_TRAIN+1:end]) 
+    gtrain, _ = getgraph(gfull, perm[1:NUM_TRAIN])
+    gtest, _ = getgraph(gfull, perm[NUM_TRAIN+1:end]) 
     train_loader = DataLoader(gtrain, batchsize=args.batchsize, shuffle=true)
     test_loader = DataLoader(gtest, batchsize=args.batchsize, shuffle=false)
     
@@ -121,4 +120,4 @@ function train(; kws...)
     end
 end
 
-# train()
+train()
