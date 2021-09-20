@@ -1,7 +1,7 @@
 # An example of graph classification
 
 using Flux
-using Flux: @functor, dropout, onecold, onehotbatch, getindex
+using Flux: @functor, dropout, onecold, onehotbatch, getindex, cpu, gpu
 using Flux.Losses: logitbinarycrossentropy
 using Flux.Data: DataLoader
 using GraphNeuralNetworks

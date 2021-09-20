@@ -18,6 +18,7 @@ tests = [
     "layers/basic",
     "layers/conv",
     "layers/pool",
+    "examples.jl",
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")

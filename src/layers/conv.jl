@@ -288,9 +288,8 @@ end
 
 
 function Base.show(io::IO, l::GATConv)
-    in_channel = size(l.weight, ndims(l.weight))
-    out_channel = size(l.weight, ndims(l.weight)-1)
-    print(io, "GATConv(", in_channel, "=>", out_channel)
+    out_channel, in_channel = size(l.weight)
+    print(io, "GATConv(", in_channel, "=>", out_channel ÷ l.heads)
     print(io, ", LeakyReLU(λ=", l.negative_slope)
     print(io, "))")
 end
@@ -567,9 +566,8 @@ function (l::SAGEConv)(g::GNNGraph, x::AbstractMatrix)
 end
 
 function Base.show(io::IO, l::SAGEConv)
-    in_channel = size(l.weight1, ndims(l.weight1))
-    out_channel = size(l.weight1, ndims(l.weight1)-1)
-    print(io, "SAGEConv(", in_channel, " => ", out_channel)
+    out_channel, in_channel = size(l.weight)
+    print(io, "SAGEConv(", in_channel ÷ 2, " => ", out_channel)
     l.σ == identity || print(io, ", ", l.σ)
     print(io, ", aggr=", l.aggr)
     print(io, ")")

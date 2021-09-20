@@ -40,7 +40,7 @@
     end
 
     @testset "ChebConv" begin
-        k = 6
+        k = 3
         l = ChebConv(in_channel => out_channel, k)
         @test size(l.weight) == (out_channel, in_channel, k)
         @test size(l.bias) == (out_channel,)
