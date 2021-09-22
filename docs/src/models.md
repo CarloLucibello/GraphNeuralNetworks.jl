@@ -90,14 +90,14 @@ The `GNNChain` only propagates the graph and the node features. More complex sce
 A `GNNChain` oppurtunely propagates the graph into the branches created by the `Flux.Parallel` layer:
 
 ```julia
-AddResidual(l) = Parallel(+, identity, l) 
+AddResidual(l) = Parallel(+, identity, l)  # implementing a skip/residual connection
 
-model = GNNChain( AddResidual(ResGatedGraphConv(din => d, relu)),
-                  BatchNorm(d),
+model = GNNChain( ResGatedGraphConv(din => d, relu),
                   AddResidual(ResGatedGraphConv(d => d, relu)),
-                  BatchNorm(d),
+                  AddResidual(ResGatedGraphConv(d => d, relu)),
+                  AddResidual(ResGatedGraphConv(d => d, relu)),
                   GlobalPooling(mean),
                   Dense(d, dout))
 
 y = model(g, X) # output size: (dout, g.num_graphs)
-```            
+```
