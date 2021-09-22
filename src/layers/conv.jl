@@ -641,7 +641,7 @@ end
 
 
 function Base.show(io::IO, l::ResGatedGraphConv)
-    out_channel, in_channel = size(l.weight)
+    out_channel, in_channel = size(l.A)
     print(io, "ResGatedGraphConv(", in_channel, "=>", out_channel)
     l.σ == identity || print(io, ", ", l.σ)
     print(io, ")")

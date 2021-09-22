@@ -15,13 +15,13 @@
 
         testmode!(gnn)
         
-        test_layer(gnn, g, rtol=1e-5) # exclude BN buffers
+        test_layer(gnn, g, rtol=1e-5)
 
 
         @testset "Parallel" begin
             AddResidual(l) = Parallel(+, identity, l) 
 
-            gnn = GNNChain(AddResidual(ResGatedGraphConv(din => d, tanh)),
+            gnn = GNNChain(ResGatedGraphConv(din => d, tanh),
                            BatchNorm(d),
                            AddResidual(ResGatedGraphConv(d => d, tanh)),
                            BatchNorm(d),
@@ -29,8 +29,7 @@
 
             testmode!(gnn)
                            
-            test_layer(gnn, g, rtol=1e-5, verbose=true, 
-                    exclude_grad_fields=[:μ, :σ², :ϵ]) # exclude BN buffers
+            test_layer(gnn, g, rtol=1e-5)
         end
     end
 end

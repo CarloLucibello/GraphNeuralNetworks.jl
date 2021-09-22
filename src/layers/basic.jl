@@ -64,12 +64,9 @@ applylayer(l, g::GNNGraph, x) = l(x)
 applylayer(l::GNNLayer, g::GNNGraph, x) = l(g, x)
 
 # Handle Flux.Parallel
-applylayer(l::Parallel, g::GNNGraph, x::AbstractArray) = mapreduce(f -> applylayer(l, g, x), l.connection, l.layers)
-applylayer(l::Parallel, g::GNNGraph, xs::Vararg{<:AbstractArray}) = mapreduce((f, x) -> applylayer(l, g, x), l.connection, l.layers, xs)
+applylayer(l::Parallel, g::GNNGraph, x::AbstractArray) = mapreduce(f -> applylayer(f, g, x), l.connection, l.layers)
+applylayer(l::Parallel, g::GNNGraph, xs::Vararg{<:AbstractArray}) = mapreduce((f, x) -> applylayer(f, g, x), l.connection, l.layers, xs)
 applylayer(l::Parallel, g::GNNGraph, xs::Tuple) = applylayer(l, g, xs...)
-applylayer(l::Parallel, g::GNNGraph, x::AbstractArray) = mapreduce(f -> applylayer(l, g, x), l.connection, l.layers)
-applylayer(l::Parallel, g::GNNGraph, xs::Vararg{<:AbstractArray}) = mapreduce((f, x) -> applylayer(l, g, x), l.connection, l.layers, xs)
-
 
 
 applychain(::Tuple{}, g::GNNGraph, x) = x
