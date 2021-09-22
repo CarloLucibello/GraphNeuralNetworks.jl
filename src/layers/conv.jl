@@ -224,7 +224,7 @@ with ``z_i`` a normalization factor.
 
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
-- `bias::Bool`: Keyword argument, whether to learn the additive bias.
+- `bias`: Learn the additive bias if true.
 - `heads`: Number attention heads.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
 - `negative_slope`: The parameter of LeakyReLU.
@@ -570,5 +570,79 @@ function Base.show(io::IO, l::SAGEConv)
     print(io, "SAGEConv(", in_channel ÷ 2, " => ", out_channel)
     l.σ == identity || print(io, ", ", l.σ)
     print(io, ", aggr=", l.aggr)
+    print(io, ")")
+end
+
+
+@doc raw"""
+    ResGatedGraphConv(in => out, act=identity; init=glorot_uniform, bias=true)
+
+The residual gated graph convolutional operator from the [Residual Gated Graph ConvNets]((https://arxiv.org/abs/1711.07553)) paper.
+
+The layer's forward pass is given by
+
+```math
+\mathbf{x}_i' = act\big(U\mathbf{xhttps://github.com/ArtLabBocconi/deepJuliaNN}_i + \sum_{j \in N(i)} \eta_{ij} V \mathbf{x}_j\big),
+```
+where the edge gates ``\eta_{ij}`` are given by
+
+```math
+\eta_{ij} = sigmoid(A\mathbf{x}_i + B\mathbf{x}_j).
+```
+
+# Arguments
+
+- `in`: The dimension of input features.
+- `out`: The dimension of output features.
+- `act`: Activation function.
+- `init`: Weight matrices' initializing function. 
+- `bias`: Learn an additive bias if true.
+"""
+struct ResGatedGraphConv <: GNNLayer
+    A
+    B
+    U
+    V
+    bias
+    σ
+end
+
+@functor ResGatedGraphConv
+
+function ResGatedGraphConv(ch::Pair{Int,Int}, σ=identity;
+                      init=glorot_uniform, bias::Bool=true)
+    in, out = ch             
+    A = init(out, in)
+    B = init(out, in)
+    U = init(out, in)
+    V = init(out, in)
+    b = bias ? Flux.create_bias(A, true, out) : false
+    return ResGatedGraphConv(A, B, U, V, b, σ)
+end
+
+function compute_message(l::ResGatedGraphConv, di, dj)
+    η = sigmoid.(di.Ax .+ dj.Bx)
+    return η .* dj.Vx
+end
+
+update_node(l::ResGatedGraphConv, m, x) = m
+
+function (l::ResGatedGraphConv)(g::GNNGraph, x::AbstractMatrix)
+    check_num_nodes(g, x)
+
+    Ax = l.A * x
+    Bx = l.B * x
+    Vx = l.V * x
+    
+    m, _ = propagate(l, g, +, (; Ax, Bx, Vx))
+
+    return l.σ.(l.U*x .+ m .+ l.bias)                                      
+end
+
+
+function Base.show(io::IO, l::ResGatedGraphConv)
+    out_channel, in_channel = size(l.weight)
+    print(io, "ResGatedGraphConv(", in_channel, "=>", out_channel)
+    l.σ == identity || print(io, ", ", l.σ)
     print(io, ")")
 end

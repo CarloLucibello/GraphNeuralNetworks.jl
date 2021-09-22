@@ -46,6 +46,7 @@ export
     GINConv,
     GraphConv,
     NNConv,
+    ResGatedGraphConv,
     SAGEConv,
 
     # layers/pool

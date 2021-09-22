@@ -63,6 +63,15 @@ Flux.functor(::Type{<:GNNChain}, c) = c.layers, ls -> GNNChain(ls...)
 applylayer(l, g::GNNGraph, x) = l(x)
 applylayer(l::GNNLayer, g::GNNGraph, x) = l(g, x)
 
+# Handle Flux.Parallel
+applylayer(l::Parallel, g::GNNGraph, x::AbstractArray) = mapreduce(f -> applylayer(l, g, x), l.connection, l.layers)
+applylayer(l::Parallel, g::GNNGraph, xs::Vararg{<:AbstractArray}) = mapreduce((f, x) -> applylayer(l, g, x), l.connection, l.layers, xs)
+applylayer(l::Parallel, g::GNNGraph, xs::Tuple) = applylayer(l, g, xs...)
+applylayer(l::Parallel, g::GNNGraph, x::AbstractArray) = mapreduce(f -> applylayer(l, g, x), l.connection, l.layers)
+applylayer(l::Parallel, g::GNNGraph, xs::Vararg{<:AbstractArray}) = mapreduce((f, x) -> applylayer(l, g, x), l.connection, l.layers, xs)
+
+
+
 applychain(::Tuple{}, g::GNNGraph, x) = x
 applychain(fs::Tuple, g::GNNGraph, x) = applychain(tail(fs), g, applylayer(first(fs), g, x))
 

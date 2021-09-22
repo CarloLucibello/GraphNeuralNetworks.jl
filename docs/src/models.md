@@ -78,11 +78,26 @@ X = randn(Float32, din, 10)
 model = GNNChain(GCNConv(din => d),
                  BatchNorm(d),
                  x -> relu.(x),
-                 GraphConv(d => d, relu),
+                 GCNConv(d => d, relu),
                  Dropout(0.5),
                  Dense(d, dout))
 
-y = model(g, X)
+y = model(g, X)  # output size: (dout, g.num_nodes)
 ```
 
 The `GNNChain` only propagates the graph and the node features. More complex scenarios, e.g. when also edge features are updated, have to be handled using the explicit definition of the forward pass. 
+
+A `GNNChain` oppurtunely propagates the graph into the branches created by the `Flux.Parallel` layer:
+
+```julia
+AddResidual(l) = Parallel(+, identity, l) 
+
+model = GNNChain( AddResidual(ResGatedGraphConv(din => d, relu)),
+                  BatchNorm(d),
+                  AddResidual(ResGatedGraphConv(d => d, relu)),
+                  BatchNorm(d),
+                  GlobalPooling(mean),
+                  Dense(d, dout))
+
+y = model(g, X) # output size: (dout, g.num_graphs)
+```            

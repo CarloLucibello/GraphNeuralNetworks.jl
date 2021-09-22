@@ -2,32 +2,35 @@
     @testset "GNNChain" begin
         n, din, d, dout = 10, 3, 4, 2
         
-        g = GNNGraph(random_regular_graph(n, 4), graph_type=GRAPH_T)
+        g = GNNGraph(random_regular_graph(n, 4), 
+                    graph_type=GRAPH_T,
+                    ndata= randn(Float32, din, n))
         
         gnn = GNNChain(GCNConv(din => d),
                        BatchNorm(d),
-                       x -> relu.(x),
-                       GraphConv(d => d, relu),
+                       x -> tanh.(x),
+                       GraphConv(d => d, tanh),
                        Dropout(0.5),
                        Dense(d, dout))
+
+        testmode!(gnn)
         
-        X = randn(Float32, din, n)
+        test_layer(gnn, g, rtol=1e-5) # exclude BN buffers
 
-        y = gnn(g, X)
-  
-        @test y isa Matrix{Float32}
-        @test size(y) == (dout, n)
 
-        @test length(params(gnn)) == 9
-        
-        gs = gradient(x -> sum(gnn(g, x)), X)[1]
-        @test gs isa Matrix{Float32}
-        @test size(gs) == size(X) 
+        @testset "Parallel" begin
+            AddResidual(l) = Parallel(+, identity, l) 
 
-        gs = gradient(() -> sum(gnn(g, X)), Flux.params(gnn))
-        for p in Flux.params(gnn)
-            @test eltype(gs[p]) == Float32
-            @test size(gs[p]) == size(p)
+            gnn = GNNChain(AddResidual(ResGatedGraphConv(din => d, tanh)),
+                           BatchNorm(d),
+                           AddResidual(ResGatedGraphConv(d => d, tanh)),
+                           BatchNorm(d),
+                           Dense(d, dout))
+
+            testmode!(gnn)
+                           
+            test_layer(gnn, g, rtol=1e-5, verbose=true, 
+                    exclude_grad_fields=[:μ, :σ², :ϵ]) # exclude BN buffers
         end
     end
 end

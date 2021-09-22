@@ -70,8 +70,8 @@ function train(Layer; verbose=false, kws...)
             ŷ = model(g, X)
             logitcrossentropy(ŷ[:,train_ids], ytrain)
         end
-        verbose && report(epoch)
         Flux.Optimise.update!(opt, ps, gs)
+        verbose && report(epoch)
     end
 
     train_res = eval_loss_accuracy(X, y, train_ids, model, g)
@@ -87,11 +87,12 @@ for Layer in [
             (nin, nout) -> GATConv(nin => nout÷2, relu, heads=2),
             (nin, nout) -> GINConv(Dense(nin, nout, relu)),
             (nin, nout) -> ChebConv(nin => nout, 3),
+            (nin, nout) -> ResGatedGraphConv(nin => nout, relu),          
             # (nin, nout) -> NNConv(nin => nout),  # needs edge features
             # (nin, nout) -> GatedGraphConv(nout, 2),  # needs nin = nout
             # (nin, nout) -> EdgeConv(Dense(2nin, nout, relu)), # Fits the traning set but does not generalize well
               ]
-    train_res, test_res = train(Layer, verbose=true)
+    train_res, test_res = train(Layer, verbose=false)
     # @show Layer(2,2) train_res, test_res
     @test train_res.acc > 95
     @test test_res.acc > 70
