@@ -8,7 +8,10 @@ using LearnBase
 using LightGraphs
 using Zygote
 using Test
+using MLDatasets
 CUDA.allowscalar(false)
+
+ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 
 include("test_utils.jl")
 
