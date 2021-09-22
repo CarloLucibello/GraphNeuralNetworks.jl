@@ -1,5 +1,3 @@
-# An example of semi-supervised node classification
-
 using Flux
 using Flux: onecold, onehotbatch
 using Flux.Losses: logitcrossentropy
@@ -16,28 +14,25 @@ function eval_loss_accuracy(X, y, ids, model, g)
     return (loss = round(l, digits=4), acc = round(acc*100, digits=2))
 end
 
+
 # arguments for the `train` function 
 Base.@kwdef mutable struct Args
     η = 1f-3             # learning rate
-    epochs = 100          # number of epochs
+    epochs = 20         # number of epochs
     seed = 17             # set seed > 0 for reproducibility
-    usecuda = true      # if true use cuda (if available)
+    usecuda = false      # if true use cuda (if available)
     nhidden = 128        # dimension of hidden features
-    infotime = 10 	     # report every `infotime` epochs
 end
 
-function train(; kws...)
+function train(Layer; verbose=false, kws...)
     args = Args(; kws...)
-
     args.seed > 0 && Random.seed!(args.seed)
     
     if args.usecuda && CUDA.functional()
-        device = gpu
+        device = Flux.gpu
         args.seed > 0 && CUDA.seed!(args.seed)
-        @info "Training on GPU"
     else
-        device = cpu
-        @info "Training on CPU"
+        device = Flux.cpu
     end
 
     # LOAD DATA
@@ -53,35 +48,51 @@ function train(; kws...)
     nin, nhidden, nout = size(X,1), args.nhidden, data.num_classes 
     
     ## DEFINE MODEL
-    model = GNNChain(GCNConv(nin => nhidden, relu),
+    model = GNNChain(Layer(nin, nhidden),
                      Dropout(0.5),
-                     GCNConv(nhidden => nhidden, relu), 
+                     Layer(nhidden, nhidden), 
                      Dense(nhidden, nout))  |> device
 
     ps = Flux.params(model)
     opt = ADAM(args.η)
-
-    @info g
     
-    ## LOGGING FUNCTION
+
+    ## TRAINING
     function report(epoch)
         train = eval_loss_accuracy(X, y, train_ids, model, g)
         test = eval_loss_accuracy(X, y, test_ids, model, g)        
         println("Epoch: $epoch   Train: $(train)   Test: $(test)")
     end
     
-    ## TRAINING
-    report(0)
+    verbose && report(0)
     for epoch in 1:args.epochs
         gs = Flux.gradient(ps) do
             ŷ = model(g, X)
             logitcrossentropy(ŷ[:,train_ids], ytrain)
         end
-
+        verbose && report(epoch)
         Flux.Optimise.update!(opt, ps, gs)
-        
-        epoch % args.infotime == 0 && report(epoch)
     end
+
+    train_res = eval_loss_accuracy(X, y, train_ids, model, g)
+    test_res = eval_loss_accuracy(X, y, test_ids, model, g)        
+    return train_res, test_res
 end
 
-train()
+for Layer in [
+            (nin, nout) -> GCNConv(nin => nout, relu),
+            (nin, nout) -> GraphConv(nin => nout, relu, aggr=mean),
+            (nin, nout) -> SAGEConv(nin => nout, relu),
+            (nin, nout) -> GATConv(nin => nout, relu),
+            (nin, nout) -> GATConv(nin => nout÷2, relu, heads=2),
+            (nin, nout) -> GINConv(Dense(nin, nout, relu)),
+            (nin, nout) -> ChebConv(nin => nout, 3),
+            # (nin, nout) -> NNConv(nin => nout),  # needs edge features
+            # (nin, nout) -> GatedGraphConv(nout, 2),  # needs nin = nout
+            # (nin, nout) -> EdgeConv(Dense(2nin, nout, relu)), # Fits the traning set but does not generalize well
+              ]
+    train_res, test_res = train(Layer, verbose=true)
+    # @show Layer(2,2) train_res, test_res
+    @test train_res.acc > 95
+    @test test_res.acc > 70
+end

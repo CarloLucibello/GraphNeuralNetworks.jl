@@ -288,9 +288,8 @@ end
 
 
 function Base.show(io::IO, l::GATConv)
-    in_channel = size(l.weight, ndims(l.weight))
-    out_channel = size(l.weight, ndims(l.weight)-1)
-    print(io, "GATConv(", in_channel, "=>", out_channel)
+    out_channel, in_channel = size(l.weight)
+    print(io, "GATConv(", in_channel, "=>", out_channel ÷ l.heads)
     print(io, ", LeakyReLU(λ=", l.negative_slope)
     print(io, "))")
 end
@@ -341,7 +340,7 @@ update_node(l::GatedGraphConv, m, x) = m
 # remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
 @non_differentiable fill!(x...)
 
-function (l::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {T<:AbstractVector,S<:Real}
+function (l::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {S<:Real}
     check_num_nodes(g, H)
     m, n = size(H)
     @assert (m <= l.out_ch) "number of input features must less or equals to output features."
@@ -567,9 +566,8 @@ function (l::SAGEConv)(g::GNNGraph, x::AbstractMatrix)
 end
 
 function Base.show(io::IO, l::SAGEConv)
-    in_channel = size(l.weight1, ndims(l.weight1))
-    out_channel = size(l.weight1, ndims(l.weight1)-1)
-    print(io, "SAGEConv(", in_channel, " => ", out_channel)
+    out_channel, in_channel = size(l.weight)
+    print(io, "SAGEConv(", in_channel ÷ 2, " => ", out_channel)
     l.σ == identity || print(io, ", ", l.σ)
     print(io, ", aggr=", l.aggr)
     print(io, ")")
