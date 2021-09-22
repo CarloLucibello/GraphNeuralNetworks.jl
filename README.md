@@ -25,3 +25,7 @@ pkg> add GraphNeuralNetworks
 ## Usage
 
 Usage examples can be found in the [examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) folder. Also, make sure to read the [documentation](https://CarloLucibello.github.io/GraphNeuralNetworks.jl/dev) for a comprehensive introduction to the library.
+
+## Acknowledgements
+
+A big thank you goes to @yuehhua for creating [GeometricFlux.jl](https://github.com/FluxML/GeometricFlux.jl) of which GraphNeuralNetworks.jl is a radical redesign. 
