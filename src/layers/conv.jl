@@ -340,7 +340,7 @@ update_node(l::GatedGraphConv, m, x) = m
 # remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
 @non_differentiable fill!(x...)
 
-function (l::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {T<:AbstractVector,S<:Real}
+function (l::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {S<:Real}
     check_num_nodes(g, H)
     m, n = size(H)
     @assert (m <= l.out_ch) "number of input features must less or equals to output features."

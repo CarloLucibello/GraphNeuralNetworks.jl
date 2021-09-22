@@ -46,14 +46,11 @@
         @test size(l.bias) == (out_channel,)
         @test l.k == k
         for g in test_graphs
-            if g === g_single_vertex && GRAPH_T == :dense
-                @test_broken test_layer(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
-            else
-                test_layer(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=false)
-                if TEST_GPU
-                    @test_broken test_layer(l, g, rtol=1e-5, broken_grad_fields=[:weight], test_gpu=true)
-                end
-            end            
+            g = add_self_loops(g)
+            test_layer(l, g, rtol=1e-5, test_gpu=false, outsize=(out_channel, g.num_nodes))
+            if TEST_GPU
+                @test_broken test_layer(l, g, rtol=1e-5, test_gpu=true, outsize=(out_channel, g.num_nodes))
+            end              
         end
         
         @testset "bias=false" begin
@@ -81,10 +78,10 @@
 
     @testset "GATConv" begin
 
-        for heads in (1, 3), concat in (true, false)
+        for heads in (1, 2), concat in (true, false)
             l = GATConv(in_channel => out_channel; heads, concat)
             for g in test_graphs
-                test_layer(l, g, rtol=1e-4, 
+                test_layer(l, g, rtol=1e-4,
                     outsize=(concat ? heads*out_channel : out_channel, g.num_nodes))
             end
         end
