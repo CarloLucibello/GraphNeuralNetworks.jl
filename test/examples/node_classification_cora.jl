@@ -92,8 +92,8 @@ for Layer in [
             # (nin, nout) -> EdgeConv(Dense(2nin, nout, relu)), # Fits the traning set but does not generalize well
               ]
 
-    @show Layer(2,2)
-    train_res, test_res = train(Layer, verbose=true)
+    # @show Layer(2,2)
+    train_res, test_res = train(Layer, verbose=false)
     @test train_res.acc > 95
     @test test_res.acc > 70
 end
