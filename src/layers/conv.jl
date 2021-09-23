@@ -590,7 +590,7 @@ The residual gated graph convolutional operator from the [Residual Gated Graph C
 The layer's forward pass is given by
 
 ```math
-\mathbf{x}_i' = act\big(U\mathbf{xhttps://github.com/ArtLabBocconi/deepJuliaNN}_i + \sum_{j \in N(i)} \eta_{ij} V \mathbf{x}_j\big),
+\mathbf{x}_i' = act\big(U\mathbf{x}_i + \sum_{j \in N(i)} \eta_{ij} V \mathbf{x}_j\big),
 ```
 where the edge gates ``\eta_{ij}`` are given by
 
