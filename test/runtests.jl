@@ -17,7 +17,7 @@ include("test_utils.jl")
 
 tests = [
     "gnngraph",
-    "msgpass",
+    # "msgpass",
     "layers/basic",
     "layers/conv",
     "layers/pool",

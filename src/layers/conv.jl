@@ -49,7 +49,6 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
 end
 
 compute_message(l::GCNConv, xi, xj, eij) = xj
-update_node(l::GCNConv, m, x) = m
 
 function (l::GCNConv)(g::GNNGraph, x::CuMatrix{T}) where T
     if l.add_self_loops
@@ -57,7 +56,7 @@ function (l::GCNConv)(g::GNNGraph, x::CuMatrix{T}) where T
     end
     c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'
-    x, _ = propagate(l, g, +, x)
+    x = propagate(l, g, +, xj=x)
     x = x .* c'
     return l.σ.(l.weight * x .+ l.bias)
 end
@@ -182,12 +181,12 @@ function GraphConv(ch::Pair{Int,Int}, σ=identity; aggr=+,
 end
 
 compute_message(l::GraphConv, x_i, x_j, e_ij) =  x_j
-update_node(l::GraphConv, m, x) = l.σ.(l.weight1 * x .+ l.weight2 * m .+ l.bias)
 
 function (l::GraphConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    x, _ = propagate(l, g, l.aggr, x)
-    x
+    m = propagate(l, g, l.aggr, xj=x)
+    x = l.σ.(l.weight1 * x .+ l.weight2 * m .+ l.bias)
+    return x
 end
 
 function Base.show(io::IO, l::GraphConv)
@@ -264,8 +263,6 @@ function compute_message(l::GATConv, Wxi, Wxj)
     return (α = α, m = α .* Wxj)
 end
 
-update_node(l::GATConv, d̄, x) = d̄.m ./ d̄.α
-
 function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
     g = add_self_loops(g)
@@ -275,7 +272,8 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
     Wx = l.weight * x
     Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
     
-    x, _ = propagate(l, g, +, Wx)                 ## chout × nheads × nnodes
+    d̄ = propagate(l, g, +; x=Wx)                 ## chout × nheads × nnodes
+    x = d̄.m ./ d̄.α
 
     if !l.concat
         x = mean(x, dims=2)
@@ -302,7 +300,7 @@ Gated graph convolution layer from [Gated Graph Sequence Neural Networks](https:
 
 Implements the recursion
 ```math
-\mathbf{h}^{(0)}_i = \mathbf{x}_i || \mathbf{0} \\
+\mathbf{h}^{(0)}_i = [\mathbf{x}_i || \mathbf{0}] \\
 \mathbf{h}^{(l)}_i = GRU(\mathbf{h}^{(l-1)}_i, \square_{j \in N(i)} W \mathbf{h}^{(l-1)}_j)
 ```
 
@@ -325,7 +323,6 @@ end
 
 @functor GatedGraphConv
 
-
 function GatedGraphConv(out_ch::Int, num_layers::Int;
                         aggr=+, init=glorot_uniform)
     w = init(out_ch, out_ch, num_layers)
@@ -333,9 +330,7 @@ function GatedGraphConv(out_ch::Int, num_layers::Int;
     GatedGraphConv(w, gru, out_ch, num_layers, aggr)
 end
 
-
 compute_message(l::GatedGraphConv, x_i, x_j, e_ij) = x_j
-update_node(l::GatedGraphConv, m, x) = m
 
 # remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
 @non_differentiable fill!(x...)
@@ -350,7 +345,7 @@ function (l::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {S<:Real}
     end
     for i = 1:l.num_layers
         M = view(l.weight, :, :, i) * H
-        M, _ = propagate(l, g, l.aggr, M)
+        M = propagate(l, g, l.aggr; xj=M)
         H, _ = l.gru(H, M)
     end
     H
@@ -391,12 +386,10 @@ EdgeConv(nn; aggr=max) = EdgeConv(nn, aggr)
 
 compute_message(l::EdgeConv, x_i, x_j, e_ij) = l.nn(vcat(x_i, x_j .- x_i))
 
-update_node(l::EdgeConv, m, x) = m
-
-function (l::EdgeConv)(g::GNNGraph, X::AbstractMatrix)
+function (l::EdgeConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, X)
-    X, _ = propagate(l, g, l.aggr, X)
-    X
+    x = propagate(l, g, l.aggr; x)
+    return x
 end
 
 function Base.show(io::IO, l::EdgeConv)
@@ -433,23 +426,19 @@ Flux.trainable(l::GINConv) = (l.nn,)
 
 GINConv(nn, ϵ; aggr=+) = GINConv(nn, ϵ, aggr)
 
-
 compute_message(l::GINConv, x_i, x_j, e_ij) = x_j 
-update_node(l::GINConv, m, x) = l.nn((1 + ofeltype(x, l.ϵ)) * x + m)
 
-function (l::GINConv)(g::GNNGraph, X::AbstractMatrix)
-    check_num_nodes(g, X)
-    X, _ = propagate(l, g, l.aggr, X)
-    X
+function (l::GINConv)(g::GNNGraph, x::AbstractMatrix)
+    check_num_nodes(g, x)
+    m = propagate(l, g, l.aggr, xj=x)
+    l.nn((1 + ofeltype(x, l.ϵ)) * x + m)
 end
-
 
 function Base.show(io::IO, l::GINConv)
     print(io, "GINConv($(l.nn)")
     print(io, ", $(l.ϵ)")
     print(io, ")")
 end
-
 
 
 @doc raw"""
@@ -499,21 +488,17 @@ function NNConv(ch::Pair{Int,Int}, nn, σ=identity; aggr=+, bias=true, init=glor
 end
 
 function compute_message(l::NNConv, x_i, x_j, e_ij) 
-    nin, nedges = size(x_i)
+    nin, nedges = size(x_j)
     W = reshape(l.nn(e_ij), (:, nin, nedges))
     x_j = reshape(x_j, (nin, 1, nedges)) # needed by batched_mul
     m = NNlib.batched_mul(W, x_j)
     return reshape(m, :, nedges)
 end
 
-function update_node(l::NNConv, m, x)
-    l.σ.(l.weight*x .+ m .+ l.bias)
-end
-
 function (l::NNConv)(g::GNNGraph, x::AbstractMatrix, e)
     check_num_nodes(g, x)
-    x, _ = propagate(l, g, l.aggr, x, e)
-    return x
+    m = propagate(l, g, l.aggr, xj=x, e=e)
+    return l.σ.(l.weight*x .+ m .+ l.bias)
 end
 
 (l::NNConv)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g), edge_features(g)))
@@ -533,7 +518,7 @@ GraphSAGE convolution layer from paper [Inductive Representation Learning on Lar
 
 Performs:
 ```math
-\mathbf{x}_i' = W [\mathbf{x}_i \,\|\, \square_{j \in \mathcal{N}(i)} \mathbf{x}_j]
+\mathbf{x}_i' = W \cdot [\mathbf{x}_i \,\|\, \square_{j \in \mathcal{N}(i)} \mathbf{x}_j]
 ```
 
 where the aggregation type is selected by `aggr`.
@@ -565,12 +550,12 @@ function SAGEConv(ch::Pair{Int,Int}, σ=identity; aggr=mean,
 end
 
 compute_message(l::SAGEConv, x_i, x_j, e_ij) =  x_j
-update_node(l::SAGEConv, m, x) = l.σ.(l.weight * vcat(x, m) .+ l.bias)
 
 function (l::SAGEConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    x, _ = propagate(l, g, l.aggr, x)
-    x
+    m = propagate(l, g, l.aggr, xj=x)
+    x = l.σ.(l.weight * vcat(x, m) .+ l.bias)
+    return x 
 end
 
 function Base.show(io::IO, l::SAGEConv)
@@ -633,8 +618,6 @@ function compute_message(l::ResGatedGraphConv, di, dj)
     return η .* dj.Vx
 end
 
-update_node(l::ResGatedGraphConv, m, x) = m
-
 function (l::ResGatedGraphConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
 
@@ -642,11 +625,10 @@ function (l::ResGatedGraphConv)(g::GNNGraph, x::AbstractMatrix)
     Bx = l.B * x
     Vx = l.V * x
     
-    m, _ = propagate(l, g, +, (; Ax, Bx, Vx))
+    m = propagate(l, g, +, xi=(; Ax), xj=(; Bx, Vx))
 
     return l.σ.(l.U*x .+ m .+ l.bias)                                      
 end
-
 
 function Base.show(io::IO, l::ResGatedGraphConv)
     out_channel, in_channel = size(l.A)

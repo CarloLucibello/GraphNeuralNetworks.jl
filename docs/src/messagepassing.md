@@ -9,13 +9,16 @@ The message passing corresponds to the following operations
 ```math
 \begin{aligned}
 \mathbf{m}_{j\to i} &= \phi(\mathbf{x}_i, \mathbf{x}_j, \mathbf{e}_{j\to i}) \\
-\mathbf{x}_{i}' &= \gamma_x(\mathbf{x}_{i}, \square_{j\in N(i)}  \mathbf{m}_{j\to i})\\
+\bar{\mathbf{m}}_{i} &= \square_{j\in N(i)}  \mathbf{m}_{j\to i} \\
+
+\mathbf{x}_{i}' &= \gamma_x(\mathbf{x}_{i}, \bar{\mathbf{m}}_{i})\\
 \mathbf{e}_{j\to i}^\prime &=  \gamma_e(\mathbf{e}_{j \to i},\mathbf{m}_{j \to i})
 \end{aligned}
 ```
 where ``\phi`` is expressed by the [`compute_message`](@ref) function, 
 ``\gamma_x`` and ``\gamma_e`` by [`update_node`](@ref) and [`update_edge`](@ref)
-respectively.
+respectively. The generic aggregation ``\square`` usually is given by a summation
+``\sum``, a max or a mean operation. 
 
 The message propagation mechanism internally relies on the [`NNlib.gather`](@ref) 
 and [`NNlib.scatter`](@ref) methods.
@@ -50,12 +53,11 @@ function GCN(ch::Pair{Int,Int}, σ=identity)
 end
 
 compute_message(l::GCN, xi, xj, eij) = l.weight * xj
-update_node(l::GCN, m, x) = m
 
 function (l::GCN)(g::GNNGraph, x::AbstractMatrix{T}) where T
     c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'
-    x, _ = propagate(l, g, +, x)
+    x = propagate(l, g, +, x)
     x = x .* c'
     return l.σ.(x .+ l.bias)
 end
