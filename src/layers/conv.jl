@@ -39,26 +39,22 @@ function GCNConv(ch::Pair{Int,Int}, σ=identity;
     GCNConv(W, b, σ, add_self_loops)
 end
 
-## Matrix operations are more performant, 
-## but cannot compute the normalized adjacency of sparse cuda matrices yet,
-## therefore fallback to message passing framework on gpu for the time being
- 
 function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
-    Ã = normalized_adjacency(g, T; dir=:out, l.add_self_loops)
-    l.σ.(l.weight * x * Ã .+ l.bias)
-end
-
-compute_message(l::GCNConv, xi, xj, eij) = xj
-
-function (l::GCNConv)(g::GNNGraph, x::CuMatrix{T}) where T
     if l.add_self_loops
         g = add_self_loops(g)
     end
+    Dout, Din = size(l.weight)
+    if Dout < Din
+        x = l.weight * x
+    end
     c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'
-    x = propagate(l, g, +, xj=x)
+    x = propagate(copyxj, g, +, xj=x)
     x = x .* c'
-    return l.σ.(l.weight * x .+ l.bias)
+    if Dout >= Din
+        x = l.weight * x
+    end
+    return l.σ.(x .+ l.bias)
 end
 
 function Base.show(io::IO, l::GCNConv)
@@ -180,11 +176,9 @@ function GraphConv(ch::Pair{Int,Int}, σ=identity; aggr=+,
     GraphConv(W1, W2, b, σ, aggr)
 end
 
-compute_message(l::GraphConv, x_i, x_j, e_ij) =  x_j
-
 function (l::GraphConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    m = propagate(l, g, l.aggr, xj=x)
+    m = propagate(copyxj, g, l.aggr, xj=x)
     x = l.σ.(l.weight1 * x .+ l.weight2 * m .+ l.bias)
     return x
 end
@@ -272,7 +266,7 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
     Wx = l.weight * x
     Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
     
-    d̄ = propagate(l, g, +; x=Wx)                 ## chout × nheads × nnodes
+    d̄ = propagate(l, g, +; xi=Wx, xj=Wx)                 ## chout × nheads × nnodes
     x = d̄.m ./ d̄.α
 
     if !l.concat
@@ -330,8 +324,6 @@ function GatedGraphConv(out_ch::Int, num_layers::Int;
     GatedGraphConv(w, gru, out_ch, num_layers, aggr)
 end
 
-compute_message(l::GatedGraphConv, x_i, x_j, e_ij) = x_j
-
 # remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
 @non_differentiable fill!(x...)
 
@@ -345,7 +337,7 @@ function (l::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {S<:Real}
     end
     for i = 1:l.num_layers
         M = view(l.weight, :, :, i) * H
-        M = propagate(l, g, l.aggr; xj=M)
+        M = propagate(copyxj, g, l.aggr; xj=M)
         H, _ = l.gru(H, M)
     end
     H
@@ -387,8 +379,8 @@ EdgeConv(nn; aggr=max) = EdgeConv(nn, aggr)
 compute_message(l::EdgeConv, x_i, x_j, e_ij) = l.nn(vcat(x_i, x_j .- x_i))
 
 function (l::EdgeConv)(g::GNNGraph, x::AbstractMatrix)
-    check_num_nodes(g, X)
-    x = propagate(l, g, l.aggr; x)
+    check_num_nodes(g, x)
+    x = propagate(l, g, l.aggr, xi=x, xj=x)
     return x
 end
 
@@ -426,11 +418,9 @@ Flux.trainable(l::GINConv) = (l.nn,)
 
 GINConv(nn, ϵ; aggr=+) = GINConv(nn, ϵ, aggr)
 
-compute_message(l::GINConv, x_i, x_j, e_ij) = x_j 
-
 function (l::GINConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    m = propagate(l, g, l.aggr, xj=x)
+    m = propagate(copyxj, g, l.aggr, xj=x)
     l.nn((1 + ofeltype(x, l.ϵ)) * x + m)
 end
 
@@ -549,11 +539,9 @@ function SAGEConv(ch::Pair{Int,Int}, σ=identity; aggr=mean,
     SAGEConv(W, b, σ, aggr)
 end
 
-compute_message(l::SAGEConv, x_i, x_j, e_ij) =  x_j
-
 function (l::SAGEConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    m = propagate(l, g, l.aggr, xj=x)
+    m = propagate(copyxj, g, l.aggr, xj=x)
     x = l.σ.(l.weight * vcat(x, m) .+ l.bias)
     return x 
 end
@@ -613,9 +601,9 @@ function ResGatedGraphConv(ch::Pair{Int,Int}, σ=identity;
     return ResGatedGraphConv(A, B, U, V, b, σ)
 end
 
-function compute_message(l::ResGatedGraphConv, di, dj)
-    η = sigmoid.(di.Ax .+ dj.Bx)
-    return η .* dj.Vx
+function compute_message(l::ResGatedGraphConv, xi, xj, e)
+    η = sigmoid.(xi.Ax .+ xj.Bx)
+    η .* xj.Vx
 end
 
 function (l::ResGatedGraphConv)(g::GNNGraph, x::AbstractMatrix)

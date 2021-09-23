@@ -93,7 +93,7 @@ for (layer, Layer) in [
               ]
 
     @show layer
-    @time train_res, test_res = train(Layer, verbose=false)
+    @time train_res, test_res = train(Layer, verbose=true)
     @test train_res.acc > 95
     @test test_res.acc > 70
 end

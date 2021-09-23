@@ -4,3 +4,7 @@
 
 # TO Deprecate
 # x, _ = propagate(l, g, l.aggr, x, e)
+
+# # TODO deprecate
+# propagate(l, g::GNNGraph, aggr, x, e=nothing) = propagate(l, g, aggr; x, e)
+

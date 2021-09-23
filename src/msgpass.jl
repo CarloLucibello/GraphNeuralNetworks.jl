@@ -53,20 +53,14 @@ See also [`compute_message`](@ref) and [`update_node`](@ref).
 """
 function propagate end 
 
+propagate(l, g::GNNGraph, aggr; xi=nothing, xj=nothing, e=nothing) = 
+    propagate(l, g, aggr, xi, xj, e)
 
-function propagate(l, g::GNNGraph, aggr; x=nothing, xi=nothing, xj=nothing, e=nothing)
-    if !isnothing(x)
-        @assert isnothing(xi)
-        @assert isnothing(xj)
-        xi, xj = x, x
-    end
+function propagate(l, g::GNNGraph, aggr, xi, xj, e)
     m = apply_edges(l, g, xi, xj, e) 
     m̄ = aggregate_neighbors(g, aggr, m)
     return m̄
 end
-
-# TODO deprecate
-propagate(l, g::GNNGraph, aggr, x, e=nothing) = propagate(l, g, aggr; x, e)
 
 ## Step 1.
 
@@ -106,8 +100,11 @@ _gather(x::Tuple, i) = map(x -> _gather(x, i), x)
 _gather(x::AbstractArray, i) = NNlib.gather(x, i)
 _gather(x::Nothing, i) = nothing
 
+apply_edges(l, g::GNNGraph; xi=nothing, xj=nothing, e=nothing) = 
+    apply_edges(l, g, xi, xj, e)
+
 apply_edges(l::GNNLayer, g::GNNGraph, xi, xj, e) = 
-    apply_edges((a...) -> compute_message(l, a...), g::GNNGraph, xi, xj, e)
+    apply_edges((xi,xj,e) -> compute_message(l, xi, xj, e), g, xi, xj, e)
 
 function apply_edges(f, g::GNNGraph, xi, xj, e)
     s, t = edge_index(g)
@@ -120,16 +117,32 @@ end
 
 ##  Step 2
 
-_scatter(aggr, e::NamedTuple, t) = map(e -> _scatter(aggr, e, t), e)
-_scatter(aggr, e::Tuple, t) = map(e -> _scatter(aggr, e, t), e)
-_scatter(aggr, e::AbstractArray, t) = NNlib.scatter(aggr, e, t)
-_scatter(aggr, e::Nothing, t) = nothing
+_scatter(aggr, m::NamedTuple, t) = map(m -> _scatter(aggr, m, t), m)
+_scatter(aggr, m::Tuple, t) = map(m -> _scatter(aggr, m, t), m)
+_scatter(aggr, m::AbstractArray, t) = NNlib.scatter(aggr, m, t)
 
-function aggregate_neighbors(g::GNNGraph, aggr, e)
+function aggregate_neighbors(g::GNNGraph, aggr, m)
     s, t = edge_index(g)
-    return _scatter(aggr, e, t)
+    return _scatter(aggr, m, t)
 end
 
 aggregate_neighbors(g::GNNGraph, aggr::Nothing, e) = nothing
 
 ### end steps ###
+
+
+
+### SPECIALIZATIONS OF PROPAGATE ###
+copyxi(xi, xj, e) = xi
+copyxj(xi, xj, e) = xj
+ximulxj(xi, xj, e) = xi .* xj
+xiaddxj(xi, xj, e) = xi .+ xj
+
+function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj, e)
+    A = adjacency_matrix(g)
+    return xj * A
+end
+
+# TODO divide  by degre
+# propagate(::typeof(copyxj), g::GNNGraph, ::typeof(mean), xi, xj, e)
+
