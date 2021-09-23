@@ -46,6 +46,7 @@ export
     GINConv,
     GraphConv,
     NNConv,
+    ResGatedGraphConv,
     SAGEConv,
 
     # layers/pool
@@ -62,5 +63,6 @@ include("msgpass.jl")
 include("layers/basic.jl")
 include("layers/conv.jl")
 include("layers/pool.jl")
+include("deprecations.jl")
 
 end

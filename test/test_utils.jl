@@ -94,6 +94,7 @@ function test_layer(l, g::GNNGraph; atol = 1e-7, rtol = 1e-5,
 
     # TEST LAYER GRADIENT - l(g, x) 
     l̄ = gradient(l -> loss(l, g, x), l)[1]
+    l̄ = l̄ isa Base.RefValue ? l̄[] : l̄           # Zygote wraps gradient of mutables in RefValue 
     l̄_fd = FiniteDifferences.grad(fdm, l64 -> loss(l64, g64, x64), l64)[1]
     test_approx_structs(l, l̄, l̄_fd; atol, rtol, broken_grad_fields, exclude_grad_fields, verbose)
 
@@ -104,6 +105,7 @@ function test_layer(l, g::GNNGraph; atol = 1e-7, rtol = 1e-5,
 
     # TEST LAYER GRADIENT - l(g)
     l̄ = gradient(l -> loss(l, g), l)[1]
+    l̄ = l̄ isa Base.RefValue ? l̄[] : l̄           # Zygote wraps gradient of mutables in RefValue 
     l̄_fd = FiniteDifferences.grad(fdm, l64 -> loss(l64, g64), l64)[1]
     test_approx_structs(l, l̄, l̄_fd; atol, rtol, broken_grad_fields, exclude_grad_fields, verbose)
 
@@ -140,7 +142,8 @@ function test_approx_structs(l, l̄, l̄2; atol=1e-5, rtol=1e-5,
             end
         else
             verbose && println("C")
-            test_approx_structs(x, f̄, f̄2; broken_grad_fields)
+            f̄ = f̄ isa Base.RefValue ? f̄[] : f̄          # Zygote wraps gradient of mutables in RefValue 
+            test_approx_structs(x, f̄, f̄2; exclude_grad_fields, broken_grad_fields, verbose)
         end
     end
     return true
