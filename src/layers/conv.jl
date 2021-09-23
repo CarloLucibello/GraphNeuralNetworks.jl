@@ -407,7 +407,7 @@ end
 
 
 @doc raw"""
-    GINConv(f; eps = 0f0)
+    GINConv(f, ϵ; aggr=+)
 
 Graph Isomorphism convolutional layer from paper [How Powerful are Graph Neural Networks?](https://arxiv.org/pdf/1810.00826.pdf)
 
@@ -420,28 +420,36 @@ where ``f_\Theta`` typically denotes a learnable function, e.g. a linear layer o
 # Arguments
 
 - `f`: A (possibly learnable) function acting on node features. 
-- `eps`: Weighting factor.
+- `ϵ`: Weighting factor.
 """
 struct GINConv{R<:Real} <: GNNLayer
     nn
-    eps::R
+    ϵ::R
+    aggr
 end
 
 @functor GINConv
-Flux.trainable(l::GINConv) = (nn=l.nn,)
+Flux.trainable(l::GINConv) = (l.nn,)
 
-function GINConv(nn; eps=0f0)
-    GINConv(nn, eps)
-end
+GINConv(nn, ϵ; aggr=+) = GINConv(nn, ϵ, aggr)
+
 
 compute_message(l::GINConv, x_i, x_j, e_ij) = x_j 
-update_node(l::GINConv, m, x) = l.nn((1 + l.eps) * x + m)
+update_node(l::GINConv, m, x) = l.nn((1 + ofeltype(x, l.ϵ)) * x + m)
 
 function (l::GINConv)(g::GNNGraph, X::AbstractMatrix)
     check_num_nodes(g, X)
-    X, _ = propagate(l, g, +, X)
+    X, _ = propagate(l, g, l.aggr, X)
     X
 end
+
+
+function Base.show(io::IO, l::GINConv)
+    print(io, "GINConv($(l.nn)")
+    print(io, ", $(l.ϵ)")
+    print(io, ")")
+end
+
 
 
 @doc raw"""

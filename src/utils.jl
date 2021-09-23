@@ -67,3 +67,6 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
     end
     return data
 end
+
+
+ofeltype(x, y) = convert(float(eltype(x)), y)

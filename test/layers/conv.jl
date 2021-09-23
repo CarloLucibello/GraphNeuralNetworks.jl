@@ -111,10 +111,10 @@
 
     @testset "GINConv" begin
         nn = Dense(in_channel, out_channel)
-        eps = 0.001f0
-        l = GINConv(nn, eps=eps)
+        
+        l = GINConv(nn, 0.01f0, aggr=mean)
         for g in test_graphs
-            test_layer(l, g, rtol=1e-5, outsize=(out_channel, g.num_nodes), exclude_grad_fields=[:eps]) 
+            test_layer(l, g, rtol=1e-5, outsize=(out_channel, g.num_nodes)) 
         end
     
         @test !in(:eps, Flux.trainable(l))

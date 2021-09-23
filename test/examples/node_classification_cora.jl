@@ -17,11 +17,11 @@ end
 
 # arguments for the `train` function 
 Base.@kwdef mutable struct Args
-    η = 1f-3             # learning rate
-    epochs = 20         # number of epochs
+    η = 5f-3             # learning rate
+    epochs = 10         # number of epochs
     seed = 17             # set seed > 0 for reproducibility
     usecuda = false      # if true use cuda (if available)
-    nhidden = 128        # dimension of hidden features
+    nhidden = 64        # dimension of hidden features
 end
 
 function train(Layer; verbose=false, kws...)
@@ -49,7 +49,7 @@ function train(Layer; verbose=false, kws...)
     
     ## DEFINE MODEL
     model = GNNChain(Layer(nin, nhidden),
-                     Dropout(0.5),
+                    #  Dropout(0.5),
                      Layer(nhidden, nhidden), 
                      Dense(nhidden, nout))  |> device
 
@@ -84,16 +84,16 @@ for Layer in [
             (nin, nout) -> GraphConv(nin => nout, relu, aggr=mean),
             (nin, nout) -> SAGEConv(nin => nout, relu),
             (nin, nout) -> GATConv(nin => nout, relu),
-            (nin, nout) -> GATConv(nin => nout÷2, relu, heads=2),
-            (nin, nout) -> GINConv(Dense(nin, nout, relu)),
-            (nin, nout) -> ChebConv(nin => nout, 3),
-            (nin, nout) -> ResGatedGraphConv(nin => nout, relu),          
+            (nin, nout) -> GINConv(Dense(nin, nout, relu), 0.01, aggr=mean),
+            (nin, nout) -> ChebConv(nin => nout, 2),
+            (nin, nout) -> ResGatedGraphConv(nin => nout, relu),        
             # (nin, nout) -> NNConv(nin => nout),  # needs edge features
             # (nin, nout) -> GatedGraphConv(nout, 2),  # needs nin = nout
             # (nin, nout) -> EdgeConv(Dense(2nin, nout, relu)), # Fits the traning set but does not generalize well
               ]
-    train_res, test_res = train(Layer, verbose=false)
-    # @show Layer(2,2) train_res, test_res
+
+    @show Layer(2,2)
+    train_res, test_res = train(Layer, verbose=true)
     @test train_res.acc > 95
     @test test_res.acc > 70
 end
