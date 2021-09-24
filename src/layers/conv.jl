@@ -585,7 +585,7 @@ end
 @doc raw"""
     ResGatedGraphConv(in => out, act=identity; init=glorot_uniform, bias=true)
 
-The residual gated graph convolutional operator from the [Residual Gated Graph ConvNets]((https://arxiv.org/abs/1711.07553)) paper.
+The residual gated graph convolutional operator from the [Residual Gated Graph ConvNets](https://arxiv.org/abs/1711.07553) paper.
 
 The layer's forward pass is given by
 
