@@ -16,11 +16,11 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
-    # "gnngraph",
-    # "msgpass",
-    # "layers/basic",
-    # "layers/conv",
-    # "layers/pool",
+    "gnngraph",
+    "msgpass",
+    "layers/basic",
+    "layers/conv",
+    "layers/pool",
     "examples/node_classification_cora",
 ]
 
