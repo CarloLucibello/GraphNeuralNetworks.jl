@@ -2,7 +2,8 @@
 
 This is the documentation page for the [GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl) library.
 
-A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
+A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl). GNN.jl is largely inspired by python's libraries [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/) and [Deep Graph Library](https://docs.dgl.ai/),
+and by julia's [GeometricFlux](https://fluxml.ai/GeometricFlux.jl/stable/).
 
 Among its features:
 
@@ -15,15 +16,15 @@ Among its features:
 
 ## Package overview
 
-Let's give a brief overview of the package solving a  
-graph regression problem on fake data. 
+Let's give a brief overview of the package by solving a  
+graph regression problem with synthetic data. 
 
 Usage examples on real datasets can be found in the [examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) folder. 
 
 ### Data preparation
 
 First, we create our dataset consisting in multiple random graphs and associated data features. 
-that we batch together into a unique graph.
+Then we batch the graphs together into a unique graph.
 
 ```julia
 julia> using GraphNeuralNetworks, LightGraphs, Flux, CUDA, Statistics
