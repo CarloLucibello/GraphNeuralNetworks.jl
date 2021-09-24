@@ -251,12 +251,6 @@ function GATConv(ch::Pair{Int,Int}, σ=identity;
     GATConv(W, b, a, σ, negative_slope, ch, heads, concat)
 end
 
-function compute_message(l::GATConv, Wxi, Wxj)
-    aWW = sum(l.a .* vcat(Wxi, Wxj), dims=1)   # 1 × nheads × nedges
-    α = exp.(leakyrelu.(aWW, l.negative_slope))       
-    return (α = α, m = α .* Wxj)
-end
-
 function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
     g = add_self_loops(g)
@@ -265,9 +259,15 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
 
     Wx = l.weight * x
     Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
-    
-    d̄ = propagate(l, g, +; xi=Wx, xj=Wx)                 ## chout × nheads × nnodes
-    x = d̄.m ./ d̄.α
+
+    function message(Wxi, Wxj, e)
+        aWW = sum(l.a .* vcat(Wxi, Wxj), dims=1)   # 1 × nheads × nedges
+        α = exp.(leakyrelu.(aWW, l.negative_slope))       
+        return (α = α, β = α .* Wxj)
+    end
+
+    m = propagate(message, g, +; xi=Wx, xj=Wx)                 ## chout × nheads × nnodes
+    x = m.β ./ m.α
 
     if !l.concat
         x = mean(x, dims=2)
@@ -376,11 +376,10 @@ end
 
 EdgeConv(nn; aggr=max) = EdgeConv(nn, aggr)
 
-compute_message(l::EdgeConv, x_i, x_j, e_ij) = l.nn(vcat(x_i, x_j .- x_i))
-
 function (l::EdgeConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    x = propagate(l, g, l.aggr, xi=x, xj=x)
+    message(xi, xj, e) = l.nn(vcat(xi, xj .- xi))
+    x = propagate(message, g, l.aggr, xi=x, xj=x)
     return x
 end
 
@@ -477,17 +476,18 @@ function NNConv(ch::Pair{Int,Int}, nn, σ=identity; aggr=+, bias=true, init=glor
     return NNConv(W, b, nn, σ, aggr)
 end
 
-function compute_message(l::NNConv, x_i, x_j, e_ij) 
-    nin, nedges = size(x_j)
-    W = reshape(l.nn(e_ij), (:, nin, nedges))
-    x_j = reshape(x_j, (nin, 1, nedges)) # needed by batched_mul
-    m = NNlib.batched_mul(W, x_j)
-    return reshape(m, :, nedges)
-end
-
 function (l::NNConv)(g::GNNGraph, x::AbstractMatrix, e)
     check_num_nodes(g, x)
-    m = propagate(l, g, l.aggr, xj=x, e=e)
+
+    function message(xi, xj, e) 
+        nin, nedges = size(xj)
+        W = reshape(l.nn(e), (:, nin, nedges))
+        xj = reshape(xj, (nin, 1, nedges)) # needed by batched_mul
+        m = NNlib.batched_mul(W, xj)
+        return reshape(m, :, nedges)
+    end
+
+    m = propagate(message, g, l.aggr, xj=x, e=e)
     return l.σ.(l.weight*x .+ m .+ l.bias)
 end
 
@@ -601,20 +601,17 @@ function ResGatedGraphConv(ch::Pair{Int,Int}, σ=identity;
     return ResGatedGraphConv(A, B, U, V, b, σ)
 end
 
-function compute_message(l::ResGatedGraphConv, xi, xj, e)
-    η = sigmoid.(xi.Ax .+ xj.Bx)
-    η .* xj.Vx
-end
-
 function (l::ResGatedGraphConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
 
+    message(xi, xj, e) = sigmoid.(xi.Ax .+ xj.Bx) .* xj.Vx
+    
     Ax = l.A * x
     Bx = l.B * x
     Vx = l.V * x
     
-    m = propagate(l, g, +, xi=(; Ax), xj=(; Bx, Vx))
-
+    m = propagate(message, g, +, xi=(; Ax), xj=(; Bx, Vx))
+    
     return l.σ.(l.U*x .+ m .+ l.bias)                                      
 end
 

@@ -37,7 +37,7 @@ function train(Layer; verbose=false, kws...)
 
     # LOAD DATA
     data = Cora.dataset()
-    g = GNNGraph(data.adjacency_list) |> device
+    g = GNNGraph(data.adjacency_list, graph_type=GRAPH_T) |> device
     X = data.node_features |> device
     y = onehotbatch(data.node_labels, 1:data.num_classes) |> device
     train_ids = data.train_indices |> device
@@ -93,7 +93,7 @@ for (layer, Layer) in [
               ]
 
     @show layer
-    @time train_res, test_res = train(Layer, verbose=true)
+    @time train_res, test_res = train(Layer, verbose=false)
     @test train_res.acc > 95
     @test test_res.acc > 70
 end

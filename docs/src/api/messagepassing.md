@@ -14,8 +14,6 @@ Pages   = ["messagepassing.md"]
 ## Docs
 
 ```@docs
-compute_message
-update_node
-update_edge
+apply_edges
 propagate
 ```

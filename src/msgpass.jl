@@ -1,22 +1,24 @@
 """
-    propagate(l, g, aggr; xi, xj, e)  ->  m̄, m
+    propagate(f, g, aggr; xi, xj, e)  ->  m̄
 
-Performs the message-passing for GNN layer `l` on graph `g` . 
-Returns updated node and edge features `x` and `e`.
-
-In case no input and edge features are given as input, 
-extracts them from `g` and returns the same graph
-with updated feautres.
+Performs the message passing scheme on graph `g`.
+Returns the aggregated node features `m̄` computed 
 
 The computational steps are the following:
 
 ```julia
-m = apply_edges(l, g, xi, xj, e)  # calls `compute_message`
+m = apply_edges(f, g, xi, xj, e)
 m̄ = aggregate_neighbors(g, aggr, m)
 ```
 
-Custom layers typically define their own [`compute_message`](@ref) function, then call
-this method in the forward pass:
+GNN layers typically call propagate in their forward pass.
+
+# Arguments
+
+- `f`: A generic function that will be passed over to [`apply_edges`](@ref). 
+      Takes as inputs `xi`, `xj`, and `e`
+       (target nodes' features, source nodes' features, and edge features
+       respetively) and returns new edge features `m`.
 
 # Usage example
 
@@ -35,13 +37,12 @@ function GNNConv(ch::Pair{Int,Int}, σ=identity)
     in, out = ch
     W = Flux.glorot_uniform(out, in)
     b = zeros(Float32, out)
-    GNNConv(W, b, σ, aggr)
+    GNNConv(W, b, σ)
 end
 
-compute_message(l::GNNConv, xi, xj, eij) = l.W * xj
-
 function (l::GNNConv)(g::GNNGraph, x::AbstractMatrix)
-    m̄ = propagate(l, g, +, xj=x)
+    message(xi, xj, e) = l.W * xj
+    m̄ = propagate(message, g, +, xj=x)
     return l.σ.(m̄ .+ l.bias)
 end
 
@@ -49,7 +50,7 @@ l = GNNConv(10 => 20)
 l(g, x)
 ```
 
-See also [`compute_message`](@ref) and [`update_node`](@ref).
+See also [`apply_edges`](@ref).
 """
 function propagate end 
 
@@ -62,49 +63,41 @@ function propagate(l, g::GNNGraph, aggr, xi, xj, e)
     return m̄
 end
 
-## Step 1.
+## APPLY EDGES
 
 """
-    compute_message(l, x_i, x_j, [e_ij])
+    apply_edges(f, xi, xj, e)
 
 Message function for the message-passing scheme
 started by [`propagate`](@ref).
 Returns the message from node `j` to node `i` .
 In the message-passing scheme, the incoming messages 
 from the neighborhood of `i` will later be aggregated
-in order to update (see [`update_node`](@ref)) the features of node `i`.
+in order to update the features of node `i`.
 
 The function operates on batches of edges, therefore
-`x_i`, `x_j`, and `e_ij` are tensors whose last dimension
+`xi`, `xj`, and `e` are tensors whose last dimension
 is the batch size, or can be tuple/namedtuples of 
 such tensors, according to the input to propagate.
 
-By default, the function returns `x_j`.
+By default, the function returns `xj`.
 Custom layer should specialize this method with the desired behavior.
 
 # Arguments
 
-- `l`: A gnn layer.
-- `x_i`: Features of the central node `i`.
-- `x_j`: Features of the neighbor `j` of node `i`.
-- `e_ij`: Features of edge `(i,j)`.
+- `f`: A function that takes as inputs `xi`, `xj`, and `e`
+    (target nodes' features, source nodes' features, and edge features
+    respetively) and returns new edge features `m`.
+- `xi`: Features of the central node `i`.
+- `xj`: Features of the neighbor `j` of node `i`.
+- `eij`: Features of edge `(i,j)`.
 
-See also [`update_node`](@ref) and [`propagate`](@ref).
+See also [`propagate`](@ref).
 """
-function compute_message end 
-
-compute_message(l, x_i, x_j, e_ij) = compute_message(l, x_i, x_j)
-
-_gather(x::NamedTuple, i) = map(x -> _gather(x, i), x)
-_gather(x::Tuple, i) = map(x -> _gather(x, i), x)
-_gather(x::AbstractArray, i) = NNlib.gather(x, i)
-_gather(x::Nothing, i) = nothing
+function apply_edges end 
 
 apply_edges(l, g::GNNGraph; xi=nothing, xj=nothing, e=nothing) = 
     apply_edges(l, g, xi, xj, e)
-
-apply_edges(l::GNNLayer, g::GNNGraph, xi, xj, e) = 
-    apply_edges((xi,xj,e) -> compute_message(l, xi, xj, e), g, xi, xj, e)
 
 function apply_edges(f, g::GNNGraph, xi, xj, e)
     s, t = edge_index(g)
@@ -114,21 +107,22 @@ function apply_edges(f, g::GNNGraph, xi, xj, e)
     return m
 end
 
+_gather(x::NamedTuple, i) = map(x -> _gather(x, i), x)
+_gather(x::Tuple, i) = map(x -> _gather(x, i), x)
+_gather(x::AbstractArray, i) = NNlib.gather(x, i)
+_gather(x::Nothing, i) = nothing
 
-##  Step 2
 
-_scatter(aggr, m::NamedTuple, t) = map(m -> _scatter(aggr, m, t), m)
-_scatter(aggr, m::Tuple, t) = map(m -> _scatter(aggr, m, t), m)
-_scatter(aggr, m::AbstractArray, t) = NNlib.scatter(aggr, m, t)
+##  AGGREGATE NEIGHBORS
 
 function aggregate_neighbors(g::GNNGraph, aggr, m)
     s, t = edge_index(g)
     return _scatter(aggr, m, t)
 end
 
-aggregate_neighbors(g::GNNGraph, aggr::Nothing, e) = nothing
-
-### end steps ###
+_scatter(aggr, m::NamedTuple, t) = map(m -> _scatter(aggr, m, t), m)
+_scatter(aggr, m::Tuple, t) = map(m -> _scatter(aggr, m, t), m)
+_scatter(aggr, m::AbstractArray, t) = NNlib.scatter(aggr, m, t)
 
 
 
@@ -143,6 +137,6 @@ function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj, e)
     return xj * A
 end
 
-# TODO divide  by degre
+# TODO divide  by degree
 # propagate(::typeof(copyxj), g::GNNGraph, ::typeof(mean), xi, xj, e)
 

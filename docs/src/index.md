@@ -3,12 +3,14 @@
 This is the documentation page for the [GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl) library.
 
 A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
-Its most relevant features are:
-* Provides CUDA support.
-* It's integrated with the JuliaGraphs ecosystem.
-* Implements many common graph convolutional layers.
-* Performs fast operations on batched graphs. 
-* Makes it easy to define custom graph convolutional layers.
+
+Among its features:
+
+* Integratation with the JuliaGraphs ecosystem.
+* Provides common graph convolutional layers.
+* Fast operations on batched graphs. 
+* Easy to define custom graph convolutional layers.
+* CUDA support.
 
 
 ## Package overview
@@ -50,17 +52,17 @@ GNNGraph:
 
 ### Model building 
 
-We concisely define our model using as a [`GNNChain`](@ref) containing 2 graph convolutaional 
+We concisely define our model as a [`GNNChain`](@ref) containing 2 graph convolutaional 
 layers. If CUDA is available, our model will live on the gpu.
 
 ```julia
 julia> device = CUDA.functional() ? Flux.gpu : Flux.cpu;
 
 julia> model = GNNChain(GCNConv(16 => 64),
-                        BatchNorm(64),
-                        x -> relu.(x),
+                        BatchNorm(64),     # Apply batch normalization on node features (nodes dimension is batch dimension)
+                        x -> relu.(x),     
                         GCNConv(64 => 64, relu),
-                        GlobalPool(mean),
+                        GlobalPool(mean),  # aggregate node-wise features into graph-wise features
                         Dense(64, 1)) |> device;
 
 julia> ps = Flux.params(model);
@@ -86,7 +88,7 @@ loss(loader) = mean(loss(g |> device) for g in loader)
 
 for epoch in 1:100
     for g in train_loader
-        g = g |> gpu
+        g = g |> device
         grad = gradient(() -> loss(g), ps)
         Flux.Optimise.update!(opt, ps, grad)
     end

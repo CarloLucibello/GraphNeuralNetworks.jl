@@ -184,9 +184,9 @@
         @test g.gdata.u2 ≈ 2U
 
         # Dimension checks
-        @test_throws AssertionError GNNGraph(erdos_renyi(10,  30), edata=rand(29), graph_type=GRAPH_T)
-        @test_throws AssertionError GNNGraph(erdos_renyi(10,  30), edata=rand(2, 29), graph_type=GRAPH_T)
-        @test_throws AssertionError GNNGraph(erdos_renyi(10,  30), edata=(; x=rand(30), y=rand(29)), graph_type=GRAPH_T)
+        @test_throws AssertionError GNNGraph(erdos_renyi(10, 30), edata=rand(29), graph_type=GRAPH_T)
+        @test_throws AssertionError GNNGraph(erdos_renyi(10, 30), edata=rand(2, 29), graph_type=GRAPH_T)
+        @test_throws AssertionError GNNGraph(erdos_renyi(10, 30), edata=(; x=rand(30), y=rand(29)), graph_type=GRAPH_T)
 
         # Copy features on reverse edge
         e = rand(30)

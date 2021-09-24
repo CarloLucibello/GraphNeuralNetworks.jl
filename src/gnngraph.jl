@@ -50,10 +50,10 @@ from the LightGraphs' graph library can be used on it.
     - `:sparse`. A sparse adjacency matrix representation.
     - `:dense`. A dense adjacency matrix representation.  
     Default `:coo`.
-- `dir`. The assumed edge direction when given adjacency matrix or adjacency list input data `g`. 
+- `dir`: The assumed edge direction when given adjacency matrix or adjacency list input data `g`. 
         Possible values are `:out` and `:in`. Default `:out`.
-- `num_nodes`. The number of nodes. If not specified, inferred from `g`. Default `nothing`.
-- `graph_indicator`. For batched graphs, a vector containing the graph assigment of each node. Default `nothing`.  
+- `num_nodes`: The number of nodes. If not specified, inferred from `g`. Default `nothing`.
+- `graph_indicator`: For batched graphs, a vector containing the graph assigment of each node. Default `nothing`.  
 - `ndata`: Node features. A named tuple of arrays whose last dimension has size num_nodes.
 - `edata`: Edge features. A named tuple of arrays whose whose last dimension has size num_edges.
 - `gdata`: Global features. A named tuple of arrays whose has size num_graphs. 
