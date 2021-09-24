@@ -54,6 +54,7 @@ model = GNN(din, d, dout)                 # step 5
 
 g = GNNGraph(random_regular_graph(10, 4))
 X = randn(Float32, din, 10) 
+
 y = model(g, X)  # output size: (dout, g.num_nodes)
 gs = gradient(() -> sum(model(g, X)), Flux.params(model))
 ```

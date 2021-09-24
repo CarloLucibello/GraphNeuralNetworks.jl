@@ -1,26 +1,39 @@
 """
     propagate(f, g, aggr; xi, xj, e)  ->  m̄
 
-Performs the message passing scheme on graph `g`.
-Returns the aggregated node features `m̄` computed 
+Performs message passing on graph `g`.
 
-The computational steps are the following:
+Takes care of materializing the node features on each edge, 
+applying the message function, and returning an aggregated message ``\bar{\mathbf{m}}`` 
+(depending on the return value of `f`, an array or a named tuple of 
+arrays with last dimension's size `g.num_nodes`).
+
+It can be decomposed in two steps:
 
 ```julia
 m = apply_edges(f, g, xi, xj, e)
 m̄ = aggregate_neighbors(g, aggr, m)
 ```
 
-GNN layers typically call propagate in their forward pass.
+GNN layers typically call `propagate` in their forward pass,
+providing as input `f` a closure.  
 
 # Arguments
 
+- `g`: A `GNNGraph`.
+- `xi`: An array or a named tuple containing arrays whose last dimension's size 
+        is `g.num_nodes`. It will be appropriately materialized on the
+        target node of each edge (see also [`edge_index`](@ref)).
+- `xj`: As `xj`, but to be materialized on edges' sources. 
+- `e`: An array or a named tuple containing arrays whose last dimension's size is `g.num_edges`.
 - `f`: A generic function that will be passed over to [`apply_edges`](@ref). 
-      Takes as inputs `xi`, `xj`, and `e`
-       (target nodes' features, source nodes' features, and edge features
-       respetively) and returns new edge features `m`.
+      Has to take as inputs the edge-materialized `xi`, `xj`, and `e` 
+      (arrays or named tuples of arrays whose last dimension' size is the size of 
+      a batch of edges). Its output has to be an array or a named tuple of arrays
+      with the same batch size.
+- `aggr`: Neighborhood aggregation operator. Use `+`, `mean`, `max`, or `min`. 
 
-# Usage example
+# Usage Examples
 
 ```julia
 using GraphNeuralNetworks, Flux
@@ -68,8 +81,6 @@ end
 """
     apply_edges(f, xi, xj, e)
 
-Message function for the message-passing scheme
-started by [`propagate`](@ref).
 Returns the message from node `j` to node `i` .
 In the message-passing scheme, the incoming messages 
 from the neighborhood of `i` will later be aggregated
@@ -77,20 +88,21 @@ in order to update the features of node `i`.
 
 The function operates on batches of edges, therefore
 `xi`, `xj`, and `e` are tensors whose last dimension
-is the batch size, or can be tuple/namedtuples of 
-such tensors, according to the input to propagate.
-
-By default, the function returns `xj`.
-Custom layer should specialize this method with the desired behavior.
-
+is the batch size, or can be named tuples of 
+such tensors.
+    
 # Arguments
 
-- `f`: A function that takes as inputs `xi`, `xj`, and `e`
-    (target nodes' features, source nodes' features, and edge features
-    respetively) and returns new edge features `m`.
-- `xi`: Features of the central node `i`.
-- `xj`: Features of the neighbor `j` of node `i`.
-- `eij`: Features of edge `(i,j)`.
+- `g`: A `GNNGraph`.
+- `xi`: An array or a named tuple containing arrays whose last dimension's size 
+        is `g.num_nodes`. It will be appropriately materialized on the
+        target node of each edge (see also [`edge_index`](@ref)).
+- `xj`: As `xj`, but to be materialized on edges' sources. 
+- `e`: An array or a named tuple containing arrays whose last dimension's size is `g.num_edges`.
+- `f`: A function that takes as inputs the edge-materialized `xi`, `xj`, and `e`.
+       These are arrays (or named tuples of arrays) whose last dimension' size is the size of
+       a batch of edges. The output of `f` has to be an array (or a named tuple of arrays)
+       with the same batch size. 
 
 See also [`propagate`](@ref).
 """
