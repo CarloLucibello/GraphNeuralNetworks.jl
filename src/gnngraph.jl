@@ -160,13 +160,26 @@ function GNNGraph(g::AbstractGraph; kws...)
 end
 
 
-function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata)
+function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata, graph_type=nothing)
 
     ndata = normalize_graphdata(ndata, default_name=:x, n=g.num_nodes)
     edata = normalize_graphdata(edata, default_name=:e, n=g.num_edges, duplicate_if_needed=true)
     gdata = normalize_graphdata(gdata, default_name=:u, n=g.num_graphs)
-    
-    GNNGraph(g.graph, 
+
+    if !isnothing(graph_type)
+        if graph_type == :coo
+            graph, num_nodes, num_edges = to_coo(g.graph; g.num_nodes)
+        elseif graph_type == :dense
+            graph, num_nodes, num_edges = to_dense(g.graph)
+        elseif graph_type == :sparse
+            graph, num_nodes, num_edges = to_sparse(g.graph)
+        end    
+        @assert num_nodes == g.num_nodes
+        @assert num_edges == g.num_edges
+    else
+        graph = g.graph
+    end
+    GNNGraph(graph, 
             g.num_nodes, g.num_edges, g.num_graphs, 
             g.graph_indicator, 
             ndata, edata, gdata) 

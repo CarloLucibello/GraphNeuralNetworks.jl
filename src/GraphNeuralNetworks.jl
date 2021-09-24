@@ -32,6 +32,7 @@ export
 
     # msgpass
     apply_edges, propagate,
+    copyxj,
 
     # layers/basic
     GNNLayer,

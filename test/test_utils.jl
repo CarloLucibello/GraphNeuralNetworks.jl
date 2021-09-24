@@ -50,6 +50,11 @@ function test_layer(l, g::GNNGraph; atol = 1e-7, rtol = 1e-5,
     if !isnothing(outsize)
         @test size(y) == outsize
     end
+
+    # test same output on different graph formats
+    gcoo = GNNGraph(g, graph_type=:coo)
+    ycoo = f(l, gcoo, x)
+    @test ycoo ≈ y    
  
     g′ = f(l, g)
     @test g′.ndata.x ≈ y

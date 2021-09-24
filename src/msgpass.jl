@@ -1,10 +1,8 @@
 """
     propagate(f, g, aggr; xi, xj, e)  ->  m̄
 
-Performs message passing on graph `g`.
-
-Takes care of materializing the node features on each edge, 
-applying the message function, and returning an aggregated message ``\bar{\mathbf{m}}`` 
+Performs message passing on graph `g`. Takes care of materializing the node features on each edge, 
+applying the message function, and returning an aggregated message ``\\bar{\\mathbf{m}}`` 
 (depending on the return value of `f`, an array or a named tuple of 
 arrays with last dimension's size `g.num_nodes`).
 
@@ -139,16 +137,25 @@ _scatter(aggr, m::AbstractArray, t) = NNlib.scatter(aggr, m, t)
 
 
 ### SPECIALIZATIONS OF PROPAGATE ###
-copyxi(xi, xj, e) = xi
+"""
+    copyxj(xi, xj, e) = xj
+"""
 copyxj(xi, xj, e) = xj
-ximulxj(xi, xj, e) = xi .* xj
-xiaddxj(xi, xj, e) = xi .+ xj
 
-function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj, e)
+# copyxi(xi, xj, e) = xi
+# ximulxj(xi, xj, e) = xi .* xj
+# xiaddxj(xi, xj, e) = xi .+ xj
+
+function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
     A = adjacency_matrix(g)
     return xj * A
 end
 
-# TODO divide  by degree
-# propagate(::typeof(copyxj), g::GNNGraph, ::typeof(mean), xi, xj, e)
+# function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
+#     A = adjacency_matrix(g)
+#     degs = vec(sum(A; dims=2))
+#     D = Diagonal(ofeltype(xj, 1) ./ degs)
+#     # A, D = _aa(g, xj)
+#     return xj * A * D
+# end
 

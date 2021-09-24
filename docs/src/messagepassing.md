@@ -83,3 +83,9 @@ end
 ```
 
 See the [`GATConv`](@ref) implementation [here](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/master/src/layers/conv.jl) for a more complex example.
+
+
+## Built-in message functions
+
+In order to exploit optimized specializations of the [`propagate`](@ref), it is recommended 
+to use built-in message functions such as [`copyxj`](@ref) whenever possible. 

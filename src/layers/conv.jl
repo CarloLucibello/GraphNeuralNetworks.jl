@@ -47,6 +47,7 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
     if Dout < Din
         x = l.weight * x
     end
+    # @assert all(>(0), degree(g, T, dir=:in))
     c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'
     x = propagate(copyxj, g, +, xj=x)
