@@ -146,10 +146,10 @@ copyxj(xi, xj, e) = xj
 # ximulxj(xi, xj, e) = xi .* xj
 # xiaddxj(xi, xj, e) = xi .+ xj
 
-function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
-    A = adjacency_matrix(g)
-    return xj * A
-end
+# function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
+#     A = adjacency_matrix(g)
+#     return xj * A
+# end
 
 # function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
 #     A = adjacency_matrix(g)
