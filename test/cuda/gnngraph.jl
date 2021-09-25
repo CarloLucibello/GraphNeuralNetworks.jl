@@ -32,6 +32,13 @@ const ACUMatrix{T} = Union{CuMatrix{T}, CUDA.CUSPARSE.CuSparseMatrix{T}}
         @test Array(mat_gpu) == mat 
     end
 
+    @teset "degree" begin
+        d = degree(g)
+        d_gpu = degree(g_gpu)
+        @test d_gpu isa CuVector
+        @test Array(d_gpu) == d
+    end
+
     @testset "scaled_laplacian" begin
         @test_broken begin 
             mat = scaled_laplacian(g)

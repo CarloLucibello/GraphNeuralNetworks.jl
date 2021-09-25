@@ -57,37 +57,4 @@
 
         @test m.a == ones(out_channel, num_E)
     end
-
-
-    # @testset "NamedTuples" begin
-    #     struct NewLayerNT{G}
-    #         W
-    #     end
-        
-    #     NewLayerNT(in, out) = NewLayerNT{GRAPH_T}(randn(T, out, in))
-        
-    #     function GraphNeuralNetworks.compute_message(l::NewLayerNT{GRAPH_T}, di, dj, dij)
-    #         a = l.W * (di.x .+ dj.x .+ dij.e) 
-    #         b = l.W * di.x
-    #         return (; a, b)
-    #     end
-    #     function GraphNeuralNetworks.update_node(l::NewLayerNT{GRAPH_T}, m, d) 
-    #         return (α=l.W * d.x + m.a + m.b, β=m)
-    #     end
-    #     function GraphNeuralNetworks.update_edge(l::NewLayerNT{GRAPH_T}, m, e) 
-    #         return m.a
-    #     end
-
-    #     function (::NewLayerNT{GRAPH_T})(g, x, e)
-    #         x, e = propagate(l, g, mean, (; x), (; e))
-    #         return x.α .+ x.β.a, e
-    #     end
-
-    #     l = NewLayerNT(in_channel, out_channel)
-    #     g = GNNGraph(adj, graph_type=GRAPH_T)
-    #     X′, E′ = l(g, X, E)
-
-    #     @test size(X′) == (out_channel, num_V)
-    #     @test size(E′) == (out_channel, num_E)
-    # end
 end

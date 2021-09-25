@@ -12,6 +12,17 @@ function to_coo(coo::COO_T; dir=:out, num_nodes=nothing)
     return coo, num_nodes, num_edges
 end
 
+function to_coo(A::SPARSE_T; dir=:out, num_nodes=nothing)
+    s, t, v = findnz(A)
+    if dir == :in
+        s, t = t, s
+    end
+    num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
+    num_edges = length(s)
+
+    return (s, t, nothing), num_nodes, num_edges
+end
+
 function to_coo(A::ADJMAT_T; dir=:out, num_nodes=nothing)
     nz = findall(!=(0), A) # vec of cartesian indexes
     s, t = ntuple(i -> map(t->t[i], nz), 2)

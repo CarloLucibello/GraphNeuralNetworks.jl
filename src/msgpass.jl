@@ -146,16 +146,25 @@ copyxj(xi, xj, e) = xj
 # ximulxj(xi, xj, e) = xi .* xj
 # xiaddxj(xi, xj, e) = xi .+ xj
 
-# function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
-#     A = adjacency_matrix(g)
-#     return xj * A
-# end
+
+function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
+    A = adjacency_matrix(g)
+    return xj * A
+end
+
+## avoid the fast path on gpu until we have better cuda support
+function propagate(::typeof(copyxj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
+    propagate((xi,xj,e)->copyxj(xi,xj,e), g, +, xi, xj, e)
+end
 
 # function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
 #     A = adjacency_matrix(g)
-#     degs = vec(sum(A; dims=2))
-#     D = Diagonal(ofeltype(xj, 1) ./ degs)
-#     # A, D = _aa(g, xj)
+#     D = compute_degree(A)
 #     return xj * A * D
 # end
+
+# # Zygote bug. Error with sparse matrix without nograd
+# compute_degree(A) = Diagonal(1f0 ./ vec(sum(A; dims=2)))
+
+# Flux.Zygote.@nograd compute_degree
 

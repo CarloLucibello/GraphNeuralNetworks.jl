@@ -102,7 +102,7 @@ struct GNNGraph{T<:Union{COO_T,ADJMAT_T}}
     num_nodes::Int
     num_edges::Int
     num_graphs::Int
-    graph_indicator
+    graph_indicator       # vector of ints or nothing
     ndata::NamedTuple
     edata::NamedTuple
     gdata::NamedTuple
@@ -216,9 +216,11 @@ s, t = edge_index(g)
 """
 edge_index(g::GNNGraph{<:COO_T}) = g.graph[1:2]
 
-edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph)[1][1:2]
+edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][1:2]
 
 edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
+
+edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][3]
 
 LightGraphs.edges(g::GNNGraph) = zip(edge_index(g)...)
 
@@ -278,6 +280,7 @@ end
 
 function LightGraphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
     if g.graph[1] isa CuVector
+        # TODO revisi after https://github.com/JuliaGPU/CUDA.jl/pull/1152
         A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
     else
         A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
@@ -293,17 +296,18 @@ function LightGraphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltyp
     return dir == :out ? A : A'
 end
 
-function LightGraphs.degree(g::GNNGraph{<:COO_T}, T=Int; dir=:out)
+function LightGraphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out)
     s, t = edge_index(g)
+    T = isnothing(T) ? eltype(s) : T
     degs = fill!(similar(s, T, g.num_nodes), 0)
-    o = fill!(similar(s, Int, g.num_edges), 1)
+    src = 1
     if dir ∈ [:out, :both]
-        NNlib.scatter!(+, degs, o, s)
+        NNlib.scatter!(+, degs, src, s)
     end
     if dir ∈ [:in, :both]
-        NNlib.scatter!(+, degs, o, t)
+        NNlib.scatter!(+, degs, src, t)
     end
-    return degs
+    return degs 
 end
 
 function LightGraphs.degree(g::GNNGraph{<:ADJMAT_T}, T=Int; dir=:out)
@@ -317,6 +321,7 @@ function LightGraphs.laplacian_matrix(g::GNNGraph, T::DataType=Int; dir::Symbol=
     D = Diagonal(vec(sum(A; dims=2)))
     return D - A
 end
+
 
 """
     normalized_laplacian(g, T=Float32; add_self_loops=false, dir=:out)
@@ -406,13 +411,14 @@ end
 function add_self_loops(g::GNNGraph{<:ADJMAT_T})
     A = g.graph
     @assert g.edata === (;)
+    num_edges = g.num_edges + g.num_nodes
     A = A + I
-    num_edges =  g.num_edges + g.num_nodes
     GNNGraph(A, 
             g.num_nodes, num_edges, g.num_graphs, 
             g.graph_indicator,
             g.ndata, g.edata, g.gdata)
 end
+
 
 function remove_self_loops(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
@@ -572,9 +578,3 @@ end
 @non_differentiable degree(x...)
 @non_differentiable add_self_loops(x...)     # TODO this is wrong, since g carries feature arrays, needs rrule
 @non_differentiable remove_self_loops(x...)  # TODO this is wrong, since g carries feature arrays, needs rrule
-
-# # delete when https://github.com/JuliaDiff/ChainRules.jl/pull/472 is merged
-# function ChainRulesCore.rrule(::typeof(copy), x)
-#     copy_pullback(ȳ) = (NoTangent(), ȳ)
-#     return copy(x), copy_pullback
-# end

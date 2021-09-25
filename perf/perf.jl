@@ -15,15 +15,27 @@ function run_single_benchmark(N, c, D, CONV; gtype=:lg)
     g_gpu = g |> gpu    
     
     m = CONV(D => D)
+    ps = Flux.params(m)
+    
     m_gpu = m |> gpu
+    ps_gpu = Flux.params(m_gpu)
+
     
     res = Dict()
-    res["CPU"] = @benchmark $m($g)
+
+    res["CPU_FWD"] = @benchmark $m($g)
+    res["CPU_GRAD"] = @benchmark gradient(() -> sum($m($g).ndata.x), $ps)
     
-    try [GCNConv, GraphConv, GATConv]
-        res["GPU"] = @benchmark CUDA.@sync($m_gpu($g_gpu)) teardown=(GC.gc(); CUDA.reclaim())
+    try
+        res["GPU_FWD"] = @benchmark CUDA.@sync($m_gpu($g_gpu)) teardown=(GC.gc(); CUDA.reclaim())
     catch
-        res["GPU"] = missing
+        res["GPU_FWD"] = missing
+    end
+
+    try
+        res["GPU_GRAD"] = @benchmark CUDA.@sync(gradient(() -> sum($m_gpu($g_gpu).ndata.x), $ps_gpu)) teardown=(GC.gc(); CUDA.reclaim())
+    catch
+        res["GPU_GRAD"] = missing
     end
 
     return res
@@ -45,7 +57,7 @@ function run_benchmarks(;
         Ns = [10, 100, 1000, 10000],
         c = 6,
         D = 100,
-        layers = [GCNConv, GraphConv, GATConv],
+        layers = [GCNConv, GATConv],
         gtypes = [:coo, :sparse, :dense],
         )
 

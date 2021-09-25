@@ -65,7 +65,7 @@ function train(Layer; verbose=false, kws...)
     end
     
     verbose && report(0)
-    for epoch in 1:args.epochs
+    @time for epoch in 1:args.epochs
         gs = Flux.gradient(ps) do
             ŷ = model(g, X)
             logitcrossentropy(ŷ[:,train_ids], ytrain)
@@ -79,21 +79,29 @@ function train(Layer; verbose=false, kws...)
     return train_res, test_res
 end
 
-for (layer, Layer) in [
-            ("GCNConv", (nin, nout) -> GCNConv(nin => nout, relu)),
-            ("GraphConv", (nin, nout) -> GraphConv(nin => nout, relu, aggr=mean)),
-            ("SAGEConv", (nin, nout) -> SAGEConv(nin => nout, relu)),
-            ("GATConv", (nin, nout) -> GATConv(nin => nout, relu)),
-            ("GINConv", (nin, nout) -> GINConv(Dense(nin, nout, relu), 0.01, aggr=mean)),
-            ("ChebConv", (nin, nout) -> ChebConv(nin => nout, 2)),
-            ("ResGatedGraphConv", (nin, nout) -> ResGatedGraphConv(nin => nout, relu)),        
-            # (nin, nout) -> NNConv(nin => nout),  # needs edge features
-            # (nin, nout) -> GatedGraphConv(nout, 2),  # needs nin = nout
-            # (nin, nout) -> EdgeConv(Dense(2nin, nout, relu)), # Fits the traning set but does not generalize well
-              ]
+function train_many(; usecuda=false)
+    for (layer, Layer) in [
+                ("GCNConv", (nin, nout) -> GCNConv(nin => nout, relu)),
+                ("ResGatedGraphConv", (nin, nout) -> ResGatedGraphConv(nin => nout, relu)),        
+                ("GraphConv", (nin, nout) -> GraphConv(nin => nout, relu, aggr=mean)),
+                ("SAGEConv", (nin, nout) -> SAGEConv(nin => nout, relu)),
+                ("GATConv", (nin, nout) -> GATConv(nin => nout, relu)),
+                ("GINConv", (nin, nout) -> GINConv(Dense(nin, nout, relu), 0.01, aggr=mean)),
+                ## ("ChebConv", (nin, nout) -> ChebConv(nin => nout, 2)), # not working on gpu
+                ## ("NNConv", (nin, nout) -> NNConv(nin => nout)),  # needs edge features
+                ## ("GatedGraphConv", (nin, nout) -> GatedGraphConv(nout, 2)),  # needs nin = nout
+                ## ("EdgeConv",(nin, nout) -> EdgeConv(Dense(2nin, nout, relu))), # Fits the traning set but does not generalize well
+                ]
 
-    @show layer
-    @time train_res, test_res = train(Layer, verbose=false)
-    @test train_res.acc > 95
-    @test test_res.acc > 70
+        @show layer
+        @time train_res, test_res = train(Layer; usecuda, verbose=false)
+        @test train_res.acc > 94
+        @test test_res.acc > 70
+    end
+end
+
+## if GRAPH_T != :dense # some erratic errors with :dense
+train_many(usecuda=false)
+if TEST_GPU
+    train_many(usecuda=true)
 end
