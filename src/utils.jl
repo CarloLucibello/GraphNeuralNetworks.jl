@@ -68,6 +68,10 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
     return data
 end
 
+ones_like(x::AbstractArray, T=eltype(x), sz=size(x)) = fill!(similar(x, T, sz), 1)
+ones_like(x::SparseMatrixCSC, T=eltype(x), sz=size(x)) = ones(T, sz)
+ones_like(x::CUMAT_T, T=eltype(x), sz=size(x)) = CUDA.ones(T, sz)
+
 ofeltype(x, y) = convert(float(eltype(x)), y)
 
 # TODO move to flux. fix for https://github.com/FluxML/Flux.jl/issues/1720

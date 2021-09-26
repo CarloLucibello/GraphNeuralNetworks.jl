@@ -78,8 +78,8 @@ Flux's DataLoader iterates over mini-batches of graphs
 (batched together into a `GNNGraph` object). 
 
 ```julia
-gtrain, _ = getgraph(gbatch, 1:800)
-gtest, _ = getgraph(gbatch, 801:gbatch.num_graphs)
+gtrain = getgraph(gbatch, 1:800)
+gtest = getgraph(gbatch, 801:gbatch.num_graphs)
 train_loader = Flux.Data.DataLoader(gtrain, batchsize=32, shuffle=true)
 test_loader = Flux.Data.DataLoader(gtest, batchsize=32, shuffle=false)
 

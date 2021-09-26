@@ -436,24 +436,42 @@ function remove_self_loops(g::GNNGraph{<:COO_T})
             g.ndata, g.edata, g.gdata)
 end
 
-function _catgraphs(g1::GNNGraph{<:COO_T}, g2::GNNGraph{<:COO_T})
-    s1, t1 = edge_index(g1)
-    s2, t2 = edge_index(g2)
+function SparseArrays.blockdiag(g1::GNNGraph, g2::GNNGraph)
     nv1, nv2 = g1.num_nodes, g2.num_nodes
-    s = vcat(s1, nv1 .+ s2)
-    t = vcat(t1, nv1 .+ t2)
-    w = cat_features(edge_weight(g1), edge_weight(g2))
-
-    ind1 = isnothing(g1.graph_indicator) ? fill!(similar(s1, Int, nv1), 1) : g1.graph_indicator 
-    ind2 = isnothing(g2.graph_indicator) ? fill!(similar(s2, Int, nv2), 1) : g2.graph_indicator 
+    if g1.graph isa COO_T
+        s1, t1 = edge_index(g1)
+        s2, t2 = edge_index(g2)
+        s = vcat(s1, nv1 .+ s2)
+        t = vcat(t1, nv1 .+ t2)
+        w = cat_features(edge_weight(g1), edge_weight(g2))
+        graph = (s, t, w)
+        ind1 = isnothing(g1.graph_indicator) ? ones_like(s1, Int, nv1) : g1.graph_indicator 
+        ind2 = isnothing(g2.graph_indicator) ? ones_like(s2, Int, nv2) : g2.graph_indicator     
+    elseif g1.graph isa ADJMAT_T        
+        graph = blockdiag(g1.graph, g2.graph)
+        ind1 = isnothing(g1.graph_indicator) ? ones_like(graph, Int, nv1) : g1.graph_indicator 
+        ind2 = isnothing(g2.graph_indicator) ? ones_like(graph, Int, nv2) : g2.graph_indicator     
+    end
     graph_indicator = vcat(ind1, g1.num_graphs .+ ind2)
     
-    GNNGraph((s, t, w),
+    GNNGraph(graph,
             nv1 + nv2, g1.num_edges + g2.num_edges, g1.num_graphs + g2.num_graphs, 
             graph_indicator,
             cat_features(g1.ndata, g2.ndata),
             cat_features(g1.edata, g2.edata),
             cat_features(g1.gdata, g2.gdata))
+end
+
+# PIRACY
+function SparseArrays.blockdiag(A1::AbstractMatrix, A2::AbstractMatrix)
+    m1, n1 = size(A1)
+    @assert m1 == n1
+    m2, n2 = size(A2)
+    @assert m2 == n2
+    O1 = fill!(similar(A1, eltype(A1), (m1, n2)), 0)
+    O2 = fill!(similar(A1, eltype(A1), (m2, n1)), 0)
+    return [A1 O1
+            O2 A2]
 end
 
 ### Cat public interfaces #############
@@ -466,7 +484,7 @@ Equivalent to [`Flux.batch`](@ref).
 function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
     g = g1
     for go in gothers
-        g = _catgraphs(g, go)
+        g = blockdiag(g, go)
     end
     return g
 end
@@ -475,7 +493,7 @@ end
     batch(xs::Vector{<:GNNGraph})
 
 Batch together multiple `GNNGraph`s into a single one 
-containing the total number of nodes and edges of the original graphs.
+containing the total number of original nodes and edges.
 
 Equivalent to [`SparseArrays.blockdiag`](@ref).
 """
@@ -483,31 +501,36 @@ Flux.batch(xs::Vector{<:GNNGraph}) = blockdiag(xs...)
 
 ### LearnBase compatibility
 LearnBase.nobs(g::GNNGraph) = g.num_graphs 
-LearnBase.getobs(g::GNNGraph, i) = getgraph(g, i)[1]
+LearnBase.getobs(g::GNNGraph, i) = getgraph(g, i)
 
 # Flux's Dataloader compatibility. Related PR https://github.com/FluxML/Flux.jl/pull/1683
 Flux.Data._nobs(g::GNNGraph) = g.num_graphs
-Flux.Data._getobs(g::GNNGraph, i) = getgraph(g, i)[1]
+Flux.Data._getobs(g::GNNGraph, i) = getgraph(g, i)
 
 #########################
 Base.:(==)(g1::GNNGraph, g2::GNNGraph) = all(k -> getfield(g1,k)==getfield(g2,k), fieldnames(typeof(g1)))
 
 """
-    getgraph(g::GNNGraph, i)
+    getgraph(g::GNNGraph, i; nmap=false)
 
-Return the getgraph of `g` induced by those nodes `v`
-for which `g.graph_indicator[v] ∈ i`. In other words, it
-extract the component graphs from a batched graph. 
+Return the subgraph of `g` induced by those nodes `j`
+for which `g.graph_indicator[j] == i` or,
+if `i` is a collection, `g.graph_indicator[j] ∈ i`. 
+In other words, it extract the component graphs from a batched graph. 
 
-It also returns a vector `nodes` mapping the new nodes to the old ones. 
-The node `i` in the getgraph corresponds to the node `nodes[i]` in `g`.
+If `nmap=true`, return also a vector `v` mapping the new nodes to the old ones. 
+The node `i` in the subgraph will correspond to the node `v[i]` in `g`.
 """
-getgraph(g::GNNGraph, i::Int) = getgraph(g::GNNGraph{<:COO_T}, [i])
+getgraph(g::GNNGraph, i::Int; kws...) = getgraph(g, [i]; kws...)
 
-function getgraph(g::GNNGraph{<:COO_T}, i::AbstractVector{Int})
+function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap=false)
     if g.graph_indicator === nothing
         @assert i == [1]
-        return g
+        if nmap
+            return g, 1:g.num_nodes
+        else
+            return g
+        end
     end
 
     node_mask = g.graph_indicator .∈ Ref(i)
@@ -518,25 +541,38 @@ function getgraph(g::GNNGraph{<:COO_T}, i::AbstractVector{Int})
     graphmap = Dict(i => inew for (inew, i) in enumerate(i))
     graph_indicator = [graphmap[i] for i in g.graph_indicator[node_mask]]
     
-    s, t, w = g.graph
-    edge_mask = s .∈ Ref(nodes) 
-    s = [nodemap[i] for i in s[edge_mask]]
-    t = [nodemap[i] for i in t[edge_mask]]
-    w = isnothing(w) ? nothing : w[edge_mask]
-    
+    if g.graph isa COO_T 
+        s, t = edge_index(g)
+        w = edge_weight(g)
+        edge_mask = s .∈ Ref(nodes) 
+        s = [nodemap[i] for i in s[edge_mask]]
+        t = [nodemap[i] for i in t[edge_mask]]
+        w = isnothing(w) ? nothing : w[edge_mask]
+        graph = (s, t, w)
+        num_edges = length(s)
+        edata = getobs(g.edata, edge_mask)
+    elseif g.graph isa ADJMAT_T
+        graph = g.graph[nodes, nodes]
+        num_edges = count(>=(0), graph)
+        @assert g.edata == (;) # TODO
+        edata = (;)
+    end
     ndata = getobs(g.ndata, node_mask)
-    edata = getobs(g.edata, edge_mask)
     gdata = getobs(g.gdata, i)
 
     num_nodes = length(graph_indicator)
-    num_edges = length(s)
     num_graphs = length(i)
 
-    gnew = GNNGraph((s,t,w), 
+    gnew = GNNGraph(graph, 
                 num_nodes, num_edges, num_graphs,
                 graph_indicator,
                 ndata, edata, gdata)
-    return gnew, nodes
+
+    if nmap
+        return gnew, nodes
+    else
+        return gnew
+    end
 end
 
 function node_features(g::GNNGraph)

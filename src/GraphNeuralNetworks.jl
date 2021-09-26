@@ -28,7 +28,7 @@ export
     # from LightGraphs
     adjacency_matrix, 
     # from SparseArrays
-    sprand, sparse, 
+    sprand, sparse, blockdiag,
 
     # msgpass
     apply_edges, propagate,

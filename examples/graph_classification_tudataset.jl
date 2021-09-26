@@ -75,8 +75,8 @@ function train(; kws...)
     @info gfull
     
     perm = randperm(gfull.num_graphs)
-    gtrain, _ = getgraph(gfull, perm[1:NUM_TRAIN])
-    gtest, _ = getgraph(gfull, perm[NUM_TRAIN+1:end]) 
+    gtrain = getgraph(gfull, perm[1:NUM_TRAIN])
+    gtest = getgraph(gfull, perm[NUM_TRAIN+1:end]) 
     train_loader = DataLoader(gtrain, batchsize=args.batchsize, shuffle=true)
     test_loader = DataLoader(gtest, batchsize=args.batchsize, shuffle=false)
     
