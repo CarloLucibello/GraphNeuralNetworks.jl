@@ -18,7 +18,7 @@ makedocs(;
                 "Convolutional Layers" => "api/conv.md",
                 "Pooling Layers" => "api/pool.md",
                 "Message Passing" => "api/messagepassing.md",
-                "NNlib" => "api/nnlib.md",
+                "Utils" => "api/utils.md",
                ],
               "Developer Notes" => "dev.md",
             ],

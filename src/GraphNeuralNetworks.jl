@@ -30,6 +30,10 @@ export
     # from SparseArrays
     sprand, sparse, blockdiag,
 
+    # utils
+    readout_nodes, readout_edges, 
+    softmax_nodes, softmax_edges,
+    
     # msgpass
     apply_edges, propagate,
     copyxj,

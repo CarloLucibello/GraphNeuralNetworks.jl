@@ -130,3 +130,67 @@ function NNlib.scatter!(op, dst::AnyCuArray, src::Number, idx::AnyCuArray)
     kernel(args...; threads=threads, blocks=blocks)
     return dst
 end
+
+"""
+    readout_nodes(g, x, aggr)
+
+For a batched graph `g`, return the graph-wise aggregation of the node
+features `x`. The aggregation operator `aggr` can be `+`, `mean`, `max`, or `min`.
+The returned array will have last dimension `g.num_graphs`.
+"""
+function readout_nodes(g, x, aggr)
+    indexes = graph_indicator(g)
+    return NNlib.scatter(aggr, x, indexes)
+end
+
+"""
+    readout_edges(g, e, aggr)
+
+For a batched graph `g`, return the graph-wise aggregation of the edge
+features `e`. The aggregation operator `aggr` can be `+`, `mean`, `max`, or `min`.
+The returned array will have last dimension `g.num_graphs`.
+"""
+function readout_edges(g, e, aggr)
+    s, t = edge_index(g)
+    indexes = graph_indicator(g)[s]
+    return NNlib.scatter(aggr, e, indexes)
+end
+
+"""
+    softmax_nodes(g, x, aggr)
+
+Graph-wise softmax of the node features `x`.
+"""
+function softmax_nodes(g, x)
+    max_ = maximum(x; dims = ndims(x)) # TODO use graph-wise maximum
+    num = exp.(x .- max_)
+    den = readout_nodes(g, num, +)
+    den = Flux.flatten(den) # reshape to matrix for convenience
+    gi = graph_indicator(g)
+    den = den[:, gi]
+    return num ./ reshape(den, size(num))
+end
+
+"""
+    softmax_edges(g, e)
+
+Graph-wise softmax of the edge features `e`.
+"""
+function softmax_edges(g, e)
+    max_ = maximum(e; dims = ndims(e)) # TODO use graph-wise maximum
+    num = exp.(e .- max_)
+    den = readout_edges(g, num, +)
+    den = Flux.flatten(den) # reshape to matrix for convenience
+    s, t = edge_index(g)
+    gi = graph_indicator(g)[s]
+    den = den[:, gi]
+    return num ./ reshape(den, size(num))
+end
+
+function graph_indicator(g)
+    if isnothing(g.graph_indicator)
+        return ones_like(edge_index(g)[1], Int, g.num_nodes)
+    else 
+        return g.graph_indicator
+    end
+end
