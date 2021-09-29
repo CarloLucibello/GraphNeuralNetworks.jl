@@ -29,7 +29,8 @@ tests = [
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
 
-@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo,:sparse,:dense)
+@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo,:sparse) 
+    # not testing :dense since causes OutOfMerror on github's CI
 
     global GRAPH_T = graph_type
     global TEST_GPU = CUDA.functional()# && GRAPH_T != :sparse
