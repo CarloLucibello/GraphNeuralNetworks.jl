@@ -33,14 +33,8 @@ struct GlobalPool{F} <: GNNLayer
     aggr::F
 end
 
-function (l::GlobalPool)(g::GNNGraph, X::AbstractArray)
-    if isnothing(g.graph_indicator)
-        # assume only one graph
-        indexes = fill!(similar(X, Int, g.num_nodes), 1)     
-    else 
-        indexes = g.graph_indicator
-    end
-    return NNlib.scatter(l.aggr, X, indexes)
+function (l::GlobalPool)(g::GNNGraph, x::AbstractArray)
+    return readout_nodes(g, x, l.aggr)
 end
 
 """
