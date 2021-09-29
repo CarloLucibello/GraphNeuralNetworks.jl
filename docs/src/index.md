@@ -8,9 +8,9 @@ and by julia's [GeometricFlux](https://fluxml.ai/GeometricFlux.jl/stable/).
 Among its features:
 
 * Integratation with the JuliaGraphs ecosystem.
-* Provides common graph convolutional layers.
+* Implementation of common graph convolutional layers.
 * Fast operations on batched graphs. 
-* Easy to define custom graph convolutional layers.
+* Easy to define custom layers.
 * CUDA support.
 
 
