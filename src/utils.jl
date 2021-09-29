@@ -132,43 +132,45 @@ function NNlib.scatter!(op, dst::AnyCuArray, src::Number, idx::AnyCuArray)
 end
 
 """
-    readout_nodes(g, x, aggr)
+    reduce_nodes(aggr, g, x)
 
 For a batched graph `g`, return the graph-wise aggregation of the node
 features `x`. The aggregation operator `aggr` can be `+`, `mean`, `max`, or `min`.
 The returned array will have last dimension `g.num_graphs`.
 """
-function readout_nodes(g, x, aggr)
+function reduce_nodes(aggr, g::GNNGraph, x)
+    @assert size(x)[end] == g.num_nodes
     indexes = graph_indicator(g)
     return NNlib.scatter(aggr, x, indexes)
 end
 
 """
-    readout_edges(g, e, aggr)
+    reduce_edges(aggr, g, e)
 
 For a batched graph `g`, return the graph-wise aggregation of the edge
 features `e`. The aggregation operator `aggr` can be `+`, `mean`, `max`, or `min`.
 The returned array will have last dimension `g.num_graphs`.
 """
-function readout_edges(g, e, aggr)
+function reduce_edges(aggr, g::GNNGraph, e)
+    @assert size(e)[end] == g.num_edges
     s, t = edge_index(g)
     indexes = graph_indicator(g)[s]
     return NNlib.scatter(aggr, e, indexes)
 end
 
 """
-    softmax_nodes(g, x, aggr)
+    softmax_nodes(g, x)
 
 Graph-wise softmax of the node features `x`.
 """
-function softmax_nodes(g, x)
-    max_ = maximum(x; dims = ndims(x)) # TODO use graph-wise maximum
-    num = exp.(x .- max_)
-    den = readout_nodes(g, num, +)
-    den = Flux.flatten(den) # reshape to matrix for convenience
+function softmax_nodes(g::GNNGraph, x)
+    @assert size(x)[end] == g.num_nodes
     gi = graph_indicator(g)
-    den = den[:, gi]
-    return num ./ reshape(den, size(num))
+    max_ = gather(scatter(max, x, gi), gi)
+    num = exp.(x .- max_)
+    den = reduce_nodes(+, g, num)
+    den = gather(den, gi)
+    return num ./ den
 end
 
 """
@@ -176,21 +178,51 @@ end
 
 Graph-wise softmax of the edge features `e`.
 """
-function softmax_edges(g, e)
-    max_ = maximum(e; dims = ndims(e)) # TODO use graph-wise maximum
+function softmax_edges(g::GNNGraph, e)
+    @assert size(e)[end] == g.num_edges
+    gi = graph_indicator(g, edges=true)
+    max_ = gather(scatter(max, e, gi), gi)
     num = exp.(e .- max_)
-    den = readout_edges(g, num, +)
-    den = Flux.flatten(den) # reshape to matrix for convenience
-    s, t = edge_index(g)
-    gi = graph_indicator(g)[s]
-    den = den[:, gi]
-    return num ./ reshape(den, size(num))
+    den = reduce_edges(+, g, num)
+    den = gather(den, gi)
+    return num ./ den
 end
 
-function graph_indicator(g)
+"""
+    broadcast_nodes(g, x)
+
+Graph-wise broadcast array `x` of size `(*, g.num_graphs)` 
+to size `(*, g.num_nodes)`.
+"""
+function broadcast_nodes(g::GNNGraph, x)
+    @assert size(x)[end] == g.num_graphs
+    gi = graph_indicator(g)
+    return gather(x, gi)
+end
+
+"""
+    broadcast_edges(g, x)
+
+Graph-wise broadcast array `x` of size `(*, g.num_graphs)` 
+to size `(*, g.num_edges)`.
+"""
+function broadcast_edges(g::GNNGraph, x)
+    @assert size(x)[end] == g.num_graphs
+    gi = graph_indicator(g, edges=true)
+    return gather(x, gi)
+end
+
+
+function graph_indicator(g; edges=false)
     if isnothing(g.graph_indicator)
-        return ones_like(edge_index(g)[1], Int, g.num_nodes)
+        gi = ones_like(edge_index(g)[1], Int, g.num_nodes)
     else 
-        return g.graph_indicator
+        gi = g.graph_indicator
+    end
+    if edges
+        s, t = edge_index(g)
+        return gi[s]
+    else
+        return gi
     end
 end

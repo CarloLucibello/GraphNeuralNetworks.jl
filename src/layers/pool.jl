@@ -34,7 +34,7 @@ struct GlobalPool{F} <: GNNLayer
 end
 
 function (l::GlobalPool)(g::GNNGraph, x::AbstractArray)
-    return readout_nodes(g, x, l.aggr)
+    return reduce_nodes(g, x, l.aggr)
 end
 
 """

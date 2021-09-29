@@ -14,13 +14,15 @@ Pages   = ["utils.md"]
 ## Docs
 
 
-### Readout Functions 
+### Graph-wise operations 
 
 ```@docs
-GraphNeuralNetworks.readout_nodes
-GraphNeuralNetworks.readout_edges
+GraphNeuralNetworks.reduce_nodes
+GraphNeuralNetworks.reduce_edges
 GraphNeuralNetworks.softmax_nodes
 GraphNeuralNetworks.softmax_edges
+GraphNeuralNetworks.broadcast_nodes
+GraphNeuralNetworks.broadcast_edges
 ```
 
 ### NNlib
