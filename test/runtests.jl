@@ -24,6 +24,7 @@ tests = [
     "layers/conv",
     "layers/pool",
     "examples/node_classification_cora",
+    "deprecations",
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")

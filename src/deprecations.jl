@@ -16,14 +16,14 @@ update_edge(l, e, m) = e
 function propagate(l::GNNLayer, g::GNNGraph, aggr, x, e=nothing)
     @warn """
           Passing a GNNLayer to propagate is deprecated, 
-          you should pass directly the message function.
+          you should pass the message function directly.
           The new signature is `propagate(f, g, aggr; [xi, xj, e])`.
 
-          Also the functions `compute_message`, `update_node`,
-          and `update_edge` have been deprecated. Please
+          The functions `compute_message`, `update_node`,
+          and `update_edge` have been deprecated as well. Please
           refer to the documentation.
           """
-    m = apply_edge((a...) -> compute_message(l, a...), g, x, x, e)
+    m = apply_edges((a...) -> compute_message(l, a...), g, x, x, e)
     m̄ = aggregate_neighbors(g, aggr, m)
     x = update_node(l, x, m̄)
     e = update_edge(l, e, m)

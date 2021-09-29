@@ -74,14 +74,6 @@ ones_like(x::CUMAT_T, T=eltype(x), sz=size(x)) = CUDA.ones(T, sz)
 
 ofeltype(x, y) = convert(float(eltype(x)), y)
 
-# TODO move to flux. fix for https://github.com/FluxML/Flux.jl/issues/1720
-Flux._cpu_array(x::AbstractSparseArray) = Flux.adapt(SparseMatrixCSC, x)
-
-# TODO. FIX THIS HACK. CUDA.jl support to sparse matrices is very bad, convert to dense
-# Revisit after https://github.com/JuliaGPU/CUDA.jl/pull/1152
-Flux._gpu_array(x::AbstractSparseArray) = CuMatrix(x)
-
-
 # Considers the src a zero dimensional object.
 # Useful for implementing `StatsBase.counts`, `degree`, etc...
 # function NNlib.scatter!(op, dst::AbstractArray, src::Number, idx::AbstractArray)
