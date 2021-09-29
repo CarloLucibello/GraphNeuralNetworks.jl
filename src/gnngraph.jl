@@ -50,10 +50,10 @@ from the LightGraphs' graph library can be used on it.
     - `:sparse`. A sparse adjacency matrix representation.
     - `:dense`. A dense adjacency matrix representation.  
     Default `:coo`.
-- `dir`. The assumed edge direction when given adjacency matrix or adjacency list input data `g`. 
+- `dir`: The assumed edge direction when given adjacency matrix or adjacency list input data `g`. 
         Possible values are `:out` and `:in`. Default `:out`.
-- `num_nodes`. The number of nodes. If not specified, inferred from `g`. Default `nothing`.
-- `graph_indicator`. For batched graphs, a vector containing the graph assigment of each node. Default `nothing`.  
+- `num_nodes`: The number of nodes. If not specified, inferred from `g`. Default `nothing`.
+- `graph_indicator`: For batched graphs, a vector containing the graph assigment of each node. Default `nothing`.  
 - `ndata`: Node features. A named tuple of arrays whose last dimension has size num_nodes.
 - `edata`: Edge features. A named tuple of arrays whose whose last dimension has size num_edges.
 - `gdata`: Global features. A named tuple of arrays whose has size num_graphs. 
@@ -102,7 +102,7 @@ struct GNNGraph{T<:Union{COO_T,ADJMAT_T}}
     num_nodes::Int
     num_edges::Int
     num_graphs::Int
-    graph_indicator
+    graph_indicator       # vector of ints or nothing
     ndata::NamedTuple
     edata::NamedTuple
     gdata::NamedTuple
@@ -160,13 +160,26 @@ function GNNGraph(g::AbstractGraph; kws...)
 end
 
 
-function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata)
+function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata, graph_type=nothing)
 
     ndata = normalize_graphdata(ndata, default_name=:x, n=g.num_nodes)
     edata = normalize_graphdata(edata, default_name=:e, n=g.num_edges, duplicate_if_needed=true)
     gdata = normalize_graphdata(gdata, default_name=:u, n=g.num_graphs)
-    
-    GNNGraph(g.graph, 
+
+    if !isnothing(graph_type)
+        if graph_type == :coo
+            graph, num_nodes, num_edges = to_coo(g.graph; g.num_nodes)
+        elseif graph_type == :dense
+            graph, num_nodes, num_edges = to_dense(g.graph)
+        elseif graph_type == :sparse
+            graph, num_nodes, num_edges = to_sparse(g.graph)
+        end    
+        @assert num_nodes == g.num_nodes
+        @assert num_edges == g.num_edges
+    else
+        graph = g.graph
+    end
+    GNNGraph(graph, 
             g.num_nodes, g.num_edges, g.num_graphs, 
             g.graph_indicator, 
             ndata, edata, gdata) 
@@ -203,9 +216,11 @@ s, t = edge_index(g)
 """
 edge_index(g::GNNGraph{<:COO_T}) = g.graph[1:2]
 
-edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph)[1][1:2]
+edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][1:2]
 
 edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
+
+edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][3]
 
 LightGraphs.edges(g::GNNGraph) = zip(edge_index(g)...)
 
@@ -265,6 +280,7 @@ end
 
 function LightGraphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
     if g.graph[1] isa CuVector
+        # TODO revisi after https://github.com/JuliaGPU/CUDA.jl/pull/1152
         A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
     else
         A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
@@ -280,17 +296,18 @@ function LightGraphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltyp
     return dir == :out ? A : A'
 end
 
-function LightGraphs.degree(g::GNNGraph{<:COO_T}, T=Int; dir=:out)
+function LightGraphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out)
     s, t = edge_index(g)
+    T = isnothing(T) ? eltype(s) : T
     degs = fill!(similar(s, T, g.num_nodes), 0)
-    o = fill!(similar(s, Int, g.num_edges), 1)
+    src = 1
     if dir ∈ [:out, :both]
-        NNlib.scatter!(+, degs, o, s)
+        NNlib.scatter!(+, degs, src, s)
     end
     if dir ∈ [:in, :both]
-        NNlib.scatter!(+, degs, o, t)
+        NNlib.scatter!(+, degs, src, t)
     end
-    return degs
+    return degs 
 end
 
 function LightGraphs.degree(g::GNNGraph{<:ADJMAT_T}, T=Int; dir=:out)
@@ -304,6 +321,7 @@ function LightGraphs.laplacian_matrix(g::GNNGraph, T::DataType=Int; dir::Symbol=
     D = Diagonal(vec(sum(A; dims=2)))
     return D - A
 end
+
 
 """
     normalized_laplacian(g, T=Float32; add_self_loops=false, dir=:out)
@@ -393,13 +411,14 @@ end
 function add_self_loops(g::GNNGraph{<:ADJMAT_T})
     A = g.graph
     @assert g.edata === (;)
+    num_edges = g.num_edges + g.num_nodes
     A = A + I
-    num_edges =  g.num_edges + g.num_nodes
     GNNGraph(A, 
             g.num_nodes, num_edges, g.num_graphs, 
             g.graph_indicator,
             g.ndata, g.edata, g.gdata)
 end
+
 
 function remove_self_loops(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
@@ -417,24 +436,42 @@ function remove_self_loops(g::GNNGraph{<:COO_T})
             g.ndata, g.edata, g.gdata)
 end
 
-function _catgraphs(g1::GNNGraph{<:COO_T}, g2::GNNGraph{<:COO_T})
-    s1, t1 = edge_index(g1)
-    s2, t2 = edge_index(g2)
+function SparseArrays.blockdiag(g1::GNNGraph, g2::GNNGraph)
     nv1, nv2 = g1.num_nodes, g2.num_nodes
-    s = vcat(s1, nv1 .+ s2)
-    t = vcat(t1, nv1 .+ t2)
-    w = cat_features(edge_weight(g1), edge_weight(g2))
-
-    ind1 = isnothing(g1.graph_indicator) ? fill!(similar(s1, Int, nv1), 1) : g1.graph_indicator 
-    ind2 = isnothing(g2.graph_indicator) ? fill!(similar(s2, Int, nv2), 1) : g2.graph_indicator 
+    if g1.graph isa COO_T
+        s1, t1 = edge_index(g1)
+        s2, t2 = edge_index(g2)
+        s = vcat(s1, nv1 .+ s2)
+        t = vcat(t1, nv1 .+ t2)
+        w = cat_features(edge_weight(g1), edge_weight(g2))
+        graph = (s, t, w)
+        ind1 = isnothing(g1.graph_indicator) ? ones_like(s1, Int, nv1) : g1.graph_indicator 
+        ind2 = isnothing(g2.graph_indicator) ? ones_like(s2, Int, nv2) : g2.graph_indicator     
+    elseif g1.graph isa ADJMAT_T        
+        graph = blockdiag(g1.graph, g2.graph)
+        ind1 = isnothing(g1.graph_indicator) ? ones_like(graph, Int, nv1) : g1.graph_indicator 
+        ind2 = isnothing(g2.graph_indicator) ? ones_like(graph, Int, nv2) : g2.graph_indicator     
+    end
     graph_indicator = vcat(ind1, g1.num_graphs .+ ind2)
     
-    GNNGraph((s, t, w),
+    GNNGraph(graph,
             nv1 + nv2, g1.num_edges + g2.num_edges, g1.num_graphs + g2.num_graphs, 
             graph_indicator,
             cat_features(g1.ndata, g2.ndata),
             cat_features(g1.edata, g2.edata),
             cat_features(g1.gdata, g2.gdata))
+end
+
+# PIRACY
+function SparseArrays.blockdiag(A1::AbstractMatrix, A2::AbstractMatrix)
+    m1, n1 = size(A1)
+    @assert m1 == n1
+    m2, n2 = size(A2)
+    @assert m2 == n2
+    O1 = fill!(similar(A1, eltype(A1), (m1, n2)), 0)
+    O2 = fill!(similar(A1, eltype(A1), (m2, n1)), 0)
+    return [A1 O1
+            O2 A2]
 end
 
 ### Cat public interfaces #############
@@ -447,7 +484,7 @@ Equivalent to [`Flux.batch`](@ref).
 function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
     g = g1
     for go in gothers
-        g = _catgraphs(g, go)
+        g = blockdiag(g, go)
     end
     return g
 end
@@ -456,7 +493,7 @@ end
     batch(xs::Vector{<:GNNGraph})
 
 Batch together multiple `GNNGraph`s into a single one 
-containing the total number of nodes and edges of the original graphs.
+containing the total number of original nodes and edges.
 
 Equivalent to [`SparseArrays.blockdiag`](@ref).
 """
@@ -464,31 +501,36 @@ Flux.batch(xs::Vector{<:GNNGraph}) = blockdiag(xs...)
 
 ### LearnBase compatibility
 LearnBase.nobs(g::GNNGraph) = g.num_graphs 
-LearnBase.getobs(g::GNNGraph, i) = getgraph(g, i)[1]
+LearnBase.getobs(g::GNNGraph, i) = getgraph(g, i)
 
 # Flux's Dataloader compatibility. Related PR https://github.com/FluxML/Flux.jl/pull/1683
 Flux.Data._nobs(g::GNNGraph) = g.num_graphs
-Flux.Data._getobs(g::GNNGraph, i) = getgraph(g, i)[1]
+Flux.Data._getobs(g::GNNGraph, i) = getgraph(g, i)
 
 #########################
 Base.:(==)(g1::GNNGraph, g2::GNNGraph) = all(k -> getfield(g1,k)==getfield(g2,k), fieldnames(typeof(g1)))
 
 """
-    getgraph(g::GNNGraph, i)
+    getgraph(g::GNNGraph, i; nmap=false)
 
-Return the getgraph of `g` induced by those nodes `v`
-for which `g.graph_indicator[v] ∈ i`. In other words, it
-extract the component graphs from a batched graph. 
+Return the subgraph of `g` induced by those nodes `j`
+for which `g.graph_indicator[j] == i` or,
+if `i` is a collection, `g.graph_indicator[j] ∈ i`. 
+In other words, it extract the component graphs from a batched graph. 
 
-It also returns a vector `nodes` mapping the new nodes to the old ones. 
-The node `i` in the getgraph corresponds to the node `nodes[i]` in `g`.
+If `nmap=true`, return also a vector `v` mapping the new nodes to the old ones. 
+The node `i` in the subgraph will correspond to the node `v[i]` in `g`.
 """
-getgraph(g::GNNGraph, i::Int) = getgraph(g::GNNGraph{<:COO_T}, [i])
+getgraph(g::GNNGraph, i::Int; kws...) = getgraph(g, [i]; kws...)
 
-function getgraph(g::GNNGraph{<:COO_T}, i::AbstractVector{Int})
+function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap=false)
     if g.graph_indicator === nothing
         @assert i == [1]
-        return g
+        if nmap
+            return g, 1:g.num_nodes
+        else
+            return g
+        end
     end
 
     node_mask = g.graph_indicator .∈ Ref(i)
@@ -499,25 +541,38 @@ function getgraph(g::GNNGraph{<:COO_T}, i::AbstractVector{Int})
     graphmap = Dict(i => inew for (inew, i) in enumerate(i))
     graph_indicator = [graphmap[i] for i in g.graph_indicator[node_mask]]
     
-    s, t, w = g.graph
-    edge_mask = s .∈ Ref(nodes) 
-    s = [nodemap[i] for i in s[edge_mask]]
-    t = [nodemap[i] for i in t[edge_mask]]
-    w = isnothing(w) ? nothing : w[edge_mask]
-    
+    if g.graph isa COO_T 
+        s, t = edge_index(g)
+        w = edge_weight(g)
+        edge_mask = s .∈ Ref(nodes) 
+        s = [nodemap[i] for i in s[edge_mask]]
+        t = [nodemap[i] for i in t[edge_mask]]
+        w = isnothing(w) ? nothing : w[edge_mask]
+        graph = (s, t, w)
+        num_edges = length(s)
+        edata = getobs(g.edata, edge_mask)
+    elseif g.graph isa ADJMAT_T
+        graph = g.graph[nodes, nodes]
+        num_edges = count(>=(0), graph)
+        @assert g.edata == (;) # TODO
+        edata = (;)
+    end
     ndata = getobs(g.ndata, node_mask)
-    edata = getobs(g.edata, edge_mask)
     gdata = getobs(g.gdata, i)
 
     num_nodes = length(graph_indicator)
-    num_edges = length(s)
     num_graphs = length(i)
 
-    gnew = GNNGraph((s,t,w), 
+    gnew = GNNGraph(graph, 
                 num_nodes, num_edges, num_graphs,
                 graph_indicator,
                 ndata, edata, gdata)
-    return gnew, nodes
+
+    if nmap
+        return gnew, nodes
+    else
+        return gnew
+    end
 end
 
 function node_features(g::GNNGraph)
@@ -559,9 +614,3 @@ end
 @non_differentiable degree(x...)
 @non_differentiable add_self_loops(x...)     # TODO this is wrong, since g carries feature arrays, needs rrule
 @non_differentiable remove_self_loops(x...)  # TODO this is wrong, since g carries feature arrays, needs rrule
-
-# # delete when https://github.com/JuliaDiff/ChainRules.jl/pull/472 is merged
-# function ChainRulesCore.rrule(::typeof(copy), x)
-#     copy_pullback(ȳ) = (NoTangent(), ȳ)
-#     return copy(x), copy_pullback
-# end

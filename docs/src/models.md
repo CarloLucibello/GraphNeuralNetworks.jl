@@ -15,13 +15,12 @@ In the explicit modeling style, the model is created according to the following 
 1. Define a new type for your model (`GNN` in the example below). Layers and submodels are fields.
 2. Apply `Flux.@functor` to the new type to make it Flux's compatible (parameters' collection, gpu movement, etc...)
 3. Optionally define a convenience constructor for your model.
-4. Define the forward pass by implementing the function call method for your type
+4. Define the forward pass by implementing the call method for your type.
 5. Instantiate the model. 
 
 Here is an example of this construction:
 ```julia
 using Flux, LightGraphs, GraphNeuralNetworks
-using Flux: @functor
 
 struct GNN                                # step 1
     conv1
@@ -31,7 +30,7 @@ struct GNN                                # step 1
     dense
 end
 
-@functor GNN                              # step 2
+Flux.@functor GNN                              # step 2
 
 function GNN(din::Int, d::Int, dout::Int) # step 3    
     GNN(GCNConv(din => d),
@@ -51,10 +50,13 @@ function (model::GNN)(g::GNNGraph, x)     # step 4
 end
 
 din, d, dout = 3, 4, 2 
-g = GNNGraph(random_regular_graph(10, 4))
-X = randn(Float32, din, 10)
 model = GNN(din, d, dout)                 # step 5
-y = model(g, X)
+
+g = GNNGraph(random_regular_graph(10, 4))
+X = randn(Float32, din, 10) 
+
+y = model(g, X)  # output size: (dout, g.num_nodes)
+gs = gradient(() -> sum(model(g, X)), Flux.params(model))
 ```
 
 ## Implicit modeling with GNNChains
@@ -81,8 +83,6 @@ model = GNNChain(GCNConv(din => d),
                  GCNConv(d => d, relu),
                  Dropout(0.5),
                  Dense(d, dout))
-
-y = model(g, X)  # output size: (dout, g.num_nodes)
 ```
 
 The `GNNChain` only propagates the graph and the node features. More complex scenarios, e.g. when also edge features are updated, have to be handled using the explicit definition of the forward pass. 

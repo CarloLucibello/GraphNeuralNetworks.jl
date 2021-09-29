@@ -1,28 +1,37 @@
 """
-    propagate(l, g, aggr, [x, e]) -> x′, e′
-    propagate(l, g, aggr) -> g′
+    propagate(f, g, aggr; xi, xj, e)  ->  m̄
 
-Performs the message-passing for GNN layer `l` on graph `g` . 
-Returns updated node and edge features `x` and `e`.
+Performs message passing on graph `g`. Takes care of materializing the node features on each edge, 
+applying the message function, and returning an aggregated message ``\\bar{\\mathbf{m}}`` 
+(depending on the return value of `f`, an array or a named tuple of 
+arrays with last dimension's size `g.num_nodes`).
 
-In case no input and edge features are given as input, 
-extracts them from `g` and returns the same graph
-with updated feautres.
-
-The computational steps are the following:
+It can be decomposed in two steps:
 
 ```julia
-m = compute_batch_message(l, g, x, e)  # calls `compute_message`
+m = apply_edges(f, g, xi, xj, e)
 m̄ = aggregate_neighbors(g, aggr, m)
-x′ = update_node(l, m̄, x)
-e′ = update_edge(l, m, e)
 ```
 
-Custom layers typically define their own [`update_node`](@ref)
-and [`compute_message`](@ref) functions, then call
-this method in the forward pass:
+GNN layers typically call `propagate` in their forward pass,
+providing as input `f` a closure.  
 
-# Usage example
+# Arguments
+
+- `g`: A `GNNGraph`.
+- `xi`: An array or a named tuple containing arrays whose last dimension's size 
+        is `g.num_nodes`. It will be appropriately materialized on the
+        target node of each edge (see also [`edge_index`](@ref)).
+- `xj`: As `xj`, but to be materialized on edges' sources. 
+- `e`: An array or a named tuple containing arrays whose last dimension's size is `g.num_edges`.
+- `f`: A generic function that will be passed over to [`apply_edges`](@ref). 
+      Has to take as inputs the edge-materialized `xi`, `xj`, and `e` 
+      (arrays or named tuples of arrays whose last dimension' size is the size of 
+      a batch of edges). Its output has to be an array or a named tuple of arrays
+      with the same batch size.
+- `aggr`: Neighborhood aggregation operator. Use `+`, `mean`, `max`, or `min`. 
+
+# Usage Examples
 
 ```julia
 using GraphNeuralNetworks, Flux
@@ -35,140 +44,127 @@ end
 
 Flux.@functor GNNConv
 
-function GNNConv(ch::Pair{Int,Int}, σ=identity;
-                 init=glorot_uniform, bias::Bool=true)
+function GNNConv(ch::Pair{Int,Int}, σ=identity)
     in, out = ch
-    W = init(out, in)
-    b = Flux.create_bias(W, bias, out)
-    GNNConv(W, b, σ, aggr)
+    W = Flux.glorot_uniform(out, in)
+    b = zeros(Float32, out)
+    GNNConv(W, b, σ)
 end
-
-compute_message(l::GNNConv, x_i, x_j, e_ij) = l.W * x_j
-update_node(l::GNNConv, m̄, x) = l.σ.(m̄ .+ l.bias)
 
 function (l::GNNConv)(g::GNNGraph, x::AbstractMatrix)
-    x, _ = propagate(l, g, +, x)
-    return x
+    message(xi, xj, e) = l.W * xj
+    m̄ = propagate(message, g, +, xj=x)
+    return l.σ.(m̄ .+ l.bias)
 end
+
+l = GNNConv(10 => 20)
+l(g, x)
 ```
 
-See also [`compute_message`](@ref) and [`update_node`](@ref).
+See also [`apply_edges`](@ref).
 """
 function propagate end 
 
-function propagate(l, g::GNNGraph, aggr)
-    x, e = propagate(l, g, aggr, node_features(g), edge_features(g))
-    return GNNGraph(g, ndata=x, edata=e)
-end
+propagate(l, g::GNNGraph, aggr; xi=nothing, xj=nothing, e=nothing) = 
+    propagate(l, g, aggr, xi, xj, e)
 
-function propagate(l, g::GNNGraph, aggr, x, e=nothing)
-    m = compute_batch_message(l, g, x, e) 
+function propagate(l, g::GNNGraph, aggr, xi, xj, e)
+    m = apply_edges(l, g, xi, xj, e) 
     m̄ = aggregate_neighbors(g, aggr, m)
-    x′ = update_node(l, m̄, x)
-    e′ = update_edge(l, m, e)
-    return x′, e′
+    return m̄
 end
 
-## Step 1.
+## APPLY EDGES
 
 """
-    compute_message(l, x_i, x_j, [e_ij])
+    apply_edges(f, xi, xj, e)
 
-Message function for the message-passing scheme
-started by [`propagate`](@ref).
 Returns the message from node `j` to node `i` .
 In the message-passing scheme, the incoming messages 
 from the neighborhood of `i` will later be aggregated
-in order to update (see [`update_node`](@ref)) the features of node `i`.
+in order to update the features of node `i`.
 
 The function operates on batches of edges, therefore
-`x_i`, `x_j`, and `e_ij` are tensors whose last dimension
-is the batch size, or can be tuple/namedtuples of 
-such tensors, according to the input to propagate.
-
-By default, the function returns `x_j`.
-Custom layer should specialize this method with the desired behavior.
-
+`xi`, `xj`, and `e` are tensors whose last dimension
+is the batch size, or can be named tuples of 
+such tensors.
+    
 # Arguments
 
-- `l`: A gnn layer.
-- `x_i`: Features of the central node `i`.
-- `x_j`: Features of the neighbor `j` of node `i`.
-- `e_ij`: Features of edge `(i,j)`.
+- `g`: A `GNNGraph`.
+- `xi`: An array or a named tuple containing arrays whose last dimension's size 
+        is `g.num_nodes`. It will be appropriately materialized on the
+        target node of each edge (see also [`edge_index`](@ref)).
+- `xj`: As `xj`, but to be materialized on edges' sources. 
+- `e`: An array or a named tuple containing arrays whose last dimension's size is `g.num_edges`.
+- `f`: A function that takes as inputs the edge-materialized `xi`, `xj`, and `e`.
+       These are arrays (or named tuples of arrays) whose last dimension' size is the size of
+       a batch of edges. The output of `f` has to be an array (or a named tuple of arrays)
+       with the same batch size. 
 
-See also [`update_node`](@ref) and [`propagate`](@ref).
+See also [`propagate`](@ref).
 """
-function compute_message end 
+function apply_edges end 
 
-@inline compute_message(l, x_i, x_j, e_ij) = compute_message(l, x_i, x_j)
-@inline compute_message(l, x_i, x_j) = x_j
+apply_edges(l, g::GNNGraph; xi=nothing, xj=nothing, e=nothing) = 
+    apply_edges(l, g, xi, xj, e)
+
+function apply_edges(f, g::GNNGraph, xi, xj, e)
+    s, t = edge_index(g)
+    xi = _gather(xi, t)   # size: (D, num_nodes) -> (D, num_edges)
+    xj = _gather(xj, s)
+    m = f(xi, xj, e)
+    return m
+end
 
 _gather(x::NamedTuple, i) = map(x -> _gather(x, i), x)
 _gather(x::Tuple, i) = map(x -> _gather(x, i), x)
 _gather(x::AbstractArray, i) = NNlib.gather(x, i)
 _gather(x::Nothing, i) = nothing
 
-function compute_batch_message(l, g::GNNGraph, x, e)
+
+##  AGGREGATE NEIGHBORS
+
+function aggregate_neighbors(g::GNNGraph, aggr, m)
     s, t = edge_index(g)
-    xi = _gather(x, t)
-    xj = _gather(x, s)
-    m = compute_message(l, xi, xj, e)
-    return m
+    return _scatter(aggr, m, t)
 end
 
-##  Step 2
+_scatter(aggr, m::NamedTuple, t) = map(m -> _scatter(aggr, m, t), m)
+_scatter(aggr, m::Tuple, t) = map(m -> _scatter(aggr, m, t), m)
+_scatter(aggr, m::AbstractArray, t) = NNlib.scatter(aggr, m, t)
 
-_scatter(aggr, e::NamedTuple, t) = map(e -> _scatter(aggr, e, t), e)
-_scatter(aggr, e::Tuple, t) = map(e -> _scatter(aggr, e, t), e)
-_scatter(aggr, e::AbstractArray, t) = NNlib.scatter(aggr, e, t)
-_scatter(aggr, e::Nothing, t) = nothing
 
-function aggregate_neighbors(g::GNNGraph, aggr, e)
-    s, t = edge_index(g)
-    _scatter(aggr, e, t)
+
+### SPECIALIZATIONS OF PROPAGATE ###
+"""
+    copyxj(xi, xj, e) = xj
+"""
+copyxj(xi, xj, e) = xj
+
+# copyxi(xi, xj, e) = xi
+# ximulxj(xi, xj, e) = xi .* xj
+# xiaddxj(xi, xj, e) = xi .+ xj
+
+
+function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
+    A = adjacency_matrix(g)
+    return xj * A
 end
 
-aggregate_neighbors(g::GNNGraph, aggr::Nothing, e) = nothing
+## avoid the fast path on gpu until we have better cuda support
+function propagate(::typeof(copyxj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
+    propagate((xi,xj,e)->copyxj(xi,xj,e), g, +, xi, xj, e)
+end
 
-## Step 3
+# function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
+#     A = adjacency_matrix(g)
+#     D = compute_degree(A)
+#     return xj * A * D
+# end
 
-"""
-    update_node(l, m̄, x)
+# # Zygote bug. Error with sparse matrix without nograd
+# compute_degree(A) = Diagonal(1f0 ./ vec(sum(A; dims=2)))
 
-Node update function for the GNN layer `l`,
-returning a new set of node features `x′` based on old 
-features `x` and the aggregated message `m̄` from the neighborhood.
+# Flux.Zygote.@nograd compute_degree
 
-The input `m̄` is an array, a tuple or a named tuple, 
-reflecting the output of [`compute_message`](@ref).
-
-By default, the function returns `m̄`.
-Custom layers should  specialize this method with the desired behavior.
-
-See also [`compute_message`](@ref), [`update_edge`](@ref), and [`propagate`](@ref).
-"""
-function update_node end
-
-@inline update_node(l, m̄, x) = m̄
-
-## Step 4
-
-
-"""
-    update_edge(l, m, e)
-
-Edge update function for the GNN layer `l`,
-returning a new set of edge features `e′` based on old 
-features `e` and the newly computed messages `m`
-from the [`compute_message`](@ref) function.
-
-By default, the function returns `e`.
-Custom layers should specialize this method with the desired behavior.
-
-See also [`compute_message`](@ref), [`update_node`](@ref), and [`propagate`](@ref).
-"""
-function update_edge end
-
-@inline update_edge(l, m, e) = e
-
-### end steps ###

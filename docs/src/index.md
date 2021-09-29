@@ -2,26 +2,29 @@
 
 This is the documentation page for the [GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl) library.
 
-A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
-Its most relevant features are:
-* Provides CUDA support.
-* It's integrated with the JuliaGraphs ecosystem.
-* Implements many common graph convolutional layers.
-* Performs fast operations on batched graphs. 
-* Makes it easy to define custom graph convolutional layers.
+A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl). GNN.jl is largely inspired by python's libraries [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/) and [Deep Graph Library](https://docs.dgl.ai/),
+and by julia's [GeometricFlux](https://fluxml.ai/GeometricFlux.jl/stable/).
+
+Among its features:
+
+* Integratation with the JuliaGraphs ecosystem.
+* Implementation of common graph convolutional layers.
+* Fast operations on batched graphs. 
+* Easy to define custom layers.
+* CUDA support.
 
 
 ## Package overview
 
-Let's give a brief overview of the package solving a  
-graph regression problem on fake data. 
+Let's give a brief overview of the package by solving a  
+graph regression problem with synthetic data. 
 
 Usage examples on real datasets can be found in the [examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) folder. 
 
 ### Data preparation
 
 First, we create our dataset consisting in multiple random graphs and associated data features. 
-that we batch together into a unique graph.
+Then we batch the graphs together into a unique graph.
 
 ```julia
 julia> using GraphNeuralNetworks, LightGraphs, Flux, CUDA, Statistics
@@ -50,17 +53,17 @@ GNNGraph:
 
 ### Model building 
 
-We concisely define our model using as a [`GNNChain`](@ref) containing 2 graph convolutaional 
+We concisely define our model as a [`GNNChain`](@ref) containing 2 graph convolutaional 
 layers. If CUDA is available, our model will live on the gpu.
 
 ```julia
 julia> device = CUDA.functional() ? Flux.gpu : Flux.cpu;
 
 julia> model = GNNChain(GCNConv(16 => 64),
-                        BatchNorm(64),
-                        x -> relu.(x),
+                        BatchNorm(64),     # Apply batch normalization on node features (nodes dimension is batch dimension)
+                        x -> relu.(x),     
                         GCNConv(64 => 64, relu),
-                        GlobalPool(mean),
+                        GlobalPool(mean),  # aggregate node-wise features into graph-wise features
                         Dense(64, 1)) |> device;
 
 julia> ps = Flux.params(model);
@@ -75,8 +78,8 @@ Flux's DataLoader iterates over mini-batches of graphs
 (batched together into a `GNNGraph` object). 
 
 ```julia
-gtrain, _ = getgraph(gbatch, 1:800)
-gtest, _ = getgraph(gbatch, 801:gbatch.num_graphs)
+gtrain = getgraph(gbatch, 1:800)
+gtest = getgraph(gbatch, 801:gbatch.num_graphs)
 train_loader = Flux.Data.DataLoader(gtrain, batchsize=32, shuffle=true)
 test_loader = Flux.Data.DataLoader(gtest, batchsize=32, shuffle=false)
 
@@ -86,7 +89,7 @@ loss(loader) = mean(loss(g |> device) for g in loader)
 
 for epoch in 1:100
     for g in train_loader
-        g = g |> gpu
+        g = g |> device
         grad = gradient(() -> loss(g), ps)
         Flux.Optimise.update!(opt, ps, grad)
     end

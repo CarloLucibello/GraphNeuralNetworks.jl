@@ -11,11 +11,15 @@ Order = [:type, :function]
 Pages   = ["messagepassing.md"]
 ```
 
-## Docs
+## Interface
 
 ```@docs
-compute_message
-update_node
-update_edge
+apply_edges
 propagate
+```
+
+## Built-in message functions
+
+```@docs
+copyxj
 ```

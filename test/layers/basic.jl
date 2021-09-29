@@ -15,7 +15,7 @@
 
         testmode!(gnn)
         
-        test_layer(gnn, g, rtol=1e-5)
+        test_layer(gnn, g, rtol=1e-5, exclude_grad_fields=[:μ, :σ²])
 
 
         @testset "Parallel" begin
@@ -29,7 +29,7 @@
 
             testmode!(gnn)
                            
-            test_layer(gnn, g, rtol=1e-5)
+            test_layer(gnn, g, rtol=1e-5, exclude_grad_fields=[:μ, :σ²])
         end
     end
 end

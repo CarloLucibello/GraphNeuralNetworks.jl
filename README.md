@@ -5,13 +5,13 @@
 ![](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/CarloLucibello/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/CarloLucibello/GraphNeuralNetworks.jl)
 
-A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
-Its most relevant features are:
-* Provides CUDA support.
-* It's integrated with the JuliaGraphs ecosystem.
-* Implements many common graph convolutional layers.
-* Performs fast operations on batched graphs. 
-* Makes it easy to define custom graph convolutional layers.
+A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl). Its features include:
+
+* Integratation with the JuliaGraphs ecosystem.
+* Implementation of common graph convolutional layers.
+* Fast operations on batched graphs. 
+* Easy to define custom layers.
+* CUDA support.
 
 ## Installation
 
@@ -28,4 +28,4 @@ Usage examples can be found in the [examples](https://github.com/CarloLucibello/
 
 ## Acknowledgements
 
-A big thank you goes to @yuehhua for creating [GeometricFlux.jl](https://github.com/FluxML/GeometricFlux.jl) of which GraphNeuralNetworks.jl is a radical redesign. 
+A big thanks goes to @yuehhua for creating [GeometricFlux.jl](https://github.com/FluxML/GeometricFlux.jl) of which GraphNeuralNetworks.jl is a radical redesign. 

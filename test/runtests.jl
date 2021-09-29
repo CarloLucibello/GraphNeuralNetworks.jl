@@ -11,6 +11,8 @@ using Test
 using MLDatasets
 CUDA.allowscalar(false)
 
+const ACUMatrix{T} = Union{CuMatrix{T}, CUDA.CUSPARSE.CuSparseMatrix{T}}
+
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 
 include("test_utils.jl")
@@ -22,21 +24,17 @@ tests = [
     "layers/conv",
     "layers/pool",
     "examples/node_classification_cora",
+    "deprecations",
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
 
-# Testing all graph types. :sparse is a bit broken at the moment
-@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo,:sparse,:dense)
-
+@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :sparse, :dense) 
     global GRAPH_T = graph_type
-    global TEST_GPU = CUDA.functional() && GRAPH_T != :sparse
+    global TEST_GPU = CUDA.functional()
 
     for t in tests
+        startswith(t, "examples") && GRAPH_T == :dense && continue     # not testing :dense since causes OutOfMememory on github's CI
         include("$t.jl")
-
-        if TEST_GPU && isfile("cuda/$t.jl")
-            include("cuda/$t.jl")
-        end
     end
 end

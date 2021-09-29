@@ -28,10 +28,11 @@ export
     # from LightGraphs
     adjacency_matrix, 
     # from SparseArrays
-    sprand, sparse, 
+    sprand, sparse, blockdiag,
 
     # msgpass
-    update_node, update_edge, compute_message, propagate,
+    apply_edges, propagate,
+    copyxj,
 
     # layers/basic
     GNNLayer,
@@ -55,14 +56,13 @@ export
     topk_index
 
 
-    
 include("gnngraph.jl")
 include("graph_conversions.jl")
 include("utils.jl")
-include("msgpass.jl")
 include("layers/basic.jl")
 include("layers/conv.jl")
 include("layers/pool.jl")
+include("msgpass.jl")
 include("deprecations.jl")
 
 end
