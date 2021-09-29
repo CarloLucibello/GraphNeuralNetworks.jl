@@ -14,6 +14,9 @@ where ``V`` is the set of nodes of the input graph and
 the type of aggregation represented by ``\square`` is selected by the `aggr` argument. 
 Commonly used aggregations are `mean`, `max`, and `+`.
 
+See also [`reduce_nodes`](@ref).
+
+# Examples
 ```julia
 using Flux, GraphNeuralNetworks, LightGraphs
 
@@ -34,7 +37,7 @@ struct GlobalPool{F} <: GNNLayer
 end
 
 function (l::GlobalPool)(g::GNNGraph, x::AbstractArray)
-    return reduce_nodes(g, x, l.aggr)
+    return reduce_nodes(l.aggr, g, x)
 end
 
 """
