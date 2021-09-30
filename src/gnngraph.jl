@@ -541,25 +541,24 @@ function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap=false)
     graphmap = Dict(i => inew for (inew, i) in enumerate(i))
     graph_indicator = [graphmap[i] for i in g.graph_indicator[node_mask]]
     
+    s, t = edge_index(g)
+    w = edge_weight(g)
+    edge_mask = s .∈ Ref(nodes) 
+    
     if g.graph isa COO_T 
-        s, t = edge_index(g)
-        w = edge_weight(g)
-        edge_mask = s .∈ Ref(nodes) 
         s = [nodemap[i] for i in s[edge_mask]]
         t = [nodemap[i] for i in t[edge_mask]]
         w = isnothing(w) ? nothing : w[edge_mask]
         graph = (s, t, w)
-        num_edges = length(s)
-        edata = getobs(g.edata, edge_mask)
     elseif g.graph isa ADJMAT_T
         graph = g.graph[nodes, nodes]
-        num_edges = count(>=(0), graph)
-        @assert g.edata == (;) # TODO
-        edata = (;)
     end
-    ndata = getobs(g.ndata, node_mask)
-    gdata = getobs(g.gdata, i)
 
+    ndata = getobs(g.ndata, node_mask)
+    edata = getobs(g.edata, edge_mask)
+    gdata = getobs(g.gdata, i)
+    
+    num_edges = sum(edge_mask)
     num_nodes = length(graph_indicator)
     num_graphs = length(i)
 
