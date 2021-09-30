@@ -14,6 +14,9 @@ where ``V`` is the set of nodes of the input graph and
 the type of aggregation represented by ``\square`` is selected by the `aggr` argument. 
 Commonly used aggregations are `mean`, `max`, and `+`.
 
+See also [`reduce_nodes`](@ref).
+
+# Examples
 ```julia
 using Flux, GraphNeuralNetworks, LightGraphs
 
@@ -33,14 +36,8 @@ struct GlobalPool{F} <: GNNLayer
     aggr::F
 end
 
-function (l::GlobalPool)(g::GNNGraph, X::AbstractArray)
-    if isnothing(g.graph_indicator)
-        # assume only one graph
-        indexes = fill!(similar(X, Int, g.num_nodes), 1)     
-    else 
-        indexes = g.graph_indicator
-    end
-    return NNlib.scatter(l.aggr, X, indexes)
+function (l::GlobalPool)(g::GNNGraph, x::AbstractArray)
+    return reduce_nodes(l.aggr, g, x)
 end
 
 """

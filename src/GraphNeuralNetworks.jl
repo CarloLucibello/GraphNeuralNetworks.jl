@@ -12,6 +12,7 @@ using MacroTools: @forward
 import LearnBase
 using LearnBase: getobs
 using NNlib, NNlibCUDA
+using NNlib: scatter, gather
 using ChainRulesCore
 import LightGraphs
 using LightGraphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree
@@ -30,6 +31,11 @@ export
     # from SparseArrays
     sprand, sparse, blockdiag,
 
+    # utils
+    reduce_nodes, reduce_edges, 
+    softmax_nodes, softmax_edges,
+    broadcast_nodes, broadcast_edges,
+    
     # msgpass
     apply_edges, propagate,
     copyxj,
