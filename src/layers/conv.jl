@@ -637,7 +637,7 @@ Performs the operation
 \mathbf{x}_i' = \mathbf{x}_i + \sum_{j\in N(i)}\sigma(W_f \mathbf{z}_{ij} + \mathbf{b}_f)\, act(W_s \mathbf{z}_{ij} + \mathbf{b}_s)
 ```
 
-where ``z_{ij}``  is the node and edge features concatenation 
+where ``\mathbf{z}_{ij}``  is the node and edge features concatenation 
 ``[\mathbf{x}_i \| \mathbf{x}_j \| \mathbf{e}_{j\to i}]`` 
 and ``\sigma`` is the sigmoid function.
 The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
