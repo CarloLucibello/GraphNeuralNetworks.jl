@@ -60,19 +60,29 @@ end
 
 Flux.functor(::Type{<:GNNChain}, c) = c.layers, ls -> GNNChain(ls...)
 
+# input from graph
+applylayer(l, g::GNNGraph) = GNNGraph(g, ndata=l(node_features(g)))
+applylayer(l::GNNLayer, g::GNNGraph) = l(g)
+
+# explicit input
 applylayer(l, g::GNNGraph, x) = l(x)
 applylayer(l::GNNLayer, g::GNNGraph, x) = l(g, x)
 
 # Handle Flux.Parallel
+applylayer(l::Parallel, g::GNNGraph) = GNNGraph(g, ndata=applylayer(l, g, node_features(g)))
 applylayer(l::Parallel, g::GNNGraph, x::AbstractArray) = mapreduce(f -> applylayer(f, g, x), l.connection, l.layers)
-applylayer(l::Parallel, g::GNNGraph, xs::Vararg{<:AbstractArray}) = mapreduce((f, x) -> applylayer(f, g, x), l.connection, l.layers, xs)
-applylayer(l::Parallel, g::GNNGraph, xs::Tuple) = applylayer(l, g, xs...)
 
+# input from graph
+applychain(::Tuple{}, g::GNNGraph) = g
+applychain(fs::Tuple, g::GNNGraph) = applychain(tail(fs), applylayer(first(fs), g))
 
+# explicit input
 applychain(::Tuple{}, g::GNNGraph, x) = x
 applychain(fs::Tuple, g::GNNGraph, x) = applychain(tail(fs), g, applylayer(first(fs), g, x))
 
 (c::GNNChain)(g::GNNGraph, x) = applychain(Tuple(c.layers), g, x)
+(c::GNNChain)(g::GNNGraph) = applychain(Tuple(c.layers), g)
+
 
 Base.getindex(c::GNNChain, i::AbstractArray) = GNNChain(c.layers[i]...)
 Base.getindex(c::GNNChain{<:NamedTuple}, i::AbstractArray) = 
