@@ -71,8 +71,6 @@ applylayer(l::GNNLayer, g::GNNGraph, x) = l(g, x)
 # Handle Flux.Parallel
 applylayer(l::Parallel, g::GNNGraph) = GNNGraph(g, ndata=applylayer(l, g, node_features(g)))
 applylayer(l::Parallel, g::GNNGraph, x::AbstractArray) = mapreduce(f -> applylayer(f, g, x), l.connection, l.layers)
-applylayer(l::Parallel, g::GNNGraph, xs::Vararg{<:AbstractArray}) = mapreduce((f, x) -> applylayer(f, g, x), l.connection, l.layers, xs)
-applylayer(l::Parallel, g::GNNGraph, xs::Tuple) = applylayer(l, g, xs...)
 
 # input from graph
 applychain(::Tuple{}, g::GNNGraph) = g
