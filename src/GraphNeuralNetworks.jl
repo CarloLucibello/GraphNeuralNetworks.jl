@@ -45,6 +45,7 @@ export
     GNNChain,
 
     # layers/conv
+    CGConv,
     ChebConv,
     EdgeConv,
     GATConv,
@@ -55,7 +56,7 @@ export
     NNConv,
     ResGatedGraphConv,
     SAGEConv,
-
+    
     # layers/pool
     GlobalPool,
     TopKPool,

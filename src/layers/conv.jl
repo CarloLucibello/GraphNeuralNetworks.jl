@@ -622,3 +622,91 @@ function Base.show(io::IO, l::ResGatedGraphConv)
     l.σ == identity || print(io, ", ", l.σ)
     print(io, ")")
 end
+
+
+
+@doc raw"""
+    CGConv((nin, ein) => nout, f, act=identity; bias=true, init=glorot_uniform, residual=false)
+
+The crystal graph convolutional layer from the paper
+[Crystal Graph Convolutional Neural Networks for an Accurate and
+Interpretable Prediction of Material Properties](https://arxiv.org/pdf/1710.10324.pdf).
+Performs the operation
+
+```math
+\mathbf{x}_i' = \mathbf{x}_i + \sum_{j\in N(i)}\sigma(W_f \mathbf{z}_{ij} + \mathbf{b}_f)\, act(W_s \mathbf{z}_{ij} + \mathbf{b}_s)
+```
+
+where ``z_ij``  is the node and edge features concatenation 
+``[\\mathbf{x}_i \\,\\|\\, \\mathbf{x}_j \\,\\|\\, \\mathbf{e}_{j\\to i}]`` 
+and ``\\sigma`` is the sigmoid function.
+The residual ``\\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
+as the input size.
+
+# Arguments
+
+- `nin`: The dimension of input node features.
+- `nout`: The dimension of input edge features.
+- `out`: The dimension of output node features.
+- `act`: Activation function.
+- `bias`: Add learnable bias.
+- `init`: Weights' initializer.
+- `residual`: Add a residual connection.
+
+# Usage 
+
+```julia
+x = rand(Float32, 2, g.num_nodes)
+e = rand(Float32, 3, g.num_edges)
+
+l = GCNConv((2,3) => 4, tanh)
+
+y = l(g, x, e)    # size: (4, num_nodes)
+```
+"""
+struct CGConv <: GNNLayer
+    ch
+    dense_f::Dense
+    dense_s::Dense
+    residual::Bool
+end
+
+@functor CGConv
+
+CGConv(nin::Int, ein::Int, out::Int, args...; kws...) = CGConv((nin, ein) => out, args...; kws...)
+
+function CGConv(ch::Pair{NTuple{2,Int},Int}, act=identity; residual=false, bias=true, init=glorot_uniform)
+    (nin, ein), out = ch
+    dense_f = Dense(2nin+ein, out, sigmoid; bias, init)
+    dense_s = Dense(2nin+ein, out, act; bias, init)
+    return CGConv(ch, dense_f, dense_s, residual)
+end
+
+function (l::CGConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
+    check_num_nodes(g, x)
+    check_num_edges(g, e)
+
+    function message(xi, xj, e)
+        z = vcat(xi, xj, e)
+        return l.dense_f(z) .* l.dense_s(z)
+    end
+
+    m = propagate(message, g, +, xi=x, xj=x, e=e)
+    if l.residual
+        if size(x, 1) == size(m, 1)
+            m += x
+        else
+            @warn "number of output features different from number of input features, residual not applyed."
+        end
+    end
+    return m
+end
+
+(l::CGConv)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g), edge_features(g)))
+
+function Base.show(io::IO, l::CGConv)
+    print(io, "CGConv($(l.ch)")
+    l.dense_s.σ == identity || print(io, ", ", l.dense_s.σ)
+    print(io, ", residual=$(l.residual)")
+    print(io, ")")
+end

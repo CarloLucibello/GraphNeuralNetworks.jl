@@ -124,13 +124,7 @@
         edim = 10
         nn = Dense(edim, out_channel * in_channel)
         
-        l = NNConv(in_channel => out_channel, nn)
-        for g in test_graphs
-            g = GNNGraph(g, edata=rand(T, edim, g.num_edges))
-            test_layer(l, g, rtol=1e-5, outsize=(out_channel, g.num_nodes)) 
-        end
-        
-        l = NNConv(in_channel => out_channel, nn, tanh, bias=false, aggr=mean)
+        l = NNConv(in_channel => out_channel, nn, tanh, bias=true, aggr=+)
         for g in test_graphs
             g = GNNGraph(g, edata=rand(T, edim, g.num_edges))
             test_layer(l, g, rtol=1e-5, outsize=(out_channel, g.num_nodes)) 
@@ -140,10 +134,7 @@
     @testset "SAGEConv" begin
         l = SAGEConv(in_channel => out_channel)
         @test l.aggr == mean
-        for g in test_graphs
-            test_layer(l, g, rtol=1e-5, outsize=(out_channel, g.num_nodes)) 
-        end
-        
+
         l = SAGEConv(in_channel => out_channel, tanh, bias=false, aggr=+)
         for g in test_graphs
             test_layer(l, g, rtol=1e-5, outsize=(out_channel, g.num_nodes)) 
@@ -152,14 +143,19 @@
 
 
     @testset "ResGatedGraphConv" begin
-        l = ResGatedGraphConv(in_channel => out_channel)
+        l = ResGatedGraphConv(in_channel => out_channel, tanh, bias=true)
         for g in test_graphs
-            test_layer(l, g, rtol=1e-5,)
+            test_layer(l, g, rtol=1e-5, outsize=(out_channel, g.num_nodes))
         end
+    end
 
-        l = ResGatedGraphConv(in_channel => out_channel, tanh, bias=false)
+
+    @testset "CGConv" begin
+        edim = 10
+        l = CGConv((in_channel, edim) => out_channel, tanh, residual=false, bias=true)
         for g in test_graphs
-            test_layer(l, g, rtol=1e-5,)
+            g = GNNGraph(g, edata=rand(T, edim, g.num_edges))
+            test_layer(l, g, rtol=1e-5, outsize=(out_channel, g.num_nodes)) 
         end
     end
 end
