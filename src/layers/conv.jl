@@ -394,9 +394,9 @@ end
 @doc raw"""
     GINConv(f, ϵ; aggr=+)
 
-Graph Isomorphism convolutional layer from paper [How Powerful are Graph Neural Networks?](https://arxiv.org/pdf/1810.00826.pdf)
+Graph Isomorphism convolutional layer from paper [How Powerful are Graph Neural Networks?](https://arxiv.org/pdf/1810.00826.pdf).
 
-
+Implements the graph convolution
 ```math
 \mathbf{x}_i' = f_\Theta\left((1 + \epsilon) \mathbf{x}_i + \sum_{j \in N(i)} \mathbf{x}_j \right)
 ```
