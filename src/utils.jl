@@ -1,6 +1,9 @@
 function check_num_nodes(g::GNNGraph, x::AbstractArray)
     @assert g.num_nodes == size(x, ndims(x))    
 end
+function check_num_edges(g::GNNGraph, e::AbstractArray)
+    @assert g.num_edges == size(e, ndims(e))    
+end
 
 sort_edge_index(eindex::Tuple) = sort_edge_index(eindex...)
 
