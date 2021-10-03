@@ -31,6 +31,18 @@
                            
             test_layer(gnn, g, rtol=1e-5, exclude_grad_fields=[:μ, :σ²])
         end
+
+        @testset "Only graph input" begin
+            nin, nout = 2, 4
+            ndata = rand(nin, 3)
+            edata = rand(nin, 3)
+            g = GNNGraph([1,1,2], [2, 3, 3], ndata=ndata, edata=edata)
+            m = NNConv(nin => nout, Dense(2, nin*nout, tanh))
+            chain = GNNChain(m)
+            y = m(g, g.ndata.x, g.edata.e)
+            @test m(g).ndata.x == y
+            @test chain(g).ndata.x == y
+        end
     end
 end
 
