@@ -638,7 +638,7 @@ Performs the operation
 ```
 
 where ``z_{ij}``  is the node and edge features concatenation 
-``[\mathbf{x}_i | \mathbf{x}_j | mathbf{e}_{j\to i}]`` 
+``[\mathbf{x}_i \| \mathbf{x}_j \| \mathbf{e}_{j\to i}]`` 
 and ``\sigma`` is the sigmoid function.
 The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
 as the input size.
