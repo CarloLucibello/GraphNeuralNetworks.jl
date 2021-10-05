@@ -18,6 +18,7 @@ function test_layer(l, g::GNNGraph; atol = 1e-7, rtol = 1e-5,
                                  verbose = false,
                                  test_gpu = TEST_GPU,
                                  outsize = nothing,
+                                 outtype = :node,
                                 )
 
     # TODO these give errors, probably some bugs in ChainRulesTestUtils
@@ -57,8 +58,15 @@ function test_layer(l, g::GNNGraph; atol = 1e-7, rtol = 1e-5,
     @test ycoo ≈ y    
  
     g′ = f(l, g)
-    @test g′.ndata.x ≈ y
-    
+    if outtype == :node
+        @test g′.ndata.x ≈ y
+    elseif outtype == :edge
+        @test g′.edata.e ≈ y    
+    elseif outtype == :graph
+        @test g′.gdata.u ≈ y
+    else
+        @error "wrong outtype $outtype"
+    end
     if test_gpu
         ygpu = f(lgpu, ggpu, xgpu)
         @test ygpu isa CuArray 
