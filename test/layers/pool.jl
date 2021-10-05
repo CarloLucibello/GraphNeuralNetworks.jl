@@ -2,9 +2,11 @@
     @testset "GlobalPool" begin
         n = 10
         X = rand(16, n)
-        g = GNNGraph(random_regular_graph(n, 4))
+        g = GNNGraph(random_regular_graph(n, 4), ndata=X)
         p = GlobalPool(+)
-        @test p(g, X) ≈ NNlib.scatter(+, X, ones(Int, n))
+        y = p(g, X)
+        @test y ≈ NNlib.scatter(+, X, ones(Int, n))
+        test_layer(p, g, rtol=1e-5, exclude_grad_fields = [:aggr], outtype=:graph)
     end
 
     @testset "TopKPool" begin

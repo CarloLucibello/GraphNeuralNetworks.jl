@@ -52,7 +52,6 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
     end
     
     sz = map(x -> x isa AbstractArray ? size(x)[end] : 0, data)
-    
     if duplicate_if_needed 
         # Used to copy edge features on reverse edges    
         @assert all(s -> s == 0 ||  s == n || s == n÷2, sz)

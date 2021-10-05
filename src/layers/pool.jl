@@ -40,6 +40,8 @@ function (l::GlobalPool)(g::GNNGraph, x::AbstractArray)
     return reduce_nodes(l.aggr, g, x)
 end
 
+(l::GlobalPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
+
 """
     TopKPool(adj, k, in_channel)
 
