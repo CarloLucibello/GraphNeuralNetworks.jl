@@ -660,7 +660,7 @@ as the input size.
 x = rand(Float32, 2, g.num_nodes)
 e = rand(Float32, 3, g.num_edges)
 
-l = GCNConv((2,3) => 4, tanh)
+l = CGConv((2,3) => 4, tanh)
 
 y = l(g, x, e)    # size: (4, num_nodes)
 ```
