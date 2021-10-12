@@ -305,7 +305,8 @@ function LightGraphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out)
         NNlib.scatter!(+, degs, src, s)
     end
     if dir ∈ [:in, :both]
-        NNlib.scatter!(+, degs, src, t)
+        # @show size(degs) src typeof(t)
+        NNlib.scatter!(+, degs, src, Int.(t))
     end
     return degs 
 end

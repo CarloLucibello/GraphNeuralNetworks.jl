@@ -44,5 +44,19 @@
             @test chain(g).ndata.x == y
         end
     end
+
+    @testset "WithGraph" begin
+        g = GNNGraph([1,2,3], [2,3,1])
+        x = rand(Float32, 2, 3)
+        model = SAGEConv(2 => 3)
+        wg = WithGraph(model, g)
+        # No need to feed the graph to `wg`
+        @test wg(x) == model(g, x)
+
+        g2 = GNNGraph([1,1,2,3], [2,4,1,1])
+        x2 = rand(Float32, 2, 4)
+        # WithGraph will ignore the internal graph if fed with a new one. 
+        @test wg(g2, x2) == model(g2, x2)
+    end
 end
 
