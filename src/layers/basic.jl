@@ -19,6 +19,9 @@ A type wrapping the `model` and tying it to the graph `g`.
 In the forward pass, can only take feature arrays as inputs,
 returning `model(g, x...; kws...)`.
 
+If `traingraph=false`, the graph's parameters, won't be collected
+when calling `Flux.params` on a `WithGraph` object.
+
 # Examples
 
 ```julia
@@ -41,11 +44,10 @@ struct WithGraph{M}
   traingraph::Bool
 end
 
-
 WithGraph(model, g::GNNGraph; traingraph=false) = WithGraph(model, g, traingraph)
 
 @functor WithGraph
-trainable(l::WithGraph) = l.traingraph ? (l.model, l.g) : (l.model,)
+Flux.trainable(l::WithGraph) = l.traingraph ? (l.model, l.g) : (l.model,)
 
 (l::WithGraph)(g::GNNGraph, x...; kws...) = l.model(g, x...; kws...)
 (l::WithGraph)(x...; kws...) = l.model(l.g, x...; kws...)

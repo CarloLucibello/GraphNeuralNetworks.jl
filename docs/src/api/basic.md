@@ -14,7 +14,8 @@ Pages = ["basic.md"]
 
 ## Docs
 
-```@docs
-GNNLayer
-GNNChain
+```@autodocs
+Modules = [GraphNeuralNetworks]
+Pages   = ["layers/basic.jl"]
+Private = false
 ```
