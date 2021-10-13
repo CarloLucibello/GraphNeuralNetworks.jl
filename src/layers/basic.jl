@@ -11,6 +11,48 @@ abstract type GNNLayer end
 # To be specialized by layers also needing edge features as input (e.g. NNConv). 
 (l::GNNLayer)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g)))
 
+
+"""
+  WithGraph(model, g::GNNGraph; traingraph=false) 
+
+A type wrapping the `model` and tying it to the graph `g`.
+In the forward pass, can only take feature arrays as inputs,
+returning `model(g, x...; kws...)`.
+
+If `traingraph=false`, the graph's parameters, won't be collected
+when calling `Flux.params` on a `WithGraph` object.
+
+# Examples
+
+```julia
+g = GNNGraph([1,2,3], [2,3,1])
+x = rand(Float32, 2, 3)
+model = SAGEConv(2 => 3)
+wg = WithGraph(model, g)
+# No need to feed the graph to `wg`
+@assert wg(x) == model(g, x)
+
+g2 = GNNGraph([1,1,2,3], [2,4,1,1])
+x2 = rand(Float32, 2, 4)
+# WithGraph will ignore the internal graph if fed with a new one. 
+@assert wg(g2, x2) == model(g2, x2)
+```
+"""
+struct WithGraph{M}
+  model::M
+  g::GNNGraph
+  traingraph::Bool
+end
+
+WithGraph(model, g::GNNGraph; traingraph=false) = WithGraph(model, g, traingraph)
+
+@functor WithGraph
+Flux.trainable(l::WithGraph) = l.traingraph ? (l.model, l.g) : (l.model,)
+
+(l::WithGraph)(g::GNNGraph, x...; kws...) = l.model(g, x...; kws...)
+(l::WithGraph)(x...; kws...) = l.model(l.g, x...; kws...)
+
+
 """
     GNNChain(layers...)
     GNNChain(name = layer, ...)

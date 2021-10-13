@@ -43,6 +43,7 @@ export
     # layers/basic
     GNNLayer,
     GNNChain,
+    WithGraph,
 
     # layers/conv
     CGConv,
