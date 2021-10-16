@@ -36,10 +36,10 @@ node = NeuralODE(
 )
 
 model = GNNChain(GCNConv(nin => nhidden, relu),
-                Dropout(0.5),
-                node,
-                diffeqarray_to_array,
-                GCNConv(nhidden => nout))
+                 Dropout(0.5),
+                 node,
+                 diffeqarray_to_array,
+                 GCNConv(nhidden => nout))
 
 # Loss
 loss(x, y) = logitcrossentropy(model(g, x), y)
@@ -55,6 +55,6 @@ opt = ADAM(0.01)
 ## Training Loop
 for epoch in 1:epochs
     gs = gradient(() -> loss(X, y), ps)
-    Flux.Optimisers.update!(opt, ps, gs)
+    Flux.Optimise.update!(opt, ps, gs)
     @show(accuracy(X, y))
 end
