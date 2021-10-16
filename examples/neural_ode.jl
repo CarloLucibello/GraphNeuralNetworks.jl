@@ -5,7 +5,7 @@ using Flux.Losses: logitcrossentropy
 using Statistics: mean
 using MLDatasets: Cora
 
-device = cpu
+device = cpu # `gpu` not working yet
 
 # LOAD DATA
 data = Cora.dataset()
@@ -15,31 +15,32 @@ y = onehotbatch(data.node_labels, 1:data.num_classes) |> device
 train_ids = data.train_indices |> device
 val_ids = data.val_indices |> device
 test_ids = data.test_indices |> device
-ytrain = y[:,train_ids]
+ytrain = y[:, train_ids]
 
 
 # Model and Data Configuration
-nin = size(X,1)
+nin = size(X, 1)
 nhidden = 16
 nout = data.num_classes 
 epochs = 40
 
 # Define the Neural GDE
-diffeqarray_to_array(X) = reshape(cpu(X), size(X)[1:2])
+diffeqsol_to_array(x) = reshape(device(x), size(x)[1:2])
 
 # GCNConv(nhidden => nhidden, graph=g),
 
-node = NeuralODE(
-    WithGraph(GCNConv(nhidden => nhidden), g),
-    (0.f0, 1.f0), Tsit5(), save_everystep = false,
-    reltol = 1e-3, abstol = 1e-3, save_start = false
-)
+node_chain = GNNChain(GCNConv(nhidden => nhidden, relu),
+                      GCNConv(nhidden => nhidden, relu)) |> device
+
+node = NeuralODE(WithGraph(node_chain, g),
+                (0.f0, 1.f0), Tsit5(), save_everystep = false,
+                reltol = 1e-3, abstol = 1e-3, save_start = false) |> device
 
 model = GNNChain(GCNConv(nin => nhidden, relu),
                  Dropout(0.5),
                  node,
                  diffeqarray_to_array,
-                 GCNConv(nhidden => nout))
+                 Dense(nhidden, nout)) |> device
 
 # Loss
 loss(x, y) = logitcrossentropy(model(g, x), y)
