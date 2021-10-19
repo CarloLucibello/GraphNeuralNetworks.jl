@@ -1,7 +1,7 @@
 @testset "pool" begin
     @testset "GlobalPool" begin
         n = 10
-        X = rand(16, n)
+        X = rand(Float32, 16, n)
         g = GNNGraph(random_regular_graph(n, 4), ndata=X)
         p = GlobalPool(+)
         y = p(g, X)

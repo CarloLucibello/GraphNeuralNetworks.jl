@@ -9,10 +9,10 @@ operators, gpu movement, and storage of node/edge/graph related feature arrays.
 A GNNGraph can be created from several different data sources encoding the graph topology:
 
 ```julia
-using GraphNeuralNetworks, LightGraphs, SparseArrays
+using GraphNeuralNetworks, Graphs, SparseArrays
 
 
-# Construct GNNGraph from From LightGraphs's graph
+# Construct GNNGraph from From Graphs's graph
 lg = erdos_renyi(10, 30)
 g = GNNGraph(lg)
 
@@ -70,7 +70,7 @@ g.ndata.y, g.ndata.x
 
 # Attach an array with edge features.
 # Since `GNNGraph`s are directed, the number of edges
-# will be double that of the original LightGraphs' undirected graph.
+# will be double that of the original Graphs' undirected graph.
 g = GNNGraph(erdos_renyi(10,  30), edata = rand(Float32, 60))
 @assert g.num_edges == 60
 
@@ -134,10 +134,10 @@ g′ = remove_self_loops(g)
 
 ## JuliaGraphs ecosystem integration
 
-Since `GNNGraph <: LightGraphs.AbstractGraph`, we can use any functionality from LightGraphs. 
+Since `GNNGraph <: Graphs.AbstractGraph`, we can use any functionality from Graphs. 
 
 ```julia
-@assert LightGraphs.isdirected(g)
+@assert Graphs.isdirected(g)
 ```
 
 ## GPU movement

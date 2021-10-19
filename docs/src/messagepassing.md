@@ -49,7 +49,7 @@ The convolution reads
 We will also add a bias and an activation function.
 
 ```julia
-using Flux, LightGraphs, GraphNeuralNetworks
+using Flux, Graphs, GraphNeuralNetworks
 
 struct GCN{A<:AbstractMatrix, B, F} <: GNNLayer
     weight::A

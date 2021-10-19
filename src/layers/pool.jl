@@ -18,7 +18,7 @@ See also [`reduce_nodes`](@ref).
 
 # Examples
 ```julia
-using Flux, GraphNeuralNetworks, LightGraphs
+using Flux, GraphNeuralNetworks, Graphs
 
 pool = GlobalPool(mean)
 

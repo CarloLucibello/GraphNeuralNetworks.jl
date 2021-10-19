@@ -1,10 +1,10 @@
-using Flux, NNlib, GraphNeuralNetworks, LightGraphs, SparseArrays
+using Flux, NNlib, GraphNeuralNetworks, Graphs, SparseArrays
 using Documenter
 
 DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup, :(using GraphNeuralNetworks); recursive=true)
 
 makedocs(;
-    modules=[GraphNeuralNetworks, NNlib, Flux, LightGraphs, SparseArrays],
+    modules=[GraphNeuralNetworks, NNlib, Flux, Graphs, SparseArrays],
     doctest=false, clean=true,     
     sitename = "GraphNeuralNetworks.jl",
     pages = ["Home" => "index.md",

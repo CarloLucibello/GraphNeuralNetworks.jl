@@ -1,8 +1,8 @@
 #===================================
-Define GNNGraph type as a subtype of LightGraphs' AbstractGraph.
+Define GNNGraph type as a subtype of Graphs' AbstractGraph.
 For the core methods to be implemented by any AbstractGraph, see
-https://juliagraphs.org/LightGraphs.jl/latest/types/#AbstractGraph-Type
-https://juliagraphs.org/LightGraphs.jl/latest/developing/#Developing-Alternate-Graph-Types
+https://juliagraphs.org/Graphs.jl/latest/types/#AbstractGraph-Type
+https://juliagraphs.org/Graphs.jl/latest/developing/#Developing-Alternate-Graph-Types
 =============================================#
 
 const COO_T = Tuple{T, T, V} where {T <: AbstractVector, V}
@@ -31,8 +31,8 @@ A `GNNGraph` can also represent multiple graphs batched togheter
 The field `g.graph_indicator` contains the graph membership
 of each node.
 
-A `GNNGraph` is a LightGraphs' `AbstractGraph`, therefore any functionality
-from the LightGraphs' graph library can be used on it.
+A `GNNGraph` is a Graphs' `AbstractGraph`, therefore any functionality
+from the Graphs' graph library can be used on it.
 
 # Arguments 
 
@@ -40,7 +40,7 @@ from the LightGraphs' graph library can be used on it.
     - An adjacency matrix
     - An adjacency list.
     - A tuple containing the source and target vectors (COO representation)
-    - A LightGraphs' graph.
+    - A Graphs' graph.
 - `graph_type`: A keyword argument that specifies 
                 the underlying representation used by the GNNGraph. 
                 Currently supported values are 
@@ -77,7 +77,7 @@ s = [1,1,2,2,2,3,4,4,5,5]
 t = [2,3,1,4,5,3,2,5,2,4]
 g = GNNGraph(s, t)
 
-# From a LightGraphs' graph
+# From a Graphs' graph
 g = GNNGraph(erdos_renyi(100, 20))
 
 # Add 2 node feature arrays
@@ -150,13 +150,13 @@ GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
 # GNNGraph(g::AbstractGraph; kws...) = GNNGraph(adjacency_matrix(g, dir=:out); kws...)
 
 function GNNGraph(g::AbstractGraph; kws...)
-    s = LightGraphs.src.(LightGraphs.edges(g))
-    t = LightGraphs.dst.(LightGraphs.edges(g))
-    if !LightGraphs.is_directed(g) 
+    s = Graphs.src.(Graphs.edges(g))
+    t = Graphs.dst.(Graphs.edges(g))
+    if !Graphs.is_directed(g) 
         # add reverse edges since GNNGraph are directed
         s, t = [s; t], [t; s]    
     end
-    GNNGraph((s, t); num_nodes=LightGraphs.nv(g), kws...)
+    GNNGraph((s, t); num_nodes=Graphs.nv(g), kws...)
 end
 
 
@@ -222,44 +222,44 @@ edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
 
 edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][3]
 
-LightGraphs.edges(g::GNNGraph) = zip(edge_index(g)...)
+Graphs.edges(g::GNNGraph) = zip(edge_index(g)...)
 
-LightGraphs.edgetype(g::GNNGraph) = Tuple{Int, Int}
+Graphs.edgetype(g::GNNGraph) = Tuple{Int, Int}
 
-function LightGraphs.has_edge(g::GNNGraph{<:COO_T}, i::Integer, j::Integer)
+function Graphs.has_edge(g::GNNGraph{<:COO_T}, i::Integer, j::Integer)
     s, t = edge_index(g)
     return any((s .== i) .& (t .== j))
 end
 
-LightGraphs.has_edge(g::GNNGraph{<:ADJMAT_T}, i::Integer, j::Integer) = g.graph[i,j] != 0
+Graphs.has_edge(g::GNNGraph{<:ADJMAT_T}, i::Integer, j::Integer) = g.graph[i,j] != 0
 
-LightGraphs.nv(g::GNNGraph) = g.num_nodes
-LightGraphs.ne(g::GNNGraph) = g.num_edges
-LightGraphs.has_vertex(g::GNNGraph, i::Int) = 1 <= i <= g.num_nodes
-LightGraphs.vertices(g::GNNGraph) = 1:g.num_nodes
+Graphs.nv(g::GNNGraph) = g.num_nodes
+Graphs.ne(g::GNNGraph) = g.num_edges
+Graphs.has_vertex(g::GNNGraph, i::Int) = 1 <= i <= g.num_nodes
+Graphs.vertices(g::GNNGraph) = 1:g.num_nodes
 
-function LightGraphs.outneighbors(g::GNNGraph{<:COO_T}, i::Integer)
+function Graphs.outneighbors(g::GNNGraph{<:COO_T}, i::Integer)
     s, t = edge_index(g)
     return t[s .== i]
 end
 
-function LightGraphs.outneighbors(g::GNNGraph{<:ADJMAT_T}, i::Integer)
+function Graphs.outneighbors(g::GNNGraph{<:ADJMAT_T}, i::Integer)
     A = g.graph
     return findall(!=(0), A[i,:])
 end
 
-function LightGraphs.inneighbors(g::GNNGraph{<:COO_T}, i::Integer)
+function Graphs.inneighbors(g::GNNGraph{<:COO_T}, i::Integer)
     s, t = edge_index(g)
     return s[t .== i]
 end
 
-function LightGraphs.inneighbors(g::GNNGraph{<:ADJMAT_T}, i::Integer)
+function Graphs.inneighbors(g::GNNGraph{<:ADJMAT_T}, i::Integer)
     A = g.graph
     return findall(!=(0), A[:,i])
 end
 
-LightGraphs.is_directed(::GNNGraph) = true
-LightGraphs.is_directed(::Type{GNNGraph}) = true
+Graphs.is_directed(::GNNGraph) = true
+Graphs.is_directed(::Type{GNNGraph}) = true
 
 """
     adjacency_list(g; dir=:out)
@@ -278,7 +278,7 @@ function adjacency_list(g::GNNGraph; dir=:out)
     return [fneighs(g, i) for i in 1:g.num_nodes]
 end
 
-function LightGraphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
+function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
     if g.graph[1] isa CuVector
         # TODO revisi after https://github.com/JuliaGPU/CUDA.jl/pull/1152
         A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
@@ -289,14 +289,14 @@ function LightGraphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir
     return dir == :out ? A : A'
 end
 
-function LightGraphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g.graph); dir=:out)
+function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g.graph); dir=:out)
     @assert dir ∈ [:in, :out]
     A = g.graph
     A = T != eltype(A) ? T.(A) : A
     return dir == :out ? A : A'
 end
 
-function LightGraphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out)
+function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out)
     s, t = edge_index(g)
     T = isnothing(T) ? eltype(s) : T
     degs = fill!(similar(s, T, g.num_nodes), 0)
@@ -310,13 +310,13 @@ function LightGraphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out)
     return degs 
 end
 
-function LightGraphs.degree(g::GNNGraph{<:ADJMAT_T}, T=Int; dir=:out)
+function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=Int; dir=:out)
     @assert dir ∈ (:in, :out)
     A = adjacency_matrix(g, T)
     return dir == :out ? vec(sum(A, dims=2)) : vec(sum(A, dims=1))
 end
 
-function LightGraphs.laplacian_matrix(g::GNNGraph, T::DataType=Int; dir::Symbol=:out)
+function Graphs.laplacian_matrix(g::GNNGraph, T::DataType=Int; dir::Symbol=:out)
     A = adjacency_matrix(g, T; dir=dir)
     D = Diagonal(vec(sum(A; dims=2)))
     return D - A

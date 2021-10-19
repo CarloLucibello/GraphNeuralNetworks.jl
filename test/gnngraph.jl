@@ -137,13 +137,13 @@
         end
     end
 
-    @testset "LightGraphs constructor" begin
+    @testset "Graphs constructor" begin
         lg = random_regular_graph(10, 4)
-        @test !LightGraphs.is_directed(lg)
+        @test !Graphs.is_directed(lg)
         g = GNNGraph(lg)
         @test g.num_edges == 2*ne(lg) # g in undirected
-        @test LightGraphs.is_directed(g)
-        for e in LightGraphs.edges(lg)
+        @test Graphs.is_directed(g)
+        for e in Graphs.edges(lg)
             i, j = src(e), dst(e)
             @test has_edge(g, i, j)
             @test has_edge(g, j, i)            

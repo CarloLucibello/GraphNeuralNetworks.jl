@@ -1,4 +1,4 @@
-using Flux, GraphNeuralNetworks, LightGraphs, BenchmarkTools, CUDA
+using Flux, GraphNeuralNetworks, Graphs, BenchmarkTools, CUDA
 using DataFrames, Statistics, JLD2, SparseArrays
 CUDA.device!(2)
 CUDA.allowscalar(false)
