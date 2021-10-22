@@ -259,7 +259,7 @@ function Graphs.inneighbors(g::GNNGraph{<:ADJMAT_T}, i::Integer)
 end
 
 Graphs.is_directed(::GNNGraph) = true
-Graphs.is_directed(::Type{GNNGraph}) = true
+Graphs.is_directed(::Type{<:GNNGraph}) = true
 
 """
     adjacency_list(g; dir=:out)
