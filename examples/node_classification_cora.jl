@@ -12,7 +12,7 @@ CUDA.allowscalar(false)
 function eval_loss_accuracy(X, y, ids, model, g)
     ŷ = model(g, X)
     l = logitcrossentropy(ŷ[:,ids], y[:,ids])
-    acc = mean(onecold(ŷ[:,ids] |> cpu) .== onecold(y[:,ids] |> cpu))
+    acc = mean(onecold(ŷ[:,ids]) .== onecold(y[:,ids]))
     return (loss = round(l, digits=4), acc = round(acc*100, digits=2))
 end
 

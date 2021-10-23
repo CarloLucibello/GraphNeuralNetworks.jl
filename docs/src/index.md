@@ -27,7 +27,7 @@ First, we create our dataset consisting in multiple random graphs and associated
 Then we batch the graphs together into a unique graph.
 
 ```julia
-julia> using GraphNeuralNetworks, LightGraphs, Flux, CUDA, Statistics
+julia> using GraphNeuralNetworks, Graphs, Flux, CUDA, Statistics
 
 julia> all_graphs = GNNGraph[];
 

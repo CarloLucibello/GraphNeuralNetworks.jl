@@ -17,6 +17,8 @@
 
         @test g.num_edges == 8
         @test g.num_nodes == 4
+        @test nv(g) == g.num_nodes
+        @test ne(g) == g.num_edges
         @test collect(edges(g)) |> sort == collect(zip(s, t)) |> sort
         @test sort(outneighbors(g, 1)) == [2, 4] 
         @test sort(inneighbors(g, 1)) == [2, 4] 
@@ -24,6 +26,7 @@
         s1, t1 = GraphNeuralNetworks.sort_edge_index(edge_index(g))
         @test s1 == s
         @test t1 == t
+        @test vertices(g) == 1:g.num_nodes
         
         @test sort.(adjacency_list(g; dir=:in)) == adj_list_in
         @test sort.(adjacency_list(g; dir=:out)) == adj_list_out
@@ -119,6 +122,7 @@
         @test sort(outneighbors(g, 1)) == [2] 
         @test sort(inneighbors(g, 1)) == [4] 
         @test is_directed(g) == true
+        @test is_directed(typeof(g)) == true
         s1, t1 = GraphNeuralNetworks.sort_edge_index(edge_index(g))
         @test s1 == s
         @test t1 == t
@@ -137,13 +141,13 @@
         end
     end
 
-    @testset "LightGraphs constructor" begin
+    @testset "Graphs constructor" begin
         lg = random_regular_graph(10, 4)
-        @test !LightGraphs.is_directed(lg)
+        @test !Graphs.is_directed(lg)
         g = GNNGraph(lg)
         @test g.num_edges == 2*ne(lg) # g in undirected
-        @test LightGraphs.is_directed(g)
-        for e in LightGraphs.edges(lg)
+        @test Graphs.is_directed(g)
+        for e in Graphs.edges(lg)
             i, j = src(e), dst(e)
             @test has_edge(g, i, j)
             @test has_edge(g, j, i)            

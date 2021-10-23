@@ -20,7 +20,7 @@ In the explicit modeling style, the model is created according to the following 
 
 Here is an example of this construction:
 ```julia
-using Flux, LightGraphs, GraphNeuralNetworks
+using Flux, Graphs, GraphNeuralNetworks
 
 struct GNN                                # step 1
     conv1
@@ -71,7 +71,7 @@ to layers subtyping the [`GNNLayer`](@ref) abstract type.
 Using `GNNChain`, the previous example becomes
 
 ```julia
-using Flux, LightGraphs, GraphNeuralNetworks
+using Flux, Graphs, GraphNeuralNetworks
 
 din, d, dout = 3, 4, 2 
 g = GNNGraph(random_regular_graph(10, 4))

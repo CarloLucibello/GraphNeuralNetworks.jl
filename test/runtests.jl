@@ -5,7 +5,7 @@ using Flux: gpu, @functor
 using LinearAlgebra, Statistics, Random
 using NNlib
 using LearnBase
-using LightGraphs
+using Graphs
 using Zygote
 using Test
 using MLDatasets

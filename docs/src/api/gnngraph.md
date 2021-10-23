@@ -24,5 +24,5 @@ Private = false
 ```@docs
 Flux.batch
 SparseArrays.blockdiag
-LightGraphs.adjacency_matrix
+Graphs.adjacency_matrix
 ```

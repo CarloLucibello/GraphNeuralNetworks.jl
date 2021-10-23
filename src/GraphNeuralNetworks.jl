@@ -14,8 +14,8 @@ using LearnBase: getobs
 using NNlib, NNlibCUDA
 using NNlib: scatter, gather
 using ChainRulesCore
-import LightGraphs
-using LightGraphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree
+import Graphs
+using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree
 
 export
     # gnngraph
@@ -26,7 +26,7 @@ export
     add_self_loops, remove_self_loops,
     getgraph,
 
-    # from LightGraphs
+    # from Graphs
     adjacency_matrix, 
     # from SparseArrays
     sprand, sparse, blockdiag,
