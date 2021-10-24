@@ -7,7 +7,7 @@
 
 A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl). Its features include:
 
-* Integratation with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
+* Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
 * Implementation of common graph convolutional layers.
 * Fast operations on batched graphs. 
 * Easy to define custom layers.
