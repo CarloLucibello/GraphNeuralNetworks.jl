@@ -10,6 +10,7 @@ and performs the operation
 ```math
 \mathbf{u}_V = \square_{i \in V} \mathbf{x}_i
 ```
+
 where ``V`` is the set of nodes of the input graph and 
 the type of aggregation represented by ``\square`` is selected by the `aggr` argument. 
 Commonly used aggregations are `mean`, `max`, and `+`.
@@ -17,6 +18,7 @@ Commonly used aggregations are `mean`, `max`, and `+`.
 See also [`reduce_nodes`](@ref).
 
 # Examples
+
 ```julia
 using Flux, GraphNeuralNetworks, Graphs
 
@@ -41,6 +43,70 @@ function (l::GlobalPool)(g::GNNGraph, x::AbstractArray)
 end
 
 (l::GlobalPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
+
+
+@doc raw"""
+    GlobalAttentionPool(fgate, ffeat=identity)
+
+Global soft attention layer from the [Gated Graph Sequence Neural
+Networks](https://arxiv.org/abs/1511.05493) paper
+
+```math
+\mathbf{u}_V} = \sum_{i\in V} \alpha_i\, f_{\mathrm{feat}}(\mathbf{x}_i)
+```
+
+where the coefficients ``alpha_i`` are given by a [`softmax_nodes`](@ref)
+operation:
+
+```math
+\alpha_i = \frac{e^{f_{\mathrm{feat}}(\mathbf{x}_i)}}
+                {\sum_{i'\in V} e^{f_{\mathrm{feat}}(\mathbf{x}_{i'})}}.
+```
+
+# Arguments
+
+- `fgate`: The function ``f_{\mathrm{gate}} \colon \mathbb{R}^{D_{in}} \to
+\mathbb{R}``. It is tipically a neural network.
+
+- `ffeat`: The function ``f_{\mathrm{feat}} \colon \mathbb{R}^{D_{in}} \to
+\mathbb{R}^{D_{out}}``. It is tipically a neural network.
+
+# Examples
+
+```julia
+chin = 6
+chout = 5    
+
+fgate = Dense(chin, 1)
+ffeat = Dense(chin, chout)
+pool = GlobalAttentionPool(fgate, ffeat)
+
+g = Flux.batch([GNNGraph(random_regular_graph(10, 4), 
+                         ndata=rand(Float32, chin, 10)) 
+                for i=1:3])
+
+u = pool(g, g.ndata.x)
+
+@assert size(u) == (chout, g.num_graphs)
+"""
+struct GlobalAttentionPool{G,F}
+    fgate::G
+    ffeat::F
+end
+
+@functor GlobalAttentionPool
+
+GlobalAttentionPool(fgate) = GlobalAttentionPool(fgate, identity)
+
+function (l::GlobalAttentionPool)(g::GNNGraph, x::AbstractArray)
+    α = softmax_nodes(g, l.fgate(x))
+    feats = α .* l.ffeat(x)
+    u = reduce_nodes(+, g, feats)
+    return u   
+end
+
+(l::GlobalAttentionPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
+
 
 """
     TopKPool(adj, k, in_channel)
