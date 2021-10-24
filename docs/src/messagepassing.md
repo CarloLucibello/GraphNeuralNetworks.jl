@@ -14,7 +14,7 @@ A generic message passing on graph takes the form
 where we refer to ``\phi`` as to the message function, 
 and to ``\gamma_x`` and ``\gamma_e`` as to the node update and edge update function
 respectively. The aggregation ``\square`` is over the neighborhood ``N(i)`` of node ``i``, 
-and it is usually equal either a ``\sum``,  a `max` or a `mean` operation. 
+and it is usually equal either to ``\sum``, to `max` or to a `mean` operation. 
 
 In GNN.jl, the function [`propagate`](@ref) takes care of materializing the
 node features on each edge, applying the message function, performing the
