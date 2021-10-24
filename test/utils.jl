@@ -31,17 +31,6 @@
         @test r[:,1:60] ≈ softmax(getgraph(g, 1).edata.e, dims=2)
     end
 
-    @testset "softmax_edge_neighbors" begin
-        s = [1,2,3,4]
-        t = [5,5,6,6]
-        g = GNNGraph(s, t)
-        e = randn(Float32, 3, g.num_edges)
-        z = softmax_edge_neighbors(g, e)
-        @test size(z) == size(e)
-        @test z[:,1:2] ≈ NNlib.softmax(e[:,1:2], dims=2)
-        @test z[:,3:4] ≈ NNlib.softmax(e[:,3:4], dims=2)
-    end
-
     @testset "broadcast_nodes" begin
         z = rand(4, g.num_graphs)
         r = broadcast_nodes(g, z)
@@ -58,5 +47,16 @@
         @test r[:,1] ≈ z[:,1]
         @test r[:,60] ≈ z[:,1]
         @test r[:,61] ≈ z[:,2]
+    end
+
+    @testset "softmax_edge_neighbors" begin
+        s = [1,2,3,4]
+        t = [5,5,6,6]
+        g2 = GNNGraph(s, t)
+        e2 = randn(Float32, 3, g2.num_edges)
+        z = softmax_edge_neighbors(g2, e2)
+        @test size(z) == size(e2)
+        @test z[:,1:2] ≈ NNlib.softmax(e2[:,1:2], dims=2)
+        @test z[:,3:4] ≈ NNlib.softmax(e2[:,3:4], dims=2)
     end
 end
