@@ -25,6 +25,12 @@ GraphNeuralNetworks.broadcast_nodes
 GraphNeuralNetworks.broadcast_edges
 ```
 
+### Neighborhood operations
+
+```@docs
+GraphNeuralNetworks.softmax_edge_neighbors
+```
+
 ### NNlib
 
 Primitive functions implemented in NNlib.jl.

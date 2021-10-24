@@ -35,6 +35,7 @@ export
     reduce_nodes, reduce_edges, 
     softmax_nodes, softmax_edges,
     broadcast_nodes, broadcast_edges,
+    softmax_edge_neighbors,
     
     # msgpass
     apply_edges, propagate,

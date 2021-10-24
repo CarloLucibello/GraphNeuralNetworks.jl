@@ -14,14 +14,14 @@ A generic message passing on graph takes the form
 where we refer to ``\phi`` as to the message function, 
 and to ``\gamma_x`` and ``\gamma_e`` as to the node update and edge update function
 respectively. The aggregation ``\square`` is over the neighborhood ``N(i)`` of node ``i``, 
-and it is usually set to summation ``\sum``, a max or a mean operation. 
+and it is usually equal either to ``\sum``, to `max` or to a `mean` operation. 
 
 In GNN.jl, the function [`propagate`](@ref) takes care of materializing the
 node features on each edge, applying the message function, performing the
 aggregation, and returning ``\bar{\mathbf{m}}``. 
 It is then left to the user to perform further node and edge updates,
-manypulating arrays of size ``D_{node} \times num_nodes`` and   
-``D_{edge} \times num_edges``.
+manypulating arrays of size ``D_{node} \times num\_nodes`` and   
+``D_{edge} \times num\_edges``.
 
 As part of the [`propagate`](@ref) pipeline, we have the function
 [`apply_edges`](@ref). It can be independently used to materialize 
@@ -34,9 +34,9 @@ and [`NNlib.scatter`](@ref) methods.
 
 ## Examples
 
-### Basic use propagate and apply_edges 
+### Basic use of propagate and apply_edges 
 
-
+TODO
 
 ### Implementing a custom Graph Convolutional Layer
 
