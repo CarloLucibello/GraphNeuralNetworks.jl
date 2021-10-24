@@ -60,6 +60,7 @@ export
     
     # layers/pool
     GlobalPool,
+    GlobalAttentionPool,
     TopKPool,
     topk_index
 

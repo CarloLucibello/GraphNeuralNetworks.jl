@@ -42,6 +42,47 @@ end
 
 (l::GlobalPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
 
+
+@doc raw"""
+    GlobalAttentionPool(fgate, ffeat=identity)
+
+Global soft attention layer from the [Gated Graph Sequence Neural
+Networks](https://arxiv.org/abs/1511.05493) paper
+
+```math
+\mathbf{u}_V} = \sum_{i\in V} \mathrm{softmax} \left(
+                    f_{\mathrm{gate}} ( \mathbf{x}_i ) \right) \odot
+                    f_{\mathrm{feat}} ( \mathbf{x}_i ),
+```
+
+where ``f_{\mathrm{gate}} \colon \mathbb{R}^F \to
+\mathbb{R}`` and ``f_{\mathbf{feat}}` denote neural networks.
+
+# Arguments
+
+fgate: 
+ffeat: 
+"""
+struct GlobalAttentionPool{G,F}
+    fgate::G
+    ffeat::F
+end
+
+@functor GlobalAttentionPool
+
+GlobalAttentionPool(fgate) = GlobalAttentionPool(fgate, identity)
+
+
+function (l::GlobalAttentionPool)(g::GNNGraph, x::AbstractArray)
+    weights = softmax_nodes(g, l.fgate(x))
+    feats = l.ffeat(x)
+    u = reduce_nodes(+, g, weights .* feats)
+    return u   
+end
+
+(l::GlobalAttentionPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
+
+
 """
     TopKPool(adj, k, in_channel)
 
@@ -59,6 +100,9 @@ struct TopKPool{T,S}
     p::AbstractVector{S}
     Ã::AbstractMatrix{T}
 end
+
+
+
 
 function TopKPool(adj::AbstractMatrix, k::Int, in_channel::Int; init=glorot_uniform)
     TopKPool(adj, k, init(in_channel), similar(adj, k, k))
