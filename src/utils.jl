@@ -193,7 +193,7 @@ end
 @doc raw"""
     softmax_edge_neighbors(g, e)
 
-Softmax over each node neighborhood of the edge features `e`.
+Softmax over each node's neighborhood of the edge features `e`.
 
 ```math
 \mathbf{e}'_{j\to i} = \frac{e^{\mathbf{e}_{j\to i}}}
