@@ -190,6 +190,25 @@ function softmax_edges(g::GNNGraph, e)
     return num ./ den
 end
 
+@doc raw"""
+    softmax_edge_neighbors(g, e)
+
+Softmax over each node neighborhood of the edge features `e`.
+
+```math
+\mathbf{e}'_{j\to i} = \frac{e^{\mathbf{e}_{j\to i}}}
+                    {\sum_{j'\in N(i)} e^{\mathbf{e}_{j\to i}}}.
+```
+"""
+function softmax_edge_neighbors(g::GNNGraph, e)
+    @assert size(e)[end] == g.num_edges
+    s, t = edge_index(g)
+    max_ = gather(scatter(max, e, t), t)
+    num = exp.(e .- max_)
+    den = gather(scatter(+, num, t), t)
+    return num ./ den
+end
+
 """
     broadcast_nodes(g, x)
 

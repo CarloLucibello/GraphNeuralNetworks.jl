@@ -52,24 +52,24 @@ Global soft attention layer from the [Gated Graph Sequence Neural
 Networks](https://arxiv.org/abs/1511.05493) paper
 
 ```math
-\mathbf{u}_V} = \sum_{i\in V} \alpha_i\, f_{\mathrm{feat}}(\mathbf{x}_i)
+\mathbf{u}_V = \sum_{i\in V} \alpha_i\, f_{feat}(\mathbf{x}_i)
 ```
 
-where the coefficients ``alpha_i`` are given by a [`softmax_nodes`](@ref)
+where the coefficients ``\alpha_i`` are given by a [`softmax_nodes`](@ref)
 operation:
 
 ```math
-\alpha_i = \frac{e^{f_{\mathrm{feat}}(\mathbf{x}_i)}}
-                {\sum_{i'\in V} e^{f_{\mathrm{feat}}(\mathbf{x}_{i'})}}.
+\alpha_i = \frac{e^{f_{gate}(\mathbf{x}_i)}}
+                {\sum_{i'\in V} e^{f_{gate}(\mathbf{x}_{i'})}}.
 ```
 
 # Arguments
 
-- `fgate`: The function ``f_{\mathrm{gate}} \colon \mathbb{R}^{D_{in}} \to
-\mathbb{R}``. It is tipically a neural network.
+- `fgate`: The function ``f_{gate}: \mathbb{R}^{D_{in}} \to \mathbb{R}``. 
+           It is tipically expressed by a neural network.
 
-- `ffeat`: The function ``f_{\mathrm{feat}} \colon \mathbb{R}^{D_{in}} \to
-\mathbb{R}^{D_{out}}``. It is tipically a neural network.
+- `ffeat`: The function ``f_{feat}: \mathbb{R}^{D_{in}} \to \mathbb{R}^{D_{out}}``. 
+           It is tipically expressed by a neural network.
 
 # Examples
 
@@ -88,6 +88,7 @@ g = Flux.batch([GNNGraph(random_regular_graph(10, 4),
 u = pool(g, g.ndata.x)
 
 @assert size(u) == (chout, g.num_graphs)
+```
 """
 struct GlobalAttentionPool{G,F}
     fgate::G
