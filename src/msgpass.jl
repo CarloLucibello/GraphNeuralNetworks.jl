@@ -77,7 +77,8 @@ end
 ## APPLY EDGES
 
 """
-    apply_edges(f, xi, xj, e)
+    apply_edges(f, g, xi, xj, e)
+    apply_edges(f, g; [xi, xj, e])
 
 Returns the message from node `j` to node `i` .
 In the message-passing scheme, the incoming messages 

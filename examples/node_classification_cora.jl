@@ -50,9 +50,11 @@ function train(; kws...)
     test_ids = data.test_indices |> device
     ytrain = y[:,train_ids]
 
+    @info g
+ 
+    ## DEFINE MODEL
     nin, nhidden, nout = size(X,1), args.nhidden, data.num_classes 
     
-    ## DEFINE MODEL
     model = GNNChain(GCNConv(nin => nhidden, relu),
                      Dropout(0.5),
                      GCNConv(nhidden => nhidden, relu), 
@@ -60,8 +62,6 @@ function train(; kws...)
 
     ps = Flux.params(model)
     opt = ADAM(args.η)
-
-    @info g
     
     ## LOGGING FUNCTION
     function report(epoch)

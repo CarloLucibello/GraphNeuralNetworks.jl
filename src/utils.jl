@@ -70,6 +70,10 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
     return data
 end
 
+zeros_like(x::AbstractArray, T=eltype(x), sz=size(x)) = fill!(similar(x, T, sz), 0)
+zeros_like(x::SparseMatrixCSC, T=eltype(x), sz=size(x)) = zeros(T, sz)
+zeros_like(x::CUMAT_T, T=eltype(x), sz=size(x)) = CUDA.zeros(T, sz)
+
 ones_like(x::AbstractArray, T=eltype(x), sz=size(x)) = fill!(similar(x, T, sz), 1)
 ones_like(x::SparseMatrixCSC, T=eltype(x), sz=size(x)) = ones(T, sz)
 ones_like(x::CUMAT_T, T=eltype(x), sz=size(x)) = CUDA.ones(T, sz)
