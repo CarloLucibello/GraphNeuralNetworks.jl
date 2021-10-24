@@ -4,13 +4,14 @@
         n = 10
         chin = 6
         X = rand(Float32, 6, n)
-        g = GNNGraph(random_regular_graph(n, 4), ndata=X)
+        g = GNNGraph(random_regular_graph(n, 4), ndata=X, graph_type=GRAPH_T)
         u = p(g, X)
         @test u ≈ sum(X, dims=2)
 
         ng = 3
         g = Flux.batch([GNNGraph(random_regular_graph(n, 4), 
-                                 ndata=rand(Float32, chin, n)) 
+                                 ndata=rand(Float32, chin, n),
+                                 graph_type=GRAPH_T) 
                         for i=1:ng])
         u = p(g, g.ndata.x)
         @test size(u) == (chin, ng)
@@ -22,13 +23,21 @@
 
     @testset "GlobalAttentionPool" begin
         n = 10
-        chin = 16
-        X = rand(Float32, chin, n)
-        g = GNNGraph(random_regular_graph(n, 4), ndata=X)
-        fgate = Dense(chin, 1, sigmoid)
-        p = GlobalAttentionPool(fgate)
-        y = p(g, X)
-        test_layer(p, g, rtol=1e-5, outtype=:graph)
+        chin = 6
+        chout = 5    
+        ng = 3
+        
+        fgate = Dense(chin, 1)
+        ffeat = Dense(chin, chout)
+        p = GlobalAttentionPool(fgate, ffeat)
+        @test length(Flux.params(p)) == 4
+        
+        g = Flux.batch([GNNGraph(random_regular_graph(n, 4), 
+                                 ndata=rand(Float32, chin, n),
+                                 graph_type=GRAPH_T) 
+                        for i=1:ng])
+
+        test_layer(p, g, rtol=1e-5, outtype=:graph, outsize=(chout, ng))
     end
 
 

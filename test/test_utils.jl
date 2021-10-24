@@ -34,14 +34,21 @@ function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,
     x64, e64, l64, g64 = to64.([x, e, l, g]) # needed for accurate FiniteDifferences' grad
     xgpu, egpu, lgpu, ggpu = gpu.([x, e, l, g]) 
 
-    f(l, g) = l(g)
-    f(l, g, x::AbstractArray{Float32}) = isnothing(e) ? l(g, x) : l(g, x, e)
-    f(l, g, x::AbstractArray{Float64}) = isnothing(e64) ? l(g, x) : l(g, x, e64)
-    f(l, g, x::CuArray) = isnothing(e64) ? l(g, x) : l(g, x, egpu)
+    f(l, g::GNNGraph) = l(g)
+    f(l, g::GNNGraph, x::AbstractArray{Float32}) = isnothing(e) ? l(g, x) : l(g, x, e)
+    f(l, g::GNNGraph, x::AbstractArray{Float64}) = isnothing(e64) ? l(g, x) : l(g, x, e64)
+    f(l, g::GNNGraph, x::CuArray) = isnothing(e64) ? l(g, x) : l(g, x, egpu)
     
-    loss(l, g) = sum(node_features(f(l, g))) 
-    loss(l, g, x) = sum(f(l, g, x)) 
-    loss(l, g, x, e) = sum(l(g, x, e)) 
+    loss(l, g::GNNGraph) = if outtype == :node
+                                sum(node_features(f(l, g))) 
+                            elseif outtype == :edge
+                                sum(edge_features(f(l, g)))         
+                            elseif outtype == :graph
+                                sum(graph_features(f(l, g))) 
+                            end
+
+    loss(l, g::GNNGraph, x) = sum(f(l, g, x)) 
+    loss(l, g::GNNGraph, x, e) = sum(l(g, x, e)) 
     
     
     # TEST OUTPUT
@@ -117,7 +124,6 @@ function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,
 
     # TEST LAYER GRADIENT - l(g)
     l̄ = gradient(l -> loss(l, g), l)[1]
-    l̄_fd = FiniteDifferences.grad(fdm, l64 -> loss(l64, g64), l64)[1]
     test_approx_structs(l, l̄, l̄_fd; atol, rtol, broken_grad_fields, exclude_grad_fields, verbose)
 
     return true
