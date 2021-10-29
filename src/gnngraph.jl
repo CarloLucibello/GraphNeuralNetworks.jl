@@ -15,24 +15,30 @@ const CUMAT_T = Union{AnyCuMatrix, CUDA.CUSPARSE.CuSparseMatrix}
     GNNGraph(data; [graph_type, ndata, edata, gdata, num_nodes, graph_indicator, dir])
     GNNGraph(g::GNNGraph; [ndata, edata, gdata])
 
-A type representing a graph structure and storing also 
-feature arrays associated to nodes, edges, and to the whole graph (global features). 
+A type representing a graph structure that also stores 
+feature arrays associated to nodes, edges, and the graph itself. 
 
-A `GNNGraph` can be constructed out of different objects `data` expressing
-the connections inside the graph. The internal representation type
+A `GNNGraph` can be constructed out of different `data` objects 
+expressing the connections inside the graph. The internal representation type
 is determined by `graph_type`.
 
 When constructed from another `GNNGraph`, the internal graph representation
-is preserved and shared. The node/edge/global features are transmitted
-as well, unless explicitely changed though keyword arguments.
+is preserved and shared. The node/edge/graph features are retained
+as well, unless explicitely set by the keyword arguments
+`ndata`, `edata`, and `gdata`.
 
 A `GNNGraph` can also represent multiple graphs batched togheter 
 (see [`Flux.batch`](@ref) or [`SparseArrays.blockdiag`](@ref)).
 The field `g.graph_indicator` contains the graph membership
 of each node.
 
-A `GNNGraph` is a Graphs' `AbstractGraph`, therefore any functionality
-from the Graphs' graph library can be used on it.
+`GNNGraph`s are always directed graphs, therefore each edge is defined
+by a source node and a target node (see [`edge_index`](@ref)).
+Self loops (edges connecting a node to itself) and multiple edges
+(more than one edge between the same pair of nodes) are supported.
+
+A `GNNGraph` is a Graphs.jl `AbstractGraph`, therefore any functionality
+from the Graphs.jl library is supported.
 
 # Arguments 
 
@@ -54,9 +60,9 @@ from the Graphs' graph library can be used on it.
         Possible values are `:out` and `:in`. Default `:out`.
 - `num_nodes`: The number of nodes. If not specified, inferred from `g`. Default `nothing`.
 - `graph_indicator`: For batched graphs, a vector containing the graph assigment of each node. Default `nothing`.  
-- `ndata`: Node features. A named tuple of arrays whose last dimension has size num_nodes.
-- `edata`: Edge features. A named tuple of arrays whose whose last dimension has size num_edges.
-- `gdata`: Global features. A named tuple of arrays whose has size num_graphs. 
+- `ndata`: Node features. A named tuple of arrays whose last dimension has size `num_nodes`.
+- `edata`: Edge features. A named tuple of arrays whose last dimension has size `num_edges`.
+- `gdata`: Graph features. A named tuple of arrays whose last dimension has size `num_graphs`. 
 
 # Usage. 
 
