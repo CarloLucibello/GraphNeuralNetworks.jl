@@ -11,7 +11,7 @@ const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
 const CUMAT_T = Union{AnyCuMatrix, CUDA.CUSPARSE.CuSparseMatrix}
 
-""" 
+"""
     GNNGraph(data; [graph_type, ndata, edata, gdata, num_nodes, graph_indicator, dir])
     GNNGraph(g::GNNGraph; [ndata, edata, gdata])
 
