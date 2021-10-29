@@ -272,7 +272,7 @@
         
         @test LearnBase.getobs(g, 3) == getgraph(g, 3)
         @test LearnBase.getobs(g, 3:5) == getgraph(g, 3:5)
-        @test LearnBase.nobs(g) == g.num_graphs
+        @test StatsBase.nobs(g) == g.num_graphs
         
         d = Flux.Data.DataLoader(g, batchsize = 2, shuffle=false)
         @test first(d) == getgraph(g, 1:2)
