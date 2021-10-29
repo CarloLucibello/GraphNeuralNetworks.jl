@@ -499,8 +499,8 @@ Equivalent to [`SparseArrays.blockdiag`](@ref).
 """
 Flux.batch(xs::Vector{<:GNNGraph}) = blockdiag(xs...)
 
-### LearnBase compatibility
-LearnBase.nobs(g::GNNGraph) = g.num_graphs 
+### StatsBase/LearnBase compatibility
+StatsBase.nobs(g::GNNGraph) = g.num_graphs 
 LearnBase.getobs(g::GNNGraph, i) = getgraph(g, i)
 
 # Flux's Dataloader compatibility. Related PR https://github.com/FluxML/Flux.jl/pull/1683

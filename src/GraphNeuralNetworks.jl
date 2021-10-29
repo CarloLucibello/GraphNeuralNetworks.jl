@@ -10,6 +10,7 @@ using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, @functor, batch
 using MacroTools: @forward
 import LearnBase
+import StatsBase
 using LearnBase: getobs
 using NNlib, NNlibCUDA
 using NNlib: scatter, gather
