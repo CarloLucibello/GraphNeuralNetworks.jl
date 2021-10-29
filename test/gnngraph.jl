@@ -277,6 +277,11 @@
         d = Flux.Data.DataLoader(g, batchsize = 2, shuffle=false)
         @test first(d) == getgraph(g, 1:2)
     end
+
+    @testset "Graphs.jl integration" begin
+        g = GNNGraph(erdos_renyi(10, 20))
+        @test g isa Graphs.AbstractGraph
+    end
 end
 
 

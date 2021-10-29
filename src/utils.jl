@@ -39,8 +39,8 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
     
     if n == 1
         # If last array dimension is not 1, add a new dimension. 
-        # This is mostly usefule to reshape globale feature vectors
-        # of size D to Dx1 matrices.
+        # This is mostly useful to reshape graph feature vectors
+        # of size D into Dx1 matrices.
         function unsqz(v)
             if v isa AbstractArray && size(v)[end] != 1
                 v = reshape(v, size(v)..., 1)
