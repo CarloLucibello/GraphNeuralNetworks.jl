@@ -37,8 +37,8 @@ by a source node and a target node (see [`edge_index`](@ref)).
 Self loops (edges connecting a node to itself) and multiple edges
 (more than one edge between the same pair of nodes) are supported.
 
-A `GNNGraph` is a Graphs.jl `AbstractGraph`, therefore any functionality
-from the Graphs.jl library is supported.
+A `GNNGraph` is a Graphs.jl's `AbstractGraph`, therefore it supports most 
+functionality from that library.
 
 # Arguments 
 
@@ -103,7 +103,7 @@ g = g |> gpu
 source, target = edge_index(g)
 ```
 """
-struct GNNGraph{T<:Union{COO_T,ADJMAT_T}}
+struct GNNGraph{T<:Union{COO_T,ADJMAT_T}} <: AbstractGraph{Int}
     graph::T
     num_nodes::Int
     num_edges::Int

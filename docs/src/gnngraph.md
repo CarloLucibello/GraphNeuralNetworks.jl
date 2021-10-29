@@ -5,6 +5,9 @@ A GNNGraph `g` is a directed graph with nodes labeled from 1 to `g.num_nodes`.
 The underlying implementation allows for efficient application of graph neural network
 operators, gpu movement, and storage of node/edge/graph related feature arrays.
 
+`GNNGraph` inherits from [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl)'s `AbstractGraph`,
+therefore it supports most functionality from that library. 
+
 ## Graph Creation
 A GNNGraph can be created from several different data sources encoding the graph topology:
 
