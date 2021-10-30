@@ -15,9 +15,12 @@ A GNNGraph can be created from several different data sources encoding the graph
 using GraphNeuralNetworks, Graphs, SparseArrays
 
 
-# Construct GNNGraph from From Graphs's graph
+# Construct a GNNGraph from from a Graphs.jl's graph
 lg = erdos_renyi(10, 30)
 g = GNNGraph(lg)
+
+# Same as above using convenience method rand_graph
+g = rand_graph(10, 30)
 
 # From an adjacency matrix
 A = sprand(10, 10, 0.3)
@@ -123,21 +126,21 @@ for g in train_loader
     .....
 end
 
-# Access the nodes' graph memberships through 
-gall.graph_indicator
+# Access the nodes' graph memberships 
+graph_indicator(gall)
 ```
 
 ## Graph Manipulation
 
 ```julia
 g′ = add_self_loops(g)
-
 g′ = remove_self_loops(g)
+g′ = add_edges(g, [1, 2], [2, 3]) # add edges 1->2 and 2->3
 ```
 
 ## JuliaGraphs ecosystem integration
 
-Since `GNNGraph <: Graphs.AbstractGraph`, we can use any functionality from Graphs. 
+Since `GNNGraph <: Graphs.AbstractGraph`, we can use any functionality from Graphs.jl. 
 
 ```julia
 @assert Graphs.isdirected(g)

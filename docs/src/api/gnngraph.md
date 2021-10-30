@@ -19,14 +19,52 @@ Pages   = ["gnngraph.md"]
 
 ## Docs
 
+### GNNGraph
+
 ```@autodocs
 Modules = [GraphNeuralNetworks]
-Pages   = ["gnngraph.jl"]
+Pages   = ["GNNGraphs/gnngraph.jl"]
+Private = false
+```
+
+### Query
+
+```@autodocs
+Modules = [GraphNeuralNetworks]
+Pages   = ["GNNGraphs/query.jl"]
+Private = false
+```
+
+```@docs
+Graphs.adjacency_matrix
+Graphs.degree
+Graphs.outneighbors
+Graphs.inneighbors
+```
+
+### Transform
+
+```@autodocs
+Modules = [GraphNeuralNetworks]
+Pages   = ["GNNGraphs/transform.jl"]
 Private = false
 ```
 
 ```@docs
 Flux.batch
 SparseArrays.blockdiag
-Graphs.adjacency_matrix
+```
+
+### Generate
+
+```@autodocs
+Modules = [GraphNeuralNetworks]
+Pages   = ["GNNGraphs/generate.jl"]
+Private = false
+```
+
+### Related methods
+
+```@docs
+SparseArrays.sparse
 ```
