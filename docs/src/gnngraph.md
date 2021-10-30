@@ -36,7 +36,7 @@ target = [2,3,1,3,1,2,4,3]
 g = GNNGraph(source, target)
 ```
 
-See also the related methods [`adjacency_matrix`](@ref), [`edge_index`](@ref), and [`adjacency_list`](@ref).
+See also the related methods [`Graphs.adjacency_matrix`](@ref), [`edge_index`](@ref), and [`adjacency_list`](@ref).
 
 ## Basic Queries
 

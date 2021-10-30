@@ -121,7 +121,7 @@ Softmax over each node's neighborhood of the edge features `e`.
 
 ```math
 \mathbf{e}'_{j\to i} = \frac{e^{\mathbf{e}_{j\to i}}}
-                    {\sum_{j'\in N(i)} e^{\mathbf{e}_{j\to i}}}.
+                    {\sum_{j'\in N(i)} e^{\mathbf{e}_{j'\to i}}}.
 ```
 """
 function softmax_edge_neighbors(g::GNNGraph, e)

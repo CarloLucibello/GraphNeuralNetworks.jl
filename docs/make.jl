@@ -1,7 +1,9 @@
 using Flux, NNlib, GraphNeuralNetworks, Graphs, SparseArrays
 using Documenter
 
-DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup, :(using GraphNeuralNetworks); recursive=true)
+DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup, 
+    :(using GraphNeuralNetworks, Graphs, SparseArrays, NNlib, Flux); 
+    recursive=true)
 
 makedocs(;
     modules=[GraphNeuralNetworks, NNlib, Flux, Graphs, SparseArrays],

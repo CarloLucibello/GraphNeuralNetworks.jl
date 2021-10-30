@@ -4,7 +4,12 @@ CurrentModule = GraphNeuralNetworks
 
 # GNNGraph
 
-Documentation page for the graph type `GNNGraph` provided GraphNeuralNetworks.jl and its related methods. 
+Documentation page for the graph type `GNNGraph` provided by GraphNeuralNetworks.jl and related methods. 
+
+```@contents
+Pages = ["gnngraph.md"]
+Depth = 5
+```
 
 Besides the methods documented here, one can rely on the large set of functionalities
 given by [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl)
@@ -17,21 +22,19 @@ Order = [:type, :function]
 Pages   = ["gnngraph.md"]
 ```
 
-## Docs
-
-### GNNGraph
+## GNNGraph type
 
 ```@autodocs
-Modules = [GraphNeuralNetworks]
-Pages   = ["GNNGraphs/gnngraph.jl"]
+Modules = [GraphNeuralNetworks.GNNGraphs]
+Pages   = ["gnngraph.jl"]
 Private = false
 ```
 
-### Query
+## Query
 
 ```@autodocs
-Modules = [GraphNeuralNetworks]
-Pages   = ["GNNGraphs/query.jl"]
+Modules = [GraphNeuralNetworks.GNNGraphs]
+Pages   = ["query.jl"]
 Private = false
 ```
 
@@ -42,29 +45,18 @@ Graphs.outneighbors
 Graphs.inneighbors
 ```
 
-### Transform
+## Transform
 
 ```@autodocs
-Modules = [GraphNeuralNetworks]
-Pages   = ["GNNGraphs/transform.jl"]
+Modules = [GraphNeuralNetworks.GNNGraphs]
+Pages   = ["transform.jl"]
 Private = false
 ```
 
-```@docs
-Flux.batch
-SparseArrays.blockdiag
-```
-
-### Generate
+## Generate
 
 ```@autodocs
-Modules = [GraphNeuralNetworks]
-Pages   = ["GNNGraphs/generate.jl"]
+Modules = [GraphNeuralNetworks.GNNGraphs]
+Pages   = ["generate.jl"]
 Private = false
-```
-
-### Related methods
-
-```@docs
-SparseArrays.sparse
 ```
