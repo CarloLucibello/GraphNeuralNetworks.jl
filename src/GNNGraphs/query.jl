@@ -62,7 +62,7 @@ Graphs.is_directed(::Type{<:GNNGraph}) = true
 Return the adjacency list representation (a vector of vectors)
 of the graph `g`.
 
-Calling `a` the adjacency list, if `dir=:out`
+Calling `a` the adjacency list, if `dir=:out` than
 `a[i]` will contain the neighbors of node `i` through
 outgoing edges. If `dir=:in`, it will contain neighbors from
 incoming edges instead.
@@ -75,7 +75,7 @@ end
 
 function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
     if g.graph[1] isa CuVector
-        # TODO revisi after https://github.com/JuliaGPU/CUDA.jl/pull/1152
+        # TODO revisit after https://github.com/JuliaGPU/CUDA.jl/pull/1152
         A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
     else
         A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
