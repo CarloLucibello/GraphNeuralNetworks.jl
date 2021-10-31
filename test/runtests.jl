@@ -1,4 +1,5 @@
 using GraphNeuralNetworks
+using GraphNeuralNetworks.GNNGraphs: sort_edge_index
 using Flux
 using CUDA
 using Flux: gpu, @functor
@@ -19,7 +20,9 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
-    "gnngraph",
+    "GNNGraphs/gnngraph",
+    "GNNGraphs/transform",
+    "GNNGraphs/generate",
     "utils",
     "msgpass",
     "layers/basic",
@@ -31,9 +34,9 @@ tests = [
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
 
-@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :sparse, :dense) 
+@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :dense, :sparse) 
     global GRAPH_T = graph_type
-    global TEST_GPU = CUDA.functional()
+    global TEST_GPU = CUDA.functional() && (GRAPH_T != :sparse)
 
     for t in tests
         startswith(t, "examples") && GRAPH_T == :dense && continue     # not testing :dense since causes OutOfMememory on github's CI
