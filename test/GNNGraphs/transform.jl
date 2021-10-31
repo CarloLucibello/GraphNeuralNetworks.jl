@@ -42,6 +42,20 @@
         @test g123.gdata.u == [g1.gdata.u, g2.gdata.u, g3.gdata.u]
     end
 
+    @testset "unbatch" begin
+        g1 = rand_graph(10, 20)
+        g2 = rand_graph(5, 10)
+        g12 = Flux.batch([g1, g2])
+        gs = Flux.unbatch([g1,g2])
+        @test length(gs) == 2
+        @test gs[1].num_nodes == 10
+        @test gs[1].num_edges == 20
+        @test gs[1].num_graphs == 1
+        @test gs[2].num_nodes == 5
+        @test gs[2].num_edges == 10
+        @test gs[2].num_graphs == 1
+    end
+
     @testset "getgraph"  begin
         g1 = GNNGraph(random_regular_graph(10,2), ndata=rand(16,10), graph_type=GRAPH_T)
         g2 = GNNGraph(random_regular_graph(4,2), ndata=rand(16,4), graph_type=GRAPH_T)
