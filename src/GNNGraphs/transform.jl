@@ -54,8 +54,7 @@ end
 """
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
 
-Add to graph `g` the edges with source nodes `s` and target nodes `t`.    
-
+Add to graph `g` the edges with source nodes `s` and target nodes `t`.
 """
 function add_edges(g::GNNGraph{<:COO_T}, 
         snew::AbstractVector{<:Integer}, 
@@ -78,6 +77,25 @@ function add_edges(g::GNNGraph{<:COO_T},
             g.graph_indicator,
             g.ndata, edata, g.gdata)
 end
+
+
+"""
+    add_nodes(g::GNNGraph, n; [ndata])
+
+Add `n` new nodes to graph `g`. In the 
+new graph, these nodes will have indexes from `g.num_nodes + 1`
+to `g.num_nodes + n`.
+"""
+function add_nodes(g::GNNGraph{<:COO_T}, n::Integer; ndata=(;))
+    ndata = normalize_graphdata(ndata, default_name=:x, n=n)
+    ndata = cat_features(g.ndata, ndata)
+
+    GNNGraph(g.graph, 
+            g.num_nodes + n, g.num_edges, g.num_graphs, 
+            g.graph_indicator,
+            ndata, g.edata, g.gdata)
+end
+
 
 function SparseArrays.blockdiag(g1::GNNGraph, g2::GNNGraph)
     nv1, nv2 = g1.num_nodes, g2.num_nodes
@@ -117,8 +135,6 @@ function SparseArrays.blockdiag(A1::AbstractMatrix, A2::AbstractMatrix)
             O2 A2]
 end
 
-### Cat public interfaces #############
-
 """
     blockdiag(xs::GNNGraph...)
 
@@ -133,14 +149,115 @@ function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
 end
 
 """
-    batch(xs::Vector{<:GNNGraph})
+    batch(gs::Vector{<:GNNGraph})
 
 Batch together multiple `GNNGraph`s into a single one 
 containing the total number of original nodes and edges.
 
 Equivalent to [`SparseArrays.blockdiag`](@ref).
+See also [`Flux.unbatch`](@ref).
+
+# Usage
+
+```juliarepl
+julia> g1 = rand_graph(4, 6, ndata=ones(8, 4))
+GNNGraph:
+    num_nodes = 4
+    num_edges = 6
+    num_graphs = 1
+    ndata:
+        x => (8, 4)
+    edata:
+    gdata:
+
+
+julia> g2 = rand_graph(7, 4, ndata=zeros(8, 7))
+GNNGraph:
+    num_nodes = 7
+    num_edges = 4
+    num_graphs = 1
+    ndata:
+        x => (8, 7)
+    edata:
+    gdata:
+
+
+julia> g12 = Flux.batch([g1, g2])
+GNNGraph:
+    num_nodes = 11
+    num_edges = 10
+    num_graphs = 2
+    ndata:
+        x => (8, 11)
+    edata:
+    gdata:
+
+
+julia> g12.ndata.x
+8×11 Matrix{Float64}:
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+```
 """
-Flux.batch(xs::Vector{<:GNNGraph}) = blockdiag(xs...)
+Flux.batch(gs::Vector{<:GNNGraph}) = blockdiag(gs...)
+
+
+"""
+    unbatch(g::GNNGraph)
+
+Opposite of the [`Flux.batch`](@ref) operation, returns 
+an array of the individual graphs batched together in `g`.
+
+See also [`Flux.batch`](@ref) and [`getgraph`](@ref).
+
+# Usage
+
+```juliarepl
+julia> gbatched = Flux.batch([rand_graph(5, 6), rand_graph(10, 8), rand_graph(4,2)])
+GNNGraph:
+    num_nodes = 19
+    num_edges = 16
+    num_graphs = 3
+    ndata:
+    edata:
+    gdata:
+
+julia> Flux.unbatch(gbatched)
+3-element Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}:
+ GNNGraph:
+    num_nodes = 5
+    num_edges = 6
+    num_graphs = 1
+    ndata:
+    edata:
+    gdata:
+
+ GNNGraph:
+    num_nodes = 10
+    num_edges = 8
+    num_graphs = 1
+    ndata:
+    edata:
+    gdata:
+
+ GNNGraph:
+    num_nodes = 4
+    num_edges = 2
+    num_graphs = 1
+    ndata:
+    edata:
+    gdata:
+```
+"""
+function Flux.unbatch(g::GNNGraph) 
+    [getgraph(g, i) for i in 1:g.num_graphs]
+end
 
 
 """

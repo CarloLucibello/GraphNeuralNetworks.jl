@@ -42,6 +42,20 @@
         @test g123.gdata.u == [g1.gdata.u, g2.gdata.u, g3.gdata.u]
     end
 
+    @testset "unbatch" begin
+        g1 = rand_graph(10, 20)
+        g2 = rand_graph(5, 10)
+        g12 = Flux.batch([g1, g2])
+        gs = Flux.unbatch([g1,g2])
+        @test length(gs) == 2
+        @test gs[1].num_nodes == 10
+        @test gs[1].num_edges == 20
+        @test gs[1].num_graphs == 1
+        @test gs[2].num_nodes == 5
+        @test gs[2].num_edges == 10
+        @test gs[2].num_graphs == 1
+    end
+
     @testset "getgraph"  begin
         g1 = GNNGraph(random_regular_graph(10,2), ndata=rand(16,10), graph_type=GRAPH_T)
         g2 = GNNGraph(random_regular_graph(4,2), ndata=rand(16,4), graph_type=GRAPH_T)
@@ -78,6 +92,17 @@
             gnew = add_edges(g, snew, tnew, edata=(e1=ones(2,1), e2=zeros(3,1)))
             @test all(gnew.edata.e1[:,5] .== 1)
             @test all(gnew.edata.e2[:,5] .== 0)           
+        end
+    end
+
+    @testset "add_nodes" begin
+        if GRAPH_T == :coo
+            g = rand_graph(6, 4, ndata=rand(2, 6), graph_type=GRAPH_T)
+            gnew = add_nodes(g, 5, ndata=ones(2, 5))
+            @test gnew.num_nodes == g.num_nodes + 5
+            @test gnew.num_edges == g.num_edges
+            @test gnew.num_graphs == g.num_graphs
+            @test all(gnew.ndata.x[:,7:11] .== 1)         
         end
     end
 end

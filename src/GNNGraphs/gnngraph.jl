@@ -56,7 +56,7 @@ functionality from that library.
               Optionally, also edge weights can be given: `(source, target, weights)`.
     - `:sparse`. A sparse adjacency matrix representation.
     - `:dense`. A dense adjacency matrix representation.  
-    Default `:coo`.
+    Defaults to `:coo`, currently the most supported type.
 - `dir`: The assumed edge direction when given adjacency matrix or adjacency list input data `g`. 
         Possible values are `:out` and `:in`. Default `:out`.
 - `num_nodes`: The number of nodes. If not specified, inferred from `g`. Default `nothing`.

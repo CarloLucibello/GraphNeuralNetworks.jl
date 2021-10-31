@@ -21,9 +21,9 @@ export GNNGraph, node_features, edge_features, graph_features
 include("query.jl")
 export  edge_index, adjacency_list, normalized_laplacian, scaled_laplacian,
         graph_indicator
-    
+
 include("transform.jl")
-export add_edges, add_self_loops, remove_self_loops, getgraph
+export add_nodes, add_edges, add_self_loops, remove_self_loops, getgraph
 
 include("generate.jl")
 export rand_graph
@@ -38,6 +38,6 @@ export
     # from SparseArrays
     sprand, sparse, blockdiag,
     # from Flux
-    batch
+    batch, unbatch
 
 end #module

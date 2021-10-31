@@ -20,7 +20,7 @@ lg = erdos_renyi(10, 30)
 g = GNNGraph(lg)
 
 # Same as above using convenience method rand_graph
-g = rand_graph(10, 30)
+g = rand_graph(10, 60)
 
 # From an adjacency matrix
 A = sprand(10, 10, 0.3)
