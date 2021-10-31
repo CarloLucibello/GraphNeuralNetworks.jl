@@ -94,4 +94,15 @@
             @test all(gnew.edata.e2[:,5] .== 0)           
         end
     end
+
+    @testset "add_nodes" begin
+        if GRAPH_T == :coo
+            g = rand_graph(6, 4, ndata=rand(2, 6), graph_type=GRAPH_T)
+            gnew = add_nodes(g, 5, ndata=ones(2, 5))
+            @test gnew.num_nodes == g.num_nodes + 5
+            @test gnew.num_edges == g.num_edges
+            @test gnew.num_graphs == g.num_graphs
+            @test all(gnew.ndata.x[:,7:11] .== 1)         
+        end
+    end
 end

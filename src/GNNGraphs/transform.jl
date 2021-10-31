@@ -54,8 +54,7 @@ end
 """
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
 
-Add to graph `g` the edges with source nodes `s` and target nodes `t`.    
-
+Add to graph `g` the edges with source nodes `s` and target nodes `t`.
 """
 function add_edges(g::GNNGraph{<:COO_T}, 
         snew::AbstractVector{<:Integer}, 
@@ -78,6 +77,25 @@ function add_edges(g::GNNGraph{<:COO_T},
             g.graph_indicator,
             g.ndata, edata, g.gdata)
 end
+
+
+"""
+    add_nodes(g::GNNGraph, n; [ndata])
+
+Add `n` new nodes to graph `g`. In the 
+new graph, these nodes will have indexes from `g.num_nodes + 1`
+to `g.num_nodes + n`.
+"""
+function add_nodes(g::GNNGraph{<:COO_T}, n::Integer; ndata=(;))
+    ndata = normalize_graphdata(ndata, default_name=:x, n=n)
+    ndata = cat_features(g.ndata, ndata)
+
+    GNNGraph(g.graph, 
+            g.num_nodes + n, g.num_edges, g.num_graphs, 
+            g.graph_indicator,
+            ndata, g.edata, g.gdata)
+end
+
 
 function SparseArrays.blockdiag(g1::GNNGraph, g2::GNNGraph)
     nv1, nv2 = g1.num_nodes, g2.num_nodes
@@ -116,8 +134,6 @@ function SparseArrays.blockdiag(A1::AbstractMatrix, A2::AbstractMatrix)
     return [A1 O1
             O2 A2]
 end
-
-### Cat public interfaces #############
 
 """
     blockdiag(xs::GNNGraph...)
