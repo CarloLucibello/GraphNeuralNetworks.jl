@@ -152,10 +152,10 @@ function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj::AbstractM
     return xj * A
 end
 
-## avoid the fast path on gpu until we have better cuda support
-function propagate(::typeof(copyxj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
-    propagate((xi,xj,e)->copyxj(xi,xj,e), g, +, xi, xj, e)
-end
+# ## avoid the fast path on gpu until we have better cuda support
+# function propagate(::typeof(copyxj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
+#     propagate((xi,xj,e) -> copyxj(xi,xj,e), g, +, xi, xj, e)
+# end
 
 # function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
 #     A = adjacency_matrix(g)

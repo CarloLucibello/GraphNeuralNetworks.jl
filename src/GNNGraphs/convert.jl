@@ -137,9 +137,37 @@ function to_sparse(coo::COO_T, T::DataType=Int; dir=:out, num_nodes=nothing)
     s, t, eweight  = coo
     eweight = isnothing(eweight) ? fill!(similar(s, T), 1) : eweight
     num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
-    A = sparse(s, t, eweight, num_nodes, num_nodes)
+    A = _sparse(s, t, eweight, num_nodes, num_nodes)
     num_edges = length(s)
     return A, num_nodes, num_edges
+end
+
+_sparse(s, t, eweight, n, m) = sparse(s, t, eweight, n, m)
+
+function _sparse(I::CuVector, J::CuVector, V::CuVector, m, n)
+    spcoo = CuSparseMatrixCOO{Float32, Int32}(Int32.(I), Int32.(J), Float32.(V), (m, n))
+    return CuSparseMatrixCSR(spcoo)
+end
+
+# function _sparse(I::CuVector, J::CuVector, V::CuVector, m, n; fmt=:csr)
+#     # Tv = Int32
+#     spcoo = CuSparseMatrixCOO{Float32, Int32}(Int32.(I), Int32.(J), Float32.(V), (m, n))
+#     if fmt == :csc
+#         return CuSparseMatrixCSC(spcoo)
+#     elseif fmt == :csr
+#         return CuSparseMatrixCSR(spcoo)
+#     elseif fmt == :coo
+#         return spcoo
+#     else
+#         error("Format :$fmt not available, use :csc, :csr, or :coo.")
+#     end
+# end
+
+
+# Workaround for https://github.com/JuliaGPU/CUDA.jl/issues/1113#issuecomment-955759875
+function Base.:*(A::CuMatrix, B::CuSparseMatrixCSR)
+    @assert size(A, 2) == size(B, 1)
+    return CuMatrix((B' * A')')
 end
 
 

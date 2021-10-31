@@ -192,8 +192,8 @@ function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata, grap
             ndata, edata, gdata) 
 end
 
-function Base.show(io::IO, g::GNNGraph)
-    println(io, "GNNGraph:
+function Base.show(io::IO, g::GNNGraph{T}) where T
+    println(io, "GNNGraph{$T}:
     num_nodes = $(g.num_nodes)
     num_edges = $(g.num_edges)
     num_graphs = $(g.num_graphs)")

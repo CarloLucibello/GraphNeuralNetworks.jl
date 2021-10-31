@@ -74,12 +74,7 @@ function adjacency_list(g::GNNGraph; dir=:out)
 end
 
 function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
-    if g.graph[1] isa CuVector
-        # TODO revisit after https://github.com/JuliaGPU/CUDA.jl/pull/1152
-        A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
-    else
-        A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
-    end
+    A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
     @assert size(A) == (n, n)
     return dir == :out ? A : A'
 end

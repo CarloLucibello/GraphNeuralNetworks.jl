@@ -3,6 +3,7 @@ module GNNGraphs
 using SparseArrays
 using Functors: @functor
 using CUDA 
+using CUDA.CUSPARSE
 import Graphs
 using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree
 import Flux
