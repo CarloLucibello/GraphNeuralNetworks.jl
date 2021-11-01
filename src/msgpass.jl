@@ -152,6 +152,27 @@ function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj::AbstractM
     return xj * A
 end
 
+# Have to define custom rule since CUDA.jl has troubles with some sparse-dense multiplications
+function ChainRulesCore.rrule(::typeof(propagate), ::typeof(copyxj), g::GNNGraph, 
+                              ::typeof(+), xi, xj::AbstractMatrix, e)
+    A = adjacency_matrix(g)
+    y = xj * A
+    function propagate_pullback(ȳ)
+        Ȳ = unthunk(ȳ)
+        dxj = Ȳ * A'
+        return NoTangent(), NoTangent(), NoTangent(), NoTangent(), NoTangent(), dxj, NoTangent()
+    end
+
+    function propagate_pullback(ȳ::CuMatrix)
+        Ȳ = unthunk(ȳ)
+        dxj = CuArray((A * Ȳ')')
+        return NoTangent(), NoTangent(), NoTangent(), NoTangent(), NoTangent(), dxj, NoTangent()
+    end
+
+    y, propagate_pullback
+end
+
+
 # ## avoid the fast path on gpu until we have better cuda support
 # function propagate(::typeof(copyxj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
 #     propagate((xi,xj,e) -> copyxj(xi,xj,e), g, +, xi, xj, e)
