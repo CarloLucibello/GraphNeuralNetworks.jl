@@ -5,8 +5,8 @@ https://juliagraphs.org/Graphs.jl/latest/types/#AbstractGraph-Type
 https://juliagraphs.org/Graphs.jl/latest/developing/#Developing-Alternate-Graph-Types
 =============================================#
 
-const COO_T = Tuple{T, T, V} where {T <: AbstractVector, V}
-const ADJLIST_T = AbstractVector{T} where T <: AbstractVector
+const COO_T = Tuple{T, T, V} where {T <: AbstractVector{<:Integer}, V}
+const ADJLIST_T = AbstractVector{T} where T <: AbstractVector{<:Integer}
 const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
 const CUMAT_T = Union{CUDA.AnyCuMatrix, CUDA.CUSPARSE.CuSparseMatrix}
