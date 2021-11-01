@@ -1,11 +1,14 @@
 # Load the packages
-using GraphNeuralNetworks, JLD2, DiffEqFlux, DifferentialEquations
-using Flux: onehotbatch, onecold, throttle
+using GraphNeuralNetworks, DiffEqFlux, DifferentialEquations
+using Flux: onehotbatch, onecold
 using Flux.Losses: logitcrossentropy
 using Statistics: mean
 using MLDatasets: Cora
+using CUDA
+# CUDA.allowscalar(false) # Some scalar indexing is still done by DiffEqFlux
 
-device = cpu # `gpu` not working yet
+# device = cpu # `gpu` not working yet
+device = CUDA.functional() ? gpu : cpu
 
 # LOAD DATA
 data = Cora.dataset()
@@ -39,21 +42,21 @@ node = NeuralODE(WithGraph(node_chain, g),
 model = GNNChain(GCNConv(nin => nhidden, relu),
                  Dropout(0.5),
                  node,
-                 diffeqarray_to_array,
+                 diffeqsol_to_array,
                  Dense(nhidden, nout)) |> device
 
 # Loss
 loss(x, y) = logitcrossentropy(model(g, x), y)
 accuracy(x, y) = mean(onecold(model(g, x)) .== onecold(y))
 
-# Training
-## Model Parameters
-ps = Flux.params(model, node.p);
+# # Training
+# ## Model Parameters
+ps = Flux.params(model);
 
-## Optimizer
+# ## Optimizer
 opt = ADAM(0.01)
 
-## Training Loop
+# ## Training Loop
 for epoch in 1:epochs
     gs = gradient(() -> loss(X, y), ps)
     Flux.Optimise.update!(opt, ps, gs)

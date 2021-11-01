@@ -14,7 +14,6 @@ function eval_loss_accuracy(X, y, ids, model, g)
     return (loss = round(l, digits=4), acc = round(acc*100, digits=2))
 end
 
-
 # arguments for the `train` function 
 Base.@kwdef mutable struct Args
     η = 5f-3             # learning rate

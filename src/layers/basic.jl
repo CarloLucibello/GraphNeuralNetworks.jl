@@ -13,7 +13,7 @@ abstract type GNNLayer end
 
 
 """
-  WithGraph(model, g::GNNGraph; traingraph=false) 
+    WithGraph(model, g::GNNGraph; traingraph=false) 
 
 A type wrapping the `model` and tying it to the graph `g`.
 In the forward pass, can only take feature arrays as inputs,
@@ -38,16 +38,30 @@ x2 = rand(Float32, 2, 4)
 @assert wg(g2, x2) == model(g2, x2)
 ```
 """
-struct WithGraph{M}
-  model::M
-  g::GNNGraph
-  traingraph::Bool
+struct WithGraph{M, G<:GNNGraph}
+    model::M
+    g::G
+    traingraph::Bool
 end
 
 WithGraph(model, g::GNNGraph; traingraph=false) = WithGraph(model, g, traingraph)
 
 @functor WithGraph
 Flux.trainable(l::WithGraph) = l.traingraph ? (l.model, l.g) : (l.model,)
+
+# Work around 
+# https://github.com/FluxML/Flux.jl/issues/1733
+# Revisit after 
+# https://github.com/FluxML/Flux.jl/pull/1742
+function Flux.destructure(m::WithGraph)
+    @assert m.traingraph == false # TODO
+    p, re = Flux.destructure(m.model)
+    function  re_withgraph(x)
+        WithGraph(re(x), m.g, m.traingraph)        
+    end
+
+    return p, re_withgraph
+end
 
 (l::WithGraph)(g::GNNGraph, x...; kws...) = l.model(g, x...; kws...)
 (l::WithGraph)(x...; kws...) = l.model(l.g, x...; kws...)
@@ -86,15 +100,15 @@ julia> m(g, x)
 ```
 """
 struct GNNChain{T} <: GNNLayer
-  layers::T
+    layers::T
 
-  GNNChain(xs...) = new{typeof(xs)}(xs)
-  
-  function GNNChain(; kw...)
-    :layers in Base.keys(kw) && throw(ArgumentError("a GNNChain cannot have a named layer called `layers`"))
-    isempty(kw) && return new{Tuple{}}(())
-    new{typeof(values(kw))}(values(kw))
-  end
+    GNNChain(xs...) = new{typeof(xs)}(xs)
+    
+    function GNNChain(; kw...)
+        :layers in Base.keys(kw) && throw(ArgumentError("a GNNChain cannot have a named layer called `layers`"))
+        isempty(kw) && return new{Tuple{}}(())
+        new{typeof(values(kw))}(values(kw))
+    end
 end
 
 @forward GNNChain.layers Base.getindex, Base.length, Base.first, Base.last,
