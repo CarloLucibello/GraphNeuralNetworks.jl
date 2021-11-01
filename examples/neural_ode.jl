@@ -4,9 +4,11 @@ using Flux: onehotbatch, onecold
 using Flux.Losses: logitcrossentropy
 using Statistics: mean
 using MLDatasets: Cora
+using CUDA
+# CUDA.allowscalar(false) # Some scalar indexing is still done by DiffEqFlux
 
 # device = cpu # `gpu` not working yet
-device = gpu
+device = CUDA.functional() ? gpu : cpu
 
 # LOAD DATA
 data = Cora.dataset()
