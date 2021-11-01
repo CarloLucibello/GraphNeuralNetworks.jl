@@ -1,5 +1,5 @@
 """
-    rand_graph(n, m; bidirected=true, kws...)
+    rand_graph(n, m; bidirected=true, seed=-1, kws...)
 
 Generate a random (Erdós-Renyi) `GNNGraph` with `n` nodes
 and `m` edges.
@@ -43,10 +43,10 @@ julia> edge_index(g)
 
 ```
 """
-function rand_graph(n::Integer, m::Integer; bidirected=true, kws...)
+function rand_graph(n::Integer, m::Integer; bidirected=true, seed=-1, kws...)
     if bidirected
         @assert iseven(m) "Need even number of edges for bidirected graphs, given m=$m."
     end
     m2 = bidirected ? m÷2 : m
-    return GNNGraph(Graphs.erdos_renyi(n, m2, is_directed=!bidirected); kws...)    
+    return GNNGraph(Graphs.erdos_renyi(n, m2; is_directed=!bidirected, seed); kws...)    
 end
