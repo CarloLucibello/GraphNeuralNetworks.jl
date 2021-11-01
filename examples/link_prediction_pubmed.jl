@@ -2,20 +2,17 @@
 # Ported from https://docs.dgl.ai/tutorials/blitz/4_link_predict.html#sphx-glr-tutorials-blitz-4-link-predict-py
 
 using Flux
+# Link prediction task
+# https://arxiv.org/pdf/2102.12557.pdf
+
 using Flux: onecold, onehotbatch
 using Flux.Losses: logitbinarycrossentropy
 using GraphNeuralNetworks
-using GraphNeuralNetworks: ones_like, zeros_like
-using MLDatasets: Cora
+using MLDatasets: PubMed, Cora
 using Statistics, Random, LinearAlgebra
 using CUDA
-using MLJBase: AreaUnderCurve
+# using MLJBase: AreaUnderCurve
 CUDA.allowscalar(false)
-
-"""
-Transform vector of cartesian indexes into a tuple of vectors containing integers.
-"""
-ci2t(ci::AbstractVector{<:CartesianIndex}, dims) = ntuple(i -> map(x -> x[i], ci), dims)
 
 # arguments for the `train` function 
 Base.@kwdef mutable struct Args
@@ -33,6 +30,8 @@ function (::DotPredictor)(g, x)
     z = apply_edges((xi, xj, e) -> sum(xi .* xj, dims=1), g, xi=x, xj=x)
     return vec(z)
 end
+
+using ChainRulesCore
 
 function train(; kws...)
     # args = Args(; kws...)
@@ -54,67 +53,59 @@ function train(; kws...)
     g = GNNGraph(data.adjacency_list) |> device
     X = data.node_features |> device
     
+    
     #### SPLIT INTO NEGATIVE AND POSITIVE SAMPLES
-    # Split edge set for training and testing
     s, t = edge_index(g)
     eids = randperm(g.num_edges)
     test_size = round(Int, g.num_edges * 0.1)
-    train_size = g.num_edges - test_size
+    
     test_pos_s, test_pos_t = s[eids[1:test_size]], t[eids[1:test_size]]
+    test_pos_g = GNNGraph(test_pos_s, test_pos_t, num_nodes=g.num_nodes)
+    
     train_pos_s, train_pos_t = s[eids[test_size+1:end]], t[eids[test_size+1:end]]
+    train_pos_g = GNNGraph(train_pos_s, train_pos_t, num_nodes=g.num_nodes)
 
-    # Find all negative edges and split them for training and testing
-    adj = adjacency_matrix(g)
-    adj_neg = 1 .- adj - I
-    neg_s, neg_t = ci2t(findall(adj_neg .> 0), 2)
-
-    neg_eids = randperm(length(neg_s))[1:g.num_edges]
-    test_neg_s, test_neg_t = neg_s[neg_eids[1:test_size]], neg_t[neg_eids[1:test_size]]
-    train_neg_s, train_neg_t = neg_s[neg_eids[test_size+1:end]], neg_t[neg_eids[test_size+1:end]]
-    # train_neg_s, train_neg_t = neg_s[neg_eids[train_size+1:end]], neg_t[neg_eids[train_size+1:end]]
+    test_neg_g = negative_sample(g, num_neg_edges=test_size)
     
-    train_pos_g = GNNGraph((train_pos_s, train_pos_t), num_nodes=g.num_nodes)
-    train_neg_g = GNNGraph((train_neg_s, train_neg_t), num_nodes=g.num_nodes)
-
-    test_pos_g = GNNGraph((test_pos_s, test_pos_t), num_nodes=g.num_nodes)
-    test_neg_g = GNNGraph((test_neg_s, test_neg_t), num_nodes=g.num_nodes)
-    
-    @show train_pos_g test_pos_g train_neg_g test_neg_g
-
-    ### DEFINE MODEL
+    ### DEFINE MODEL #########
     nin, nhidden = size(X,1), args.nhidden
     
-    model = GNNChain(GCNConv(nin => nhidden, relu),
-                     GCNConv(nhidden => nhidden)) |> device
+    model = WithGraph(GNNChain(GCNConv(nin => nhidden, relu),
+                               GCNConv(nhidden => nhidden)),
+                      train_pos_g) |> device
 
     pred = DotPredictor()
 
     ps = Flux.params(model)
     opt = ADAM(args.η)
 
-    ### LOSS FUNCTION
+    ### LOSS FUNCTION ############
 
-    function loss(pos_g, neg_g)
-        h = model(train_pos_g, X)
+    function loss(pos_g, neg_g = nothing)
+        h = model(X)
+        if neg_g === nothing
+            # we sample a negative graph at each training step
+            neg_g = negative_sample(pos_g)
+        end
         pos_score = pred(pos_g, h)
         neg_score = pred(neg_g, h)
         scores = [pos_score; neg_score]
-        labels = [ones_like(pos_score); zeros_like(neg_score)]
+        labels = [fill!(similar(pos_score), 1); fill!(similar(neg_score), 0)]
         return logitbinarycrossentropy(scores, labels)
     end
 
-    function accuracy(pos_g, neg_g)
-        h = model(train_pos_g, X)
-        pos_score = pred(pos_g, h)
-        neg_score = pred(neg_g, h)
-        scores = [pos_score; neg_score]
-        labels = [ones_like(pos_score); zeros_like(neg_score)]
-        return logitbinarycrossentropy(scores, labels)
-    end
+    # function accuracy(pos_g, neg_g)
+    #     h = model(train_pos_g, X)
+    #     pos_score = pred(pos_g, h)
+    #     neg_score = pred(neg_g, h)
+    #     scores = [pos_score; neg_score]
+    #     labels = [fill!(similar(pos_score), 1); fill!(similar(neg_score), 0)]
+    #     return logitbinarycrossentropy(scores, labels)
+    # end
     
     ### LOGGING FUNCTION
     function report(epoch)
-        train_loss = loss(train_pos_g, train_neg_g)
+        train_loss = loss(train_pos_g)
         test_loss = loss(test_pos_g, test_neg_g)
         println("Epoch: $epoch   Train: $(train_loss)   Test: $(test_loss)")
     end
@@ -122,7 +113,7 @@ function train(; kws...)
     ### TRAINING
     report(0)
     for epoch in 1:args.epochs
-        gs = Flux.gradient(() -> loss(train_pos_g, train_neg_g), ps)
+        gs = Flux.gradient(() -> loss(train_pos_g), ps)
         Flux.Optimise.update!(opt, ps, gs)
         epoch % args.infotime == 0 && report(epoch)
     end
