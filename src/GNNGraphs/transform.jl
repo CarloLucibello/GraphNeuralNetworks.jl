@@ -324,5 +324,26 @@ function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap=false)
     end
 end
 
+
+"""
+    negative_sample(g::GNNGraph; num_neg_edges=g.num_edges)
+
+Return a graph containing random negative edges (i.e. non-edges) from graph `g`.
+"""
+function negative_sample(g::GNNGraph; num_neg_edges=g.num_edges)
+    adj = adjacency_matrix(g)
+    adj_neg = 1 .- adj - I
+    neg_s, neg_t = ci2t(findall(adj_neg .> 0), 2)
+    neg_eids = randperm(length(neg_s))[1:num_neg_edges]
+    neg_s, neg_t = neg_s[neg_eids], neg_t[neg_eids]
+    return GNNGraph(neg_s, neg_t, num_nodes=g.num_nodes)
+end
+
+# """
+# Transform vector of cartesian indexes into a tuple of vectors containing integers.
+# """
+ci2t(ci::AbstractVector{<:CartesianIndex}, dims) = ntuple(i -> map(x -> x[i], ci), dims)
+
+@non_differentiable negative_sample(x...)
 @non_differentiable add_self_loops(x...)     # TODO this is wrong, since g carries feature arrays, needs rrule
 @non_differentiable remove_self_loops(x...)  # TODO this is wrong, since g carries feature arrays, needs rrule

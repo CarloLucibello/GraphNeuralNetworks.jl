@@ -23,7 +23,8 @@ export  edge_index, adjacency_list, normalized_laplacian, scaled_laplacian,
         graph_indicator
 
 include("transform.jl")
-export add_nodes, add_edges, add_self_loops, remove_self_loops, getgraph
+export add_nodes, add_edges, add_self_loops, remove_self_loops, getgraph,
+       negative_sample
 
 include("generate.jl")
 export rand_graph
