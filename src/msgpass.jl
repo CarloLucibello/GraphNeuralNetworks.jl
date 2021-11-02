@@ -146,7 +146,7 @@ copy_xj(xi, xj, e) = xj
 """
     copy_xi(xi, xj, e) = xi
 """
-copy_xi(xi, xj, e) = xj
+copy_xi(xi, xj, e) = xi
 
 """
     xi_dot_xj(xi, xj, e) = sum(xi .* xj, dims=1)
