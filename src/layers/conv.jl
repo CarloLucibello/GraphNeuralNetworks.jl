@@ -50,7 +50,7 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
     # @assert all(>(0), degree(g, T, dir=:in))
     c = 1 ./ sqrt.(degree(g, T, dir=:in))
     x = x .* c'
-    x = propagate(copyxj, g, +, xj=x)
+    x = propagate(copy_xj, g, +, xj=x)
     x = x .* c'
     if Dout >= Din
         x = l.weight * x
@@ -179,7 +179,7 @@ end
 
 function (l::GraphConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    m = propagate(copyxj, g, l.aggr, xj=x)
+    m = propagate(copy_xj, g, l.aggr, xj=x)
     x = l.σ.(l.weight1 * x .+ l.weight2 * m .+ l.bias)
     return x
 end
@@ -206,7 +206,7 @@ Graph attentional layer from the paper [Graph Attention Networks](https://arxiv.
 
 Implements the operation
 ```math
-\mathbf{x}_i' = \sum_{j \in N(i)} \alpha_{ij} W \mathbf{x}_j
+\mathbf{x}_i' = \sum_{j \in N(i) \cup \{i\}} \alpha_{ij} W \mathbf{x}_j
 ```
 where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
@@ -338,7 +338,7 @@ function (l::GatedGraphConv)(g::GNNGraph, H::AbstractMatrix{S}) where {S<:Real}
     end
     for i = 1:l.num_layers
         M = view(l.weight, :, :, i) * H
-        M = propagate(copyxj, g, l.aggr; xj=M)
+        M = propagate(copy_xj, g, l.aggr; xj=M)
         H, _ = l.gru(H, M)
     end
     H
@@ -420,7 +420,7 @@ GINConv(nn, ϵ; aggr=+) = GINConv(nn, ϵ, aggr)
 
 function (l::GINConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    m = propagate(copyxj, g, l.aggr, xj=x)
+    m = propagate(copy_xj, g, l.aggr, xj=x)
     l.nn((1 + ofeltype(x, l.ϵ)) * x + m)
 end
 
@@ -542,7 +542,7 @@ end
 
 function (l::SAGEConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    m = propagate(copyxj, g, l.aggr, xj=x)
+    m = propagate(copy_xj, g, l.aggr, xj=x)
     x = l.σ.(l.weight * vcat(x, m) .+ l.bias)
     return x 
 end
@@ -711,3 +711,56 @@ function Base.show(io::IO, l::CGConv)
     print(io, ", residual=$(l.residual)")
     print(io, ")")
 end
+
+
+@doc raw"""
+    AGNNConv(init_beta=1f0)
+
+Attention-based Graph Neural Network layer from paper [Attention-based
+Graph Neural Network for Semi-Supervised Learning](https://arxiv.org/abs/1803.03735).
+
+THe forward pass is given by
+```math
+\mathbf{x}_i' = \sum_{j \in {N(i) \cup \{i\}} \alpha_{ij} W \mathbf{x}_j
+```
+where the attention coefficients ``\alpha_{ij}`` are given by
+```math
+\alpha_{ij} =\frac{e^{\beta \cos(\mathbf{x}_i, \mathbf{x}_j)}}
+                  {\sum_{j'}e^{\beta \cos(\mathbf{x}_i, \mathbf{x}_j'}}
+```
+with the cosine distance defined by
+```math 
+\cos(\mathbf{x}_i, \mathbf{x}_j) = 
+  \mathbf{x}_i \cdot \mathbf{x}_j / \lVert\mathbf{x}_i\rVert \lVert\mathbf{x}_j\rVert``
+```
+and ``\beta`` a trainable parameter.
+
+# Arguments
+
+- `init_beta`: The initial value of ``\beta``.
+"""
+struct AGNNConv{A<:AbstractVector} <: GNNLayer
+    β::A
+end
+
+@functor AGNNConv
+
+function AGNNConv(init_beta = 1f0)
+    AGNNConv([init_beta])
+end
+
+function (l::AGNNConv)(g::GNNGraph, x::AbstractMatrix)
+    check_num_nodes(g, x)
+    g = add_self_loops(g)
+
+    xn = x ./ sqrt.(sum(x.^2, dims=1))
+    cos_dist = apply_edges(xi_dot_xj, g, xi=xn, xj=xn)
+    α = softmax_edge_neighbors(g, l.β .* cos_dist)
+
+    x = propagate(g, +; xj=x, e=α) do xi, xj, α
+            α .* xj
+        end
+
+    return x  
+end
+

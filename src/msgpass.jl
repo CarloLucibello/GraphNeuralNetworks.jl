@@ -139,26 +139,32 @@ _scatter(aggr, m::AbstractArray, t) = NNlib.scatter(aggr, m, t)
 
 ### SPECIALIZATIONS OF PROPAGATE ###
 """
-    copyxj(xi, xj, e) = xj
+    copy_xj(xi, xj, e) = xj
 """
-copyxj(xi, xj, e) = xj
+copy_xj(xi, xj, e) = xj
 
-# copyxi(xi, xj, e) = xi
-# ximulxj(xi, xj, e) = xi .* xj
-# xiaddxj(xi, xj, e) = xi .+ xj
+"""
+    copy_xi(xi, xj, e) = xi
+"""
+copy_xi(xi, xj, e) = xj
+
+"""
+    xi_dot_xj(xi, xj, e) = sum(xi .* xj, dims=1)
+"""
+xi_dot_xj(xi, xj, e) = sum(xi .* xj, dims=1)
 
 
-function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
+function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
     A = adjacency_matrix(g)
     return xj * A
 end
 
 ## avoid the fast path on gpu until we have better cuda support
-function propagate(::typeof(copyxj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
-    propagate((xi,xj,e)->copyxj(xi,xj,e), g, +, xi, xj, e)
+function propagate(::typeof(copy_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
+    propagate((xi,xj,e)->copy_xj(xi,xj,e), g, +, xi, xj, e)
 end
 
-# function propagate(::typeof(copyxj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
+# function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
 #     A = adjacency_matrix(g)
 #     D = compute_degree(A)
 #     return xj * A * D

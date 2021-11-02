@@ -23,7 +23,7 @@
         end
 
         function new_forward(l, g, x)
-            x = propagate(copyxj, g, +, xj=x) 
+            x = propagate(copy_xj, g, +, xj=x) 
             return l.σ.(l.weight * x .+ l.bias)
         end
 

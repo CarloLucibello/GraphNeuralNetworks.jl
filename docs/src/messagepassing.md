@@ -88,4 +88,4 @@ See the [`GATConv`](@ref) implementation [here](https://github.com/CarloLucibell
 ## Built-in message functions
 
 In order to exploit optimized specializations of the [`propagate`](@ref), it is recommended 
-to use built-in message functions such as [`copyxj`](@ref) whenever possible. 
+to use built-in message functions such as [`copy_xj`](@ref) whenever possible. 

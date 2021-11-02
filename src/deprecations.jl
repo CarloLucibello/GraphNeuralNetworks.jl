@@ -1,10 +1,5 @@
-# Deprecated in v0.1 
+## Deprecated in v0.2
 
-@deprecate GINConv(nn; eps=0, aggr=+)  GINConv(nn, eps; aggr)
-
-
-# Deprecated in v0.2
-# TODO check if argument order is exact
 function compute_message end
 function update_node end
 function update_edge end
@@ -29,3 +24,7 @@ function propagate(l::GNNLayer, g::GNNGraph, aggr, x, e=nothing)
     e = update_edge(l, e, m)
     return x, e
 end
+
+## Deprecated in v0.3 
+
+@deprecate copyxj(xi, xj, e)  copy_xj(xi, xj, e) 

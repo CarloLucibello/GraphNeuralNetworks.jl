@@ -28,7 +28,7 @@ export
     
     # msgpass
     apply_edges, propagate,
-    copyxj,
+    copy_xj, copy_xi, xi_dot_xj,
 
     # layers/basic
     GNNLayer,
@@ -36,6 +36,7 @@ export
     WithGraph,
 
     # layers/conv
+    AGNNConv,
     CGConv,
     ChebConv,
     EdgeConv,
