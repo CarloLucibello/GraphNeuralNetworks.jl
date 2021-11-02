@@ -229,6 +229,20 @@ function graph_features(g::GNNGraph)
     end
 end
 
+"""
+    is_bidirected(g::GNNGraph)
+
+Check if the directed graph `g` essentially corresponds
+to an undirected graph, i.e. if for each edge it also contains the 
+reverse edge. 
+"""
+function is_bidirected(g::GNNGraph)
+    s, t = edge_index(g)
+    s1, t1 = sort_edge_index(s, t)
+    s2, t2 = sort_edge_index(t, s)
+    all((s1 .== s2) .& (t1 .== t2))
+end
+
 @non_differentiable normalized_laplacian(x...)
 @non_differentiable normalized_adjacency(x...)
 @non_differentiable scaled_laplacian(x...)

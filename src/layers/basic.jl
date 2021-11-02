@@ -151,3 +151,23 @@ function Base.show(io::IO, c::GNNChain)
 end
 _show_layers(io, layers::Tuple) = join(io, layers, ", ")
 _show_layers(io, layers::NamedTuple) = join(io, ["$k = $v" for (k, v) in pairs(layers)], ", ")
+
+
+"""
+    DotDecoder()
+
+A graph neural network layer that 
+for given input graph `g` and node features `x`,
+returns the dot product `x_i ⋅ xj` on each edge. 
+
+# Usage 
+
+```juliarepl
+
+```
+"""
+struct DotDecoder <: GNNLayer end 
+
+function (::DotDecoder)(g, x)
+    apply_edges(xi_dot_xj, g, xi=x, xj=x)
+end

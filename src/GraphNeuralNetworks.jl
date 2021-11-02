@@ -34,6 +34,7 @@ export
     GNNLayer,
     GNNChain,
     WithGraph,
+    DotDecoder,
 
     # layers/conv
     AGNNConv,

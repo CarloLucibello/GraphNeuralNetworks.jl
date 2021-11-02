@@ -52,6 +52,28 @@ function remove_self_loops(g::GNNGraph{<:COO_T})
 end
 
 """
+    remove_multi_edges(g::GNNGraph)
+
+Remove multiple edges (also called parallel edges or repeated edges) from graph `g`.
+"""
+function remove_multi_edges(g::GNNGraph{<:COO_T})
+    s, t = edge_index(g)
+    # TODO remove these constraints
+    @assert g.num_graphs == 1
+    @assert g.edata === (;)
+    @assert edge_weight(g) === nothing
+    
+    idxs, idxmax = edge_encoding(s, t, g.num_nodes)
+    union!(idxs)
+    s, t = edge_decoding(idxs, g.num_nodes)
+
+    GNNGraph((s, t, nothing), 
+            g.num_nodes, length(s), g.num_graphs, 
+            g.graph_indicator,
+            g.ndata, g.edata, g.gdata)
+end
+
+"""
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
 
 Add to graph `g` the edges with source nodes `s` and target nodes `t`.
@@ -164,23 +186,15 @@ julia> g1 = rand_graph(4, 6, ndata=ones(8, 4))
 GNNGraph:
     num_nodes = 4
     num_edges = 6
-    num_graphs = 1
     ndata:
         x => (8, 4)
-    edata:
-    gdata:
-
 
 julia> g2 = rand_graph(7, 4, ndata=zeros(8, 7))
 GNNGraph:
     num_nodes = 7
     num_edges = 4
-    num_graphs = 1
     ndata:
         x => (8, 7)
-    edata:
-    gdata:
-
 
 julia> g12 = Flux.batch([g1, g2])
 GNNGraph:
@@ -189,9 +203,6 @@ GNNGraph:
     num_graphs = 2
     ndata:
         x => (8, 11)
-    edata:
-    gdata:
-
 
 julia> g12.ndata.x
 8×11 Matrix{Float64}:
@@ -224,35 +235,20 @@ GNNGraph:
     num_nodes = 19
     num_edges = 16
     num_graphs = 3
-    ndata:
-    edata:
-    gdata:
 
 julia> Flux.unbatch(gbatched)
 3-element Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}:
  GNNGraph:
     num_nodes = 5
     num_edges = 6
-    num_graphs = 1
-    ndata:
-    edata:
-    gdata:
 
  GNNGraph:
     num_nodes = 10
     num_edges = 8
-    num_graphs = 1
-    ndata:
-    edata:
-    gdata:
 
  GNNGraph:
     num_nodes = 4
     num_edges = 2
-    num_graphs = 1
-    ndata:
-    edata:
-    gdata:
 ```
 """
 function Flux.unbatch(g::GNNGraph) 
@@ -323,7 +319,6 @@ function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap=false)
         return gnew
     end
 end
-
 
 """
     negative_sample(g::GNNGraph; num_neg_edges=g.num_edges)

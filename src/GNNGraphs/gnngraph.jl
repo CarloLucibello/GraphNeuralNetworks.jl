@@ -195,19 +195,25 @@ end
 function Base.show(io::IO, g::GNNGraph)
     println(io, "GNNGraph:
     num_nodes = $(g.num_nodes)
-    num_edges = $(g.num_edges)
-    num_graphs = $(g.num_graphs)")
-    println(io, "    ndata:")
-    for k in keys(g.ndata)
-        println(io, "        $k => $(size(g.ndata[k]))")
+    num_edges = $(g.num_edges)")
+    g.num_graphs > 1 && println("num_graphs = $(g.num_graphs)")
+    if !isempty(g.ndata)
+        println(io, "    ndata:")
+        for k in keys(g.ndata)
+            println(io, "        $k => $(size(g.ndata[k]))")
+        end
     end
-    println(io, "    edata:")
-    for k in keys(g.edata)
-        println(io, "        $k => $(size(g.edata[k]))")
+    if !isempty(g.edata)
+        println(io, "    edata:")
+        for k in keys(g.edata)
+            println(io, "        $k => $(size(g.edata[k]))")
+        end
     end
-    println(io, "    gdata:")
-    for k in keys(g.gdata)
-        println(io, "        $k => $(size(g.gdata[k]))")
+    if !isempty(g.gdata)
+        println(io, "    gdata:")
+        for k in keys(g.gdata)
+            println(io, "        $k => $(size(g.gdata[k]))")
+        end
     end
 end
 

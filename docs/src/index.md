@@ -6,12 +6,13 @@ and [GeometricFlux.jl](https://fluxml.ai/GeometricFlux.jl/stable/).
 
 Among its features:
 
-* Integration with the JuliaGraphs ecosystem.
-* Implementation of common graph convolutional layers.
-* Fast operations on batched graphs. 
+* Implements common graph convolutional layers.
+* Supports computations on batched graphs. 
 * Easy to define custom layers.
+* Integration with the JuliaGraphs ecosystem.
 * CUDA support.
-* Examples of node-wise, edge-wise, and graph-wise machine learning tasks. 
+* Integration with [Graph.jl](https://github.com/JuliaGraphs/Graphs.jl).
+* [Examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) of node, edge, and graph level machine learning tasks. 
 
 
 ## Package overview
@@ -45,7 +46,6 @@ GNNGraph:
     num_graphs = 1000
     ndata:
         x => (16, 10000)
-    edata:
     gdata:
         y => (1000,)
 ```

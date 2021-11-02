@@ -138,14 +138,6 @@ g′ = remove_self_loops(g)
 g′ = add_edges(g, [1, 2], [2, 3]) # add edges 1->2 and 2->3
 ```
 
-## JuliaGraphs ecosystem integration
-
-Since `GNNGraph <: Graphs.AbstractGraph`, we can use any functionality from Graphs.jl. 
-
-```julia
-@assert Graphs.isdirected(g)
-```
-
 ## GPU movement
 
 Move a `GNNGraph` to a CUDA device using `Flux.gpu` method. 
@@ -154,4 +146,36 @@ Move a `GNNGraph` to a CUDA device using `Flux.gpu` method.
 using Flux: gpu
 
 g_gpu = g |> gpu
+```
+
+## JuliaGraphs/Graphs.jl integration
+
+Since `GNNGraph <: Graphs.AbstractGraph`, we can use any functionality from Graphs.jl. 
+Moreover, `GNNGraphs` can be constructed from `Graphs.Graph` and `Graphs.DiGraph`
+and viceversa.
+
+```julia
+julia> import Graphs
+
+julia> using GraphNeuralNetworks
+
+# A Graphs.jl undirected graph
+julia> gu = Graphs.erdos_renyi(10, 20)    
+{10, 20} undirected simple Int64 graph
+
+# Since GNNGraphs are undirected, the edges are doubled when converting 
+# to GNNGraph
+julia> GNNGraph(gu)  # Since GNNGraphs are 
+GNNGraph:
+    num_nodes = 10
+    num_edges = 40
+
+# A Graphs.jl directed graph
+julia> gd = Graphs.erdos_renyi(10, 20, is_directed=true)
+{10, 20} directed simple Int64 graph
+
+julia> GNNGraph(gd)
+GNNGraph:
+    num_nodes = 10
+    num_edges = 20
 ```

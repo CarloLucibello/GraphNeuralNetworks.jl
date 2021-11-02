@@ -23,6 +23,7 @@ tests = [
     "GNNGraphs/gnngraph",
     "GNNGraphs/transform",
     "GNNGraphs/generate",
+    "GNNGraphs/query",
     "utils",
     "msgpass",
     "layers/basic",
