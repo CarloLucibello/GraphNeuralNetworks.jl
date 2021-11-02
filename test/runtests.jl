@@ -7,6 +7,7 @@ using LinearAlgebra, Statistics, Random
 using NNlib
 using LearnBase
 import StatsBase
+using SparseArrays
 using Graphs
 using Zygote
 using Test
