@@ -151,8 +151,7 @@ g_gpu = g |> gpu
 ## JuliaGraphs/Graphs.jl integration
 
 Since `GNNGraph <: Graphs.AbstractGraph`, we can use any functionality from Graphs.jl. 
-Moreover, `GNNGraphs` can be constructed from `Graphs.Graph` and `Graphs.DiGraph`
-and viceversa.
+Moreover, `GNNGraph`s can be constructed from `Graphs.Graph` and `Graphs.DiGraph`.
 
 ```julia
 julia> import Graphs
