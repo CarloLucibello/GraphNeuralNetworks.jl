@@ -21,5 +21,7 @@ propagate
 ## Built-in message functions
 
 ```@docs
-copyxj
+copy_xi
+copy_xj
+xi_dot_xj
 ```
