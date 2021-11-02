@@ -106,22 +106,26 @@
         end
     end
 
-    @testset "remove_self_loops" begin 
-        g = rand_graph(10, 20, graph_type=GRAPH_T)
-        g1 = add_edges(g, [1:5;], [1:5;])
-        @test g1.num_edges == g.num_edges + 5
-        g2 = remove_self_loops(g)
-        @test g2.num_edges == g.num_edges
-        @test sort_edge_index(edge_index(g2)) == sort_edge_index(edge_index(g))
+    @testset "remove_self_loops" begin
+        if GRAPH_T == :coo
+            g = rand_graph(10, 20, graph_type=GRAPH_T)
+            g1 = add_edges(g, [1:5;], [1:5;])
+            @test g1.num_edges == g.num_edges + 5
+            g2 = remove_self_loops(g)
+            @test g2.num_edges == g.num_edges
+            @test sort_edge_index(edge_index(g2)) == sort_edge_index(edge_index(g))
+        end 
     end
 
-    @testset "remove_multi_edges" begin 
-        g = rand_graph(10, 20, graph_type=GRAPH_T)
-        s, t = edge_index(g)
-        g1 = add_edges(g, s[1:5], t[1:5])
-        @test g1.num_edges == g.num_edges + 5
-        g2 = remove_multi_edges(g)
-        @test g2.num_edges == g.num_edges
-        @test sort_edge_index(edge_index(g2)) == sort_edge_index(edge_index(g))
+    @testset "remove_multi_edges" begin
+        if GRAPH_T == :coo
+            g = rand_graph(10, 20, graph_type=GRAPH_T)
+            s, t = edge_index(g)
+            g1 = add_edges(g, s[1:5], t[1:5])
+            @test g1.num_edges == g.num_edges + 5
+            g2 = remove_multi_edges(g)
+            @test g2.num_edges == g.num_edges
+            @test sort_edge_index(edge_index(g2)) == sort_edge_index(edge_index(g))
+        end
     end
 end
