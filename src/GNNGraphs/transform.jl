@@ -362,11 +362,55 @@ function negative_sample(g::GNNGraph;
     return GNNGraph(s_neg, t_neg, num_nodes=n) |> device
 end
 
+"""
+    rand_edge_split(g::GNNGraph, frac) -> g1, g2
+
+Randomly partition the edges in `g` to from two graphs, `g1`
+and `g2`. Both will have the same number of nodes as `g`.
+`g1` will contain a fraction `frac` of the original edges, 
+while `g2` wil contain the rest.
+Useful for train/test splits in link prediction tasks.
+"""
+function rand_edge_split(g::GNNGraph, frac)
+    s, t = edge_index(g)
+    eids = randperm(g.num_edges)
+    size1 = round(Int, g.num_edges * frac)
+    
+    s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
+    g1 = GNNGraph(s1, t1, num_nodes=g.num_nodes)
+
+    s, t = edge_index(g)
+    eids = randperm(g.num_edges)
+    size1 = round(Int, g.num_edges * frac)
+    
+    s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
+    g1 = GNNGraph(s1, t1, num_nodes=g.num_nodes)
+
+    s2, t2 = s[eids[size1+1:end]], t[eids[size1+1:end]]
+    g2 = GNNGraph(s2, t2, num_nodes=g.num_nodes)
+
+    return g1, g2
+end
+
+
 # each edge is represented by a number in
 # 1:N^2
-function edge_encoding(s, t, n)
-    idx = (s .- 1) .* n .+ t
-    maxid = n^2 
+function edge_encoding(s, t, n; directed=true)
+    if directed
+        # directed edges and self-loops allowed
+        idx = (s .- 1) .* n .+ t
+        maxid = n^2
+    else 
+        # undirected edges and self-loops allowed
+        maxid = n * (n - 1) ÷ 2
+        mask = s .<= t
+        s1, t1 = s[mask], t[mask]
+        t2, s2 = s[.!mask], t[.!mask]
+        s, t = [s1; s2], [t1; t2] 
+        offset1 = (n .* 0:n-1) .- cumsum(0:n-1)
+        offset2 = 0:n-1
+        idx = offset1[s] .+ (t .- offset2)
+    end
     return idx, maxid
 end
 

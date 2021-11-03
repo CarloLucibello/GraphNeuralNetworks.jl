@@ -243,10 +243,35 @@ function is_bidirected(g::GNNGraph)
     all((s1 .== s2) .& (t1 .== t2))
 end
 
-@non_differentiable normalized_laplacian(x...)
-@non_differentiable normalized_adjacency(x...)
-@non_differentiable scaled_laplacian(x...)
-@non_differentiable adjacency_matrix(x...)
+"""
+    has_self_loops(g::GNNGraph)
+
+Return `true` if `g` has any self loops.
+"""
+function Graphs.has_self_loops(g::GNNGraph)
+    s, t = edge_index(g)
+    any(s .== t)
+end
+
+"""
+    has_multi_edges(g::GNNGraph)
+
+Return `true` if `g` has any multiple edges.
+"""
+function has_multi_edges(g::GNNGraph)
+    s, t = edge_index(g)
+    idxs = edge_encoding(s, t, g.num_nodes)
+    length(union(idxs)) < length(idxs)
+end
+
+
 @non_differentiable adjacency_list(x...)
+@non_differentiable adjacency_matrix(x...)
 @non_differentiable degree(x...)
 @non_differentiable graph_indicator(x...)
+@non_differentiable has_multi_edges(x...)
+@non_differentiable Graphs.has_self_loops(x...) 
+@non_differentiable is_bidirected(x...)
+@non_differentiable normalized_adjacency(x...)
+@non_differentiable normalized_laplacian(x...)
+@non_differentiable scaled_laplacian(x...)

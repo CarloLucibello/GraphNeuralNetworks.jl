@@ -22,26 +22,29 @@ export GNNGraph,
        graph_features
     
 include("query.jl")
-export edge_index, 
-       adjacency_list, 
+export adjacency_list,
+       edge_index, 
+       graph_indicator, 
+       has_multi_edges, 
+       is_bidirected,
        normalized_laplacian, 
        scaled_laplacian,
-       graph_indicator, 
-       is_bidirected,
        # from Graphs
        adjacency_matrix, 
        degree, 
-       outneighbors, 
-       inneighbors
+       has_self_loops,
+       inneighbors,
+       outneighbors 
 
 include("transform.jl")
 export add_nodes, 
        add_edges, 
-       add_self_loops, 
-       remove_self_loops, 
-       remove_multi_edges,
+       add_self_loops,
        getgraph,
        negative_sample,
+       rand_edge_split,
+       remove_self_loops, 
+       remove_multi_edges,
        # from Flux
        batch, 
        unbatch,
