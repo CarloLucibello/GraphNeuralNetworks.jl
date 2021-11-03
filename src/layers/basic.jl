@@ -151,3 +151,34 @@ function Base.show(io::IO, c::GNNChain)
 end
 _show_layers(io, layers::Tuple) = join(io, layers, ", ")
 _show_layers(io, layers::NamedTuple) = join(io, ["$k = $v" for (k, v) in pairs(layers)], ", ")
+
+
+"""
+    DotDecoder()
+
+A graph neural network layer that 
+for given input graph `g` and node features `x`,
+returns the dot product `x_i ⋅ xj` on each edge. 
+
+# Usage 
+
+```juliarepl
+julia> g = rand_graph(5, 6)
+GNNGraph:
+    num_nodes = 5
+    num_edges = 6
+
+julia> dotdec = DotDecoder()
+DotDecoder()
+
+julia> dotdec(g, rand(2, 5))
+1×6 Matrix{Float64}:
+ 0.345098  0.458305  0.106353  0.345098  0.458305  0.106353
+```
+"""
+struct DotDecoder <: GNNLayer end 
+
+function (::DotDecoder)(g, x)
+    check_num_nodes(g, x)
+    apply_edges(xi_dot_xj, g, xi=x, xj=x)
+end

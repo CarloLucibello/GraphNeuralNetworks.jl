@@ -1,17 +1,18 @@
 # GraphNeuralNetworks
 
-This is the documentation page for the [GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl) library.
-
-A graph neural network library for Julia based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl). GNN.jl is largely inspired by python's libraries [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/) and [Deep Graph Library](https://docs.dgl.ai/),
-and by julia's [GeometricFlux](https://fluxml.ai/GeometricFlux.jl/stable/).
+This is the documentation page for [GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl), a graph neural network library written in Julia and based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
+GNN.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/),[Deep Graph Library](https://docs.dgl.ai/),
+and [GeometricFlux.jl](https://fluxml.ai/GeometricFlux.jl/stable/).
 
 Among its features:
 
-* Integratation with the JuliaGraphs ecosystem.
-* Implementation of common graph convolutional layers.
-* Fast operations on batched graphs. 
+* Implements common graph convolutional layers.
+* Supports computations on batched graphs. 
 * Easy to define custom layers.
+* Integration with the JuliaGraphs ecosystem.
 * CUDA support.
+* Integration with [Graph.jl](https://github.com/JuliaGraphs/Graphs.jl).
+* [Examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) of node, edge, and graph level machine learning tasks. 
 
 
 ## Package overview
@@ -45,7 +46,6 @@ GNNGraph:
     num_graphs = 1000
     ndata:
         x => (16, 10000)
-    edata:
     gdata:
         y => (1000,)
 ```

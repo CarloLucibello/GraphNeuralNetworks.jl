@@ -19,11 +19,6 @@ julia> g = rand_graph(5, 4, bidirected=false)
 GNNGraph:
     num_nodes = 5
     num_edges = 4
-    num_graphs = 1
-    ndata:
-    edata:
-    gdata:
-
 
 julia> edge_index(g)
 ([1, 3, 3, 4], [5, 4, 5, 2])
@@ -33,11 +28,8 @@ julia> g = rand_graph(5, 4, edata=rand(16, 2))
 GNNGraph:
     num_nodes = 5
     num_edges = 4
-    num_graphs = 1
-    ndata:
     edata:
         e => (16, 4)
-    gdata:
 
 # Each edge has a reverse
 julia> edge_index(g)

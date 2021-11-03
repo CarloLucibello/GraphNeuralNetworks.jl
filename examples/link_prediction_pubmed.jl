@@ -1,10 +1,8 @@
 # An example of link prediction using negative and positive samples.
 # Ported from https://docs.dgl.ai/tutorials/blitz/4_link_predict.html#sphx-glr-tutorials-blitz-4-link-predict-py
+# See the comparison paper https://arxiv.org/pdf/2102.12557.pdf for more details
 
 using Flux
-# Link prediction task
-# https://arxiv.org/pdf/2102.12557.pdf
-
 using Flux: onecold, onehotbatch
 using Flux.Losses: logitbinarycrossentropy
 using GraphNeuralNetworks
@@ -24,19 +22,19 @@ Base.@kwdef mutable struct Args
     infotime = 10 	     # report every `infotime` epochs
 end
 
+# We define our own edge prediction layer but could also 
+# use GraphNeuralNetworks.DotDecoder instead.
 struct DotPredictor end
 
 function (::DotPredictor)(g, x)
     z = apply_edges((xi, xj, e) -> sum(xi .* xj, dims=1), g, xi=x, xj=x)
+    # z = apply_edges(xi_dot_xj, g, xi=x, xj=x) # Same with  buit-in methods
     return vec(z)
 end
 
-using ChainRulesCore
-
 function train(; kws...)
-    # args = Args(; kws...)
-    args = Args()
-
+    args = Args(; kws...)
+    
     args.seed > 0 && Random.seed!(args.seed)
     
     if args.usecuda && CUDA.functional()
@@ -50,9 +48,10 @@ function train(; kws...)
 
     ### LOAD DATA
     data = Cora.dataset()
+    # data = PubMed.dataset()
     g = GNNGraph(data.adjacency_list) |> device
+    @show is_bidirected(g)
     X = data.node_features |> device
-    
     
     #### SPLIT INTO NEGATIVE AND POSITIVE SAMPLES
     s, t = edge_index(g)
@@ -67,9 +66,11 @@ function train(; kws...)
 
     test_neg_g = negative_sample(g, num_neg_edges=test_size)
     
+
     ### DEFINE MODEL #########
     nin, nhidden = size(X,1), args.nhidden
     
+    # We embed the graph with positive training edges in the model 
     model = WithGraph(GNNChain(GCNConv(nin => nhidden, relu),
                                GCNConv(nhidden => nhidden)),
                       train_pos_g) |> device
@@ -84,7 +85,7 @@ function train(; kws...)
     function loss(pos_g, neg_g = nothing)
         h = model(X)
         if neg_g === nothing
-            # we sample a negative graph at each training step
+            # We sample a negative graph at each training step
             neg_g = negative_sample(pos_g)
         end
         pos_score = pred(pos_g, h)
@@ -93,15 +94,6 @@ function train(; kws...)
         labels = [fill!(similar(pos_score), 1); fill!(similar(neg_score), 0)]
         return logitbinarycrossentropy(scores, labels)
     end
-
-    # function accuracy(pos_g, neg_g)
-    #     h = model(train_pos_g, X)
-    #     pos_score = pred(pos_g, h)
-    #     neg_score = pred(neg_g, h)
-    #     scores = [pos_score; neg_score]
-    #     labels = [fill!(similar(pos_score), 1); fill!(similar(neg_score), 0)]
-    #     return logitbinarycrossentropy(scores, labels)
-    # end
     
     ### LOGGING FUNCTION
     function report(epoch)

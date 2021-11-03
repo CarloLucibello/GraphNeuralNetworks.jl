@@ -52,6 +52,28 @@ function remove_self_loops(g::GNNGraph{<:COO_T})
 end
 
 """
+    remove_multi_edges(g::GNNGraph)
+
+Remove multiple edges (also called parallel edges or repeated edges) from graph `g`.
+"""
+function remove_multi_edges(g::GNNGraph{<:COO_T})
+    s, t = edge_index(g)
+    # TODO remove these constraints
+    @assert g.num_graphs == 1
+    @assert g.edata === (;)
+    @assert edge_weight(g) === nothing
+    
+    idxs, idxmax = edge_encoding(s, t, g.num_nodes)
+    union!(idxs)
+    s, t = edge_decoding(idxs, g.num_nodes)
+
+    GNNGraph((s, t, nothing), 
+            g.num_nodes, length(s), g.num_graphs, 
+            g.graph_indicator,
+            g.ndata, g.edata, g.gdata)
+end
+
+"""
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
 
 Add to graph `g` the edges with source nodes `s` and target nodes `t`.
@@ -164,23 +186,15 @@ julia> g1 = rand_graph(4, 6, ndata=ones(8, 4))
 GNNGraph:
     num_nodes = 4
     num_edges = 6
-    num_graphs = 1
     ndata:
         x => (8, 4)
-    edata:
-    gdata:
-
 
 julia> g2 = rand_graph(7, 4, ndata=zeros(8, 7))
 GNNGraph:
     num_nodes = 7
     num_edges = 4
-    num_graphs = 1
     ndata:
         x => (8, 7)
-    edata:
-    gdata:
-
 
 julia> g12 = Flux.batch([g1, g2])
 GNNGraph:
@@ -189,9 +203,6 @@ GNNGraph:
     num_graphs = 2
     ndata:
         x => (8, 11)
-    edata:
-    gdata:
-
 
 julia> g12.ndata.x
 8×11 Matrix{Float64}:
@@ -224,35 +235,20 @@ GNNGraph:
     num_nodes = 19
     num_edges = 16
     num_graphs = 3
-    ndata:
-    edata:
-    gdata:
 
 julia> Flux.unbatch(gbatched)
 3-element Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}:
  GNNGraph:
     num_nodes = 5
     num_edges = 6
-    num_graphs = 1
-    ndata:
-    edata:
-    gdata:
 
  GNNGraph:
     num_nodes = 10
     num_edges = 8
-    num_graphs = 1
-    ndata:
-    edata:
-    gdata:
 
  GNNGraph:
     num_nodes = 4
     num_edges = 2
-    num_graphs = 1
-    ndata:
-    edata:
-    gdata:
 ```
 """
 function Flux.unbatch(g::GNNGraph) 
@@ -324,19 +320,63 @@ function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap=false)
     end
 end
 
-
 """
     negative_sample(g::GNNGraph; num_neg_edges=g.num_edges)
 
-Return a graph containing random negative edges (i.e. non-edges) from graph `g`.
+Return a graph containing random negative edges (i.e. non-edges) from graph `g` as edges.
 """
-function negative_sample(g::GNNGraph; num_neg_edges=g.num_edges)
-    adj = adjacency_matrix(g)
-    adj_neg = 1 .- adj - I
-    neg_s, neg_t = ci2t(findall(adj_neg .> 0), 2)
-    neg_eids = randperm(length(neg_s))[1:num_neg_edges]
-    neg_s, neg_t = neg_s[neg_eids], neg_t[neg_eids]
-    return GNNGraph(neg_s, neg_t, num_nodes=g.num_nodes)
+function negative_sample(g::GNNGraph; 
+        max_trials=3, 
+        num_neg_edges=g.num_edges)
+
+    @assert g.num_graphs == 1
+    # Consider self-loops as positive edges
+    # Construct new graph dropping features
+    g = add_self_loops(GNNGraph(edge_index(g))) 
+    
+    s, t = edge_index(g)
+    n = g.num_nodes
+    if s isa CuArray
+        # Convert to gpu since set operations and sampling are not supported by CUDA.jl
+        device = Flux.gpu 
+        s, t = Flux.cpu(s), Flux.cpu(t) 
+    else 
+        device = Flux.cpu
+    end
+    idx_pos, maxid = edge_encoding(s, t, n)
+    
+    pneg = 1 - g.num_edges / maxid # prob of selecting negative edge 
+    # pneg * sample_prob * maxid == num_neg_edges  
+    sample_prob = min(1, num_neg_edges / (pneg * maxid) * 1.1)
+    idx_neg = Int[]
+    for _ in 1:max_trials
+        rnd = randsubseq(1:maxid, sample_prob)
+        setdiff!(rnd, idx_pos)
+        union!(idx_neg, rnd)
+        if length(idx_neg) >= num_neg_edges
+            idx_neg = idx_neg[1:num_neg_edges]
+            break
+        end
+    end
+    s_neg, t_neg = edge_decoding(idx_neg, n)
+    return GNNGraph(s_neg, t_neg, num_nodes=n) |> device
+end
+
+# each edge is represented by a number in
+# 1:N^2
+function edge_encoding(s, t, n)
+    idx = (s .- 1) .* n .+ t
+    maxid = n^2 
+    return idx, maxid
+end
+
+# each edge is represented by a number in
+# 1:N^2
+function edge_decoding(idx, n)
+    # g = remove_self_loops(g)
+    s =  (idx .- 1) .÷ n .+ 1
+    t =  (idx .- 1) .% n .+ 1
+    return s, t
 end
 
 # """
