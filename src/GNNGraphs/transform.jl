@@ -393,36 +393,6 @@ function rand_edge_split(g::GNNGraph, frac)
 end
 
 
-# each edge is represented by a number in
-# 1:N^2
-function edge_encoding(s, t, n; directed=true)
-    if directed
-        # directed edges and self-loops allowed
-        idx = (s .- 1) .* n .+ t
-        maxid = n^2
-    else 
-        # undirected edges and self-loops allowed
-        maxid = n * (n - 1) ÷ 2
-        mask = s .<= t
-        s1, t1 = s[mask], t[mask]
-        t2, s2 = s[.!mask], t[.!mask]
-        s, t = [s1; s2], [t1; t2] 
-        offset1 = (n .* 0:n-1) .- cumsum(0:n-1)
-        offset2 = 0:n-1
-        idx = offset1[s] .+ (t .- offset2)
-    end
-    return idx, maxid
-end
-
-# each edge is represented by a number in
-# 1:N^2
-function edge_decoding(idx, n)
-    # g = remove_self_loops(g)
-    s =  (idx .- 1) .÷ n .+ 1
-    t =  (idx .- 1) .% n .+ 1
-    return s, t
-end
-
 # """
 # Transform vector of cartesian indexes into a tuple of vectors containing integers.
 # """
