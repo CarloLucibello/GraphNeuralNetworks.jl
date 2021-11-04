@@ -27,5 +27,7 @@
         sdec, tdec = GNNGraphs.edge_decoding(idx, n, directed=false) 
         @test sdec == snew
         @test tdec == tnew
+
+        g = rand_graph(10, 30, bidirected=true)
     end
 end

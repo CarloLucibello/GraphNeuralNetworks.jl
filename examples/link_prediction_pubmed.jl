@@ -55,13 +55,14 @@ function train(; kws...)
     @show has_self_loops(g)
     @show has_multi_edges(g)
     @show mean(degree(g))
+    isbidir = is_bidirected(g)  
 
     g = g |> device
     X = data.node_features |> device
     
     #### SPLIT INTO NEGATIVE AND POSITIVE SAMPLES
     train_pos_g, test_pos_g = rand_edge_split(g, 0.9)
-    test_neg_g = negative_sample(g, num_neg_edges=test_pos_g.num_edges)
+    test_neg_g = negative_sample(g, num_neg_edges=test_pos_g.num_edges, bidirected=isbidir)
 
     ### DEFINE MODEL #########
     nin, nhidden = size(X,1), args.nhidden
@@ -82,7 +83,7 @@ function train(; kws...)
         h = model(X)
         if neg_g === nothing
             # We sample a negative graph at each training step
-            neg_g = negative_sample(pos_g)
+            neg_g = negative_sample(pos_g, bidirected=isbidir)
         end
         pos_score = pred(pos_g, h)
         neg_score = pred(neg_g, h)
