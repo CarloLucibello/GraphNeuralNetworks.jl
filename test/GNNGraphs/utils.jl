@@ -14,10 +14,18 @@
         @test sdec == s
         @test tdec == t
 
-
         # directed=false
         idx, maxid = GNNGraphs.edge_encoding(s, t, n, directed=false)
-        @test maxid == n * (n+1)÷2
+        @test maxid == n*(n+1)÷2
         @test idx == [1, 3, 2, 3, 7, 14, 15]
+
+        mask = s .> t
+        snew = copy(s)
+        tnew = copy(t)
+        snew[mask] .= t[mask]
+        tnew[mask] .= s[mask]
+        sdec, tdec = GNNGraphs.edge_decoding(idx, n, directed=false) 
+        @test sdec == snew
+        @test tdec == tnew
     end
 end

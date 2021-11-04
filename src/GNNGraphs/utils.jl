@@ -81,20 +81,17 @@ function edge_encoding(s, t, n; directed=true)
         maxid = n^2
     else 
         # Undirected edges and self-loops allowed
-        # In this encoding, each edge has 2 possible encodings (also the self-loops).
-        # We return the canonical one given by the upper triangular adj matrix
         maxid = n * (n + 1) ÷ 2
+        
         mask = s .> t
-        # s1, t1 = s[mask], t[mask]
-        # t2, s2 = s[.!mask], t[.!mask]
         snew = copy(s)
         tnew = copy(t)
         snew[mask] .= t[mask]
         tnew[mask] .= s[mask]
         s, t = snew, tnew
-        
+
         # idx = ∑_{i',i'<i} ∑_{j',j'>=i'}^n 1 + ∑_{j',i<=j'<=j} 1 
-        #     = ∑_{i',i'<i} ∑_{j',j'>=i'}^n 1 + j - i + 1
+        #     = ∑_{i',i'<i} ∑_{j',j'>=i'}^n 1 + (j - i + 1)
         #     = ∑_{i',i'<i} (n - i' + 1) + (j - i + 1)
         #     = (i - 1)*(2*(n+1)-i)÷2 + (j - i + 1)
         idx = @. (s-1)*(2*(n+1)-s)÷2 + (t-s+1)
@@ -105,9 +102,24 @@ end
 # each edge is represented by a number in
 # 1:N^2
 function edge_decoding(idx, n; directed=true)
-    # g = remove_self_loops(g)
-    s =  (idx .- 1) .÷ n .+ 1
-    t =  (idx .- 1) .% n .+ 1
+    if directed
+        # g = remove_self_loops(g)
+        s =  (idx .- 1) .÷ n .+ 1
+        t =  (idx .- 1) .% n .+ 1
+    else
+        # We replace j=n in 
+        # idx = (i - 1)*(2*(n+1)-i)÷2 + (j - i + 1) 
+        # and obtain
+        # idx = (i - 1)*(2*(n+1)-i)÷2 + (n - i + 1) 
+        
+        # OR We replace j=i  and obtain??
+        # idx = (i - 1)*(2*(n+1)-i)÷2 + 1 
+        
+        # inverting we have
+        s = @. ceil(Int, -sqrt((n + 1/2)^2 - 2*idx) + n + 1/2)
+        t = @. idx - (s-1)*(2*(n+1)-s)÷2 - 1 + s
+        # t =  (idx .- 1) .% n .+ 1
+    end
     return s, t
 end
 
