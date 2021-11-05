@@ -14,6 +14,14 @@
         @test sdec == s
         @test tdec == t
 
+        n1, m1 = 10, 30
+        g = rand_graph(n1, m1)
+        s1, t1 = edge_index(g)
+        idx, maxid = GNNGraphs.edge_encoding(s1, t1, n1) 
+        sdec, tdec = GNNGraphs.edge_decoding(idx, n1) 
+        @test sdec == s1
+        @test tdec == t1
+
         # directed=false
         idx, maxid = GNNGraphs.edge_encoding(s, t, n, directed=false)
         @test maxid == n*(n+1)÷2
@@ -28,6 +36,17 @@
         @test sdec == snew
         @test tdec == tnew
 
-        g = rand_graph(10, 30, bidirected=true)
+        n1, m1 = 6, 8
+        g = rand_graph(n1, m1)
+        s1, t1 = edge_index(g)
+        idx, maxid = GNNGraphs.edge_encoding(s1, t1, n1, directed=false) 
+        sdec, tdec = GNNGraphs.edge_decoding(idx, n1, directed=false) 
+        mask = s1 .> t1
+        snew = copy(s1)
+        tnew = copy(t1)
+        snew[mask] .= t1[mask]
+        tnew[mask] .= s1[mask]
+        @test sdec == snew
+        @test tdec == tnew
     end
 end

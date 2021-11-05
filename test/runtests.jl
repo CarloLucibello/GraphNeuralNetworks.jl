@@ -23,6 +23,7 @@ include("test_utils.jl")
 tests = [
     "GNNGraphs/gnngraph",
     "GNNGraphs/transform",
+    "GNNGraphs/operators",
     "GNNGraphs/generate",
     "GNNGraphs/query",
     "utils",

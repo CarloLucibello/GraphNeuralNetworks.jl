@@ -54,6 +54,9 @@ export add_nodes,
 include("generate.jl")
 export rand_graph
 
+include("operators.jl")
+# Base.intersect
+
 include("convert.jl")
 include("utils.jl")
 

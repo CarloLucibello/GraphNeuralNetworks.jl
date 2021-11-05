@@ -28,6 +28,10 @@ end
 
 Graphs.has_edge(g::GNNGraph{<:ADJMAT_T}, i::Integer, j::Integer) = g.graph[i,j] != 0
 
+graph_type_symbol(g::GNNGraph{<:COO_T}) = :coo 
+graph_type_symbol(g::GNNGraph{<:SPARSE_T}) = :sparse
+graph_type_symbol(g::GNNGraph{<:ADJMAT_T}) = :dense
+
 Graphs.nv(g::GNNGraph) = g.num_nodes
 Graphs.ne(g::GNNGraph) = g.num_edges
 Graphs.has_vertex(g::GNNGraph, i::Int) = 1 <= i <= g.num_nodes
