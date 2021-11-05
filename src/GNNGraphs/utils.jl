@@ -70,3 +70,59 @@ end
 ones_like(x::AbstractArray, T=eltype(x), sz=size(x)) = fill!(similar(x, T, sz), 1)
 ones_like(x::SparseMatrixCSC, T=eltype(x), sz=size(x)) = ones(T, sz)
 ones_like(x::CUMAT_T, T=eltype(x), sz=size(x)) = CUDA.ones(T, sz)
+
+
+# each edge is represented by a number in
+# 1:N^2
+function edge_encoding(s, t, n; directed=true)
+    if directed
+        # directed edges and self-loops allowed
+        idx = (s .- 1) .* n .+ t
+        maxid = n^2
+    else 
+        # Undirected edges and self-loops allowed
+        maxid = n * (n + 1) ÷ 2
+        
+        mask = s .> t
+        snew = copy(s)
+        tnew = copy(t)
+        snew[mask] .= t[mask]
+        tnew[mask] .= s[mask]
+        s, t = snew, tnew
+
+        # idx = ∑_{i',i'<i} ∑_{j',j'>=i'}^n 1 + ∑_{j',i<=j'<=j} 1 
+        #     = ∑_{i',i'<i} ∑_{j',j'>=i'}^n 1 + (j - i + 1)
+        #     = ∑_{i',i'<i} (n - i' + 1) + (j - i + 1)
+        #     = (i - 1)*(2*(n+1)-i)÷2 + (j - i + 1)
+        idx = @. (s-1)*(2*(n+1)-s)÷2 + (t-s+1)
+    end
+    return idx, maxid
+end
+
+# each edge is represented by a number in
+# 1:N^2
+function edge_decoding(idx, n; directed=true)
+    if directed
+        # g = remove_self_loops(g)
+        s =  (idx .- 1) .÷ n .+ 1
+        t =  (idx .- 1) .% n .+ 1
+    else
+        # We replace j=n in 
+        # idx = (i - 1)*(2*(n+1)-i)÷2 + (j - i + 1) 
+        # and obtain
+        # idx = (i - 1)*(2*(n+1)-i)÷2 + (n - i + 1) 
+        
+        # OR We replace j=i  and obtain??
+        # idx = (i - 1)*(2*(n+1)-i)÷2 + 1 
+        
+        # inverting we have
+        s = @. ceil(Int, -sqrt((n + 1/2)^2 - 2*idx) + n + 1/2)
+        t = @. idx - (s-1)*(2*(n+1)-s)÷2 - 1 + s
+        # t =  (idx .- 1) .% n .+ 1
+    end
+    return s, t
+end
+
+@non_differentiable edge_encoding(x...)
+@non_differentiable edge_decoding(x...)
+

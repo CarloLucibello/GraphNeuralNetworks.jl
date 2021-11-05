@@ -5,9 +5,10 @@ function to_coo(coo::COO_T; dir=:out, num_nodes=nothing)
     num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     @assert isnothing(val) || length(val) == length(s)
     @assert length(s) == length(t)
-    @assert min(minimum(s), minimum(t)) >= 1 
-    @assert max(maximum(s), maximum(t)) <= num_nodes 
-
+    if !isempty(s)
+        @assert min(minimum(s), minimum(t)) >= 1 
+        @assert max(maximum(s), maximum(t)) <= num_nodes 
+    end
     num_edges = length(s)
     return coo, num_nodes, num_edges
 end

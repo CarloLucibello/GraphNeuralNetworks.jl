@@ -150,6 +150,11 @@ function GNNGraph(data;
             ndata, edata, gdata)
 end
 
+function GNNGraph(n::T; graph_type=:coo, kws...) where {T<:Integer}
+    s, t = T[], T[] 
+    return GNNGraph(s, t; graph_type, num_nodes=n, kws...)
+end
+
 # COO convenience constructors
 GNNGraph(s::AbstractVector, t::AbstractVector, v = nothing; kws...) = GNNGraph((s, t, v); kws...)
 GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)

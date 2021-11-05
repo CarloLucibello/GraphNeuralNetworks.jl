@@ -128,4 +128,16 @@
             @test sort_edge_index(edge_index(g2)) == sort_edge_index(edge_index(g))
         end
     end
+
+    @testset "negative_sample" begin
+        if GRAPH_T == :coo
+            n, m = 10,30
+            g = rand_graph(n, m, bidirected=true, graph_type=GRAPH_T)
+
+            # check bidirected=is_bidirected(g) default
+            gneg = negative_sample(g, num_neg_edges=20)
+            @test is_bidirected(gneg)
+            @test intersect(g, gneg).num_edges == 0
+        end
+    end
 end

@@ -321,13 +321,21 @@ function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap=false)
 end
 
 """
-    negative_sample(g::GNNGraph; num_neg_edges=g.num_edges)
+    negative_sample(g::GNNGraph; 
+                    num_neg_edges = g.num_edges, 
+                    bidirected = is_bidirected(g))
 
 Return a graph containing random negative edges (i.e. non-edges) from graph `g` as edges.
+
+Is `bidirected=true`, the output graph will be bidirected and there will be no
+leakage from the origin graph. 
+
+See also [`is_bidirected`](@ref).
 """
 function negative_sample(g::GNNGraph; 
         max_trials=3, 
-        num_neg_edges=g.num_edges)
+        num_neg_edges=g.num_edges, 
+        bidirected = is_bidirected(g))
 
     @assert g.num_graphs == 1
     # Consider self-loops as positive edges
@@ -344,8 +352,12 @@ function negative_sample(g::GNNGraph;
         device = Flux.cpu
     end
     idx_pos, maxid = edge_encoding(s, t, n)
-    
-    pneg = 1 - g.num_edges / maxid # prob of selecting negative edge 
+    if bidirected
+        num_neg_edges = num_neg_edges ÷ 2
+        pneg = 1 - g.num_edges / 2maxid # prob of selecting negative edge 
+    else 
+        pneg = 1 - g.num_edges / 2maxid # prob of selecting negative edge 
+    end    
     # pneg * sample_prob * maxid == num_neg_edges  
     sample_prob = min(1, num_neg_edges / (pneg * maxid) * 1.1)
     idx_neg = Int[]
@@ -359,25 +371,43 @@ function negative_sample(g::GNNGraph;
         end
     end
     s_neg, t_neg = edge_decoding(idx_neg, n)
+    if bidirected
+        s_neg, t_neg = [s_neg; t_neg], [t_neg; s_neg] 
+    end
     return GNNGraph(s_neg, t_neg, num_nodes=n) |> device
 end
 
-# each edge is represented by a number in
-# 1:N^2
-function edge_encoding(s, t, n)
-    idx = (s .- 1) .* n .+ t
-    maxid = n^2 
-    return idx, maxid
+"""
+    rand_edge_split(g::GNNGraph, frac) -> g1, g2
+
+Randomly partition the edges in `g` to from two graphs, `g1`
+and `g2`. Both will have the same number of nodes as `g`.
+`g1` will contain a fraction `frac` of the original edges, 
+while `g2` wil contain the rest.
+Useful for train/test splits in link prediction tasks.
+"""
+function rand_edge_split(g::GNNGraph, frac)
+    # TODO add bidirected version
+    s, t = edge_index(g)
+    eids = randperm(g.num_edges)
+    size1 = round(Int, g.num_edges * frac)
+    
+    s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
+    g1 = GNNGraph(s1, t1, num_nodes=g.num_nodes)
+
+    s, t = edge_index(g)
+    eids = randperm(g.num_edges)
+    size1 = round(Int, g.num_edges * frac)
+    
+    s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
+    g1 = GNNGraph(s1, t1, num_nodes=g.num_nodes)
+
+    s2, t2 = s[eids[size1+1:end]], t[eids[size1+1:end]]
+    g2 = GNNGraph(s2, t2, num_nodes=g.num_nodes)
+
+    return g1, g2
 end
 
-# each edge is represented by a number in
-# 1:N^2
-function edge_decoding(idx, n)
-    # g = remove_self_loops(g)
-    s =  (idx .- 1) .÷ n .+ 1
-    t =  (idx .- 1) .% n .+ 1
-    return s, t
-end
 
 # """
 # Transform vector of cartesian indexes into a tuple of vectors containing integers.

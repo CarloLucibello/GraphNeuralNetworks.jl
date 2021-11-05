@@ -13,6 +13,7 @@ makedocs(;
              "Graphs" => "gnngraph.md",
              "Message Passing" => "messagepassing.md",
              "Model Building" => "models.md",
+             "Datasets" => "datasets.md",
              "API Reference" =>
                [
                 "GNNGraph" => "api/gnngraph.md",

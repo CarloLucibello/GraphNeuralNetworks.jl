@@ -49,23 +49,20 @@ function train(; kws...)
     ### LOAD DATA
     data = Cora.dataset()
     # data = PubMed.dataset()
-    g = GNNGraph(data.adjacency_list) |> device
+    g = GNNGraph(data.adjacency_list)
+    @info g
     @show is_bidirected(g)
+    @show has_self_loops(g)
+    @show has_multi_edges(g)
+    @show mean(degree(g))
+    isbidir = is_bidirected(g)  
+
+    g = g |> device
     X = data.node_features |> device
     
     #### SPLIT INTO NEGATIVE AND POSITIVE SAMPLES
-    s, t = edge_index(g)
-    eids = randperm(g.num_edges)
-    test_size = round(Int, g.num_edges * 0.1)
-    
-    test_pos_s, test_pos_t = s[eids[1:test_size]], t[eids[1:test_size]]
-    test_pos_g = GNNGraph(test_pos_s, test_pos_t, num_nodes=g.num_nodes)
-    
-    train_pos_s, train_pos_t = s[eids[test_size+1:end]], t[eids[test_size+1:end]]
-    train_pos_g = GNNGraph(train_pos_s, train_pos_t, num_nodes=g.num_nodes)
-
-    test_neg_g = negative_sample(g, num_neg_edges=test_size)
-    
+    train_pos_g, test_pos_g = rand_edge_split(g, 0.9)
+    test_neg_g = negative_sample(g, num_neg_edges=test_pos_g.num_edges, bidirected=isbidir)
 
     ### DEFINE MODEL #########
     nin, nhidden = size(X,1), args.nhidden
@@ -82,24 +79,30 @@ function train(; kws...)
 
     ### LOSS FUNCTION ############
 
-    function loss(pos_g, neg_g = nothing)
+    function loss(pos_g, neg_g = nothing; with_accuracy=false)
         h = model(X)
         if neg_g === nothing
             # We sample a negative graph at each training step
-            neg_g = negative_sample(pos_g)
+            neg_g = negative_sample(pos_g, bidirected=isbidir)
         end
         pos_score = pred(pos_g, h)
         neg_score = pred(neg_g, h)
         scores = [pos_score; neg_score]
         labels = [fill!(similar(pos_score), 1); fill!(similar(neg_score), 0)]
-        return logitbinarycrossentropy(scores, labels)
+        l = logitbinarycrossentropy(scores, labels)
+        if with_accuracy
+            acc = 0.5 * mean(pos_score .>= 0) + 0.5 * mean(neg_score .< 0)
+            return l, acc
+        else
+            return l
+        end
     end
     
     ### LOGGING FUNCTION
     function report(epoch)
-        train_loss = loss(train_pos_g)
-        test_loss = loss(test_pos_g, test_neg_g)
-        println("Epoch: $epoch   Train: $(train_loss)   Test: $(test_loss)")
+        train_loss, train_acc = loss(train_pos_g, with_accuracy=true)
+        test_loss, test_acc = loss(test_pos_g, test_neg_g, with_accuracy=true)
+        println("Epoch: $epoch  $((; train_loss, train_acc))  $((; test_loss, test_acc))")
     end
     
     ### TRAINING
