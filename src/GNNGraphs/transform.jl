@@ -378,19 +378,24 @@ function negative_sample(g::GNNGraph;
 end
 
 """
-    rand_edge_split(g::GNNGraph, frac) -> g1, g2
+    rand_edge_split(g::GNNGraph, frac; bidirected=is_bidirected(g)) -> g1, g2
 
 Randomly partition the edges in `g` to from two graphs, `g1`
 and `g2`. Both will have the same number of nodes as `g`.
 `g1` will contain a fraction `frac` of the original edges, 
 while `g2` wil contain the rest.
+
+If `bidirected = true` makes sure that an edge and its reverse go into the same split.
+
 Useful for train/test splits in link prediction tasks.
 """
-function rand_edge_split(g::GNNGraph, frac)
-    # TODO add bidirected version
+function rand_edge_split(g::GNNGraph, frac; bidirected=is_bidirected(g))
     s, t = edge_index(g)
-    eids = randperm(g.num_edges)
-    size1 = round(Int, g.num_edges * frac)
+    idx, idmax = edge_encoding(s, t, g.num_nodes, directed=!bidirected)
+    uidx = union(idx) # So that multi-edges (and reverse edges in the bidir case) go in the same split
+    nu = length(uidx)
+    eids = randperm(nu)
+    size1 = round(Int, nu * frac)
     
     s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
     g1 = GNNGraph(s1, t1, num_nodes=g.num_nodes)
