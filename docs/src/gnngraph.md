@@ -41,14 +41,33 @@ See also the related methods [`Graphs.adjacency_matrix`](@ref), [`edge_index`](@
 ## Basic Queries
 
 ```julia
-source = [1,1,2,2,3,3,3,4]
-target = [2,3,1,3,1,2,4,3]
-g = GNNGraph(source, target)
+julia> source = [1,1,2,2,3,3,3,4];
 
-@assert g.num_nodes == 4   # number of nodes
-@assert g.num_edges == 8   # number of edges
-@assert g.num_graphs == 1  # number of subgraphs (a GNNGraph can batch many graphs together)
-is_directed(g)      # a GGNGraph is always directed
+julia> target = [2,3,1,3,1,2,4,3];
+
+julia> g = GNNGraph(source, target)
+GNNGraph:
+    num_nodes = 4
+    num_edges = 8
+
+
+julia> @assert g.num_nodes == 4   # number of nodes
+
+julia> @assert g.num_edges == 8   # number of edges
+
+julia> @assert g.num_graphs == 1  # number of subgraphs (a GNNGraph can batch many graphs together)
+
+julia> is_directed(g)      # a GNNGraph is always directed
+true
+
+julia> is_bidirected(g)      # for each edge, also the reverse edge is present
+true
+
+julia> has_self_loops(g)
+false
+
+julia> has_multi_edges(g)      
+false
 ```
 
 ## Data Features

@@ -34,9 +34,65 @@ and [`NNlib.scatter`](@ref) methods.
 
 ## Examples
 
-### Basic use of propagate and apply_edges 
+### Basic use of apply_edges and propagate
 
-TODO
+The function [`apply_edges`](@ref) can be used to broadcast node data
+on each edge and produce new edge data.
+```julia
+julia> using GraphNeuralNetworks, Graphs, Statistics
+
+julia> g = rand_graph(10, 20)
+GNNGraph:
+    num_nodes = 10
+    num_edges = 20
+
+
+julia> x = ones(2,10)
+2×10 Matrix{Float64}:
+ 1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0
+ 1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0
+
+julia> z = 2ones(2,10)
+2×10 Matrix{Float64}:
+ 2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0
+ 2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0
+
+julia> apply_edges((xi, xj, e) -> xi .+ xj, g, xi=x, xj=z)
+2×20 Matrix{Float64}:
+ 3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0
+
+# now returning a named tuple
+julia> apply_edges((xi, xj, e) -> (a=xi .+ xj, b=xi .- xj), g, xi=x, xj=z)
+(a = [3.0 3.0 … 3.0 3.0; 3.0 3.0 … 3.0 3.0], b = [-1.0 -1.0 … -1.0 -1.0; -1.0 -1.0 … -1.0 -1.0])
+
+# Here we provide a named tuple input
+julia> apply_edges((xi, xj, e) -> xi.a + xi.b .* xj, g, xi=(a=x,b=z), xj=z)
+2×20 Matrix{Float64}:
+ 5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0
+ 5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0
+```
+The function [@propagate](@ref) instead performs also the the [`apply_edges`](@ref) operation
+but then applies a reduction over each node's neighborhood.
+```julia
+julia> propagate((xi, xj, e) -> xi .+ xj, g, +, xi=x, xj=z)
+2×10 Matrix{Float64}:
+ 3.0  6.0  9.0  9.0  0.0  6.0  6.0  3.0  15.0  3.0
+ 3.0  6.0  9.0  9.0  0.0  6.0  6.0  3.0  15.0  3.0
+
+julia> degree(g)
+10-element Vector{Int64}:
+ 1
+ 2
+ 3
+ 3
+ 0
+ 2
+ 2
+ 1
+ 5
+ 1
+```
 
 ### Implementing a custom Graph Convolutional Layer
 
