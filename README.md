@@ -31,7 +31,7 @@ Usage examples can be found in the [examples](https://github.com/CarloLucibello/
 
 ## Acknowledgments
 
-GNN.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/),[Deep Graph Library](https://docs.dgl.ai/),
+GNN.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/), [Deep Graph Library](https://docs.dgl.ai/),
 and [GeometricFlux.jl](https://fluxml.ai/GeometricFlux.jl/stable/).
 
 
