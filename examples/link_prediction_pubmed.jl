@@ -6,10 +6,9 @@ using Flux
 using Flux: onecold, onehotbatch
 using Flux.Losses: logitbinarycrossentropy
 using GraphNeuralNetworks
-using MLDatasets: PubMed, Cora
+using MLDatasets: PubMed
 using Statistics, Random, LinearAlgebra
 using CUDA
-# using MLJBase: AreaUnderCurve
 CUDA.allowscalar(false)
 
 # arguments for the `train` function 
@@ -47,8 +46,7 @@ function train(; kws...)
     end
 
     ### LOAD DATA
-    data = Cora.dataset()
-    # data = PubMed.dataset()
+    data = PubMed.dataset()
     g = GNNGraph(data.adjacency_list)
 
     # Print some info

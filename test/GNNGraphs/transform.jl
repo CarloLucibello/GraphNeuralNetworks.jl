@@ -140,4 +140,35 @@
             @test intersect(g, gneg).num_edges == 0
         end
     end
+
+    @testset "rand_edge_split" begin
+        if GRAPH_T == :coo
+            n, m = 100,300
+
+            g = rand_graph(n, m, bidirected=true, graph_type=GRAPH_T)
+            # check bidirected=is_bidirected(g) default
+            g1, g2 = rand_edge_split(g, 0.9)
+            @test is_bidirected(g1)
+            @test is_bidirected(g2)
+            @test intersect(g1, g2).num_edges == 0
+            @test g1.num_edges + g2.num_edges == g.num_edges
+            @test g2.num_edges < 50
+
+            g = rand_graph(n, m, bidirected=false, graph_type=GRAPH_T)
+            # check bidirected=is_bidirected(g) default
+            g1, g2 = rand_edge_split(g, 0.9)
+            @test !is_bidirected(g1)
+            @test !is_bidirected(g2)
+            @test intersect(g1, g2).num_edges == 0
+            @test g1.num_edges + g2.num_edges == g.num_edges
+            @test g2.num_edges < 50
+
+            g1, g2 = rand_edge_split(g, 0.9, bidirected=false)
+            @test !is_bidirected(g1)
+            @test !is_bidirected(g2)
+            @test intersect(g1, g2).num_edges == 0
+            @test g1.num_edges + g2.num_edges == g.num_edges
+            @test g2.num_edges < 50
+        end
+    end
 end

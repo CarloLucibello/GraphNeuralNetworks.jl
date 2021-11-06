@@ -386,30 +386,33 @@ and `g2`. Both will have the same number of nodes as `g`.
 while `g2` wil contain the rest.
 
 If `bidirected = true` makes sure that an edge and its reverse go into the same split.
+This option is supported only for bidirected graphs with no self-loops
+and multi-edges.
 
-Useful for train/test splits in link prediction tasks.
+`rand_edge_split` is tipically used to create train/test splits in link prediction tasks.
 """
 function rand_edge_split(g::GNNGraph, frac; bidirected=is_bidirected(g))
     s, t = edge_index(g)
-    idx, idmax = edge_encoding(s, t, g.num_nodes, directed=!bidirected)
-    uidx = union(idx) # So that multi-edges (and reverse edges in the bidir case) go in the same split
-    nu = length(uidx)
-    eids = randperm(nu)
-    size1 = round(Int, nu * frac)
+    ne = bidirected ? g.num_edges ÷ 2 : g.num_edges
+    eids = randperm(ne)
+    size1 = round(Int, ne * frac)
     
-    s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
+    if !bidirected
+        s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
+        s2, t2 = s[eids[size1+1:end]], t[eids[size1+1:end]]
+    else
+        @assert is_bidirected(g)
+        @assert !has_self_loops(g)
+        @assert !has_multi_edges(g)
+        mask = s .< t
+        s, t = s[mask], t[mask]
+        s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
+        s1, t1 = [s1; t1], [t1; s1]
+        s2, t2 = s[eids[size1+1:end]], t[eids[size1+1:end]]
+        s2, t2 = [s2; t2], [t2; s2]
+    end
     g1 = GNNGraph(s1, t1, num_nodes=g.num_nodes)
-
-    s, t = edge_index(g)
-    eids = randperm(g.num_edges)
-    size1 = round(Int, g.num_edges * frac)
-    
-    s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
-    g1 = GNNGraph(s1, t1, num_nodes=g.num_nodes)
-
-    s2, t2 = s[eids[size1+1:end]], t[eids[size1+1:end]]
     g2 = GNNGraph(s2, t2, num_nodes=g.num_nodes)
-
     return g1, g2
 end
 
