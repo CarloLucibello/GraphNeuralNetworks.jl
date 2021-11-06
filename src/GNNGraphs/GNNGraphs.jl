@@ -4,7 +4,7 @@ using SparseArrays
 using Functors: @functor
 using CUDA 
 import Graphs
-using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree
+using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree, has_self_loops
 import Flux
 using Flux: batch
 import NNlib

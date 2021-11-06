@@ -6,10 +6,9 @@ using Flux
 using Flux: onecold, onehotbatch
 using Flux.Losses: logitbinarycrossentropy
 using GraphNeuralNetworks
-using MLDatasets: PubMed, Cora
+using MLDatasets: PubMed
 using Statistics, Random, LinearAlgebra
 using CUDA
-# using MLJBase: AreaUnderCurve
 CUDA.allowscalar(false)
 
 # arguments for the `train` function 
@@ -28,7 +27,7 @@ struct DotPredictor end
 
 function (::DotPredictor)(g, x)
     z = apply_edges((xi, xj, e) -> sum(xi .* xj, dims=1), g, xi=x, xj=x)
-    # z = apply_edges(xi_dot_xj, g, xi=x, xj=x) # Same with  buit-in methods
+    # z = apply_edges(xi_dot_xj, g, xi=x, xj=x) # Same with built-in method
     return vec(z)
 end
 
@@ -47,9 +46,10 @@ function train(; kws...)
     end
 
     ### LOAD DATA
-    data = Cora.dataset()
-    # data = PubMed.dataset()
+    data = PubMed.dataset()
     g = GNNGraph(data.adjacency_list)
+
+    # Print some info
     @info g
     @show is_bidirected(g)
     @show has_self_loops(g)
@@ -57,11 +57,14 @@ function train(; kws...)
     @show mean(degree(g))
     isbidir = is_bidirected(g)  
 
+    # Move to device
     g = g |> device
     X = data.node_features |> device
     
-    #### SPLIT INTO NEGATIVE AND POSITIVE SAMPLES
-    train_pos_g, test_pos_g = rand_edge_split(g, 0.9)
+    #### TRAIN/TEST splits
+    # With bidirected graph, we make sure that an edge and its reverse
+    # are in the same split 
+    train_pos_g, test_pos_g = rand_edge_split(g, 0.9, bidirected=isbidir)
     test_neg_g = negative_sample(g, num_neg_edges=test_pos_g.num_edges, bidirected=isbidir)
 
     ### DEFINE MODEL #########
