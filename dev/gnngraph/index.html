@@ -20,14 +20,33 @@ g = GNNGraph(adjlist)
 # From COO representation
 source = [1,1,2,2,3,3,3,4]
 target = [2,3,1,3,1,2,4,3]
-g = GNNGraph(source, target)</code></pre><p>See also the related methods <a href="../api/gnngraph/#Graphs.LinAlg.adjacency_matrix"><code>Graphs.adjacency_matrix</code></a>, <a href="../api/gnngraph/#GraphNeuralNetworks.GNNGraphs.edge_index-Tuple{GNNGraph{var&quot;#s16&quot;} where var&quot;#s16&quot;&lt;:(Tuple{T, T, V} where {T&lt;:(AbstractVector{var&quot;#s1&quot;} where var&quot;#s1&quot;&lt;:Integer), V})}"><code>edge_index</code></a>, and <a href="../api/gnngraph/#GraphNeuralNetworks.GNNGraphs.adjacency_list-Tuple{GNNGraph}"><code>adjacency_list</code></a>.</p><h2 id="Basic-Queries"><a class="docs-heading-anchor" href="#Basic-Queries">Basic Queries</a><a id="Basic-Queries-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Queries" title="Permalink"></a></h2><pre><code class="language-julia hljs">source = [1,1,2,2,3,3,3,4]
-target = [2,3,1,3,1,2,4,3]
-g = GNNGraph(source, target)
+g = GNNGraph(source, target)</code></pre><p>See also the related methods <a href="../api/gnngraph/#Graphs.LinAlg.adjacency_matrix"><code>Graphs.adjacency_matrix</code></a>, <a href="../api/gnngraph/#GraphNeuralNetworks.GNNGraphs.edge_index-Tuple{GNNGraph{var&quot;#s16&quot;} where var&quot;#s16&quot;&lt;:(Tuple{T, T, V} where {T&lt;:(AbstractVector{var&quot;#s1&quot;} where var&quot;#s1&quot;&lt;:Integer), V})}"><code>edge_index</code></a>, and <a href="../api/gnngraph/#GraphNeuralNetworks.GNNGraphs.adjacency_list-Tuple{GNNGraph}"><code>adjacency_list</code></a>.</p><h2 id="Basic-Queries"><a class="docs-heading-anchor" href="#Basic-Queries">Basic Queries</a><a id="Basic-Queries-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Queries" title="Permalink"></a></h2><pre><code class="language-julia hljs">julia&gt; source = [1,1,2,2,3,3,3,4];
 
-@assert g.num_nodes == 4   # number of nodes
-@assert g.num_edges == 8   # number of edges
-@assert g.num_graphs == 1  # number of subgraphs (a GNNGraph can batch many graphs together)
-is_directed(g)      # a GGNGraph is always directed</code></pre><h2 id="Data-Features"><a class="docs-heading-anchor" href="#Data-Features">Data Features</a><a id="Data-Features-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Features" title="Permalink"></a></h2><p>One or more arrays can be associated to nodes, edges, and (sub)graphs of a <code>GNNGraph</code>. They will be stored in the fields <code>g.ndata</code>, <code>g.edata</code>, and <code>g.gdata</code> respectivaly. The data fields are <code>NamedTuple</code>s. The array they contain must have last dimension equal to <code>num_nodes</code> (in <code>ndata</code>), <code>num_edges</code> (in <code>edata</code>), or <code>num_graphs</code> (in <code>gdata</code>).</p><pre><code class="language-julia hljs"># Create a graph with a single feature array `x` associated to nodes
+julia&gt; target = [2,3,1,3,1,2,4,3];
+
+julia&gt; g = GNNGraph(source, target)
+GNNGraph:
+    num_nodes = 4
+    num_edges = 8
+
+
+julia&gt; @assert g.num_nodes == 4   # number of nodes
+
+julia&gt; @assert g.num_edges == 8   # number of edges
+
+julia&gt; @assert g.num_graphs == 1  # number of subgraphs (a GNNGraph can batch many graphs together)
+
+julia&gt; is_directed(g)      # a GNNGraph is always directed
+true
+
+julia&gt; is_bidirected(g)      # for each edge, also the reverse edge is present
+true
+
+julia&gt; has_self_loops(g)
+false
+
+julia&gt; has_multi_edges(g)      
+false</code></pre><h2 id="Data-Features"><a class="docs-heading-anchor" href="#Data-Features">Data Features</a><a id="Data-Features-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Features" title="Permalink"></a></h2><p>One or more arrays can be associated to nodes, edges, and (sub)graphs of a <code>GNNGraph</code>. They will be stored in the fields <code>g.ndata</code>, <code>g.edata</code>, and <code>g.gdata</code> respectivaly. The data fields are <code>NamedTuple</code>s. The array they contain must have last dimension equal to <code>num_nodes</code> (in <code>ndata</code>), <code>num_edges</code> (in <code>edata</code>), or <code>num_graphs</code> (in <code>gdata</code>).</p><pre><code class="language-julia hljs"># Create a graph with a single feature array `x` associated to nodes
 g = GNNGraph(erdos_renyi(10,  30), ndata = (; x = rand(Float32, 32, 10)))
 
 g.ndata.x  # access the features
@@ -111,4 +130,4 @@ julia&gt; gd = Graphs.erdos_renyi(10, 20, is_directed=true)
 julia&gt; GNNGraph(gd)
 GNNGraph:
     num_nodes = 10
-    num_edges = 20</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../messagepassing/">Message Passing »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Saturday 6 November 2021 10:07">Saturday 6 November 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+    num_edges = 20</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../messagepassing/">Message Passing »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Sunday 7 November 2021 15:29">Sunday 7 November 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
