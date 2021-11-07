@@ -9,7 +9,6 @@ Among its features:
 * Implements common graph convolutional layers.
 * Supports computations on batched graphs. 
 * Easy to define custom layers.
-* Integration with the JuliaGraphs ecosystem.
 * CUDA support.
 * Integration with [Graph.jl](https://github.com/JuliaGraphs/Graphs.jl).
 * [Examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) of node, edge, and graph level machine learning tasks. 
