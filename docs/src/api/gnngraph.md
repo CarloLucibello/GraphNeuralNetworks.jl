@@ -6,14 +6,9 @@ CurrentModule = GraphNeuralNetworks
 
 Documentation page for the graph type `GNNGraph` provided by GraphNeuralNetworks.jl and related methods. 
 
-```@contents
-Pages = ["gnngraph.md"]
-Depth = 5
-```
-
 Besides the methods documented here, one can rely on the large set of functionalities
-given by [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl)
-since `GNNGraph` inherits from `Graphs.AbstractGraph`.
+given by [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl) thanks to the fact
+that `GNNGraph` inherits from `Graphs.AbstractGraph`.
 
 ## Index 
 
@@ -59,4 +54,16 @@ Private = false
 Modules = [GraphNeuralNetworks.GNNGraphs]
 Pages   = ["generate.jl"]
 Private = false
+```
+
+## Operators
+
+```@autodocs
+Modules = [GraphNeuralNetworks.GNNGraphs]
+Pages   = ["operators.jl"]
+Private = false
+```
+
+```@docs
+Graphs.intersect
 ```

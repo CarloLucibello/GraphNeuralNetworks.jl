@@ -1,7 +1,7 @@
 # Models
 
 GraphNeuralNetworks.jl provides common graph convolutional layers by which you can assemble arbitrarily deep or complex models. GNN layers are compatible with 
-Flux.jl ones, therefore expert Flux's users should be immediately able to define and train 
+Flux.jl ones, therefore expert Flux users are promptly able to define and train 
 their models. 
 
 In what follows, we discuss two different styles for model creation:
@@ -52,7 +52,7 @@ end
 din, d, dout = 3, 4, 2 
 model = GNN(din, d, dout)                 # step 5
 
-g = GNNGraph(random_regular_graph(10, 4))
+g = rand_graph(10, 30)
 X = randn(Float32, din, 10) 
 
 y = model(g, X)  # output size: (dout, g.num_nodes)
@@ -74,7 +74,7 @@ Using `GNNChain`, the previous example becomes
 using Flux, Graphs, GraphNeuralNetworks
 
 din, d, dout = 3, 4, 2 
-g = GNNGraph(random_regular_graph(10, 4))
+g = rand_graph(10, 30)
 X = randn(Float32, din, 10)
 
 model = GNNChain(GCNConv(din => d),
@@ -101,3 +101,25 @@ model = GNNChain( ResGatedGraphConv(din => d, relu),
 
 y = model(g, X) # output size: (dout, g.num_graphs)
 ```
+
+## Embedding a graph in the model
+
+Sometimes it is useful to consider a specific graph as a part of a model instead of 
+its input. GNN.jl provides the [`WithGraph`](@ref) type to deal with this scenario.
+
+```julia
+chain = GNNChain(GCNConv(din => d, relu),
+                 GCNConv(d => d))
+
+
+g = rand_graph(10, 30)
+
+model = WithGraph(chain, g)
+
+X = randn(Float32, din, 10)
+
+# Pass only X as input, the model already contains the graph.
+y = model(X) 
+```
+
+An example of `WithGraph` usage is given in the graph neural ODE script in the [examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) folder.
