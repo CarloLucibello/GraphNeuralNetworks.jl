@@ -72,8 +72,8 @@ julia> apply_edges((xi, xj, e) -> xi.a + xi.b .* xj, g, xi=(a=x,b=z), xj=z)
  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0
  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0
 ```
-The function [@propagate](@ref) instead performs also the the [`apply_edges`](@ref) operation
-but then applies a reduction over each node's neighborhood.
+The function [`propagate`](@ref) instead performs the [`apply_edges`](@ref) operation
+but then also applies a reduction over each node's neighborhood.
 ```julia
 julia> propagate((xi, xj, e) -> xi .+ xj, g, +, xi=x, xj=z)
 2×10 Matrix{Float64}:
