@@ -63,3 +63,7 @@ Modules = [GraphNeuralNetworks.GNNGraphs]
 Pages   = ["operators.jl"]
 Private = false
 ```
+
+```@docs
+Graphs.intersect
+```
