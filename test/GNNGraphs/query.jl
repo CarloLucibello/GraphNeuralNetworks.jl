@@ -8,17 +8,15 @@
     end
 
     @testset "has_multi_edges" begin
-        if GRAPH_T == :coo
-            s = [1, 1, 2, 3]
-            t = [2, 2, 2, 4]
-            g = GNNGraph(s, t, graph_type=GRAPH_T)
-            @test has_multi_edges(g)
+        s = [1, 1, 2, 3]
+        t = [2, 2, 2, 4]
+        g = GNNGraph(s, t, graph_type=GRAPH_T)
+        @test has_multi_edges(g)
 
-            s = [1, 2, 2, 3]
-            t = [2, 1, 2, 4]
-            g = GNNGraph(s, t, graph_type=GRAPH_T)
-            @test !has_multi_edges(g)
-        end
+        s = [1, 2, 2, 3]
+        t = [2, 1, 2, 4]
+        g = GNNGraph(s, t, graph_type=GRAPH_T)
+        @test !has_multi_edges(g)
     end
 
     @testset "has_self_loops" begin
@@ -33,4 +31,3 @@
         @test !has_self_loops(g)
     end
 end
-
