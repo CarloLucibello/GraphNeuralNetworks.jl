@@ -264,7 +264,7 @@ Return `true` if `g` has any multiple edges.
 """
 function has_multi_edges(g::GNNGraph)
     s, t = edge_index(g)
-    idxs = edge_encoding(s, t, g.num_nodes)
+    idxs, _ = edge_encoding(s, t, g.num_nodes)
     length(union(idxs)) < length(idxs)
 end
 
