@@ -124,7 +124,7 @@ function to_sparse(A::ADJMAT_T, T::DataType=eltype(A); dir=:out, num_nodes=nothi
         A = T.(A)
     end
     if !(A isa AbstractSparseMatrix)
-        A = sparse(A)
+        A = GBMatrix(sparse(A))
     end 
     return A, num_nodes, num_edges
 end
@@ -140,7 +140,7 @@ function to_sparse(coo::COO_T, T::DataType=Int; dir=:out, num_nodes=nothing)
     num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     A = sparse(s, t, eweight, num_nodes, num_nodes)
     num_edges = length(s)
-    return A, num_nodes, num_edges
+    return GBMatrix(A), num_nodes, num_edges
 end
 
 

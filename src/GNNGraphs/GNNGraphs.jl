@@ -14,6 +14,7 @@ using LearnBase: getobs
 import KrylovKit
 using ChainRulesCore
 using LinearAlgebra, Random
+using SuiteSparseGraphBLAS: GBMatrix
 
 include("gnngraph.jl")
 export GNNGraph, 
