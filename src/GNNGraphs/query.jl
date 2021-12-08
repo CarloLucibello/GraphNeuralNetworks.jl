@@ -13,9 +13,9 @@ edge_index(g::GNNGraph{<:COO_T}) = g.graph[1:2]
 
 edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][1:2]
 
-edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
+get_edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
 
-edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][3]
+get_edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][3]
 
 Graphs.edges(g::GNNGraph) = zip(edge_index(g)...)
 
@@ -95,21 +95,33 @@ function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g.g
     return dir == :out ? A : A'
 end
 
-function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out)
+function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out, edge_weight=true)
     s, t = edge_index(g)
-    T = isnothing(T) ? eltype(s) : T
+
+    if edge_weight === true
+        edge_weight = get_edge_weight(g)
+    elseif (edge_weight === false) || (edge_weight === nothing)
+        edge_weight = nothing 
+    elseif edge_weight isa AbstractVector
+        edge_weight = edge_weight 
+    else 
+        error("Invalid edge_weight argument.")
+    end
+    edge_weight = isnothing(edge_weight) ? eltype(s)(1) : edge_weight
+
+    T = isnothing(T) ? eltype(edge_weight) : T
     degs = fill!(similar(s, T, g.num_nodes), 0)
-    src = 1
     if dir ∈ [:out, :both]
-        NNlib.scatter!(+, degs, src, s)
+        NNlib.scatter!(+, degs, edge_weight, s)
     end
     if dir ∈ [:in, :both]
-        NNlib.scatter!(+, degs, src, t)
+        NNlib.scatter!(+, degs, edge_weight, t)
     end
     return degs 
 end
 
-function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=Int; dir=:out)
+function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=Int; dir=:out, edge_weight=true)
+    @assert edge_weight === true
     @assert dir ∈ (:in, :out)
     A = adjacency_matrix(g, T)
     return dir == :out ? vec(sum(A, dims=2)) : vec(sum(A, dims=1))
