@@ -1,46 +1,66 @@
 @doc raw"""
-    GCNConv(in => out, σ=identity; bias=true, init=glorot_uniform, add_self_loops=true)
+    GCNConv(in => out, σ=identity; bias=true, init=glorot_uniform, add_self_loops=true, edge_weight=true)
 
 Graph convolutional layer from paper [Semi-supervised Classification with Graph Convolutional Networks](https://arxiv.org/abs/1609.02907).
 
 Performs the operation
 ```math
-\mathbf{x}'_i = \sum_{j\in N(i)} \frac{1}{c_{ij}} W \mathbf{x}_j
+\mathbf{x}'_i = \sum_{j\in N(i)} a_{ij} W \mathbf{x}_j
 ```
-where ``c_{ij} = \sqrt{|N(i)||N(j)|}``.
+where ``a_{ij} = 1 / \sqrt{|N(i)||N(j)|}`` is a normalization factor computed from the node degrees. 
 
-The input to the layer is a node feature array `X` 
-of size `(num_features, num_nodes)`.
+If the input graph has weighted edges and `edge_weight=true`, than ``c_{ij}`` will be computed as
+```math
+a_{ij} = \frac{e_{j\to i}}{\sqrt{\sum_{j \in N(i)}  e_{j\to i}} \sqrt{\sum_{i \in N(j)}  e_{i\to j}}}
+```
+
+The input to the layer is a node feature array `X` of size `(num_features, num_nodes)`
+and optionally an edge weight vector.
 
 # Arguments
 
 - `in`: Number of input features.
 - `out`: Number of output features.
-- `σ`: Activation function.
-- `bias`: Add learnable bias.
-- `init`: Weights' initializer.
-- `add_self_loops`: Add self loops to the graph before performing the convolution.
+- `σ`: Activation function. Default `identity`.
+- `bias`: Add learnable bias. Default `true`.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
+- `edge_weight`. If `true`, consider the edge weights in the input graph (if available).
+                 Not compatible with `add_self_loops=true` at the moment. Default `true`.
 """
 struct GCNConv{A<:AbstractMatrix, B, F} <: GNNLayer
     weight::A
     bias::B
     σ::F
     add_self_loops::Bool
+    edge_weight::Bool
 end
 
 @functor GCNConv
 
 function GCNConv(ch::Pair{Int,Int}, σ=identity;
-                 init=glorot_uniform, bias::Bool=true,
-                 add_self_loops=true)
+                 init=glorot_uniform, 
+                 bias::Bool=true,
+                 add_self_loops=true,
+                 edge_weight=false)
     in, out = ch
     W = init(out, in)
     b = bias ? Flux.create_bias(W, true, out) : false
-    GCNConv(W, b, σ, add_self_loops)
+    GCNConv(W, b, σ, add_self_loops, edge_weight)
 end
 
-function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
+function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix)
+    # Extract edge_weight from g if available and l.edge_weight == false,
+    # otherwise return nothing.
+    edge_weight = GNNGraphs._get_edge_weight(g, l.edge_weight) # vector or nothing
+    return l(g, x, edge_weight)
+end
+
+function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW) where 
+    {T, EW<:Union{Nothing,AbstractVector}}
+    
     if l.add_self_loops
+        @assert edge_weight === nothing
         g = add_self_loops(g)
     end
     Dout, Din = size(l.weight)
@@ -48,10 +68,14 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}) where T
         x = l.weight * x
     end
     # @assert all(>(0), degree(g, T, dir=:in))
-    c = 1 ./ sqrt.(degree(g, T, dir=:in))
+    c = 1 ./ sqrt.(degree(g, T; dir=:in, edge_weight))
     x = x .* c'
-    x = propagate(copy_xj, g, +, xj=x)
-    x = x .* c'
+    if edge_weight === nothing
+        x = propagate(copy_xj, g, +, xj=x)
+    else        
+        x = propagate(e_mul_xj, g, +, xj=x, e=edge_weight)
+    end
+        x = x .* c'
     if Dout >= Din
         x = l.weight * x
     end

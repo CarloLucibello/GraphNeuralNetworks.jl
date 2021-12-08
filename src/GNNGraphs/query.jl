@@ -95,18 +95,23 @@ function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g.g
     return dir == :out ? A : A'
 end
 
+function _get_edge_weight(g, edge_weight)
+    if edge_weight === true
+        ew = get_edge_weight(g)
+    elseif (edge_weight === false) || (edge_weight === nothing)
+        ew = nothing 
+    elseif edge_weight isa AbstractVector
+        ew = edge_weight 
+    else
+        error("Invalid edge_weight argument.")
+    end
+    return ew
+end
+
 function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out, edge_weight=true)
     s, t = edge_index(g)
 
-    if edge_weight === true
-        edge_weight = get_edge_weight(g)
-    elseif (edge_weight === false) || (edge_weight === nothing)
-        edge_weight = nothing 
-    elseif edge_weight isa AbstractVector
-        edge_weight = edge_weight 
-    else 
-        error("Invalid edge_weight argument.")
-    end
+    edge_weight = _get_edge_weight(g, edge_weight)
     edge_weight = isnothing(edge_weight) ? eltype(s)(1) : edge_weight
 
     T = isnothing(T) ? eltype(edge_weight) : T

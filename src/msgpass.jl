@@ -153,6 +153,18 @@ copy_xi(xi, xj, e) = xi
 """
 xi_dot_xj(xi, xj, e) = sum(xi .* xj, dims=1)
 
+"""
+    e_mul_xj(xi, xj, e) = reshape(e, (...)) .* xj
+
+Reshape `e` into broadcast compatible shape with `xj`
+(by prepending singleton dimensions) then perform
+broadcasted multiplication.
+"""
+function e_mul_xj(xi, xj::AbstractArray{Tj,Nj}, e::AbstractArray{Te,Ne}) where {Tj,Te, Nj, Ne}
+    @assert Ne <= Nj
+    e = reshape(e, ntuple(_ -> 1, Nj-Ne)..., size(e)...)
+    return e .* xj
+end
 
 function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
     A = adjacency_matrix(g)
