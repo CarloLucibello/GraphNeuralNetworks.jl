@@ -21,18 +21,18 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
-    # "GNNGraphs/gnngraph",
-    # "GNNGraphs/transform",
-    # "GNNGraphs/operators",
-    # "GNNGraphs/generate",
-    # "GNNGraphs/query",
-    # "utils",
-    # "msgpass",
-    # "layers/basic",
+    "GNNGraphs/gnngraph",
+    "GNNGraphs/transform",
+    "GNNGraphs/operators",
+    "GNNGraphs/generate",
+    "GNNGraphs/query",
+    "utils",
+    "msgpass",
+    "layers/basic",
     "layers/conv",
-    # "layers/pool",
-    # "examples/node_classification_cora",
-    # "deprecations",
+    "layers/pool",
+    "examples/node_classification_cora",
+    "deprecations",
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")

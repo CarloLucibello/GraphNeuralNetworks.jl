@@ -7,7 +7,7 @@ on:
     branches:
       - master
 jobs:
-  test:https://piazza.com/unibocconi.it/fall2020/csdb/resources
+  test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     strategy:
