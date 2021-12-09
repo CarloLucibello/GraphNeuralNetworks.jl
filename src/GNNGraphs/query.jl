@@ -126,10 +126,15 @@ function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out, edge_weight=tr
 end
 
 function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=Int; dir=:out, edge_weight=true)
-    @assert edge_weight === true
-    @assert dir ∈ (:in, :out)
+    @assert !(edge_weight isa AbstractArray) "passing the edge weights is not support by adjacency matrix representations" 
+    @assert dir ∈ (:in, :out, :both)
     A = adjacency_matrix(g, T)
-    return dir == :out ? vec(sum(A, dims=2)) : vec(sum(A, dims=1))
+    if (edge_weight === false) || (edge_weight === nothing)
+        A = map(>(0), A)
+    end
+    return dir == :out ? vec(sum(A, dims=2)) : 
+           dir == :in  ? vec(sum(A, dims=1)) :
+                  vec(sum(A, dims=1)) .+ vec(sum(A, dims=2)) 
 end
 
 function Graphs.laplacian_matrix(g::GNNGraph, T::DataType=Int; dir::Symbol=:out)

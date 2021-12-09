@@ -96,17 +96,18 @@ function to_dense(adj_list::ADJLIST_T, T::DataType=Int; dir=:out, num_nodes=noth
     A, num_nodes, num_edges
 end
 
-function to_dense(coo::COO_T, T::DataType=Int; dir=:out, num_nodes=nothing)
+function to_dense(coo::COO_T, T::DataType=Nothing; dir=:out, num_nodes=nothing)
     # `dir` will be ignored since the input `coo` is always in source -> target format.
     # The output will always be a adjmat in :out format (e.g. A[i,j] denotes from i to j)
     s, t, val = coo
     n = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes
+    val = isnothing(val) ? eltype(s)(1) : val
+    T = T == Nothing ? eltype(val) : T
     A = fill!(similar(s, T, (n, n)), 0)
-    if isnothing(val)
-        A[s .+ n .* (t .- 1)] .= 1 # exploiting linear indexing
-    else    
-        A[s .+ n .* (t .- 1)] .= val # exploiting linear indexing
-    end
+    v = vec(A)
+    idxs = s .+ n .* (t .- 1) 
+    NNlib.scatter!(+, v, val, idxs)
+    # A[s .+ n .* (t .- 1)] .= val # exploiting linear indexing
     return A, n, length(s)
 end
 

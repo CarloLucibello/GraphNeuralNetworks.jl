@@ -36,7 +36,6 @@
     @testset "degree" begin 
         s = [1, 1, 2, 3]
         t = [2, 2, 2, 4]
-        eweight = [0.1, 2.1, 1.2, 1]
         g = GNNGraph(s, t, graph_type=GRAPH_T)
 
         @test degree(g) == degree(g; dir=:out) == [2, 1, 1, 0] # default is outdegree
@@ -45,14 +44,14 @@
         @test eltype(degree(g, Float32)) == Float32
 
         # weighted degree
-        if GRAPH_T == :coo
+        # if GRAPH_T == :coo
             eweight = [0.1, 2.1, 1.2, 1]
             g = GNNGraph((s, t, eweight), graph_type=GRAPH_T)
             @test degree(g) ==  [2.2, 1.2, 1.0, 0.0]
             @test degree(g, edge_weight=false) ==  [2, 1, 1, 0]
             @test degree(g, edge_weight=nothing) ==  [2, 1, 1, 0]
             @test degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0]
-        end
+        # end
 
         if TEST_GPU
             d = degree(g)
