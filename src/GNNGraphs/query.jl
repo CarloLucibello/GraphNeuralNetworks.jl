@@ -174,7 +174,7 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=nothing; dir=:out, edge_weight
     end
     A = adjacency_matrix(g)
     if (edge_weight === false) || (edge_weight === nothing)
-        A = map(x -> x > 0 ? T(1) : T(0), A)
+        A = map(>(0), A)
     end
     A = eltype(A) != T ? T.(A) : A
     return dir == :out ? vec(sum(A, dims=2)) : 
