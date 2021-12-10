@@ -52,7 +52,7 @@
                 @test Array(d_gpu) == d
             end
         end
-        
+
         @testset "weighted" begin
             # weighted degree
             s = [1, 1, 2, 3]
@@ -83,5 +83,14 @@
                 @test Array(d_gpu) ≈ d
             end
         end
+    end
+
+    @testset "laplacian_matrix" begin
+        g = rand_graph(10, 30, graph_type=GRAPH_T)
+        A = adjacency_matrix(g)
+        D = Diagonal(vec(sum(A, dims=2)))
+        L = laplacian_matrix(g)
+        @test eltype(L) == GNNGraphs.nodetype(g)
+        @test L ≈ D - A
     end
 end

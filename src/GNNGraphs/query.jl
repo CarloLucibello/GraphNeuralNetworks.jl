@@ -182,7 +182,7 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=nothing; dir=:out, edge_weight
                   vec(sum(A, dims=1)) .+ vec(sum(A, dims=2)) 
 end
 
-function Graphs.laplacian_matrix(g::GNNGraph, T::DataType=Float32; dir::Symbol=:out)
+function Graphs.laplacian_matrix(g::GNNGraph, T::DataType=nodetype(g); dir::Symbol=:out)
     A = adjacency_matrix(g, T; dir=dir)
     D = Diagonal(vec(sum(A; dims=2)))
     return D - A
@@ -190,7 +190,7 @@ end
 
 
 """
-    normalized_laplacian(g, T=nothing; add_self_loops=false, dir=:out)
+    normalized_laplacian(g, T=Float32; add_self_loops=false, dir=:out)
 
 Normalized Laplacian matrix of graph `g`.
 
@@ -219,7 +219,7 @@ function normalized_adjacency(g::GNNGraph, T::DataType=Float32;
 end
 
 @doc raw"""
-    scaled_laplacian(g, T=nothing; dir=:out)
+    scaled_laplacian(g, T=Float32; dir=:out)
 
 Scaled Laplacian matrix of graph `g`,
 defined as ``\hat{L} = \frac{2}{\lambda_{max}} L - I`` where ``L`` is the normalized Laplacian matrix.
