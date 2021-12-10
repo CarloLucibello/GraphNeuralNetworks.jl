@@ -182,7 +182,7 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=nothing; dir=:out, edge_weight
                   vec(sum(A, dims=1)) .+ vec(sum(A, dims=2)) 
 end
 
-function Graphs.laplacian_matrix(g::GNNGraph, T=nothing; dir::Symbol=:out)
+function Graphs.laplacian_matrix(g::GNNGraph, T::DataType=Float32; dir::Symbol=:out)
     A = adjacency_matrix(g, T; dir=dir)
     D = Diagonal(vec(sum(A; dims=2)))
     return D - A
@@ -201,13 +201,13 @@ Normalized Laplacian matrix of graph `g`.
 - `add_self_loops`: add self-loops while calculating the matrix.
 - `dir`: the edge directionality considered (:out, :in, :both).
 """
-function normalized_laplacian(g::GNNGraph, T=nodetype(g); 
+function normalized_laplacian(g::GNNGraph, T::DataType=Float32; 
                         add_self_loops::Bool=false, dir::Symbol=:out)
     Ã = normalized_adjacency(g, T; dir, add_self_loops)
     return I - Ã
 end
 
-function normalized_adjacency(g::GNNGraph, T=nodetype(g); 
+function normalized_adjacency(g::GNNGraph, T::DataType=Float32; 
                         add_self_loops::Bool=false, dir::Symbol=:out)
     A = adjacency_matrix(g, T; dir=dir)
     if add_self_loops
@@ -230,7 +230,7 @@ defined as ``\hat{L} = \frac{2}{\lambda_{max}} L - I`` where ``L`` is the normal
 - `T`: result element type.
 - `dir`: the edge directionality considered (:out, :in, :both).
 """
-function scaled_laplacian(g::GNNGraph, T=nothing; dir=:out)
+function scaled_laplacian(g::GNNGraph, T::DataType=Float32; dir=:out)
     L = normalized_laplacian(g, T)
     @assert issymmetric(L) "scaled_laplacian only works with symmetric matrices"
     λmax = _eigmax(L)
