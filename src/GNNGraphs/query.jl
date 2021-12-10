@@ -20,6 +20,23 @@ get_edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes
 Graphs.edges(g::GNNGraph) = zip(edge_index(g)...)
 
 Graphs.edgetype(g::GNNGraph) = Tuple{Int, Int}
+nodetype(g::GNNGraph) = Base.eltype(g)
+
+"""
+    nodetype(g::GNNGraph)
+
+Type of nodes in `g`,
+an integer type like `Int`, `Int32`, `Uint16`, ....
+"""
+function nodetype(g::GNNGraph{<:COO_T}, T=nothing)
+    s, t = edge_index(g)
+    return eltype(s)
+end
+
+function nodetype(g::GNNGraph{<:ADJMAT_T}, T=nothing)
+    T !== nothing && return T
+    return eltype(g.graph)
+end
 
 function Graphs.has_edge(g::GNNGraph{<:COO_T}, i::Integer, j::Integer)
     s, t = edge_index(g)
@@ -77,7 +94,7 @@ function adjacency_list(g::GNNGraph; dir=:out)
     return [fneighs(g, i) for i in 1:g.num_nodes]
 end
 
-function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
+function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=nodetype(g); dir=:out)
     if g.graph[1] isa CuVector
         # TODO revisit after https://github.com/JuliaGPU/CUDA.jl/pull/1152
         A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
@@ -88,7 +105,7 @@ function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out
     return dir == :out ? A : A'
 end
 
-function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g.graph); dir=:out)
+function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=nodetype(g); dir=:out)
     @assert dir ∈ [:in, :out]
     A = g.graph
     A = T != eltype(A) ? T.(A) : A
@@ -125,19 +142,29 @@ function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out, edge_weight=tr
     return degs 
 end
 
-function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=Int; dir=:out, edge_weight=true)
+function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=nothing; dir=:out, edge_weight=true)
     @assert !(edge_weight isa AbstractArray) "passing the edge weights is not support by adjacency matrix representations" 
     @assert dir ∈ (:in, :out, :both)
-    A = adjacency_matrix(g, T)
-    if (edge_weight === false) || (edge_weight === nothing)
-        A = map(>(0), A)
+    if T === nothing
+        Nt = nodetype(g)
+        if ((edge_weight === false) || (edge_weight === nothing)) && !(Nt <: Integer) 
+            T = Nt == Float32 ? Int32 : 
+                Nt == Float16 ? Int16 : Int
+        else
+            T = Nt
+        end
     end
+    A = adjacency_matrix(g)
+    if (edge_weight === false) || (edge_weight === nothing)
+        A = map(x -> x > 0 ? T(1) : T(0), A)
+    end
+    A = eltype(A) != T ? T.(A) : A
     return dir == :out ? vec(sum(A, dims=2)) : 
            dir == :in  ? vec(sum(A, dims=1)) :
                   vec(sum(A, dims=1)) .+ vec(sum(A, dims=2)) 
 end
 
-function Graphs.laplacian_matrix(g::GNNGraph, T::DataType=Int; dir::Symbol=:out)
+function Graphs.laplacian_matrix(g::GNNGraph, T=nothing; dir::Symbol=:out)
     A = adjacency_matrix(g, T; dir=dir)
     D = Diagonal(vec(sum(A; dims=2)))
     return D - A
@@ -145,7 +172,7 @@ end
 
 
 """
-    normalized_laplacian(g, T=Float32; add_self_loops=false, dir=:out)
+    normalized_laplacian(g, T=nothing; add_self_loops=false, dir=:out)
 
 Normalized Laplacian matrix of graph `g`.
 
@@ -156,13 +183,13 @@ Normalized Laplacian matrix of graph `g`.
 - `add_self_loops`: add self-loops while calculating the matrix.
 - `dir`: the edge directionality considered (:out, :in, :both).
 """
-function normalized_laplacian(g::GNNGraph, T::DataType=Float32; 
+function normalized_laplacian(g::GNNGraph, T=nodetype(g); 
                         add_self_loops::Bool=false, dir::Symbol=:out)
     Ã = normalized_adjacency(g, T; dir, add_self_loops)
     return I - Ã
 end
 
-function normalized_adjacency(g::GNNGraph, T::DataType=Float32; 
+function normalized_adjacency(g::GNNGraph, T=nodetype(g); 
                         add_self_loops::Bool=false, dir::Symbol=:out)
     A = adjacency_matrix(g, T; dir=dir)
     if add_self_loops
@@ -174,7 +201,7 @@ function normalized_adjacency(g::GNNGraph, T::DataType=Float32;
 end
 
 @doc raw"""
-    scaled_laplacian(g, T=Float32; dir=:out)
+    scaled_laplacian(g, T=nothing; dir=:out)
 
 Scaled Laplacian matrix of graph `g`,
 defined as ``\hat{L} = \frac{2}{\lambda_{max}} L - I`` where ``L`` is the normalized Laplacian matrix.
@@ -185,7 +212,7 @@ defined as ``\hat{L} = \frac{2}{\lambda_{max}} L - I`` where ``L`` is the normal
 - `T`: result element type.
 - `dir`: the edge directionality considered (:out, :in, :both).
 """
-function scaled_laplacian(g::GNNGraph, T::DataType=Float32; dir=:out)
+function scaled_laplacian(g::GNNGraph, T=nothing; dir=:out)
     L = normalized_laplacian(g, T)
     @assert issymmetric(L) "scaled_laplacian only works with symmetric matrices"
     λmax = _eigmax(L)

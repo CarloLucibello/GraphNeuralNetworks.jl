@@ -63,8 +63,9 @@ end
 
 to_dense(A::AbstractSparseMatrix, x...; kws...) = to_dense(collect(A), x...; kws...)
 
-function to_dense(A::ADJMAT_T, T::DataType=eltype(A); dir=:out, num_nodes=nothing)
+function to_dense(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing)
     @assert dir ∈ [:out, :in]
+    T = T === nothing ? eltype(A) : T
     num_nodes = size(A, 1)
     @assert num_nodes == size(A, 2)
     # @assert all(x -> (x == 1) || (x == 0), A)
@@ -78,11 +79,12 @@ function to_dense(A::ADJMAT_T, T::DataType=eltype(A); dir=:out, num_nodes=nothin
     return A, num_nodes, num_edges
 end
 
-function to_dense(adj_list::ADJLIST_T, T::DataType=Int; dir=:out, num_nodes=nothing)
+function to_dense(adj_list::ADJLIST_T, T=nothing; dir=:out, num_nodes=nothing)
     @assert dir ∈ [:out, :in]
     num_nodes = length(adj_list)
     num_edges = sum(length.(adj_list))
     @assert num_nodes > 0
+    T = T === nothing ? eltype(adj_list[1]) : T
     A = similar(adj_list[1], T, (num_nodes, num_nodes))
     if dir == :out
         for (i, neigs) in enumerate(adj_list)
@@ -96,13 +98,13 @@ function to_dense(adj_list::ADJLIST_T, T::DataType=Int; dir=:out, num_nodes=noth
     A, num_nodes, num_edges
 end
 
-function to_dense(coo::COO_T, T::DataType=Nothing; dir=:out, num_nodes=nothing)
+function to_dense(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing)
     # `dir` will be ignored since the input `coo` is always in source -> target format.
     # The output will always be a adjmat in :out format (e.g. A[i,j] denotes from i to j)
     s, t, val = coo
     n = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes
     val = isnothing(val) ? eltype(s)(1) : val
-    T = T == Nothing ? eltype(val) : T
+    T = T === nothing ? eltype(val) : T
     A = fill!(similar(s, T, (n, n)), 0)
     v = vec(A)
     idxs = s .+ n .* (t .- 1) 
@@ -113,10 +115,11 @@ end
 
 ### SPARSE #############
 
-function to_sparse(A::ADJMAT_T, T::DataType=eltype(A); dir=:out, num_nodes=nothing)
+function to_sparse(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing)
     @assert dir ∈ [:out, :in]
     num_nodes = size(A, 1)
     @assert num_nodes == size(A, 2)
+    T = T === nothing ? eltype(A) : T
     num_edges = A isa AbstractSparseMatrix ? nnz(A) : count(!=(0), A)
     if dir == :in
         A = A'
@@ -130,13 +133,14 @@ function to_sparse(A::ADJMAT_T, T::DataType=eltype(A); dir=:out, num_nodes=nothi
     return A, num_nodes, num_edges
 end
 
-function to_sparse(adj_list::ADJLIST_T, T::DataType=Int; dir=:out, num_nodes=nothing)
+function to_sparse(adj_list::ADJLIST_T, T=nothing; dir=:out, num_nodes=nothing)
     coo, num_nodes, num_edges = to_coo(adj_list; dir, num_nodes)
     return to_sparse(coo; dir, num_nodes)
 end
 
-function to_sparse(coo::COO_T, T::DataType=Int; dir=:out, num_nodes=nothing)
+function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing)
     s, t, eweight  = coo
+    T = T === nothing ? eltype(s) : T
     eweight = isnothing(eweight) ? fill!(similar(s, T), 1) : eweight
     num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     A = sparse(s, t, eweight, num_nodes, num_nodes)
