@@ -37,6 +37,23 @@
 
         l = GCNConv(in_channel => out_channel, add_self_loops=false)
         test_layer(l, g1, rtol=1e-5, outsize=(out_channel, g1.num_nodes))
+
+        @testset "edge weights" begin
+            s = [2,3,1,3,1,2]
+            t = [1,1,2,2,3,3]
+            w = [1,2,3,4,5,6]
+            g = GNNGraph((s, t, w), graph_type=GRAPH_T)
+            x = ones(1, g.num_nodes)
+            l = GCNConv(1 => 1, add_self_loops=false, use_edge_weight=true)
+            l.weight .= 1
+            d = degree(g, dir=:in)
+            y = l(g, x)
+            @test y[1,1] ≈ w[1] / √(d[1]*d[2]) + w[2] / √(d[1]*d[3]) 
+            @test y[1,2] ≈ w[3] / √(d[2]*d[1]) + w[4] / √(d[2]*d[3])
+            if GRAPH_T == :coo
+                @test y ≈ l(g, x, w)                
+            end
+        end
     end
 
     @testset "ChebConv" begin

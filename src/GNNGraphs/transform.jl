@@ -5,19 +5,23 @@
 Return a graph with the same features as `g`
 but also adding edges connecting the nodes to themselves.
 
-Nodes with already existing
-self-loops will obtain a second self-loop.
+Nodes with already existing self-loops will obtain a second self-loop.
+
+If the graphs has edge weights, the new edges will have weight 1.
 """
 function add_self_loops(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
     @assert g.edata === (;)
-    @assert get_edge_weight(g) === nothing
+    ew = get_edge_weight(g)
     n = g.num_nodes
     nodes = convert(typeof(s), [1:n;])
     s = [s; nodes]
     t = [t; nodes]
+    if ew !== nothing
+        ew = [ew; fill!(similar(ew, n), 1)]
+    end
 
-    GNNGraph((s, t, nothing), 
+    GNNGraph((s, t, ew), 
         g.num_nodes, length(s), g.num_graphs, 
         g.graph_indicator,
         g.ndata, g.edata, g.gdata)
@@ -340,7 +344,7 @@ function negative_sample(g::GNNGraph;
     @assert g.num_graphs == 1
     # Consider self-loops as positive edges
     # Construct new graph dropping features
-    g = add_self_loops(GNNGraph(edge_index(g))) 
+    g = add_self_loops(GNNGraph(edge_index(g), num_nodes=g.num_nodes)) 
     
     s, t = edge_index(g)
     n = g.num_nodes

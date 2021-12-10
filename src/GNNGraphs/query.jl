@@ -113,9 +113,9 @@ function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=nodetype(g
 end
 
 function _get_edge_weight(g, edge_weight)
-    if edge_weight === true
+    if edge_weight === true || edge_weight === nothing 
         ew = get_edge_weight(g)
-    elseif (edge_weight === false) || (edge_weight === nothing)
+    elseif edge_weight === false
         ew = nothing 
     elseif edge_weight isa AbstractVector
         ew = edge_weight 
@@ -147,7 +147,7 @@ function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out, edge_weight=tr
     s, t = edge_index(g)
 
     edge_weight = _get_edge_weight(g, edge_weight)
-    edge_weight = isnothing(edge_weight) ? eltype(s)(1) : edge_weight
+    edge_weight = edge_weight === nothing ? eltype(s)(1) : edge_weight
 
     T = isnothing(T) ? eltype(edge_weight) : T
     degs = fill!(similar(s, T, g.num_nodes), 0)
@@ -161,11 +161,12 @@ function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out, edge_weight=tr
 end
 
 function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=nothing; dir=:out, edge_weight=true)
+    # edge_weight=true or edge_weight=nothing act the same here
     @assert !(edge_weight isa AbstractArray) "passing the edge weights is not support by adjacency matrix representations" 
     @assert dir ∈ (:in, :out, :both)
     if T === nothing
         Nt = nodetype(g)
-        if ((edge_weight === false) || (edge_weight === nothing)) && !(Nt <: Integer) 
+        if edge_weight === false && !(Nt <: Integer) 
             T = Nt == Float32 ? Int32 : 
                 Nt == Float16 ? Int16 : Int
         else
@@ -173,7 +174,7 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=nothing; dir=:out, edge_weight
         end
     end
     A = adjacency_matrix(g)
-    if (edge_weight === false) || (edge_weight === nothing)
+    if edge_weight === false
         A = map(>(0), A)
     end
     A = eltype(A) != T ? T.(A) : A

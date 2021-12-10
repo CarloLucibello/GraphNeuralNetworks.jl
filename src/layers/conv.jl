@@ -1,5 +1,5 @@
 @doc raw"""
-    GCNConv(in => out, σ=identity; bias=true, init=glorot_uniform, add_self_loops=true, edge_weight=true)
+    GCNConv(in => out, σ=identity; [bias, init, add_self_loops, use_edge_weight])
 
 Graph convolutional layer from paper [Semi-supervised Classification with Graph Convolutional Networks](https://arxiv.org/abs/1609.02907).
 
@@ -9,7 +9,7 @@ Performs the operation
 ```
 where ``a_{ij} = 1 / \sqrt{|N(i)||N(j)|}`` is a normalization factor computed from the node degrees. 
 
-If the input graph has weighted edges and `edge_weight=true`, than ``c_{ij}`` will be computed as
+If the input graph has weighted edges and `use_edge_weight=true`, than ``a_{ij}`` will be computed as
 ```math
 a_{ij} = \frac{e_{j\to i}}{\sqrt{\sum_{j \in N(i)}  e_{j\to i}} \sqrt{\sum_{i \in N(j)}  e_{i\to j}}}
 ```
@@ -25,15 +25,40 @@ and optionally an edge weight vector.
 - `bias`: Add learnable bias. Default `true`.
 - `init`: Weights' initializer. Default `glorot_uniform`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
-- `edge_weight`. If `true`, consider the edge weights in the input graph (if available).
-                 Not compatible with `add_self_loops=true` at the moment. Default `true`.
+- `use_edge_weight`. If `true`, consider the edge weights in the input graph (if available).
+                 If `add_self_loops=true` the new weights will be set to 1. Default `false`.
+
+# Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+x = randn(3, g.num_nodes)
+
+# create layer
+l = GCNConv(3 => 5) 
+
+# forward pass
+y = l(g, x)       # size:  5 × num_nodes
+
+# convolution with edge weights
+w = [1.1, 0.1, 2.3, 0.5]
+y = l(g, x, w)
+
+# Edge weights can also be embedded in the graph.
+g = GNNGraph(s, t, w)
+l = GCNConv(3 => 5, use_edge_weight=true) 
+y = l(g, x) # same as l(g, x, w) 
+```
 """
 struct GCNConv{A<:AbstractMatrix, B, F} <: GNNLayer
     weight::A
     bias::B
     σ::F
     add_self_loops::Bool
-    edge_weight::Bool
+    use_edge_weight::Bool
 end
 
 @functor GCNConv
@@ -42,17 +67,22 @@ function GCNConv(ch::Pair{Int,Int}, σ=identity;
                  init=glorot_uniform, 
                  bias::Bool=true,
                  add_self_loops=true,
-                 edge_weight=false)
+                 use_edge_weight=false)
     in, out = ch
     W = init(out, in)
     b = bias ? Flux.create_bias(W, true, out) : false
-    GCNConv(W, b, σ, add_self_loops, edge_weight)
+    GCNConv(W, b, σ, add_self_loops, use_edge_weight)
 end
 
-function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix)
-    # Extract edge_weight from g if available and l.edge_weight == false,
+function (l::GCNConv)(g::GNNGraph{<:COO_T}, x::AbstractMatrix)
+    # Extract edge_weight from g if available and l.edge_weight == true,
     # otherwise return nothing.
-    edge_weight = GNNGraphs._get_edge_weight(g, l.edge_weight) # vector or nothing
+    edge_weight = GNNGraphs._get_edge_weight(g, l.use_edge_weight) # vector or nothing
+    return l(g, x, edge_weight)
+end
+
+function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix)
+    edge_weight = nothing
     return l(g, x, edge_weight)
 end
 
@@ -60,27 +90,32 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW) where
     {T, EW<:Union{Nothing,AbstractVector}}
     
     if l.add_self_loops
-        @assert edge_weight === nothing
         g = add_self_loops(g)
+        if edge_weight !== nothing
+            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            @assert length(edge_weight) == g.num_edges
+        end
     end
     Dout, Din = size(l.weight)
     if Dout < Din
+        # multiply before convolution if it is more convenient, otherwise multiply after
         x = l.weight * x
     end
-    # @assert all(>(0), degree(g, T, dir=:in))
-    c = 1 ./ sqrt.(degree(g, T; dir=:in, edge_weight))
+    d = degree(g, T; dir=:in, edge_weight)
+    c = 1 ./ sqrt.(d)
     x = x .* c'
     if edge_weight === nothing
         x = propagate(copy_xj, g, +, xj=x)
     else        
         x = propagate(e_mul_xj, g, +, xj=x, e=edge_weight)
     end
-        x = x .* c'
+    x = x .* c'
     if Dout >= Din
         x = l.weight * x
     end
     return l.σ.(x .+ l.bias)
 end
+
 
 function Base.show(io::IO, l::GCNConv)
     out, in = size(l.weight)
