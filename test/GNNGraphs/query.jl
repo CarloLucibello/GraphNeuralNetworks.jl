@@ -47,15 +47,17 @@
         eweight = [0.1, 2.1, 1.2, 1]
         g = GNNGraph((s, t, eweight), graph_type=GRAPH_T)
         @test degree(g) ==  [2.2, 1.2, 1.0, 0.0]
+        d = degree(g, edge_weight=false)
         if GRAPH_T == :coo
-            @test degree(g, edge_weight=false) ==  [2, 1, 1, 0]
+            @test d ==  [2, 1, 1, 0]
             @test degree(g, edge_weight=nothing) ==  [2, 1, 1, 0]
         else
             # Adjacency matrix representation cannot disambiguate multiple edges
             # and edge weights
-            @test degree(g, edge_weight=false) ==  [1, 1, 1, 0]
+            @test d ==  [1, 1, 1, 0]
             @test degree(g, edge_weight=nothing) ==  [1, 1, 1, 0]
         end
+        @test eltype(d) <: Integer
         if GRAPH_T == :coo
             @test degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0]
         end
