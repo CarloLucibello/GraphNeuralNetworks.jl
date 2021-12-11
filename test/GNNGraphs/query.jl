@@ -89,7 +89,7 @@
         A = adjacency_matrix(g)
         D = Diagonal(vec(sum(A, dims=2)))
         L = laplacian_matrix(g)
-        @test eltype(L) == GNNGraphs.nodetype(g)
+        @test eltype(L) == eltype(g)
         @test L ≈ D - A
     end
 end
