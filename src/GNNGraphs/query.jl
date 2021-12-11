@@ -29,7 +29,7 @@ Graphs.edgetype(g::GNNGraph) = Tuple{Int, Int}
 # """
 function Base.eltype(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
-    w = get_edge_weight
+    w = get_edge_weight(g)
     return w !== nothing ? eltype(w) : eltype(s)
 end
 
