@@ -13,13 +13,30 @@ edge_index(g::GNNGraph{<:COO_T}) = g.graph[1:2]
 
 edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][1:2]
 
-edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
+get_edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
 
-edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][3]
+get_edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][3]
 
 Graphs.edges(g::GNNGraph) = zip(edge_index(g)...)
 
 Graphs.edgetype(g::GNNGraph) = Tuple{Int, Int}
+nodetype(g::GNNGraph) = Base.eltype(g)
+
+"""
+    nodetype(g::GNNGraph)
+
+Type of nodes in `g`,
+an integer type like `Int`, `Int32`, `Uint16`, ....
+"""
+function nodetype(g::GNNGraph{<:COO_T}, T=nothing)
+    s, t = edge_index(g)
+    return eltype(s)
+end
+
+function nodetype(g::GNNGraph{<:ADJMAT_T}, T=nothing)
+    T !== nothing && return T
+    return eltype(g.graph)
+end
 
 function Graphs.has_edge(g::GNNGraph{<:COO_T}, i::Integer, j::Integer)
     s, t = edge_index(g)
@@ -77,7 +94,7 @@ function adjacency_list(g::GNNGraph; dir=:out)
     return [fneighs(g, i) for i in 1:g.num_nodes]
 end
 
-function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out)
+function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=nodetype(g); dir=:out)
     if g.graph[1] isa CuVector
         # TODO revisit after https://github.com/JuliaGPU/CUDA.jl/pull/1152
         A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
@@ -88,34 +105,85 @@ function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=Int; dir=:out
     return dir == :out ? A : A'
 end
 
-function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g.graph); dir=:out)
+function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=nodetype(g); dir=:out)
     @assert dir ∈ [:in, :out]
     A = g.graph
     A = T != eltype(A) ? T.(A) : A
     return dir == :out ? A : A'
 end
 
-function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out)
+function _get_edge_weight(g, edge_weight)
+    if edge_weight === true || edge_weight === nothing 
+        ew = get_edge_weight(g)
+    elseif edge_weight === false
+        ew = nothing 
+    elseif edge_weight isa AbstractVector
+        ew = edge_weight 
+    else
+        error("Invalid edge_weight argument.")
+    end
+    return ew
+end
+
+"""
+    degree(g::GNNGraph, T=nothing; dir=:out, edge_weight=true)
+
+Return a vector containing the degrees of the nodes in `g`.
+
+# Arguments
+- `g`: A graph.
+- `T`: Element type of the returned vector. If `nothing`, is
+       chosen based on the graph type and will be an integer
+       if `edge_weight=false`.
+- `dir`: For `dir=:out` the degree of a node is counted based on the outgoing edges.
+         For `dir=:in`, the ingoing edges are used. If `dir=:both` we have the sum of the two.
+- `edge_weight`: If `true` and the graph contains weighted edges, the degree will 
+                be weighted. Set to `false` instead to just count the number of
+                outgoing/ingoing edges.
+                In alternative, you can also pass a vector of weights to be used
+                instead of the graph's own weights.
+"""
+function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out, edge_weight=true)
     s, t = edge_index(g)
-    T = isnothing(T) ? eltype(s) : T
+
+    edge_weight = _get_edge_weight(g, edge_weight)
+    edge_weight = edge_weight === nothing ? eltype(s)(1) : edge_weight
+
+    T = isnothing(T) ? eltype(edge_weight) : T
     degs = fill!(similar(s, T, g.num_nodes), 0)
-    src = 1
     if dir ∈ [:out, :both]
-        NNlib.scatter!(+, degs, src, s)
+        NNlib.scatter!(+, degs, edge_weight, s)
     end
     if dir ∈ [:in, :both]
-        NNlib.scatter!(+, degs, src, t)
+        NNlib.scatter!(+, degs, edge_weight, t)
     end
     return degs 
 end
 
-function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=Int; dir=:out)
-    @assert dir ∈ (:in, :out)
-    A = adjacency_matrix(g, T)
-    return dir == :out ? vec(sum(A, dims=2)) : vec(sum(A, dims=1))
+function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=nothing; dir=:out, edge_weight=true)
+    # edge_weight=true or edge_weight=nothing act the same here
+    @assert !(edge_weight isa AbstractArray) "passing the edge weights is not support by adjacency matrix representations" 
+    @assert dir ∈ (:in, :out, :both)
+    if T === nothing
+        Nt = nodetype(g)
+        if edge_weight === false && !(Nt <: Integer) 
+            T = Nt == Float32 ? Int32 : 
+                Nt == Float16 ? Int16 : Int
+        else
+            T = Nt
+        end
+    end
+    A = adjacency_matrix(g)
+    if edge_weight === false
+        A = map(>(0), A)
+    end
+    A = eltype(A) != T ? T.(A) : A
+    return dir == :out ? vec(sum(A, dims=2)) : 
+           dir == :in  ? vec(sum(A, dims=1)) :
+                  vec(sum(A, dims=1)) .+ vec(sum(A, dims=2)) 
 end
 
-function Graphs.laplacian_matrix(g::GNNGraph, T::DataType=Int; dir::Symbol=:out)
+function Graphs.laplacian_matrix(g::GNNGraph, T::DataType=nodetype(g); dir::Symbol=:out)
     A = adjacency_matrix(g, T; dir=dir)
     D = Diagonal(vec(sum(A; dims=2)))
     return D - A

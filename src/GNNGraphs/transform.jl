@@ -5,19 +5,23 @@
 Return a graph with the same features as `g`
 but also adding edges connecting the nodes to themselves.
 
-Nodes with already existing
-self-loops will obtain a second self-loop.
+Nodes with already existing self-loops will obtain a second self-loop.
+
+If the graphs has edge weights, the new edges will have weight 1.
 """
 function add_self_loops(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
     @assert g.edata === (;)
-    @assert edge_weight(g) === nothing
+    ew = get_edge_weight(g)
     n = g.num_nodes
     nodes = convert(typeof(s), [1:n;])
     s = [s; nodes]
     t = [t; nodes]
+    if ew !== nothing
+        ew = [ew; fill!(similar(ew, n), 1)]
+    end
 
-    GNNGraph((s, t, nothing), 
+    GNNGraph((s, t, ew), 
         g.num_nodes, length(s), g.num_graphs, 
         g.graph_indicator,
         g.ndata, g.edata, g.gdata)
@@ -39,7 +43,7 @@ function remove_self_loops(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
     # TODO remove these constraints
     @assert g.edata === (;)
-    @assert edge_weight(g) === nothing
+    @assert get_edge_weight(g) === nothing
     
     mask_old_loops = s .!= t
     s = s[mask_old_loops]
@@ -61,7 +65,7 @@ function remove_multi_edges(g::GNNGraph{<:COO_T})
     # TODO remove these constraints
     @assert g.num_graphs == 1
     @assert g.edata === (;)
-    @assert edge_weight(g) === nothing
+    @assert get_edge_weight(g) === nothing
     
     idxs, idxmax = edge_encoding(s, t, g.num_nodes)
     union!(idxs)
@@ -85,7 +89,7 @@ function add_edges(g::GNNGraph{<:COO_T},
 
     @assert length(snew) == length(tnew)
     # TODO remove this constraint
-    @assert edge_weight(g) === nothing
+    @assert get_edge_weight(g) === nothing
     
     edata = normalize_graphdata(edata, default_name=:e, n=length(snew))
     edata = cat_features(g.edata, edata)
@@ -126,7 +130,7 @@ function SparseArrays.blockdiag(g1::GNNGraph, g2::GNNGraph)
         s2, t2 = edge_index(g2)
         s = vcat(s1, nv1 .+ s2)
         t = vcat(t1, nv1 .+ t2)
-        w = cat_features(edge_weight(g1), edge_weight(g2))
+        w = cat_features(get_edge_weight(g1), get_edge_weight(g2))
         graph = (s, t, w)
         ind1 = isnothing(g1.graph_indicator) ? ones_like(s1, Int, nv1) : g1.graph_indicator 
         ind2 = isnothing(g2.graph_indicator) ? ones_like(s2, Int, nv2) : g2.graph_indicator     
@@ -288,7 +292,7 @@ function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap=false)
     graph_indicator = [graphmap[i] for i in g.graph_indicator[node_mask]]
     
     s, t = edge_index(g)
-    w = edge_weight(g)
+    w = get_edge_weight(g)
     edge_mask = s .∈ Ref(nodes) 
     
     if g.graph isa COO_T 
@@ -340,7 +344,7 @@ function negative_sample(g::GNNGraph;
     @assert g.num_graphs == 1
     # Consider self-loops as positive edges
     # Construct new graph dropping features
-    g = add_self_loops(GNNGraph(edge_index(g))) 
+    g = add_self_loops(GNNGraph(edge_index(g), num_nodes=g.num_nodes)) 
     
     s, t = edge_index(g)
     n = g.num_nodes

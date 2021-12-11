@@ -70,18 +70,6 @@
             adjacency_matrix(g; dir=:in) == adj_mat
         end 
 
-        @testset "degree" begin
-            @test degree(g, dir=:out) == vec(sum(adj_mat, dims=2))
-            @test degree(g, dir=:in) == vec(sum(adj_mat, dims=1))
-
-            if TEST_GPU
-                d = degree(g)
-                d_gpu = degree(g_gpu)
-                @test d_gpu isa CuVector
-                @test Array(d_gpu) == d
-            end
-        end
-
         if TEST_GPU
             @testset "functor" begin                
                 s_cpu, t_cpu = edge_index(g)
@@ -134,11 +122,6 @@
         @test adjacency_list(g, dir=:out) ==  adj_list_out
         @test adjacency_matrix(g, dir=:in) ==  adj_mat_in
         @test adjacency_list(g, dir=:in) ==  adj_list_in
-
-        @testset "degree" begin
-            @test degree(g, dir=:out) == vec(sum(adj_mat_out, dims=2))
-            @test degree(g, dir=:in) == vec(sum(adj_mat_out, dims=1))
-        end
     end
 
     @testset "Graphs constructor" begin
