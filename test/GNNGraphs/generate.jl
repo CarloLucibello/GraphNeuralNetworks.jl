@@ -24,4 +24,21 @@
         g2 = rand_graph(n, m, bidirected=false, seed=17, graph_type=GRAPH_T)
         @test edge_index(g2) == edge_index(g)
     end
+
+    @testset "knn_graph" begin
+        n = 10
+        k = 3
+        x = rand(3, n)
+        g = knn_graph(x, k; graph_type=GRAPH_T)
+        @test g.num_nodes == 10
+        @test g.num_edges == n*k
+        @test degree(g, dir=:in) == fill(k, n)        
+        @test has_self_loops(g) == false 
+
+        g = knn_graph(x, k; dir=:out, self_loops=true, graph_type=GRAPH_T)
+        @test g.num_nodes == 10
+        @test g.num_edges == n*k
+        @test degree(g, dir=:out) == fill(k, n)        
+        @test has_self_loops(g) == true 
+    end
 end

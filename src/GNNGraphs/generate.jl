@@ -44,3 +44,19 @@ function rand_graph(n::Integer, m::Integer; bidirected=true, seed=-1, kws...)
     m2 = bidirected ? m÷2 : m
     return GNNGraph(Graphs.erdos_renyi(n, m2; is_directed=!bidirected, seed); kws...)    
 end
+
+
+function knn_graph(points::AbstractMatrix, k::Int; self_loops=false, dir=:in, kws...)
+    kdtree = NearestNeighbors.KDTree(points)
+    sortres = false
+    if !self_loops
+        k += 1
+    end
+    idxs, dists = NearestNeighbors.knn(kdtree, points, k, sortres)
+    # return idxs
+    g = GNNGraph(idxs; dir, kws...)
+    if !self_loops
+        g = remove_self_loops(g)
+    end
+    return g
+end

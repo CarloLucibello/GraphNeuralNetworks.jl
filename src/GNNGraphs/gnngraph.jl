@@ -198,26 +198,26 @@ function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata, grap
 end
 
 function Base.show(io::IO, g::GNNGraph)
-    println(io, "GNNGraph:
+    print(io, "GNNGraph:
     num_nodes = $(g.num_nodes)
     num_edges = $(g.num_edges)")
-    g.num_graphs > 1 && println("num_graphs = $(g.num_graphs)")
+    g.num_graphs > 1 && print("\nnum_graphs = $(g.num_graphs)")
     if !isempty(g.ndata)
-        println(io, "    ndata:")
+        print(io, "\n    ndata:")
         for k in keys(g.ndata)
-            println(io, "        $k => $(size(g.ndata[k]))")
+            print(io, "\n        $k => $(size(g.ndata[k]))")
         end
     end
     if !isempty(g.edata)
-        println(io, "    edata:")
+        print(io, "\n    edata:")
         for k in keys(g.edata)
-            println(io, "        $k => $(size(g.edata[k]))")
+            print(io, "\n        $k => $(size(g.edata[k]))")
         end
     end
     if !isempty(g.gdata)
-        println(io, "    gdata:")
+        print(io, "\n    gdata:")
         for k in keys(g.gdata)
-            println(io, "        $k => $(size(g.gdata[k]))")
+            print(io, "\n        $k => $(size(g.gdata[k]))")
         end
     end
 end

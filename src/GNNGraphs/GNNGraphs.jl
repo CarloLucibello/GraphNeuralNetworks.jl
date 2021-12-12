@@ -7,6 +7,7 @@ import Graphs
 using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree, has_self_loops, is_directed
 import Flux
 using Flux: batch
+import NearestNeighbors
 import NNlib
 import LearnBase
 import StatsBase
@@ -53,7 +54,8 @@ export add_nodes,
        blockdiag
 
 include("generate.jl")
-export rand_graph
+export rand_graph, 
+       knn_graph
 
 include("operators.jl")
 # Base.intersect
