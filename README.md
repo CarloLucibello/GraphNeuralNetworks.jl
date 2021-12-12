@@ -18,7 +18,7 @@ Among its features:
 
 ## Installation
 
-GNN.jl is a registered julia package. You can easily install it through the package manager:
+GraphNeuralNetworks.jl is a registered Julia package. You can easily install it through the package manager:
 
 ```julia
 pkg> add GraphNeuralNetworks
@@ -30,7 +30,7 @@ Usage examples can be found in the [examples](https://github.com/CarloLucibello/
 
 ## Acknowledgments
 
-GNN.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/), [Deep Graph Library](https://docs.dgl.ai/),
+GraphNeuralNetworks.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/), [Deep Graph Library](https://docs.dgl.ai/),
 and [GeometricFlux.jl](https://fluxml.ai/GeometricFlux.jl/stable/).
 
 

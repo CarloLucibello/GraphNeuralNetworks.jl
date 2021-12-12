@@ -16,7 +16,7 @@ and to ``\gamma_x`` and ``\gamma_e`` as to the node update and edge update funct
 respectively. The aggregation ``\square`` is over the neighborhood ``N(i)`` of node ``i``, 
 and it is usually equal either to ``\sum``, to `max` or to a `mean` operation. 
 
-In GNN.jl, the function [`propagate`](@ref) takes care of materializing the
+In GraphNeuralNetworks.jl, the function [`propagate`](@ref) takes care of materializing the
 node features on each edge, applying the message function, performing the
 aggregation, and returning ``\bar{\mathbf{m}}``. 
 It is then left to the user to perform further node and edge updates,

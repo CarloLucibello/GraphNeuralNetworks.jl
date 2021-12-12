@@ -1,7 +1,7 @@
 # GraphNeuralNetworks
 
 This is the documentation page for [GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl), a graph neural network library written in Julia and based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
-GNN.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/),[Deep Graph Library](https://docs.dgl.ai/),
+GraphNeuralNetworks.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/),[Deep Graph Library](https://docs.dgl.ai/),
 and [GeometricFlux.jl](https://fluxml.ai/GeometricFlux.jl/stable/).
 
 Among its features:
@@ -52,7 +52,7 @@ GNNGraph:
 
 ### Model building 
 
-We concisely define our model as a [`GNNChain`](@ref) containing 2 graph convolutaional 
+We concisely define our model as a [`GNNChain`](@ref) containing 2 graph convolutional 
 layers. If CUDA is available, our model will live on the gpu.
 
 ```julia
@@ -72,7 +72,7 @@ julia> opt = ADAM(1f-4);
 
 ### Training 
 
-Finally, we use a standard Flux training pipeling to fit our dataset.
+Finally, we use a standard Flux training pipeline to fit our dataset.
 Flux's DataLoader iterates over mini-batches of graphs 
 (batched together into a `GNNGraph` object). 
 

@@ -87,7 +87,7 @@ model = GNNChain(GCNConv(din => d),
 
 The `GNNChain` only propagates the graph and the node features. More complex scenarios, e.g. when also edge features are updated, have to be handled using the explicit definition of the forward pass. 
 
-A `GNNChain` oppurtunely propagates the graph into the branches created by the `Flux.Parallel` layer:
+A `GNNChain` opportunely propagates the graph into the branches created by the `Flux.Parallel` layer:
 
 ```julia
 AddResidual(l) = Parallel(+, identity, l)  # implementing a skip/residual connection
@@ -105,7 +105,7 @@ y = model(g, X) # output size: (dout, g.num_graphs)
 ## Embedding a graph in the model
 
 Sometimes it is useful to consider a specific graph as a part of a model instead of 
-its input. GNN.jl provides the [`WithGraph`](@ref) type to deal with this scenario.
+its input. GraphNeuralNetworks.jl provides the [`WithGraph`](@ref) type to deal with this scenario.
 
 ```julia
 chain = GNNChain(GCNConv(din => d, relu),
