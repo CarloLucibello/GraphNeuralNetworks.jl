@@ -160,7 +160,7 @@ A graph neural network layer that
 for given input graph `g` and node features `x`,
 returns the dot product `x_i ⋅ xj` on each edge. 
 
-# Usage 
+# Examples 
 
 ```juliarepl
 julia> g = rand_graph(5, 6)

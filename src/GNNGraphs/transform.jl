@@ -55,6 +55,22 @@ function remove_self_loops(g::GNNGraph{<:COO_T})
             g.ndata, g.edata, g.gdata)
 end
 
+
+function remove_self_loops(g::GNNGraph{<:ADJMAT_T})
+    @assert g.edata === (;)
+    A = g.graph
+    A[diagind(A)] .= 0
+    if A isa AbstractSparseMatrix
+        dropzeros!(A)
+    end
+    num_edges = numnonzeros(A)
+    GNNGraph(A, 
+            g.num_nodes, num_edges, g.num_graphs, 
+            g.graph_indicator,
+            g.ndata, g.edata, g.gdata)
+end
+
+
 """
     remove_multi_edges(g::GNNGraph)
 
@@ -183,7 +199,7 @@ containing the total number of original nodes and edges.
 Equivalent to [`SparseArrays.blockdiag`](@ref).
 See also [`Flux.unbatch`](@ref).
 
-# Usage
+# Examples
 
 ```juliarepl
 julia> g1 = rand_graph(4, 6, ndata=ones(8, 4))
@@ -231,7 +247,7 @@ an array of the individual graphs batched together in `g`.
 
 See also [`Flux.batch`](@ref) and [`getgraph`](@ref).
 
-# Usage
+# Examples
 
 ```juliarepl
 julia> gbatched = Flux.batch([rand_graph(5, 6), rand_graph(10, 8), rand_graph(4,2)])
