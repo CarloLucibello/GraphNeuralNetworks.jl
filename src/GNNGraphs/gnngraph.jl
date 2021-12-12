@@ -65,7 +65,7 @@ functionality from that library.
 - `edata`: Edge features. A named tuple of arrays whose last dimension has size `num_edges`.
 - `gdata`: Graph features. A named tuple of arrays whose last dimension has size `num_graphs`. 
 
-# Usage. 
+# Examples 
 
 ```julia
 using Flux, GraphNeuralNetworks
@@ -201,7 +201,7 @@ function Base.show(io::IO, g::GNNGraph)
     print(io, "GNNGraph:
     num_nodes = $(g.num_nodes)
     num_edges = $(g.num_edges)")
-    g.num_graphs > 1 && print("\nnum_graphs = $(g.num_graphs)")
+    g.num_graphs > 1 && print("\n    num_graphs = $(g.num_graphs)")
     if !isempty(g.ndata)
         print(io, "\n    ndata:")
         for k in keys(g.ndata)

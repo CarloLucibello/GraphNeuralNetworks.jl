@@ -69,7 +69,7 @@ function to_dense(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing)
     num_nodes = size(A, 1)
     @assert num_nodes == size(A, 2)
     # @assert all(x -> (x == 1) || (x == 0), A)
-    num_edges = round(Int, sum(A))
+    num_edges = numnonzeros(A)
     if dir == :in
         A = A'
     end
@@ -85,7 +85,7 @@ function to_dense(adj_list::ADJLIST_T, T=nothing; dir=:out, num_nodes=nothing)
     num_edges = sum(length.(adj_list))
     @assert num_nodes > 0
     T = T === nothing ? eltype(adj_list[1]) : T
-    A = similar(adj_list[1], T, (num_nodes, num_nodes))
+    A = fill!(similar(adj_list[1], T, (num_nodes, num_nodes)), 0)
     if dir == :out
         for (i, neigs) in enumerate(adj_list)
             A[i, neigs] .= 1
@@ -129,13 +129,13 @@ function to_sparse(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing)
     end
     if !(A isa AbstractSparseMatrix)
         A = sparse(A)
-    end 
+    end
     return A, num_nodes, num_edges
 end
 
 function to_sparse(adj_list::ADJLIST_T, T=nothing; dir=:out, num_nodes=nothing)
     coo, num_nodes, num_edges = to_coo(adj_list; dir, num_nodes)
-    return to_sparse(coo; dir, num_nodes)
+    return to_sparse(coo; num_nodes)
 end
 
 function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing)

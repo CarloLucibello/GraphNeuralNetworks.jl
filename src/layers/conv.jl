@@ -713,7 +713,7 @@ as the input size.
 - `init`: Weights' initializer.
 - `residual`: Add a residual connection.
 
-# Usage 
+# Examples 
 
 ```julia
 x = rand(Float32, 2, g.num_nodes)

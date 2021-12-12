@@ -31,7 +31,7 @@ providing as input `f` a closure.
       with the same batch size.
 - `aggr`: Neighborhood aggregation operator. Use `+`, `mean`, `max`, or `min`. 
 
-# Usage Examples
+# Examples
 
 ```julia
 using GraphNeuralNetworks, Flux

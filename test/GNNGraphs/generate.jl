@@ -26,8 +26,7 @@
     end
 
     @testset "knn_graph" begin
-        n = 10
-        k = 3
+        n, k = 10, 3
         x = rand(3, n)
         g = knn_graph(x, k; graph_type=GRAPH_T)
         @test g.num_nodes == 10
@@ -40,5 +39,15 @@
         @test g.num_edges == n*k
         @test degree(g, dir=:out) == fill(k, n)        
         @test has_self_loops(g) == true 
+
+        graph_indicator = [1,1,1,1,1,2,2,2,2,2]
+        g = knn_graph(x, k; graph_indicator, graph_type=GRAPH_T)
+        @test g.num_graphs == 2
+        s, t = edge_index(g)
+        ne = n*k÷2
+        @test all(1 .<= s[1:ne] .<= 5)
+        @test all(1 .<= t[1:ne] .<= 5)     
+        @test all(6 .<= s[ne+1:end] .<= 10)
+        @test all(6 .<= t[ne+1:end] .<= 10)     
     end
 end

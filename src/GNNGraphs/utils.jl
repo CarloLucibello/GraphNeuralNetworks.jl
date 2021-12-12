@@ -71,6 +71,8 @@ ones_like(x::AbstractArray, T=eltype(x), sz=size(x)) = fill!(similar(x, T, sz), 
 ones_like(x::SparseMatrixCSC, T=eltype(x), sz=size(x)) = ones(T, sz)
 ones_like(x::CUMAT_T, T=eltype(x), sz=size(x)) = CUDA.ones(T, sz)
 
+numnonzeros(a::AbstractSparseMatrix) = nnz(a)
+numnonzeros(a::AbstractMatrix) = count(!=(0), a)
 
 # each edge is represented by a number in
 # 1:N^2
