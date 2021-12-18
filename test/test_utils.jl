@@ -30,14 +30,13 @@ function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,
     
     x = node_features(g)
     e = edge_features(g)
+    use_edge_feat = !isnothing(e)
 
     x64, e64, l64, g64 = to64.([x, e, l, g]) # needed for accurate FiniteDifferences' grad
     xgpu, egpu, lgpu, ggpu = gpu.([x, e, l, g]) 
 
     f(l, g::GNNGraph) = l(g)
-    f(l, g::GNNGraph, x::AbstractArray{Float32}) = isnothing(e) ? l(g, x) : l(g, x, e)
-    f(l, g::GNNGraph, x::AbstractArray{Float64}) = isnothing(e64) ? l(g, x) : l(g, x, e64)
-    f(l, g::GNNGraph, x::CuArray) = isnothing(e64) ? l(g, x) : l(g, x, egpu)
+    f(l, g::GNNGraph, x, e) = use_edge_feat ? l(g, x, e) : l(g, x)
     
     loss(l, g::GNNGraph) = if outtype == :node
                                 sum(node_features(f(l, g))) 
@@ -45,25 +44,51 @@ function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,
                                 sum(edge_features(f(l, g)))         
                             elseif outtype == :graph
                                 sum(graph_features(f(l, g))) 
+                            elseif outtype == :node_edge
+                                gnew = f(l, g)
+                                sum(node_features(gnew)) + sum(edge_features(gnew))
                             end
 
-    loss(l, g::GNNGraph, x) = sum(f(l, g, x)) 
-    loss(l, g::GNNGraph, x, e) = sum(l(g, x, e)) 
+    function loss(l, g::GNNGraph, x, e) 
+        y = f(l, g, x, e)
+        if outtype == :node_edge
+            return sum(y[1]) + sum(y[2])
+        else 
+            return sum(y)
+        end
+    end
     
     
     # TEST OUTPUT
-    y = f(l, g, x)
-    @test eltype(y) == eltype(x)
-    @test all(isfinite, y)
-    if !isnothing(outsize)
-        @test size(y) == outsize
+    y = f(l, g, x, e)
+    if outtype == :node_edge
+        @assert y isa Tuple
+        @test eltype(y[1]) == eltype(x)
+        @test eltype(y[2]) == eltype(e)
+        @test all(isfinite, y[1])
+        @test all(isfinite, y[2])
+        if !isnothing(outsize)
+            @test size(y[1]) == outsize[1]
+            @test size(y[2]) == outsize[2]
+        end
+    else
+        @test eltype(y) == eltype(x)
+        @test all(isfinite, y)
+        if !isnothing(outsize)
+            @test size(y) == outsize
+        end
     end
 
     # test same output on different graph formats
     gcoo = GNNGraph(g, graph_type=:coo)
-    ycoo = f(l, gcoo, x)
-    @test ycoo ≈ y    
- 
+    ycoo = f(l, gcoo, x, e)
+    if outtype == :node_edge
+        @test ycoo[1] ≈ y[1]
+        @test ycoo[2] ≈ y[2]
+    else
+        @test ycoo ≈ y
+    end
+
     g′ = f(l, g)
     if outtype == :node
         @test g′.ndata.x ≈ y
@@ -71,25 +96,37 @@ function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,
         @test g′.edata.e ≈ y    
     elseif outtype == :graph
         @test g′.gdata.u ≈ y
+    elseif outtype == :node_edge
+        @test g′.ndata.x ≈ y[1]
+        @test g′.edata.e ≈ y[2]
     else
         @error "wrong outtype $outtype"
     end
     if test_gpu
-        ygpu = f(lgpu, ggpu, xgpu)
-        @test ygpu isa CuArray 
-        @test eltype(ygpu) == eltype(xgpu)
-        @test Array(ygpu) ≈ y
+        ygpu = f(lgpu, ggpu, xgpu, egpu)
+        if outtype == :node_edge
+            @test ygpu[1] isa CuArray 
+            @test eltype(ygpu[1]) == eltype(xgpu)
+            @test Array(ygpu[1]) ≈ y[1]
+            @test ygpu[2] isa CuArray 
+            @test eltype(ygpu[2]) == eltype(xgpu)
+            @test Array(ygpu[2]) ≈ y[2]
+        else
+            @test ygpu isa CuArray 
+            @test eltype(ygpu) == eltype(xgpu)
+            @test Array(ygpu) ≈ y
+        end
     end
 
 
     # TEST x INPUT GRADIENT
-    x̄  = gradient(x -> loss(l, g, x), x)[1]
-    x̄_fd = FiniteDifferences.grad(fdm, x64 -> loss(l64, g64, x64), x64)[1]
+    x̄  = gradient(x -> loss(l, g, x, e), x)[1]
+    x̄_fd = FiniteDifferences.grad(fdm, x64 -> loss(l64, g64, x64, e64), x64)[1]
     @test eltype(x̄) == eltype(x)
     @test x̄ ≈ x̄_fd    atol=atol rtol=rtol
 
     if test_gpu
-        x̄gpu  = gradient(xgpu -> loss(lgpu, ggpu, xgpu), xgpu)[1]
+        x̄gpu  = gradient(xgpu -> loss(lgpu, ggpu, xgpu, egpu), xgpu)[1]
         @test x̄gpu isa CuArray 
         @test eltype(x̄gpu) == eltype(x)
         @test Array(x̄gpu) ≈ x̄   atol=atol rtol=rtol
@@ -112,13 +149,13 @@ function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,
     end
 
 
-    # TEST LAYER GRADIENT - l(g, x) 
-    l̄ = gradient(l -> loss(l, g, x), l)[1]
-    l̄_fd = FiniteDifferences.grad(fdm, l64 -> loss(l64, g64, x64), l64)[1]
+    # TEST LAYER GRADIENT - l(g, x, e) 
+    l̄ = gradient(l -> loss(l, g, x, e), l)[1]
+    l̄_fd = FiniteDifferences.grad(fdm, l64 -> loss(l64, g64, x64, e64), l64)[1]
     test_approx_structs(l, l̄, l̄_fd; atol, rtol, broken_grad_fields, exclude_grad_fields, verbose)
 
     if test_gpu
-        l̄gpu = gradient(lgpu -> loss(lgpu, ggpu, xgpu), lgpu)[1]
+        l̄gpu = gradient(lgpu -> loss(lgpu, ggpu, xgpu, egpu), lgpu)[1]
         test_approx_structs(lgpu, l̄gpu, l̄; atol, rtol, broken_grad_fields, exclude_grad_fields, verbose)
     end
 

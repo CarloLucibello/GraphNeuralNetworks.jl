@@ -186,10 +186,12 @@
     end
 
     @testset "MEGNetConv" begin
-        l = MEGNetConv(in_channel => out_channel, tanh, aggr=+)
+        l = MEGNetConv(in_channel => out_channel, aggr=+)
         for g in test_graphs
             g = GNNGraph(g, edata=rand(T, in_channel, g.num_edges))
-            test_layer(l, g, rtol=1e-5, outsize=(out_channel, g.num_nodes)) 
+            test_layer(l, g, rtol=1e-5,
+                outtype=:node_edge, 
+                outsize=((out_channel, g.num_nodes), (out_channel, g.num_edges))) 
         end
     end
 end
