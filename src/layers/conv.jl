@@ -823,3 +823,48 @@ function (l::AGNNConv)(g::GNNGraph, x::AbstractMatrix)
     return x  
 end
 
+@doc raw"""
+    MEGNetConv(in => out; aggr=mean)
+
+Convolution from [Graph Networks as a Universal Machine Learning Framework for Molecules and Crystals](https://arxiv.org/pdf/1812.05055.pdf)
+paper.
+"""
+struct MEGNetConv <: GNNLayer
+    ϕe
+    ϕv 
+    aggr
+end
+
+@functor MEGNetConv
+
+function MEGNetConv(ch::Pair{Int,Int}; aggr=mean)
+    nin, nout = ch 
+    ϕe = Chain(Dense(3nin, nout, relu),
+               Dense(nout, nout))
+
+    ϕv = Chain(Dense(nin + nout, nout, relu),
+               Dense(nout, nout))
+
+    MEGNetConv(ϕe, ϕv, aggr)
+end
+
+function (l::MEGNetConv)(g::GNNGraph)
+    x, e = l(g, node_features(g), edge_features(g))
+    g = GNNGraph(g, ndata=x, edata=e)
+end
+                                                     )
+function (l::MEGNetConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
+    check_num_nodes(g, x)
+
+    ē = apply_edges(g, xi=x, xj=x, e=e) do xi, xj, e
+        l.ϕe(vcat(xi, xj, e))
+    end
+
+    xᵉ = aggregate_neighbors(g, l.aggr, ē)
+
+    x̄ = l.ϕv(vcat(x, xᵉ))
+
+    return x̄, ē
+end
+
+

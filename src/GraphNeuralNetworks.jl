@@ -46,9 +46,11 @@ export
     GCNConv,
     GINConv,
     GraphConv,
+    MEGNetConv, 
     NNConv,
     ResGatedGraphConv,
     SAGEConv,
+
     
     # layers/pool
     GlobalPool,
