@@ -852,7 +852,7 @@ function (l::MEGNetConv)(g::GNNGraph)
     x, e = l(g, node_features(g), edge_features(g))
     g = GNNGraph(g, ndata=x, edata=e)
 end
-                                                     )
+
 function (l::MEGNetConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     check_num_nodes(g, x)
 
