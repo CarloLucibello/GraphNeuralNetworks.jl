@@ -15,6 +15,7 @@ Pages   = ["messagepassing.md"]
 
 ```@docs
 apply_edges
+aggregate_neighbors
 propagate
 ```
 
