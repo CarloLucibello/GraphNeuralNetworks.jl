@@ -61,7 +61,7 @@ l = GNNConv(10 => 20)
 l(g, x)
 ```
 
-See also [`apply_edges`](@ref).
+See also [`apply_edges`](@ref) and [`aggregate_neighbors`](@ref).
 """
 function propagate end 
 
@@ -103,7 +103,7 @@ such tensors.
        a batch of edges. The output of `f` has to be an array (or a named tuple of arrays)
        with the same batch size. 
 
-See also [`propagate`](@ref).
+See also [`propagate`](@ref) and [`aggregate_neighbors`](@ref).
 """
 function apply_edges end 
 
@@ -125,7 +125,19 @@ _gather(x::Nothing, i) = nothing
 
 
 ##  AGGREGATE NEIGHBORS
+@doc raw"""
+    aggregate_neighbors(g::GNNGraph, aggr, m)
 
+Given a graph `g`, edge features `m`, and an aggregation
+operator `aggr` (e.g `+, min, max, mean`), returns the new node
+features 
+```math
+\mathbf{x}_i = \square_{j \in \mathcal{N}(i)} \mathbf{m}_{j\to i}
+```
+
+Neighborhood aggregation is the second step of [`propagate`](@ref), 
+where it comes after [`apply_edges`](@ref).
+"""
 function aggregate_neighbors(g::GNNGraph, aggr, m)
     s, t = edge_index(g)
     return _scatter(aggr, m, t)

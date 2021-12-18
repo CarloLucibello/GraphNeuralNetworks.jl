@@ -823,3 +823,73 @@ function (l::AGNNConv)(g::GNNGraph, x::AbstractMatrix)
     return x  
 end
 
+@doc raw"""
+    MEGNetConv(ϕe, ϕv; aggr=mean)
+    MEGNetConv(in => out; aggr=mean)
+
+Convolution from [Graph Networks as a Universal Machine Learning Framework for Molecules and Crystals](https://arxiv.org/pdf/1812.05055.pdf)
+paper. In the forward pass, takes as inputs node features `x` and edge features `e` and returns
+updated features `x̄, ē` according to 
+
+```math
+ē  = ϕe(vcat(xi, xj, e))
+x̄  = ϕv(vcat(x, \square_{j\in \mathcal{N}(i)} ē_{j\to i}))
+```
+`aggr` defines the aggregation to be performed.
+
+If the neural networks `ϕe` and  `ϕv` are not provided, they will be constructed from
+the `in` and `out` arguments instead as multi-layer perceptron with one hidden layer and `relu` 
+activations.
+````
+
+# Examples
+
+```julia
+g = rand_graph(10, 30)
+x = randn(3, 10)
+e = randn(3, 30)
+m = MEGNetConv(3 => 3)
+x̄, ē = m(g, x, e)
+```
+"""
+struct MEGNetConv <: GNNLayer
+    ϕe
+    ϕv 
+    aggr
+end
+
+@functor MEGNetConv
+
+MEGNetConv(ϕe, ϕv; aggr=mean) = MEGNetConv(ϕe, ϕv, aggr)
+
+function MEGNetConv(ch::Pair{Int,Int}; aggr=mean)
+    nin, nout = ch 
+    ϕe = Chain(Dense(3nin, nout, relu),
+               Dense(nout, nout))
+
+    ϕv = Chain(Dense(nin + nout, nout, relu),
+               Dense(nout, nout))
+
+    MEGNetConv(ϕe, ϕv; aggr)
+end
+
+function (l::MEGNetConv)(g::GNNGraph)
+    x, e = l(g, node_features(g), edge_features(g))
+    g = GNNGraph(g, ndata=x, edata=e)
+end
+
+function (l::MEGNetConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
+    check_num_nodes(g, x)
+
+    ē = apply_edges(g, xi=x, xj=x, e=e) do xi, xj, e
+        l.ϕe(vcat(xi, xj, e))
+    end
+
+    xᵉ = aggregate_neighbors(g, l.aggr, ē)
+
+    x̄ = l.ϕv(vcat(x, xᵉ))
+
+    return x̄, ē
+end
+
+
