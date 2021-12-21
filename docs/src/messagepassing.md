@@ -20,13 +20,15 @@ In GraphNeuralNetworks.jl, the function [`propagate`](@ref) takes care of materi
 node features on each edge, applying the message function, performing the
 aggregation, and returning ``\bar{\mathbf{m}}``. 
 It is then left to the user to perform further node and edge updates,
-manypulating arrays of size ``D_{node} \times num\_nodes`` and   
+manipulating arrays of size ``D_{node} \times num\_nodes`` and   
 ``D_{edge} \times num\_edges``.
 
-As part of the [`propagate`](@ref) pipeline, we have the function
-[`apply_edges`](@ref). It can be independently used to materialize 
-node features on edges and perform edge-related computation without
-the following neighborhood aggregation one finds in `propagate`.
+[`propagate`](@ref) is composed of two steps corresponding to two
+exported methods:
+1.  [`apply_edges`](@ref) materializes node features on edges and 
+performs edge-related computation without. 
+2. [`aggregate_neighbors`](@ref) applies a reduction operator on the messages coming
+from the neighborhood of each node.
 
 The whole propagation mechanism internally relies on the [`NNlib.gather`](@ref) 
 and [`NNlib.scatter`](@ref) methods.
@@ -46,17 +48,11 @@ GNNGraph:
     num_nodes = 10
     num_edges = 20
 
+julia> x = ones(2,10);
 
-julia> x = ones(2,10)
-2×10 Matrix{Float64}:
- 1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0
- 1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0
+julia> z = 2ones(2,10);
 
-julia> z = 2ones(2,10)
-2×10 Matrix{Float64}:
- 2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0
- 2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0
-
+# Return an edge features arrays (D × num_edges)
 julia> apply_edges((xi, xj, e) -> xi .+ xj, g, xi=x, xj=z)
 2×20 Matrix{Float64}:
  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0  3.0
@@ -72,14 +68,16 @@ julia> apply_edges((xi, xj, e) -> xi.a + xi.b .* xj, g, xi=(a=x,b=z), xj=z)
  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0
  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0  5.0
 ```
+
 The function [`propagate`](@ref) instead performs the [`apply_edges`](@ref) operation
-but then also applies a reduction over each node's neighborhood.
+but then also applies a reduction over each node's neighborhood (see [`aggregate_neighbors`](@ref)).
 ```julia
 julia> propagate((xi, xj, e) -> xi .+ xj, g, +, xi=x, xj=z)
 2×10 Matrix{Float64}:
  3.0  6.0  9.0  9.0  0.0  6.0  6.0  3.0  15.0  3.0
  3.0  6.0  9.0  9.0  0.0  6.0  6.0  3.0  15.0  3.0
 
+# Previous output can be understood by looking at the degree
 julia> degree(g)
 10-element Vector{Int64}:
  1
