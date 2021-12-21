@@ -269,7 +269,7 @@ Implements the operation
 ```
 where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
-\alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W \mathbf{x}_i \,\|\, W \mathbf{x}_j]))
+\alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W \mathbf{x}_i; W \mathbf{x}_j]))
 ```
 with ``z_i`` a normalization factor.
 
@@ -568,7 +568,7 @@ GraphSAGE convolution layer from paper [Inductive Representation Learning on Lar
 
 Performs:
 ```math
-\mathbf{x}_i' = W \cdot [\mathbf{x}_i \,\|\, \square_{j \in \mathcal{N}(i)} \mathbf{x}_j]
+\mathbf{x}_i' = W \cdot [\mathbf{x}_i; \square_{j \in \mathcal{N}(i)} \mathbf{x}_j]
 ```
 
 where the aggregation type is selected by `aggr`.
@@ -697,7 +697,7 @@ Performs the operation
 ```
 
 where ``\mathbf{z}_{ij}``  is the node and edge features concatenation 
-``[\mathbf{x}_i \| \mathbf{x}_j \| \mathbf{e}_{j\to i}]`` 
+``[\mathbf{x}_i; \mathbf{x}_j; \mathbf{e}_{j\to i}]`` 
 and ``\sigma`` is the sigmoid function.
 The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
 as the input size.
@@ -829,12 +829,13 @@ end
 
 Convolution from [Graph Networks as a Universal Machine Learning Framework for Molecules and Crystals](https://arxiv.org/pdf/1812.05055.pdf)
 paper. In the forward pass, takes as inputs node features `x` and edge features `e` and returns
-updated features `x̄, ē` according to 
+updated features `x'` and `e'` according to 
 
 ```math
-ē  = ϕe(vcat(xi, xj, e))
-x̄  = ϕv(vcat(x, \square_{j\in \mathcal{N}(i)} ē_{j\to i}))
+\mathbf{e}_{i\to j}'  = \phi_e([\mathbf{x}_i; \mathbf{x}_j; \mathbf{e}_{i\to j}])\\
+\mathbf{x}_{i}'  = \phi_v([\mathbf{x}_i; \square_{j\in \mathcal{N}(i)\,\mathbf{e}_{j\to i}'])
 ```
+
 `aggr` defines the aggregation to be performed.
 
 If the neural networks `ϕe` and  `ϕv` are not provided, they will be constructed from
@@ -849,7 +850,7 @@ g = rand_graph(10, 30)
 x = randn(3, 10)
 e = randn(3, 30)
 m = MEGNetConv(3 => 3)
-x̄, ē = m(g, x, e)
+x′, e′ = m(g, x, e)
 ```
 """
 struct MEGNetConv <: GNNLayer
