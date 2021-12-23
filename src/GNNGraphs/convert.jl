@@ -31,7 +31,7 @@ function to_coo(A::ADJMAT_T; dir=:out, num_nodes=nothing)
     if dir == :in
         s, t = t, s
     end
-    num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
+    num_nodes = isnothing(num_nodes) ? size(A, 1) : num_nodes 
     num_edges = length(s)
     return (s, t, v), num_nodes, num_edges
 end
