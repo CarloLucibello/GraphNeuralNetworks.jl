@@ -6,12 +6,14 @@
         
         g = GNNGraph(A, graph_type=GRAPH_T)
         s, t = edge_index(g)
+        v = get_edge_weight(g)
         @test s == sA
         @test t == tA
         @test v == vA
 
         g = GNNGraph(Matrix(A), graph_type=GRAPH_T)
         s, t = edge_index(g)
+        v = get_edge_weight(g)
         @test s == sA
         @test t == tA
         @test v == vA
@@ -19,14 +21,14 @@
         g = GNNGraph([0 0 0
                       0 0 1
                       0 1 0], graph_type=GRAPH_T)
-        @test g.num_nodes = 3
-        @test g.num_edges = 2
+        @test g.num_nodes == 3
+        @test g.num_edges == 2
         
         g = GNNGraph([0 1 0
                       1 0 0
                       0 0 0], graph_type=GRAPH_T)
-        @test g.num_nodes = 3
-        @test g.num_edges = 2
+        @test g.num_nodes == 3
+        @test g.num_edges == 2
     end
 
     @testset "symmetric graph" begin
