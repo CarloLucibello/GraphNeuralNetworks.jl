@@ -18,21 +18,22 @@ function to_coo(A::SPARSE_T; dir=:out, num_nodes=nothing)
     if dir == :in
         s, t = t, s
     end
-    num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
+    num_nodes = isnothing(num_nodes) ? size(A, 1) : num_nodes 
     num_edges = length(s)
 
-    return (s, t, nothing), num_nodes, num_edges
+    return (s, t, v), num_nodes, num_edges
 end
 
 function to_coo(A::ADJMAT_T; dir=:out, num_nodes=nothing)
     nz = findall(!=(0), A) # vec of cartesian indexes
     s, t = ntuple(i -> map(t->t[i], nz), 2)
+    v = A[nz] 
     if dir == :in
         s, t = t, s
     end
-    num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
+    num_nodes = isnothing(num_nodes) ? size(A, 1) : num_nodes 
     num_edges = length(s)
-    return (s, t, nothing), num_nodes, num_edges
+    return (s, t, v), num_nodes, num_edges
 end
 
 function to_coo(adj_list::ADJLIST_T; dir=:out, num_nodes=nothing)
@@ -140,14 +141,16 @@ end
 
 function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing)
     s, t, eweight  = coo
-    T = T === nothing ? eltype(s) : T
-    eweight = isnothing(eweight) ? fill!(similar(s, T), 1) : eweight
+    T = T === nothing ? (eweight === nothing ? eltype(s) : eltype(eweight)) : T
+    eweight = eweight === nothing ? fill!(similar(s, T), 1) : eweight
     num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     A = sparse(s, t, eweight, num_nodes, num_nodes)
-    num_edges = length(s)
+    num_edges = nnz(A)
+    if eltype(A) != T
+        A = T.(A)
+    end
     return A, num_nodes, num_edges
 end
-
 
 @non_differentiable to_coo(x...)
 @non_differentiable to_dense(x...)

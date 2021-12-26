@@ -47,7 +47,7 @@ functionality from that library.
     - An adjacency matrix
     - An adjacency list.
     - A tuple containing the source and target vectors (COO representation)
-    - A Graphs' graph.
+    - A Graphs.jl' graph.
 - `graph_type`: A keyword argument that specifies 
                 the underlying representation used by the GNNGraph. 
                 Currently supported values are 
@@ -61,9 +61,9 @@ functionality from that library.
         Possible values are `:out` and `:in`. Default `:out`.
 - `num_nodes`: The number of nodes. If not specified, inferred from `g`. Default `nothing`.
 - `graph_indicator`: For batched graphs, a vector containing the graph assigment of each node. Default `nothing`.  
-- `ndata`: Node features. A named tuple of arrays whose last dimension has size `num_nodes`.
-- `edata`: Edge features. A named tuple of arrays whose last dimension has size `num_edges`.
-- `gdata`: Graph features. A named tuple of arrays whose last dimension has size `num_graphs`. 
+- `ndata`: Node features. An array or named tuple of arrays whose last dimension has size `num_nodes`.
+- `edata`: Edge features. An array or named tuple of arrays whose last dimension has size `num_edges`.
+- `gdata`: Graph features. An array or named tuple of arrays whose last dimension has size `num_graphs`. 
 
 # Examples 
 

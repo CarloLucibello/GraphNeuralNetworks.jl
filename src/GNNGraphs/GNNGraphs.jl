@@ -24,9 +24,10 @@ export GNNGraph,
     
 include("query.jl")
 export adjacency_list,
-       edge_index, 
+       edge_index,
+       get_edge_weight,
        graph_indicator, 
-       has_multi_edges, 
+       has_multi_edges,
        is_directed,
        is_bidirected,
        normalized_laplacian, 
@@ -39,16 +40,16 @@ export adjacency_list,
        outneighbors 
 
 include("transform.jl")
-export add_nodes, 
-       add_edges, 
+export add_nodes,
+       add_edges,
        add_self_loops,
        getgraph,
        negative_sample,
        rand_edge_split,
-       remove_self_loops, 
+       remove_self_loops,
        remove_multi_edges,
        # from Flux
-       batch, 
+       batch,
        unbatch,
        # from SparseArrays
        blockdiag

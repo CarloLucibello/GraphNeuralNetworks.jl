@@ -1,4 +1,36 @@
 @testset "GNNGraph" begin
+
+    @testset "Constructor: adjacency matrix" begin
+        A = sprand(10, 10, 0.5)
+        sA, tA, vA = findnz(A)
+        
+        g = GNNGraph(A, graph_type=GRAPH_T)
+        s, t = edge_index(g)
+        v = get_edge_weight(g)
+        @test s == sA
+        @test t == tA
+        @test v == vA
+
+        g = GNNGraph(Matrix(A), graph_type=GRAPH_T)
+        s, t = edge_index(g)
+        v = get_edge_weight(g)
+        @test s == sA
+        @test t == tA
+        @test v == vA
+
+        g = GNNGraph([0 0 0
+                      0 0 1
+                      0 1 0], graph_type=GRAPH_T)
+        @test g.num_nodes == 3
+        @test g.num_edges == 2
+        
+        g = GNNGraph([0 1 0
+                      1 0 0
+                      0 0 0], graph_type=GRAPH_T)
+        @test g.num_nodes == 3
+        @test g.num_edges == 2
+    end
+
     @testset "symmetric graph" begin
         s = [1, 1, 2, 2, 3, 3, 4, 4]
         t = [2, 4, 1, 3, 2, 4, 1, 3]
@@ -124,7 +156,7 @@
         @test adjacency_list(g, dir=:in) ==  adj_list_in
     end
 
-    @testset "Graphs constructor" begin
+    @testset "Graphs.jl constructor" begin
         lg = random_regular_graph(10, 4)
         @test !Graphs.is_directed(lg)
         g = GNNGraph(lg)

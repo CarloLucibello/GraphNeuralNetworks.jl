@@ -130,7 +130,15 @@ julia> g = GNNGraph(source, target, weight)
 GNNGraph:
     num_nodes = 3
     num_edges = 6
-    
+
+julia> get_edge_weight(g)
+6-element Vector{Float64}:
+ 1.0
+ 0.5
+ 2.1
+ 2.3
+ 4.0
+ 4.1
 ```
 
 ## Batches and Subgraphs

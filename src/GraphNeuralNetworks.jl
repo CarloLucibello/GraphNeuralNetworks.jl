@@ -22,20 +22,21 @@ using .GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
 export
     # utils
     reduce_nodes, 
-    reduce_edges, 
+    reduce_edges,
     softmax_nodes, 
     softmax_edges,
-    broadcast_nodes, 
+    broadcast_nodes,
     broadcast_edges,
     softmax_edge_neighbors,
     
     # msgpass
     apply_edges,
-    aggregate_neighbors, 
+    aggregate_neighbors,
     propagate,
-    copy_xj, 
-    copy_xi, 
+    copy_xj,
+    copy_xi,
     xi_dot_xj,
+    e_mul_xj,
 
     # layers/basic
     GNNLayer,
