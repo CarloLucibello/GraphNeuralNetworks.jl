@@ -128,3 +128,63 @@ end
 @non_differentiable edge_encoding(x...)
 @non_differentiable edge_decoding(x...)
 
+
+
+####################################
+# FROM MLBASE.jl
+# https://github.com/JuliaML/MLBase.jl/pull/1/files
+# remove when package is registered
+##############################################
+
+numobs(A::AbstractArray{<:Any, N}) where {N} = size(A, N)
+
+# 0-dim arrays
+numobs(A::AbstractArray{<:Any, 0}) = 1
+
+function getobs(A::AbstractArray{<:Any, N}, idx) where N
+    I = ntuple(_ -> :, N-1)
+    return A[I..., idx]
+end
+
+getobs(A::AbstractArray{<:Any, 0}, idx) = A[idx]
+
+function getobs!(buffer::AbstractArray, A::AbstractArray{<:Any, N}, idx) where N
+    I = ntuple(_ -> :, N-1)
+    buffer .= A[I..., idx]
+    return buffer
+end
+
+# --------------------------------------------------------------------
+# Tuples and NamedTuples
+
+_check_numobs_error() =
+    throw(DimensionMismatch("All data containers must have the same number of observations."))
+
+function _check_numobs(tup::Union{Tuple, NamedTuple})
+    length(tup) == 0 && return
+    n1 = numobs(tup[1])
+    for i=2:length(tup)
+        numobs(tup[i]) != n1 && _check_numobs_error()
+    end
+end
+
+function numobs(tup::Union{Tuple, NamedTuple})::Int
+    _check_numobs(tup)
+    return length(tup) == 0 ? 0 : numobs(tup[1])
+end
+
+function getobs(tup::Union{Tuple, NamedTuple}, indices)
+    _check_numobs(tup)
+    return map(x -> getobs(x, indices), tup)
+end
+
+function getobs!(buffers::Union{Tuple, NamedTuple},
+                  tup::Union{Tuple, NamedTuple},
+                  indices)
+    _check_numobs(tup)
+
+    return map(buffers, tup) do buffer, x
+                getobs!(buffer, x, indices)
+            end
+end
+#######################################################
