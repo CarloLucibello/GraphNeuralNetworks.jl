@@ -832,8 +832,8 @@ paper. In the forward pass, takes as inputs node features `x` and edge features 
 updated features `x'` and `e'` according to 
 
 ```math
-\mathbf{e}_{i\to j}'  = \phi_e([\mathbf{x}_i; \mathbf{x}_j; \mathbf{e}_{i\to j}]),\\
-\mathbf{x}_{i}'  = \phi_v([\mathbf{x}_i; \square_{j\in \mathcal{N}(i)\,\mathbf{e}_{j\to i}']).
+\mathbf{e}_{i\to j}'  = \phi_e([\mathbf{x}_i;\,  \mathbf{x}_j;\,  \mathbf{e}_{i\to j}]),\\
+\mathbf{x}_{i}'  = \phi_v([\mathbf{x}_i;\, \square_{j\in \mathcal{N}(i)}\,\mathbf{e}_{j\to i}']).
 ```
 
 `aggr` defines the aggregation to be performed.
