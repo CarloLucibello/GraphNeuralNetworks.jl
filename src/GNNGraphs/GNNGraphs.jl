@@ -11,7 +11,6 @@ import NearestNeighbors
 import NNlib
 import LearnBase
 import StatsBase
-using LearnBase: getobs
 import KrylovKit
 using ChainRulesCore
 using LinearAlgebra, Random
