@@ -92,4 +92,12 @@
         @test eltype(L) == eltype(g)
         @test L ≈ D - A
     end
+
+    @testset "adjacency_matrix" begin
+        a = sprand(5, 5, 0.5)
+        g = GNNGraph(a, graph_type=GRAPH_T)
+        A = adjacency_matrix(g, Float32)
+        @test a ≈ A
+        @test eltype(A) == Float32
+    end
 end

@@ -141,14 +141,16 @@ end
 
 function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing)
     s, t, eweight  = coo
-    T = T === nothing ? eltype(s) : T
-    eweight = isnothing(eweight) ? fill!(similar(s, T), 1) : eweight
+    T = T === nothing ? (eweight === nothing ? eltype(s) : eltype(eweight)) : T
+    eweight = eweight === nothing ? fill!(similar(s, T), 1) : eweight
     num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     A = sparse(s, t, eweight, num_nodes, num_nodes)
-    num_edges = length(s)
+    num_edges = nnz(A)
+    if eltype(A) != T
+        A = T.(A)
+    end
     return A, num_nodes, num_edges
 end
-
 
 @non_differentiable to_coo(x...)
 @non_differentiable to_dense(x...)
