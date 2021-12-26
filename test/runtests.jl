@@ -26,6 +26,7 @@ tests = [
     "GNNGraphs/operators",
     "GNNGraphs/generate",
     "GNNGraphs/query",
+    "GNNGraphs/sampling",
     "utils",
     "msgpass",
     "layers/basic",
