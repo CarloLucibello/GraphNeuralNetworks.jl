@@ -117,7 +117,7 @@ end
 
 @functor GNNGraph
 
-function GNNGraph(data; 
+function GNNGraph(data::D; 
                         num_nodes = nothing,
                         graph_indicator = nothing, 
                         graph_type = :coo,
@@ -125,7 +125,7 @@ function GNNGraph(data;
                         ndata = (;), 
                         edata = (;), 
                         gdata = (;),
-                        )
+                        ) where D <: Union{COO_T, ADJMAT_T, ADJLIST_T}
 
     @assert graph_type ∈ [:coo, :dense, :sparse] "Invalid graph_type $graph_type requested"
     @assert dir ∈ [:in, :out]
@@ -150,9 +150,9 @@ function GNNGraph(data;
             ndata, edata, gdata)
 end
 
-function GNNGraph(n::T; graph_type=:coo, kws...) where {T<:Integer}
+function (::Type{<:GNNGraph})(num_nodes::T; kws...) where {T<:Integer}
     s, t = T[], T[] 
-    return GNNGraph(s, t; graph_type, num_nodes=n, kws...)
+    return GNNGraph(s, t; num_nodes, kws...)
 end
 
 # COO convenience constructors
