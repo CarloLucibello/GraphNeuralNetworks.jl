@@ -97,11 +97,37 @@ incoming edges instead.
 
 If `nodes` is given, return the neighborhood of the nodes in `nodes` only.
 """
-function adjacency_list(g::GNNGraph, nodes; dir=:out)
+function adjacency_list(g::GNNGraph, nodes; dir=:out, with_eid=false)
     @assert dir ∈ [:out, :in]
-    fneighs = dir == :out ? outneighbors : inneighbors
-    return [fneighs(g, i) for i in nodes]
+    s, t = edge_index(g)
+    if dir == :in
+        s, t = t, s
+    end
+    T = eltype(s)
+    idict = 0
+    dmap = Dict(n => (idict += 1) for n in nodes)
+    adjlist = [T[] for _=1:length(dmap)]
+    eidlist = [T[] for _=1:length(dmap)]
+    for (eid, (i, j)) in enumerate(zip(s, t))
+        inew = get(dmap, i, 0)
+        inew == 0 && continue
+        push!(adjlist[inew], j)
+        push!(eidlist[inew], eid)
+    end
+    if with_eid
+        return adjlist, eidlist
+    else
+        return adjlist
+    end
 end
+
+# function adjacency_list(g::GNNGraph, nodes; dir=:out)
+#     @assert dir ∈ [:out, :in]
+#     fneighs = dir == :out ? outneighbors : inneighbors
+#     return [fneighs(g, i) for i in nodes]
+# end
+
+
 
 adjacency_list(g::GNNGraph; dir=:out) = adjacency_list(g, 1:g.num_nodes; dir)
 

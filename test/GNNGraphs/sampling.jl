@@ -10,7 +10,7 @@
         s, t = edge_index(sg)
         @test all(t .∈ Ref(nodes))
         for i in nodes
-            @test neighbors(sg, i; dir) == neighbors(g, i; dir)
+            @test sort(neighbors(sg, i; dir)) == sort(neighbors(g, i; dir))
         end
     end
 end
