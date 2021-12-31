@@ -40,9 +40,8 @@ tests = [
 
 @testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :dense, :sparse) 
     global GRAPH_T = graph_type
-    # global TEST_GPU = CUDA.functional() && (GRAPH_T != :sparse)
-    global TEST_GPU = false
-
+    global TEST_GPU = CUDA.functional() && (GRAPH_T != :sparse)
+    
     for t in tests
         startswith(t, "examples") && GRAPH_T == :dense && continue     # not testing :dense since causes OutOfMememory on github's CI
         include("$t.jl")
