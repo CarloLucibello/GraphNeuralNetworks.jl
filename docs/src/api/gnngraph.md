@@ -67,3 +67,11 @@ Private = false
 ```@docs
 Graphs.intersect
 ```
+
+## Sampling 
+
+```@autodocs
+Modules = [GraphNeuralNetworks.GNNGraphs]
+Pages   = ["sampling.jl"]
+Private = false
+```
