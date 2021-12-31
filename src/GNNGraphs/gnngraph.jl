@@ -182,10 +182,10 @@ function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata, grap
         if graph_type == :coo
             graph, num_nodes, num_edges = to_coo(g.graph; g.num_nodes)
         elseif graph_type == :dense
-            graph, num_nodes, num_edges = to_dense(g.graph)
+            graph, num_nodes, num_edges = to_dense(g.graph; g.num_nodes)
         elseif graph_type == :sparse
-            graph, num_nodes, num_edges = to_sparse(g.graph)
-        end    
+            graph, num_nodes, num_edges = to_sparse(g.graph; g.num_nodes)
+        end
         @assert num_nodes == g.num_nodes
         @assert num_edges == g.num_edges
     else
