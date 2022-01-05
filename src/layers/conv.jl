@@ -358,7 +358,7 @@ GATv2 attentional layer from the paper [How Attentive are Graph Attention Networ
 
 Implements the operation
 ```math
-\mathbf{x}_i' = \sum_{j \in N(i) \cup \{i\}} \alpha_{ij} W \mathbf{x}_j
+\mathbf{x}_i' = \sum_{j \in N(i) \cup \{i\}} \alpha_{ij} W_1 \mathbf{x}_j
 ```
 where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
