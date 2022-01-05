@@ -362,7 +362,7 @@ Implements the operation
 ```
 where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
-\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([Wi \mathbf{x}_i; Wj \mathbf{x}_j]))
+\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W \mathbf{x}_i; W \mathbf{x}_j]))
 ```
 with ``z_i`` a normalization factor.
 
