@@ -50,6 +50,7 @@ export
     ChebConv,
     EdgeConv,
     GATConv,
+    GATv2Conv,
     GatedGraphConv,
     GCNConv,
     GINConv,

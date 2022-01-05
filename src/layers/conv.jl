@@ -175,7 +175,7 @@ function (c::ChebConv)(g::GNNGraph, X::AbstractMatrix{T}) where T
     check_num_nodes(g, X)
     @assert size(X, 1) == size(c.weight, 2) "Input feature size must match input channel size."
     
-    L̃ = scaled_laplacian(g, eltype(X))    
+    L̃ = scaled_laplacian(g, eltype(X))
 
     Z_prev = X
     Z = X * L̃
@@ -333,15 +333,117 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
         x = mean(x, dims=2)
     end
     x = reshape(x, :, size(x, 3))  # return a matrix
-    x = l.σ.(x .+ l.bias)                                      
+    x = l.σ.(x .+ l.bias)
 
-    return x  
+    return x
 end
 
 
 function Base.show(io::IO, l::GATConv)
     out_channel, in_channel = size(l.weight)
     print(io, "GATConv(", in_channel, "=>", out_channel ÷ l.heads)
+    print(io, ", LeakyReLU(λ=", l.negative_slope)
+    print(io, "))")
+end
+
+@doc raw"""
+    GATv2Conv(in => out, σ=identity;
+            heads=1,
+            concat=true,
+            init=glorot_uniform    
+            bias=true, 
+            negative_slope=0.2f0)
+
+GATv2 attentional layer from the paper [How Attentive are Graph Attention Networks?](https://arxiv.org/abs/2105.14491).
+
+Implements the operation
+```math
+\mathbf{x}_i' = \sum_{j \in N(i) \cup \{i\}} \alpha_{ij} W \mathbf{x}_j
+```
+where the attention coefficients ``\alpha_{ij}`` are given by
+```math
+\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([Wi \mathbf{x}_i; Wj \mathbf{x}_j]))
+```
+with ``z_i`` a normalization factor.
+
+# Arguments
+
+- `in`: The dimension of input features.
+- `out`: The dimension of output features.
+- `bias`: Learn the additive bias if true.
+- `heads`: Number attention heads.
+- `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
+- `negative_slope`: The parameter of LeakyReLU.
+"""
+struct GATv2Conv{T, A<:AbstractMatrix, B} <: GNNLayer
+    Wi::A
+    Wj::A
+    bias::B
+    a::A
+    σ
+    negative_slope::T
+    channel::Pair{Int, Int}
+    heads::Int
+    concat::Bool
+end
+
+@functor GATv2Conv
+Flux.trainable(l::GATv2Conv) = (l.Wi, l.Wj, l.bias, l.a)
+
+function GATv2Conv(
+    channel::Pair{Int,Int},
+    σ=identity;
+    heads::Int=1,
+    concat::Bool=true,
+    negative_slope=0.2,
+    init=glorot_uniform,
+    bias::Bool=true,
+)
+    in, out = channel
+    Wi = init(out*heads, in)
+    Wj = init(out*heads, in)
+    if concat
+        b = bias ? Flux.create_bias(Wi, bias, out*heads) : false
+    else
+        b = bias ? Flux.create_bias(Wi, bias, out) : false
+    end
+    # bias = Flux.create_bias(Wi, bias, out*heads)
+    a = init(out, heads)
+
+    negative_slope = convert(eltype(Wi), negative_slope)
+    GATv2Conv(Wi, Wj, b, a, σ, negative_slope, channel, heads, concat)
+end
+
+function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix)
+    check_num_nodes(g, x)
+    g = add_self_loops(g)
+    in, out = l.channel
+    heads = l.heads
+
+    Wix = reshape(l.Wi * x, out, heads, :)                                  # out × heads × nnodes
+    Wjx = reshape(l.Wj * x, out, heads, :)                                  # out × heads × nnodes
+
+    function message(Wix, Wjx, e)
+        eij = sum(l.a .* leakyrelu.(Wix + Wjx, l.negative_slope), dims=1)   # 1 × heads × nedges
+        α = exp.(eij)
+        return (α = α, β = α .* Wjx)
+    end
+
+    m = propagate(message, g, +; xi=Wix, xj=Wjx)                            # out × heads × nnodes
+    x = m.β ./ m.α
+
+    if !l.concat
+        x = mean(x, dims=2)
+    end
+    x = reshape(x, :, size(x, 3))
+    x = l.σ.(x .+ l.bias)
+    return x  
+end
+
+
+function Base.show(io::IO, l::GATv2Conv)
+    out, in = size(l.weight_i)
+    print(io, "GATv2Conv(", in, "=>", out ÷ l.heads)
     print(io, ", LeakyReLU(λ=", l.negative_slope)
     print(io, "))")
 end
