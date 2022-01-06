@@ -375,11 +375,11 @@ with ``z_i`` a normalization factor.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
 - `negative_slope`: The parameter of LeakyReLU.
 """
-struct GATv2Conv{T, A<:AbstractMatrix, B} <: GNNLayer
-    Wi::A
-    Wj::A
+struct GATv2Conv{T, A, B, C<:AbstractMatrix} <: GNNLayer
+    dense_i::A
+    dense_j::A
     bias::B
-    a::A
+    a::C
     σ
     negative_slope::T
     channel::Pair{Int, Int}
@@ -388,7 +388,7 @@ struct GATv2Conv{T, A<:AbstractMatrix, B} <: GNNLayer
 end
 
 @functor GATv2Conv
-Flux.trainable(l::GATv2Conv) = (l.Wi, l.Wj, l.bias, l.a)
+Flux.trainable(l::GATv2Conv) = (l.dense_i, l.dense_j, l.bias, l.a)
 
 function GATv2Conv(
     channel::Pair{Int,Int},
@@ -400,18 +400,17 @@ function GATv2Conv(
     bias::Bool=true,
 )
     in, out = channel
-    Wi = init(out*heads, in)
-    Wj = init(out*heads, in)
+    dense_i = Dense(in, out; bias=bias, init=init)
+    dense_j = Dense(in, out; bias=bias, init=init)
     if concat
-        b = bias ? Flux.create_bias(Wi, bias, out*heads) : false
+        b = bias ? Flux.create_bias(dense_i.weight, bias, out*heads) : false
     else
-        b = bias ? Flux.create_bias(Wi, bias, out) : false
+        b = bias ? Flux.create_bias(dense_i.weight, bias, out) : false
     end
-    # bias = Flux.create_bias(Wi, bias, out*heads)
     a = init(out, heads)
 
-    negative_slope = convert(eltype(Wi), negative_slope)
-    GATv2Conv(Wi, Wj, b, a, σ, negative_slope, channel, heads, concat)
+    negative_slope = convert(eltype(dense_i.weight), negative_slope)
+    GATv2Conv(dense_i, dense_j, b, a, σ, negative_slope, channel, heads, concat)
 end
 
 function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix)
@@ -420,8 +419,9 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix)
     in, out = l.channel
     heads = l.heads
 
-    Wix = reshape(l.Wi * x, out, heads, :)                                  # out × heads × nnodes
-    Wjx = reshape(l.Wj * x, out, heads, :)                                  # out × heads × nnodes
+    Wix = reshape(l.dense_i(x), out, heads, :)                                  # out × heads × nnodes
+    Wjx = reshape(l.dense_j(x), out, heads, :)                                  # out × heads × nnodes
+
 
     function message(Wix, Wjx, e)
         eij = sum(l.a .* leakyrelu.(Wix + Wjx, l.negative_slope), dims=1)   # 1 × heads × nedges
