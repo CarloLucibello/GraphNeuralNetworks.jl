@@ -358,11 +358,11 @@ GATv2 attentional layer from the paper [How Attentive are Graph Attention Networ
 
 Implements the operation
 ```math
-\mathbf{x}_i' = \sum_{j \in N(i) \cup \{i\}} \alpha_{ij} W \mathbf{x}_j
+\mathbf{x}_i' = \sum_{j \in N(i) \cup \{i\}} \alpha_{ij} W_1 \mathbf{x}_j
 ```
 where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
-\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([Wi \mathbf{x}_i; Wj \mathbf{x}_j]))
+\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_2 \mathbf{x}_i; W_1 \mathbf{x}_j]))
 ```
 with ``z_i`` a normalization factor.
 
