@@ -375,9 +375,9 @@ with ``z_i`` a normalization factor.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
 - `negative_slope`: The parameter of LeakyReLU.
 """
-struct GATv2Conv{T, A, B, C<:AbstractMatrix} <: GNNLayer
-    dense_i::A
-    dense_j::A
+struct GATv2Conv{T, A1, A2, B, C<:AbstractMatrix} <: GNNLayer
+    dense_i::A1
+    dense_j::A2
     bias::B
     a::C
     σ
