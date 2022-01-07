@@ -120,7 +120,7 @@
         end
 
         @testset "bias=false" begin
-            @test length(Flux.params(GATv2Conv(2=>3))) == 4
+            @test length(Flux.params(GATv2Conv(2=>3))) == 5
             @test length(Flux.params(GATv2Conv(2=>3, bias=false))) == 3
         end
     end
