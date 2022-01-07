@@ -400,8 +400,8 @@ function GATv2Conv(
     bias::Bool=true,
 )
     in, out = channel
-    dense_i = Dense(in, out; bias=bias, init=init)
-    dense_j = Dense(in, out; bias=bias, init=init)
+    dense_i = Dense(in, out*heads; bias=bias, init=init)
+    dense_j = Dense(in, out*heads; bias=false, init=init)
     if concat
         b = bias ? Flux.create_bias(dense_i.weight, bias, out*heads) : false
     else
