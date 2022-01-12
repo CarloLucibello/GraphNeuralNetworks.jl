@@ -311,6 +311,7 @@ function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
     end
     return g
 end
+SparseArrays.blockdiag(gs::Vector{GNNGraph}) = SparseArrays.blockdiag(gs...) 
 
 """
     batch(gs::Vector{<:GNNGraph})
@@ -358,8 +359,33 @@ julia> g12.ndata.x
  1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
 ```
 """
-Flux.batch(gs::Vector{<:GNNGraph}) = blockdiag(gs...)
+function Flux.batch(gs::Vector{<:GNNGraph})
+    nodes = [g.num_nodes for g in gs]
 
+    if all(y -> isa(y, COO_T), [g.graph for g in gs] )
+        edge_indices = [edge_index(g) for g in gs]
+        nodesum = cumsum([0, nodes...])[1:end-1]
+        s = reduce(vcat, [ei[1] .+ nodesum[ii] for (ii,ei) in enumerate(edge_indices)])
+        t = reduce(vcat, [ei[2] .+ nodesum[ii] for (ii,ei) in enumerate(edge_indices)])
+        w = reduce(vcat, [get_edge_weight(g) for g in gs])
+        w = w isa Vector{Nothing} ? nothing : w 
+        graph = (s, t, w)
+        graph_indicator = vcat([ones_like(ei[1],Int,nodes[ii]) .+ (ii - 1) for (ii,ei) in enumerate(edge_indices)]...)
+    elseif all(y -> isa(y, ADJMAT_T), [g.graph for g in gs] )
+        graph = blockdiag([g.graph for g in gs]...)
+        graph_indicator = vcat([ones_like(graph,Int,nodes[ii]) .+ (ii - 1) for ii in 1:length(nodes)]...)
+    end
+    
+    GNNGraph(graph,
+        sum(nodes), 
+        sum([g.num_edges for g in gs]),
+        sum([g.num_graphs for g in gs]),
+        graph_indicator,
+        cat_features([g.ndata for g in gs]),
+        cat_features([g.edata for g in gs]),
+        cat_features([g.gdata for g in gs]),
+    )
+end
 
 """
     unbatch(g::GNNGraph)

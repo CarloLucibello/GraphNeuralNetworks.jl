@@ -27,6 +27,20 @@ function cat_features(x1::NamedTuple, x2::NamedTuple)
     NamedTuple(k => cat_features(getfield(x1,k), getfield(x2,k)) for k in keys(x1))
 end
 
+function cat_features(xs::Vector{NamedTuple{T1, T2}})  where {T1, T2}
+    symbols = [sort(collect(keys(x))) for x in xs]
+    all(y->y==symbols[1], symbols) || @error "cannot concatenate feature data with different keys"
+    length(xs) == 1 && return xs[1] 
+
+    # concatenate 
+    syms = symbols[1]
+    dims = [max(1, ndims(xs[1][k])) for k in syms] # promote scalar to 1D
+    methods = [dim == 1 ? vcat : hcat for dim in dims] # use optimized reduce(hcat,xs) or reduce(vcat,xs)
+    NamedTuple(
+        k => reduce(methods[ii],[x[k] for x in xs]) for (ii,k) in enumerate(syms)
+    )
+end
+
 # Turns generic type into named tuple
 normalize_graphdata(data::Nothing; kws...) = NamedTuple()
 

@@ -25,6 +25,7 @@
         
         g12 = Flux.batch([g1, g2])
         g12b = blockdiag(g1, g2)
+        @test g12 == g12b
         
         g123 = Flux.batch([g1, g2, g3])
         @test g123.graph_indicator == [fill(1, 10); fill(2, 4); fill(3, 7)]
