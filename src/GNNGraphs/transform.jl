@@ -364,8 +364,8 @@ function Flux.batch(gs::Vector{<:GNNGraph})
     if all(y -> isa(y, COO_T), [g.graph for g in gs] )
         edge_indices = [edge_index(g) for g in gs]
         nodesum = cumsum([0, nodes...])[1:end-1]
-        s = reduce(vcat, [ei[1] .+ nodesum[ii] for (ii,ei) in enumerate(edge_indices)])
-        t = reduce(vcat, [ei[2] .+ nodesum[ii] for (ii,ei) in enumerate(edge_indices)])
+        s = cat_features([ei[1] .+ nodesum[ii] for (ii, ei) in enumerate(edge_indices)])
+        t = cat_features([ei[2] .+ nodesum[ii] for (ii, ei) in enumerate(edge_indices)])
         w = reduce(vcat, [get_edge_weight(g) for g in gs])
         w = w isa Vector{Nothing} ? nothing : w 
         graph = (s, t, w)
