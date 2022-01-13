@@ -27,7 +27,7 @@ function cat_features(x1::NamedTuple, x2::NamedTuple)
     NamedTuple(k => cat_features(getfield(x1,k), getfield(x2,k)) for k in keys(x1))
 end
 
-function cat_features(xs::Vector{NamedTuple{T1, T2}})  where {T1, T2}
+function cat_features(xs::Vector{<:NamedTuple})
     symbols = [sort(collect(keys(x))) for x in xs]
     all(y->y==symbols[1], symbols) || @error "cannot concatenate feature data with different keys"
     length(xs) == 1 && return xs[1] 
