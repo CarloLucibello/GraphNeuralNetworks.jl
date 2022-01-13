@@ -206,7 +206,6 @@ function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
     end
     return g
 end
-SparseArrays.blockdiag(gs::Vector{GNNGraph}) = SparseArrays.blockdiag(gs...) 
 
 """
     batch(gs::Vector{<:GNNGraph})
