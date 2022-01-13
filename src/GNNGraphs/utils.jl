@@ -34,10 +34,8 @@ function cat_features(xs::Vector{<:NamedTuple})
 
     # concatenate 
     syms = symbols[1]
-    dims = [max(1, ndims(xs[1][k])) for k in syms] # promote scalar to 1D
-    methods = [dim == 1 ? vcat : hcat for dim in dims] # use optimized reduce(hcat,xs) or reduce(vcat,xs)
     NamedTuple(
-        k => reduce(methods[ii],[x[k] for x in xs]) for (ii,k) in enumerate(syms)
+        k => cat_features([x[k] for x in xs]) for (ii,k) in enumerate(syms)
     )
 end
 
