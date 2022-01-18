@@ -18,6 +18,9 @@ cat_features(x1::AbstractArray, x2::AbstractArray) = cat(x1, x2, dims=ndims(x1))
 cat_features(x1::Union{Number, AbstractVector}, x2::Union{Number, AbstractVector}) = 
     cat(x1, x2, dims=1)
 
+# workaround for issue #98 #104
+cat_features(x1::NamedTuple{(), Tuple{}}, x2::NamedTuple{(), Tuple{}}) = (;)
+
 function cat_features(x1::NamedTuple, x2::NamedTuple)
     sort(collect(keys(x1))) == sort(collect(keys(x2))) || @error "cannot concatenate feature data with different keys"
     
