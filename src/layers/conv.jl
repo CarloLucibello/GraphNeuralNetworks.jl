@@ -25,8 +25,8 @@ and optionally an edge weight vector.
 - `bias`: Add learnable bias. Default `true`.
 - `init`: Weights' initializer. Default `glorot_uniform`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
-- `use_edge_weight`. If `true`, consider the edge weights in the input graph (if available).
-                 If `add_self_loops=true` the new weights will be set to 1. Default `false`.
+- `use_edge_weight`: If `true`, consider the edge weights in the input graph (if available).
+                     If `add_self_loops=true` the new weights will be set to 1. Default `false`.
 
 # Examples
 

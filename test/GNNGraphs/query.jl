@@ -95,9 +95,15 @@
 
     @testset "adjacency_matrix" begin
         a = sprand(5, 5, 0.5)
+        abin = map(x -> x > 0 ? 1 : 0, a)
+        
         g = GNNGraph(a, graph_type=GRAPH_T)
         A = adjacency_matrix(g, Float32)
-        @test a ≈ A
+        @test A ≈ a
         @test eltype(A) == Float32
+    
+        Abin = adjacency_matrix(g, Float32, weighted=false)
+        @test Abin ≈ abin
+        @test eltype(Abin) == Float32    
     end
 end

@@ -179,7 +179,7 @@ function e_mul_xj(xi, xj::AbstractArray{Tj,Nj}, e::AbstractArray{Te,Ne}) where {
 end
 
 function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
-    A = adjacency_matrix(g)
+    A = adjacency_matrix(g, weighted=false)
     return xj * A
 end
 
@@ -189,7 +189,7 @@ function propagate(::typeof(copy_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::ty
 end
 
 # function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
-#     A = adjacency_matrix(g)
+#     A = adjacency_matrix(g, weigthed=false)
 #     D = compute_degree(A)
 #     return xj * A * D
 # end

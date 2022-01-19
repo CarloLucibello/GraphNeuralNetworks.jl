@@ -132,21 +132,36 @@ end
 adjacency_list(g::GNNGraph; dir=:out) = adjacency_list(g, 1:g.num_nodes; dir)
 
 
-function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=eltype(g); dir=:out)
+"""
+    adjacency_matrix(g::GNNGraph, T=eltype(g); dir=:out, weighted=true)
+
+Return the adjacency matrix `A` for the graph `g`. 
+
+If `dir=:out`, `A[i,j] > 0` denotes the presence of an edge from node `i` to node `j`.
+If `dir=:in` instead, `A[i,j] > 0` denotes the presence of an edge from node `j` to node `i`.
+
+User may specify the eltype `T` of the returned matrix. 
+
+If `weighted=true`, the `A` will contain the edge weigths if any, otherwise the elements of `A` will be either 0 or 1.
+"""
+function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=eltype(g); dir=:out, weighted=true)
     if g.graph[1] isa CuVector
         # TODO revisit after https://github.com/JuliaGPU/CUDA.jl/pull/1152
-        A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
+        A, n, m = to_dense(g.graph, T; num_nodes=g.num_nodes, weighted)
     else
-        A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
+        A, n, m = to_sparse(g.graph, T; num_nodes=g.num_nodes, weighted)
     end
     @assert size(A) == (n, n)
     return dir == :out ? A : A'
 end
 
-function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g); dir=:out)
+function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g); dir=:out, weighted=true)
     @assert dir ∈ [:in, :out]
     A = g.graph
     A = T != eltype(A) ? T.(A) : A
+    if !weighted
+        A = map(x -> x > 0 ? T(1) : T(0), A)
+    end
     return dir == :out ? A : A'
 end
 
