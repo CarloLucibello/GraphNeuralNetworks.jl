@@ -255,8 +255,6 @@ julia> g12.ndata.x
 """
 Flux.batch(gs::Vector{<:GNNGraph}) = blockdiag(gs...)
 
-Flux.batch(gs::Base.Generator{<:GNNGraph}) = Flux.batch(collect(gs))
-
 
 """
     unbatch(g::GNNGraph)
