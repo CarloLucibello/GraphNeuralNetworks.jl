@@ -5,9 +5,9 @@
     T = Float32
 
     adj1 =  [0 1 0 1
-            1 0 1 0
-            0 1 0 1
-            1 0 1 0]
+             1 0 1 0
+             0 1 0 1
+             1 0 1 0]
     
     g1 = GNNGraph(adj1, 
             ndata=rand(T, in_channel, N), 
@@ -108,6 +108,23 @@
             @test length(Flux.params(GATConv(2=>3, bias=false))) == 2
         end
     end
+
+    @testset "GATv2Conv" begin
+
+        for heads in (1, 2), concat in (true, false)
+            l = GATv2Conv(in_channel => out_channel; heads, concat)
+            for g in test_graphs
+                test_layer(l, g, rtol=1e-4,
+                    outsize=(concat ? heads*out_channel : out_channel, g.num_nodes))
+            end
+        end
+
+        @testset "bias=false" begin
+            @test length(Flux.params(GATv2Conv(2=>3))) == 5
+            @test length(Flux.params(GATv2Conv(2=>3, bias=false))) == 3
+        end
+    end
+
 
     @testset "GatedGraphConv" begin
         num_layers = 3

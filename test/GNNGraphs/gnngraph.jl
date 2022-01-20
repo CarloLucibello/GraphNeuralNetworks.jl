@@ -31,6 +31,18 @@
         @test g.num_edges == 2
     end
 
+    @testset "Constructor: integer" begin
+        g = GNNGraph(10, graph_type=GRAPH_T)
+        @test g.num_nodes == 10
+        @test g.num_edges == 0
+
+        g2 = rand_graph(10, 30, graph_type=GRAPH_T)
+        G = typeof(g2)
+        g = G(10)
+        @test g.num_nodes == 10
+        @test g.num_edges == 0
+    end
+
     @testset "symmetric graph" begin
         s = [1, 1, 2, 2, 3, 3, 4, 4]
         t = [2, 4, 1, 3, 2, 4, 1, 3]

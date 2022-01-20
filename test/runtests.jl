@@ -12,6 +12,8 @@ using Graphs
 using Zygote
 using Test
 using MLDatasets
+using InlineStrings  # not used but with the import we test #98 and #104
+
 CUDA.allowscalar(false)
 
 const ACUMatrix{T} = Union{CuMatrix{T}, CUDA.CUSPARSE.CuSparseMatrix{T}}
@@ -26,6 +28,7 @@ tests = [
     "GNNGraphs/operators",
     "GNNGraphs/generate",
     "GNNGraphs/query",
+    "GNNGraphs/sampling",
     "utils",
     "msgpass",
     "layers/basic",
@@ -40,7 +43,7 @@ tests = [
 @testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :dense, :sparse) 
     global GRAPH_T = graph_type
     global TEST_GPU = CUDA.functional() && (GRAPH_T != :sparse)
-
+    
     for t in tests
         startswith(t, "examples") && GRAPH_T == :dense && continue     # not testing :dense since causes OutOfMememory on github's CI
         include("$t.jl")

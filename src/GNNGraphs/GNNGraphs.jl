@@ -57,6 +57,9 @@ include("generate.jl")
 export rand_graph, 
        knn_graph
 
+include("sampling.jl")
+export sample_neighbors
+
 include("operators.jl")
 # Base.intersect
 

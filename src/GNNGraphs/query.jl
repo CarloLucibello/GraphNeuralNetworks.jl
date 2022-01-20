@@ -51,6 +51,15 @@ Graphs.ne(g::GNNGraph) = g.num_edges
 Graphs.has_vertex(g::GNNGraph, i::Int) = 1 <= i <= g.num_nodes
 Graphs.vertices(g::GNNGraph) = 1:g.num_nodes
 
+function Graphs.neighbors(g::GNNGraph, i; dir=:out)
+    @assert dir ∈ (:in, :out)
+    if dir == :out
+        outneighbors(g, i)
+    else
+        inneighbors(g, i)
+    end
+end
+
 function Graphs.outneighbors(g::GNNGraph{<:COO_T}, i::Integer)
     s, t = edge_index(g)
     return t[s .== i]
@@ -76,6 +85,7 @@ Graphs.is_directed(::Type{<:GNNGraph}) = true
 
 """
     adjacency_list(g; dir=:out)
+    adjacency_list(g, nodes; dir=:out)
 
 Return the adjacency list representation (a vector of vectors)
 of the graph `g`.
@@ -84,27 +94,73 @@ Calling `a` the adjacency list, if `dir=:out` than
 `a[i]` will contain the neighbors of node `i` through
 outgoing edges. If `dir=:in`, it will contain neighbors from
 incoming edges instead.
+
+If `nodes` is given, return the neighborhood of the nodes in `nodes` only.
 """
-function adjacency_list(g::GNNGraph; dir=:out)
+function adjacency_list(g::GNNGraph, nodes; dir=:out, with_eid=false)
     @assert dir ∈ [:out, :in]
-    fneighs = dir == :out ? outneighbors : inneighbors
-    return [fneighs(g, i) for i in 1:g.num_nodes]
+    s, t = edge_index(g)
+    if dir == :in
+        s, t = t, s
+    end
+    T = eltype(s)
+    idict = 0
+    dmap = Dict(n => (idict += 1) for n in nodes)
+    adjlist = [T[] for _=1:length(dmap)]
+    eidlist = [T[] for _=1:length(dmap)]
+    for (eid, (i, j)) in enumerate(zip(s, t))
+        inew = get(dmap, i, 0)
+        inew == 0 && continue
+        push!(adjlist[inew], j)
+        push!(eidlist[inew], eid)
+    end
+    if with_eid
+        return adjlist, eidlist
+    else
+        return adjlist
+    end
 end
 
-function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=eltype(g); dir=:out)
+# function adjacency_list(g::GNNGraph, nodes; dir=:out)
+#     @assert dir ∈ [:out, :in]
+#     fneighs = dir == :out ? outneighbors : inneighbors
+#     return [fneighs(g, i) for i in nodes]
+# end
+
+
+
+adjacency_list(g::GNNGraph; dir=:out) = adjacency_list(g, 1:g.num_nodes; dir)
+
+
+"""
+    adjacency_matrix(g::GNNGraph, T=eltype(g); dir=:out, weighted=true)
+
+Return the adjacency matrix `A` for the graph `g`. 
+
+If `dir=:out`, `A[i,j] > 0` denotes the presence of an edge from node `i` to node `j`.
+If `dir=:in` instead, `A[i,j] > 0` denotes the presence of an edge from node `j` to node `i`.
+
+User may specify the eltype `T` of the returned matrix. 
+
+If `weighted=true`, the `A` will contain the edge weigths if any, otherwise the elements of `A` will be either 0 or 1.
+"""
+function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=eltype(g); dir=:out, weighted=true)
     if g.graph[1] isa CuVector
         # TODO revisit after https://github.com/JuliaGPU/CUDA.jl/pull/1152
-        A, n, m = to_dense(g.graph, T, num_nodes=g.num_nodes)
+        A, n, m = to_dense(g.graph, T; num_nodes=g.num_nodes, weighted)
     else
-        A, n, m = to_sparse(g.graph, T, num_nodes=g.num_nodes)
+        A, n, m = to_sparse(g.graph, T; num_nodes=g.num_nodes, weighted)
     end
     @assert size(A) == (n, n)
     return dir == :out ? A : A'
 end
 
-function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g); dir=:out)
+function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g); dir=:out, weighted=true)
     @assert dir ∈ [:in, :out]
     A = g.graph
+    if !weighted
+        A = map(>(0), A)
+    end
     A = T != eltype(A) ? T.(A) : A
     return dir == :out ? A : A'
 end
@@ -140,7 +196,8 @@ Return a vector containing the degrees of the nodes in `g`.
                 In alternative, you can also pass a vector of weights to be used
                 instead of the graph's own weights.
 """
-function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out, edge_weight=true)
+function Graphs.degree(g::GNNGraph{<:COO_T}, T::TT=nothing; dir=:out, edge_weight=true) where 
+        TT<:Union{Nothing, Type{<:Number}}
     s, t = edge_index(g)
 
     edge_weight = _get_edge_weight(g, edge_weight)
@@ -157,7 +214,11 @@ function Graphs.degree(g::GNNGraph{<:COO_T}, T=nothing; dir=:out, edge_weight=tr
     return degs 
 end
 
-function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T=nothing; dir=:out, edge_weight=true)
+# TODO:: Make efficient
+Graphs.degree(g::GNNGraph, i::Union{Int, AbstractVector}; dir=:out) = degree(g; dir)[i]
+
+function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT=nothing; dir=:out, edge_weight=true) where TT
+        TT<:Union{Nothing, Type{<:Number}}
     # edge_weight=true or edge_weight=nothing act the same here
     @assert !(edge_weight isa AbstractArray) "passing the edge weights is not support by adjacency matrix representations" 
     @assert dir ∈ (:in, :out, :both)
