@@ -112,7 +112,9 @@ function (l::GCNConv)(g::GNNGraph{<:COO_T}, x::AbstractMatrix{T}, edge_weight::E
     return l.σ.(x .+ l.bias)
 end
 
-function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix)
+# TODO merge the ADJMAT_T and COO_T methods
+# The main problem is handling the weighted case for both.
+function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix{T}) where T
     if l.add_self_loops
         g = add_self_loops(g)
     end

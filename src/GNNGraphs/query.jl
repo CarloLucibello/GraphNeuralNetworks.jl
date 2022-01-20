@@ -158,10 +158,10 @@ end
 function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g); dir=:out, weighted=true)
     @assert dir ∈ [:in, :out]
     A = g.graph
-    A = T != eltype(A) ? T.(A) : A
     if !weighted
-        A = map(x -> x > 0 ? T(1) : T(0), A)
+        A = map(>(0), A)
     end
+    A = T != eltype(A) ? T.(A) : A
     return dir == :out ? A : A'
 end
 
