@@ -84,4 +84,34 @@
         @test spmm_copyxj_unfused(g) ≈ X * Adj
         @test spmm_copyxj_fused(g) ≈ X * Adj
     end
+
+    @testset "e_mul_xj" begin
+        n = 128
+        A = sprand(n, n, 0.1)
+        Adj = map(x -> x > 0 ? 1 : 0, A)
+        X = rand(10, n)
+
+        g = GNNGraph(
+            A,
+            ndata=(; b=b, B=B),
+            edata=(; A=reshape(A.nzval, 1, :)),
+            graph_type=:coo  # changing to :sparse has little effect on performance
+        )
+
+        function spmm_unfused(g)
+            propagate(
+                (xi, xj, e) -> e .* xj , 
+                g, +; xj=g.ndata.B, e=g.edata.A
+                )
+        end
+        function spmm_fused(g)
+            propagate(
+                e_mul_xj,
+                g, +; xj=g.ndata.B, e=vec(g.edata.A)
+                )
+        end
+
+        @test spmm_unfused(g) ≈ X * A
+        @test spmm_fused(g) ≈ X * A
+    end
 end
