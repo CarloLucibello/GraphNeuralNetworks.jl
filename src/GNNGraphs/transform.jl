@@ -120,6 +120,23 @@ function add_edges(g::GNNGraph{<:COO_T},
             g.ndata, edata, g.gdata)
 end
 
+### TODO Cannot implement this since GNNGraph is immutable (cannot change num_edges)
+# function Graphs.add_edge!(g::GNNGraph{<:COO_T}, snew::T, tnew::T; edata=nothing) where T<:Union{Integer, AbstractVector}
+#     s, t = edge_index(g)
+#     @assert length(snew) == length(tnew)
+#     # TODO remove this constraint
+#     @assert get_edge_weight(g) === nothing
+    
+#     edata = normalize_graphdata(edata, default_name=:e, n=length(snew))
+#     edata = cat_features(g.edata, edata)
+    
+#     s, t = edge_index(g)
+#     append!(s, snew)
+#     append!(t, tnew)
+#     g.num_edges += length(snew)
+#     return true
+# end
+
 
 """
     add_nodes(g::GNNGraph, n; [ndata])

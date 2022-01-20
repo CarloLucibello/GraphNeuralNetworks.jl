@@ -117,7 +117,7 @@ end
 
 @functor GNNGraph
 
-function GNNGraph(data; 
+function GNNGraph(data::D; 
                         num_nodes = nothing,
                         graph_indicator = nothing, 
                         graph_type = :coo,
@@ -125,7 +125,7 @@ function GNNGraph(data;
                         ndata = (;), 
                         edata = (;), 
                         gdata = (;),
-                        )
+                        ) where D <: Union{COO_T, ADJMAT_T, ADJLIST_T}
 
     @assert graph_type ∈ [:coo, :dense, :sparse] "Invalid graph_type $graph_type requested"
     @assert dir ∈ [:in, :out]
@@ -133,9 +133,9 @@ function GNNGraph(data;
     if graph_type == :coo
         graph, num_nodes, num_edges = to_coo(data; num_nodes, dir)
     elseif graph_type == :dense
-        graph, num_nodes, num_edges = to_dense(data; dir)
+        graph, num_nodes, num_edges = to_dense(data; num_nodes, dir)
     elseif graph_type == :sparse
-        graph, num_nodes, num_edges = to_sparse(data; dir)
+        graph, num_nodes, num_edges = to_sparse(data; num_nodes, dir)
     end
     
     num_graphs = !isnothing(graph_indicator) ? maximum(graph_indicator) : 1
@@ -150,9 +150,9 @@ function GNNGraph(data;
             ndata, edata, gdata)
 end
 
-function GNNGraph(n::T; graph_type=:coo, kws...) where {T<:Integer}
+function (::Type{<:GNNGraph})(num_nodes::T; kws...) where {T<:Integer}
     s, t = T[], T[] 
-    return GNNGraph(s, t; graph_type, num_nodes=n, kws...)
+    return GNNGraph(s, t; num_nodes, kws...)
 end
 
 # COO convenience constructors
@@ -182,10 +182,10 @@ function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata, grap
         if graph_type == :coo
             graph, num_nodes, num_edges = to_coo(g.graph; g.num_nodes)
         elseif graph_type == :dense
-            graph, num_nodes, num_edges = to_dense(g.graph)
+            graph, num_nodes, num_edges = to_dense(g.graph; g.num_nodes)
         elseif graph_type == :sparse
-            graph, num_nodes, num_edges = to_sparse(g.graph)
-        end    
+            graph, num_nodes, num_edges = to_sparse(g.graph; g.num_nodes)
+        end
         @assert num_nodes == g.num_nodes
         @assert num_edges == g.num_edges
     else

@@ -179,9 +179,19 @@ function e_mul_xj(xi, xj::AbstractArray{Tj,Nj}, e::AbstractArray{Te,Ne}) where {
 end
 
 function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
-    A = adjacency_matrix(g)
+    A = adjacency_matrix(g, weighted=false)
     return xj * A
 end
+
+# for weighted convolution
+function propagate(::typeof(e_mul_xj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e::AbstractVector)
+    s, t = edge_index(g)
+    g = GNNGraph((s, t, e); g.num_nodes)
+    A = adjacency_matrix(g, weighted=true)
+    return xj * A
+end
+
+
 
 ## avoid the fast path on gpu until we have better cuda support
 function propagate(::typeof(copy_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
@@ -189,7 +199,7 @@ function propagate(::typeof(copy_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::ty
 end
 
 # function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
-#     A = adjacency_matrix(g)
+#     A = adjacency_matrix(g, weigthed=false)
 #     D = compute_degree(A)
 #     return xj * A * D
 # end
