@@ -168,7 +168,8 @@ function GNNGraph(g::AbstractGraph; kws...)
         # add reverse edges since GNNGraph is directed
         s, t = [s; t], [t; s]    
     end
-    GNNGraph((s, t); num_nodes=Graphs.nv(g), kws...)
+    num_nodes::Int = Graphs.nv(g)
+    GNNGraph((s, t); num_nodes=num_nodes, kws...)
 end
 
 
