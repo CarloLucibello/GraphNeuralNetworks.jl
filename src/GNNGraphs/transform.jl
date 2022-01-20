@@ -417,7 +417,7 @@ end
 """
     rand_edge_split(g::GNNGraph, frac; bidirected=is_bidirected(g)) -> g1, g2
 
-Randomly partition the edges in `g` to from two graphs, `g1`
+Randomly partition the edges in `g` to form two graphs, `g1`
 and `g2`. Both will have the same number of nodes as `g`.
 `g1` will contain a fraction `frac` of the original edges, 
 while `g2` wil contain the rest.
