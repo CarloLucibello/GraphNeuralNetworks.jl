@@ -177,7 +177,12 @@
         for e in Graphs.edges(lg)
             i, j = src(e), dst(e)
             @test has_edge(g, i, j)
-            @test has_edge(g, j, i)            
+            @test has_edge(g, j, i)
+        end
+
+        @testset "SimpleGraph{Int32}" begin
+            g = GNNGraph(SimpleGraph{Int32}(6), graph_type=GRAPH_T)
+            @test g.num_nodes == 6
         end
     end
 

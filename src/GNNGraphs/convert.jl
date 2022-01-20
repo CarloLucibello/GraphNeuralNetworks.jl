@@ -2,7 +2,7 @@
 
 function to_coo(coo::COO_T; dir=:out, num_nodes=nothing, weighted=true)
     s, t, val = coo   
-    num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
+    num_nodes::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     @assert isnothing(val) || length(val) == length(s)
     @assert length(s) == length(t)
     if !isempty(s)
@@ -114,7 +114,7 @@ function to_dense(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=t
     # `dir` will be ignored since the input `coo` is always in source -> target format.
     # The output will always be a adjmat in :out format (e.g. A[i,j] denotes from i to j)
     s, t, val = coo
-    n = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes
+    n::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes
     val = isnothing(val) ? eltype(s)(1) : val
     T = T === nothing ? eltype(val) : T
     if !weighted
@@ -164,9 +164,9 @@ function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=
         eweight = fill!(similar(s, T), 1)
     end
 
-    num_nodes = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
+    num_nodes::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     A = sparse(s, t, eweight, num_nodes, num_nodes)
-    num_edges = nnz(A)
+    num_edges::Int = nnz(A)
     if eltype(A) != T
         A = T.(A)
     end
