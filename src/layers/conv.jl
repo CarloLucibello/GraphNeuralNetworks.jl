@@ -81,17 +81,13 @@ function (l::GCNConv)(g::GNNGraph{<:COO_T}, x::AbstractMatrix)
     return l(g, x, edge_weight)
 end
 
-function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix)
-    edge_weight = nothing
-    return l(g, x, edge_weight)
-end
-
-function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW) where 
+function (l::GCNConv)(g::GNNGraph{<:COO_T}, x::AbstractMatrix{T}, edge_weight::EW) where 
     {T, EW<:Union{Nothing,AbstractVector}}
     
     if l.add_self_loops
         g = add_self_loops(g)
         if edge_weight !== nothing
+            # TODO for ADJMAT_T the new edges are not generally at the end
             edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
             @assert length(edge_weight) == g.num_edges
         end
@@ -116,6 +112,31 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW) where
     return l.σ.(x .+ l.bias)
 end
 
+function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix)
+    if l.add_self_loops
+        g = add_self_loops(g)
+    end
+    Dout, Din = size(l.weight)
+    if Dout < Din
+        # multiply before convolution if it is more convenient, otherwise multiply after
+        x = l.weight * x
+    end
+    d = degree(g, T; dir=:in, edge_weight=l.use_edge_weight)
+    c = 1 ./ sqrt.(d)
+    x = x .* c'
+    A = adjacency_matrix(g, weighted=l.use_edge_weight)
+    x = x * A
+    x = x .* c'
+    if Dout >= Din
+        x = l.weight * x
+    end
+    return l.σ.(x .+ l.bias)
+end
+
+function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix, edge_weight::AbstractVector)
+    g = GNNGraph(edge_index(g)...; g.num_nodes)  # convert to COO
+    return l(g, x, edge_weight)
+end
 
 function Base.show(io::IO, l::GCNConv)
     out, in = size(l.weight)
