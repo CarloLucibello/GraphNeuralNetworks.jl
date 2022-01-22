@@ -37,6 +37,7 @@ export
     copy_xi,
     xi_dot_xj,
     e_mul_xj,
+    w_mul_xj,
 
     # layers/basic
     GNNLayer,

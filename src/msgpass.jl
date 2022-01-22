@@ -149,7 +149,7 @@ _scatter(aggr, m::AbstractArray, t) = NNlib.scatter(aggr, m, t)
 
 
 
-### SPECIALIZATIONS OF PROPAGATE ###
+### MESSAGE FUNCTIONS ###
 """
     copy_xj(xi, xj, e) = xj
 """
@@ -178,25 +178,63 @@ function e_mul_xj(xi, xj::AbstractArray{Tj,Nj}, e::AbstractArray{Te,Ne}) where {
     return e .* xj
 end
 
+"""
+    w_mul_xj(xi, xj, w) = reshape(w, (...)) .* xj
+
+Similar to [`e_mul_xj`](@ref) but specialized on scalar edge feautures (weights).
+"""
+w_mul_xj(xi, xj::AbstractArray, w::Nothing) = xj # same as copy_xj if no weights
+
+function w_mul_xj(xi, xj::AbstractArray{Tj,Nj}, w::AbstractVector) where {Tj, Nj}
+    w = reshape(w, ntuple(_ -> 1, Nj-1)..., length(w))
+    return w .* xj
+end
+
+
+###### PROPAGATE SPECIALIZATIONS ####################
+
+## COPY_XJ 
+
 function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
     A = adjacency_matrix(g, weighted=false)
     return xj * A
 end
 
+## avoid the fast path on gpu until we have better cuda support
+function propagate(::typeof(copy_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
+    propagate((xi,xj,e) -> copy_xj(xi,xj,e), g, +, xi, xj, e)
+end
+
+## E_MUL_XJ 
+
 # for weighted convolution
 function propagate(::typeof(e_mul_xj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e::AbstractVector)
-    s, t = edge_index(g)
-    g = GNNGraph((s, t, e); g.num_nodes)
+    g = set_edge_weight(g, e)
     A = adjacency_matrix(g, weighted=true)
     return xj * A
 end
 
+## avoid the fast path on gpu until we have better cuda support
+function propagate(::typeof(e_mul_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e::AbstractVector)
+    propagate((xi,xj,e) -> e_mul_xj(xi,xj,e), g, +, xi, xj, e)
+end
 
+## W_MUL_XJ 
+
+# for weighted convolution
+function propagate(::typeof(w_mul_xj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e::Nothing)
+    A = adjacency_matrix(g, weighted=true)
+    return xj * A
+end
 
 ## avoid the fast path on gpu until we have better cuda support
-function propagate(::typeof(copy_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
-    propagate((xi,xj,e)->copy_xj(xi,xj,e), g, +, xi, xj, e)
+function propagate(::typeof(w_mul_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e::Nothing)
+    propagate((xi,xj,e) -> w_mul_xj(xi,xj,e), g, +, xi, xj, e)
 end
+
+
+
+
 
 # function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
 #     A = adjacency_matrix(g, weigthed=false)

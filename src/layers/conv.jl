@@ -74,16 +74,11 @@ function GCNConv(ch::Pair{Int,Int}, σ=identity;
     GCNConv(W, b, σ, add_self_loops, use_edge_weight)
 end
 
-function (l::GCNConv)(g::GNNGraph{<:COO_T}, x::AbstractMatrix)
-    # Extract edge_weight from g if available and l.edge_weight == true,
-    # otherwise return nothing.
-    edge_weight = GNNGraphs._get_edge_weight(g, l.use_edge_weight) # vector or nothing
-    return l(g, x, edge_weight)
-end
-
-function (l::GCNConv)(g::GNNGraph{<:COO_T}, x::AbstractMatrix{T}, edge_weight::EW) where 
+function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW=nothing) where 
     {T, EW<:Union{Nothing,AbstractVector}}
     
+    @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+
     if l.add_self_loops
         g = add_self_loops(g)
         if edge_weight !== nothing
@@ -100,34 +95,13 @@ function (l::GCNConv)(g::GNNGraph{<:COO_T}, x::AbstractMatrix{T}, edge_weight::E
     d = degree(g, T; dir=:in, edge_weight)
     c = 1 ./ sqrt.(d)
     x = x .* c'
-    if edge_weight === nothing
-        x = propagate(copy_xj, g, +, xj=x)
-    else        
+    if edge_weight !== nothing
         x = propagate(e_mul_xj, g, +, xj=x, e=edge_weight)
+    elseif l.use_edge_weight        
+        x = propagate(w_mul_xj, g, +, xj=x)
+    else
+        x = propagate(copy_xj, g, +, xj=x)
     end
-    x = x .* c'
-    if Dout >= Din
-        x = l.weight * x
-    end
-    return l.σ.(x .+ l.bias)
-end
-
-# TODO merge the ADJMAT_T and COO_T methods
-# The main problem is handling the weighted case for both.
-function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix{T}) where T
-    if l.add_self_loops
-        g = add_self_loops(g)
-    end
-    Dout, Din = size(l.weight)
-    if Dout < Din
-        # multiply before convolution if it is more convenient, otherwise multiply after
-        x = l.weight * x
-    end
-    d = degree(g, T; dir=:in, edge_weight=l.use_edge_weight)
-    c = 1 ./ sqrt.(d)
-    x = x .* c'
-    A = adjacency_matrix(g, weighted=l.use_edge_weight)
-    x = x * A
     x = x .* c'
     if Dout >= Din
         x = l.weight * x
