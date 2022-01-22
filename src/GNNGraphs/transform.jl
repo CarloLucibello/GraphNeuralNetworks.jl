@@ -97,6 +97,7 @@ end
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
 
 Add to graph `g` the edges with source nodes `s` and target nodes `t`.
+Optionally, pass the features  `edata` for the new edges. 
 """
 function add_edges(g::GNNGraph{<:COO_T}, 
         snew::AbstractVector{<:Integer}, 
@@ -155,6 +156,20 @@ function add_nodes(g::GNNGraph{<:COO_T}, n::Integer; ndata=(;))
             ndata, g.edata, g.gdata)
 end
 
+"""
+    set_edge_weight(g::GNNGraph, w::AbstractVector)
+
+Set `w` as edge weights in the returned graph. 
+"""
+function set_edge_weight(g::GNNGraph, w::AbstractVector)
+    s, t = edge_index(g)
+    @assert length(w) == length(s)
+
+    return GNNGraph((s, t, w), 
+                    g.num_nodes, g.num_edges, g.num_graphs, 
+                    g.graph_indicator,
+                    g.ndata, g.edata, g.gdata)
+end
 
 function SparseArrays.blockdiag(g1::GNNGraph, g2::GNNGraph)
     nv1, nv2 = g1.num_nodes, g2.num_nodes

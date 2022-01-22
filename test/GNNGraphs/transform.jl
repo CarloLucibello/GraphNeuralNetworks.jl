@@ -173,4 +173,18 @@
             @test g2.num_edges < 50
         end
     end
+
+    @testset "set_edge_weight" begin
+        g = rand_graph(10, 20, graph_type=GRAPH_T)
+        w = rand(20)
+
+        gw = set_edge_weight(g, w)
+        @test get_edge_weight(gw) == w
+
+        # now from weighted graph
+        s, t = edge_index(g)
+        g2 = GNNGraph(s, t, rand(20), graph_type=GRAPH_T)
+        gw2 = set_edge_weight(g2, w)
+        @test get_edge_weight(gw2) == w
+    end
 end

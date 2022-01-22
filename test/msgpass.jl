@@ -85,28 +85,36 @@
         @test spmm_copyxj_fused(g) ≈ X * Adj
     end
 
-    @testset "e_mul_xj for weighted conv" begin
+    @testset "e_mul_xj adn w_mul_xj for weighted conv" begin
         n = 128
         A = sprand(n, n, 0.1)
         Adj = map(x -> x > 0 ? 1 : 0, A)
         X = rand(10, n)
 
-        g = GNNGraph(A, ndata=X, edata=reshape(A.nzval, 1, :), graph_type=GRAPH_T)
+        g = GNNGraph(A, ndata=X, edata=A.nzval, graph_type=GRAPH_T)
 
         function spmm_unfused(g)
             propagate(
-                (xi, xj, e) -> e .* xj , 
+                (xi, xj, e) -> reshape(e, 1, :) .* xj , 
                 g, +; xj=g.ndata.x, e=g.edata.e
                 )
         end
         function spmm_fused(g)
             propagate(
                 e_mul_xj,
-                g, +; xj=g.ndata.x, e=vec(g.edata.e)
+                g, +; xj=g.ndata.x, e=g.edata.e
+                )
+        end
+
+        function spmm_fused2(g)
+            propagate(
+                w_mul_xj,
+                g, +; xj=g.ndata.x
                 )
         end
 
         @test spmm_unfused(g) ≈ X * A
         @test spmm_fused(g) ≈ X * A
+        @test spmm_fused2(g) ≈ X * A
     end
 end

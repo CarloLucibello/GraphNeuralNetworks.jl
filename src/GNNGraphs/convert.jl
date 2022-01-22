@@ -86,7 +86,7 @@ function to_dense(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted=
         A = T.(A)
     end
     if !weighted
-        A = map(x -> x > 0 ? T(1) : T(0), A)
+        A = map(x -> ifelse(x > 0, T(1), T(0)), A)
     end
     return A, num_nodes, num_edges
 end
@@ -121,10 +121,10 @@ function to_dense(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=t
         val = T(1)
     end
     A = fill!(similar(s, T, (n, n)), 0)
-    v = vec(A)
+    v = vec(A) # vec view of A
     idxs = s .+ n .* (t .- 1) 
-    NNlib.scatter!(+, v, val, idxs)
-    # A[s .+ n .* (t .- 1)] .= val # exploiting linear indexing
+    # A[idxs] .= val # exploiting linear indexing
+    NNlib.scatter!(+, v, val, idxs) # using scatter instead of indexing since there could be multiple edges 
     return A, n, length(s)
 end
 
@@ -146,7 +146,7 @@ function to_sparse(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted
         A = sparse(A)
     end
     if !weighted
-        A = map(x -> x > 0 ? T(1) : T(0), A)
+        A = map(x -> ifelse(x > 0, T(1), T(0)), A)
     end
     return A, num_nodes, num_edges
 end

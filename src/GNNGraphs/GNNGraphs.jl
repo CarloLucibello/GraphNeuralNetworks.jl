@@ -47,6 +47,7 @@ export add_nodes,
        rand_edge_split,
        remove_self_loops,
        remove_multi_edges,
+       set_edge_weight,
        # from Flux
        batch,
        unbatch,
