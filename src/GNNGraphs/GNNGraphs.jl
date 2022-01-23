@@ -15,6 +15,8 @@ import KrylovKit
 using ChainRulesCore
 using LinearAlgebra, Random
 
+using ..GraphNeuralNetworks: _scatter
+
 include("gnngraph.jl")
 export GNNGraph, 
        node_features, 

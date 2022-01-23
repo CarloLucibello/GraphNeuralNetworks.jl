@@ -143,9 +143,9 @@ function aggregate_neighbors(g::GNNGraph, aggr, m)
     return _scatter(aggr, m, t)
 end
 
-_scatter(aggr, m::NamedTuple, t) = map(m -> _scatter(aggr, m, t), m)
-_scatter(aggr, m::Tuple, t) = map(m -> _scatter(aggr, m, t), m)
-_scatter(aggr, m::AbstractArray, t) = NNlib.scatter(aggr, m, t)
+_scatter(aggr, m::NamedTuple, t; dstsize=nothing) = map(m -> _scatter(aggr, m, t; dstsize), m)
+_scatter(aggr, m::Tuple, t; dstsize=nothing) = map(m -> _scatter(aggr, m, t; dstsize), m)
+_scatter(aggr, m::AbstractArray, t; dstsize=nothing) = NNlib.scatter(aggr, m, t; dstsize)
 
 
 
