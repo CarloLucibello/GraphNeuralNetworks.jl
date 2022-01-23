@@ -67,5 +67,7 @@ include("operators.jl")
 include("convert.jl")
 include("utils.jl")
 
-    
+include("gatherscatter.jl")
+# _gather, _scatter
+
 end #module

@@ -41,18 +41,19 @@ end
 
 function remove_self_loops(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
-    # TODO remove these constraints
-    @assert g.edata === (;)
-    @assert get_edge_weight(g) === nothing
+    w = get_edge_weight(g)
+    edata = g.edata
     
     mask_old_loops = s .!= t
     s = s[mask_old_loops]
     t = t[mask_old_loops]
-
-    GNNGraph((s, t, nothing), 
+    edata = getobs(edata, mask_old_loops)
+    w = isnothing(w) ? nothing : getobs(w, mask_old_loops)
+    
+    GNNGraph((s, t, w), 
             g.num_nodes, length(s), g.num_graphs, 
             g.graph_indicator,
-            g.ndata, g.edata, g.gdata)
+            g.ndata, edata, g.gdata)
 end
 
 
@@ -72,25 +73,43 @@ end
 
 
 """
-    remove_multi_edges(g::GNNGraph)
+    remove_multi_edges(g::GNNGraph; aggr=+)
 
 Remove multiple edges (also called parallel edges or repeated edges) from graph `g`.
+Possible edge features are aggregated according to `aggr`, that can take value 
+`+`,`min`, `max` or `mean`.
+
+See also [`remove_self_loops`](@ref).
 """
-function remove_multi_edges(g::GNNGraph{<:COO_T})
+function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr=+)
     s, t = edge_index(g)
-    # TODO remove these constraints
-    @assert g.num_graphs == 1
-    @assert g.edata === (;)
-    @assert get_edge_weight(g) === nothing
+    w = get_edge_weight(g)
+    edata = g.edata
+    num_edges = g.num_edges
     
     idxs, idxmax = edge_encoding(s, t, g.num_nodes)
-    union!(idxs)
-    s, t = edge_decoding(idxs, g.num_nodes)
+    
+    perm = sortperm(idxs)
+    idxs = idxs[perm]
+    s, t = s[perm], t[perm]
+    edata = getobs(edata, perm)
+    w = isnothing(w) ? nothing : getobs(w, perm)
+    idxs = [-1; idxs]
+    mask = idxs[2:end] .> idxs[1:end-1]
+    if !all(mask)
+        s, t = s[mask], t[mask]
+        idxs = similar(s, num_edges)
+        idxs .= 1:num_edges
+        idxs .= idxs .- cumsum(.!mask)
+        num_edges = length(s)
+        w = _scatter(aggr, w, idxs)
+        edata = _scatter(aggr, edata, idxs)
+    end
 
-    GNNGraph((s, t, nothing), 
-            g.num_nodes, length(s), g.num_graphs, 
+    GNNGraph((s, t, w),
+            g.num_nodes, num_edges, g.num_graphs,
             g.graph_indicator,
-            g.ndata, g.edata, g.gdata)
+            g.ndata, edata, g.gdata)
 end
 
 """

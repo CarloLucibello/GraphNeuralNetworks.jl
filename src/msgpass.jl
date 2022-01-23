@@ -112,17 +112,11 @@ apply_edges(l, g::GNNGraph; xi=nothing, xj=nothing, e=nothing) =
 
 function apply_edges(f, g::GNNGraph, xi, xj, e)
     s, t = edge_index(g)
-    xi = _gather(xi, t)   # size: (D, num_nodes) -> (D, num_edges)
-    xj = _gather(xj, s)
+    xi = GNNGraphs._gather(xi, t)   # size: (D, num_nodes) -> (D, num_edges)
+    xj = GNNGraphs._gather(xj, s)
     m = f(xi, xj, e)
     return m
 end
-
-_gather(x::NamedTuple, i) = map(x -> _gather(x, i), x)
-_gather(x::Tuple, i) = map(x -> _gather(x, i), x)
-_gather(x::AbstractArray, i) = NNlib.gather(x, i)
-_gather(x::Nothing, i) = nothing
-
 
 ##  AGGREGATE NEIGHBORS
 @doc raw"""
@@ -140,13 +134,8 @@ where it comes after [`apply_edges`](@ref).
 """
 function aggregate_neighbors(g::GNNGraph, aggr, m)
     s, t = edge_index(g)
-    return _scatter(aggr, m, t)
+    return GNNGraphs._scatter(aggr, m, t)
 end
-
-_scatter(aggr, m::NamedTuple, t) = map(m -> _scatter(aggr, m, t), m)
-_scatter(aggr, m::Tuple, t) = map(m -> _scatter(aggr, m, t), m)
-_scatter(aggr, m::AbstractArray, t) = NNlib.scatter(aggr, m, t)
-
 
 
 ### MESSAGE FUNCTIONS ###
