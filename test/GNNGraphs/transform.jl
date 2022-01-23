@@ -107,14 +107,14 @@
     end
 
     @testset "remove_self_loops" begin
-        g = rand_graph(10, 20, graph_type=GRAPH_T)
-        g1 = add_edges(g, [1:5;], [1:5;])
-        @test g1.num_edges == g.num_edges + 5
-        g2 = remove_self_loops(g1)
-        @test g2.num_edges == g.num_edges
-        @test sort_edge_index(edge_index(g2)) == sort_edge_index(edge_index(g))
+        if GRAPH_T == :coo # add_edges and set_edge_weight only implemented for coo
+            g = rand_graph(10, 20, graph_type=GRAPH_T)
+            g1 = add_edges(g, [1:5;], [1:5;])
+            @test g1.num_edges == g.num_edges + 5
+            g2 = remove_self_loops(g1)
+            @test g2.num_edges == g.num_edges
+            @test sort_edge_index(edge_index(g2)) == sort_edge_index(edge_index(g))
 
-        if GRAPH_T == :coo
             # with edge features and weights
             g1 = GNNGraph(g1, edata=(e1=ones(3,g1.num_edges), e2=2*ones(g1.num_edges)))
             g1 = set_edge_weight(g1, 3*ones(g1.num_edges))
