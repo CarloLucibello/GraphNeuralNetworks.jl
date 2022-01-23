@@ -41,18 +41,19 @@ end
 
 function remove_self_loops(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
-    # TODO remove these constraints
-    @assert g.edata === (;)
-    @assert get_edge_weight(g) === nothing
+    w = get_edge_weight(g)
+    edata = g.edata
     
     mask_old_loops = s .!= t
     s = s[mask_old_loops]
     t = t[mask_old_loops]
-
-    GNNGraph((s, t, nothing), 
+    edata = getobs(edata, mask_old_loops)
+    w = isnothing(w) ? nothing : getobs(w, mask_old_loops)
+    
+    GNNGraph((s, t, w), 
             g.num_nodes, length(s), g.num_graphs, 
             g.graph_indicator,
-            g.ndata, g.edata, g.gdata)
+            g.ndata, edata, g.gdata)
 end
 
 
@@ -75,6 +76,10 @@ end
     remove_multi_edges(g::GNNGraph; aggr=+)
 
 Remove multiple edges (also called parallel edges or repeated edges) from graph `g`.
+Possible edge features are aggregated according to `aggr`, that can take value 
+`+`,`min`, `max` or `mean`.
+
+See also [`remove_self_loops`](@ref).
 """
 function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr=+)
     s, t = edge_index(g)
