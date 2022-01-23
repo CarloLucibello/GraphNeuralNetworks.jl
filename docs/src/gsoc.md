@@ -15,7 +15,7 @@ Graph neural networks (GNN) are deep learning model well adapated to data that c
 - **Supporting heterogeneous graphs (duration: 175h, expected difficulty: hard):**
 .
 
-- **Supporting heterogeneous graphs (duration: 175h, expected difficulty: hard):**
+- **Supporting training on very large graphs (duration: 175h, expected difficulty: medium to hard):**
 .
 
 - **Supporting temporal graph neural networks (duration: 175h, expected difficulty: hard):**
@@ -28,6 +28,6 @@ Graph neural networks (GNN) are deep learning model well adapated to data that c
 
 **Expected results:** New features added to the package along with tests and relevant documentation.
 
-**Mentors:** [Carlo Lucibello](https://github.com/CarloLucibello)
+**Mentors:** [Carlo Lucibello](https://github.com/CarloLucibello) (author of [GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl) and [Will Kimmerer](https://github.com/Wimmerer) (lead developer of [SuiteSparseGraphBLAS.jl](https://github.com/JuliaSparse/SuiteSparseGraphBLAS.jl)).
 
 **Contact:** Feel free to contact us on the [Julia Slack Workspace](https://julialang.slack.com/) or by opening an issue on [GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl).
