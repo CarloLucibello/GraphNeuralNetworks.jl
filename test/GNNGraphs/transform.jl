@@ -212,7 +212,10 @@
 
     @testset "to_bidirected" begin
         if GRAPH_T == :coo
-            g = GNNGraph([1,2,3,3,4], [2,3,4,4,4], [1.0,2.0,3,4,5])
+            s, t = [1, 2, 3, 3, 4], [2, 3, 4, 4, 4] 
+            w = [1.0, 2.0, 3.0, 4.0, 5.0]
+            e = [10.0, 20.0, 30.0, 40.0, 50.0]
+            g = GNNGraph(s, t, w, edata = e)
 
             g2 = to_bidirected(g)
             @test g2.num_nodes == g.num_nodes
@@ -226,6 +229,7 @@
             @test s2 == [1, 2, 2, 3, 3, 4, 4]
             @test t2 == [2, 1, 3, 2, 4, 3, 4]
             @test w2 == [1, 1, 2, 2, 3.5, 3.5, 5]
+            @test g2.edata.e == [10.0, 10.0, 20.0, 20.0, 35.0, 35.0, 50.0]
         end
     end
 end
