@@ -79,7 +79,7 @@ Remove multiple edges (also called parallel edges or repeated edges) from graph 
 Possible edge features are aggregated according to `aggr`, that can take value 
 `+`,`min`, `max` or `mean`.
 
-See also [`remove_self_loops`](@ref).
+See also [`remove_self_loops`](@ref), [`has_multi_edges`](@ref), and [`to_bidirected`](@ref).
 """
 function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr=+)
     s, t = edge_index(g)
@@ -119,14 +119,14 @@ Add to graph `g` the edges with source nodes `s` and target nodes `t`.
 Optionally, pass the features  `edata` for the new edges. 
 """
 function add_edges(g::GNNGraph{<:COO_T}, 
-        snew::AbstractVector{<:Integer}, 
-        tnew::AbstractVector{<:Integer};
-        edata=nothing)
+                snew::AbstractVector{<:Integer}, 
+                tnew::AbstractVector{<:Integer};
+                edata=nothing)
 
     @assert length(snew) == length(tnew)
     # TODO remove this constraint
     @assert get_edge_weight(g) === nothing
-    
+
     edata = normalize_graphdata(edata, default_name=:e, n=length(snew))
     edata = cat_features(g.edata, edata)
     
@@ -156,6 +156,26 @@ end
 #     g.num_edges += length(snew)
 #     return true
 # end
+"""
+    to_bidirected(g; aggr=mean)
+
+See also [`is_bidirected`](@ref) and [`remove_multi_edges`](@ref). 
+"""
+function to_bidirected(g::GNNGraph{<:COO_T})
+    s, t = edge_index(g)
+    w = get_edge_weight(g)
+    snew = [s; t]
+    tnew = [t; s] 
+    w = cat_features(w, w)
+    edata = cat_features(g.edata, g.edata)   
+
+    g = GNNGraph((snew, tnew, w),
+                g.num_nodes, length(snew), g.num_graphs,
+                g.graph_indicator,
+                g.ndata, edata, g.gdata)
+
+    return remove_multi_edges(g; aggr=mean)
+end
 
 
 """

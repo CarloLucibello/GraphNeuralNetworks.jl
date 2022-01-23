@@ -209,4 +209,23 @@
         gw2 = set_edge_weight(g2, w)
         @test get_edge_weight(gw2) == w
     end
+
+    @testset "to_bidirected" begin
+        if GRAPH_T == :coo
+            g = GNNGraph([1,2,3,3,4], [2,3,4,4,4], [1.0,2.0,3,4,5])
+
+            g2 = to_bidirected(g)
+            @test g2.num_nodes == g.num_nodes
+            @test g2.num_edges == 7
+            s2, t2 = edge_index(g2)         
+            @test is_bidirected(g2)
+            @test !has_multi_edges(g2)
+
+            s2, t2 = edge_index(g2)
+            w2 = get_edge_weight(g2)
+            @test s2 == [1, 2, 2, 3, 3, 4, 4]
+            @test t2 == [2, 1, 3, 2, 4, 3, 4]
+            @test w2 == [1, 1, 2, 2, 3.5, 3.5, 5]
+        end
+    end
 end

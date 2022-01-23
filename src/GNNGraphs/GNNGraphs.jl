@@ -13,7 +13,7 @@ import LearnBase
 import StatsBase
 import KrylovKit
 using ChainRulesCore
-using LinearAlgebra, Random
+using LinearAlgebra, Random, Statistics
 
 include("gnngraph.jl")
 export GNNGraph, 
@@ -48,6 +48,7 @@ export add_nodes,
        remove_self_loops,
        remove_multi_edges,
        set_edge_weight,
+       to_bidirected,
        # from Flux
        batch,
        unbatch,
