@@ -71,29 +71,6 @@ function remove_self_loops(g::GNNGraph{<:ADJMAT_T})
 end
 
 
-# """
-#     remove_multi_edges(g::GNNGraph)
-
-# Remove multiple edges (also called parallel edges or repeated edges) from graph `g`.
-# """
-# function remove_multi_edges(g::GNNGraph{<:COO_T})
-#     s, t = edge_index(g)
-#     # TODO remove these constraints
-#     @assert g.num_graphs == 1
-#     @assert g.edata === (;)
-#     @assert get_edge_weight(g) === nothing
-    
-#     idxs, idxmax = edge_encoding(s, t, g.num_nodes)
-#     union!(idxs)
-#     s, t = edge_decoding(idxs, g.num_nodes)
-
-#     GNNGraph((s, t, nothing), 
-#             g.num_nodes, length(s), g.num_graphs, 
-#             g.graph_indicator,
-#             g.ndata, g.edata, g.gdata)
-# end
-
-
 """
     remove_multi_edges(g::GNNGraph; aggr=+)
 
@@ -110,23 +87,22 @@ function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr=+)
     perm = sortperm(idxs)
     idxs = idxs[perm]
     s, t = s[perm], t[perm]
-    edata = select_features(edata, perm) # getobs
-    w = select_features(w, perm)
-    
+    edata = getobs(edata, perm)
+    w = isnothing(w) ? nothing : getobs(w, perm)
     idxs = [-1; idxs]
     mask = idxs[2:end] .> idxs[1:end-1]
     if !all(mask)
         s, t = s[mask], t[mask]
-        num_edges = length(s)
-        idxs = similar(s)
+        idxs = similar(s, num_edges)
         idxs .= 1:num_edges
         idxs .= idxs .- cumsum(.!mask)
-        w = _scatter(aggr, w, idxs, dtstsize=num_edges)
-        edata = _scatter(aggr, edata, idxs, dtstsize=num_edges)
+        num_edges = length(s)
+        w = _scatter(aggr, w, idxs)
+        edata = _scatter(aggr, edata, idxs)
     end
 
-    GNNGraph((s, t, w), 
-            g.num_nodes, num_edges, g.num_graphs, 
+    GNNGraph((s, t, w),
+            g.num_nodes, num_edges, g.num_graphs,
             g.graph_indicator,
             g.ndata, edata, g.gdata)
 end
