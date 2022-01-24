@@ -24,6 +24,7 @@ makedocs(;
                 "Utils" => "api/utils.md",
                ],
               "Developer Notes" => "dev.md",
+              "Summer Of Code" => "gsoc.md",
             ],
 )
 
