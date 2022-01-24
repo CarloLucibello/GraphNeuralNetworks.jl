@@ -1,7 +1,8 @@
 # Graph Neural Networks - Summer of Code
 
-Graph neural networks (GNN) are deep learning model well adapated to data that can be rapresented by graph topologies and feature vectors leaving on nodes and edges.
-[GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl) is a pure Julia package for GNNs already equipped with plenty of features such as many common graph convolutional layers, CUDA support and graph batching for fast parallel operations. There are a number of ways that the package could be improved:
+Graph neural networks (GNN) are deep learning models well adapated to data  rapresented by graphs along with feature vectors associated to nodes and edges. 
+GNNs are a growing are of research and find many applications in complex networks analysis, relational reasoning, combinatorial optimization, molecule generation, and many other fields. 
+[GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl) is a pure Julia package for GNNs already equipped with plenty of features such as many common graph convolutional layers, CUDA support and graph batching for fast parallel operations. There are a number of ways by which the package could be improved:
 
 - **Adding graph convolutional layers (duration: 175h, expected difficulty: easy to medium):**
 While we implement a good variety of graph convolutional layers, there is still a vast zoology to be implemented yet.
