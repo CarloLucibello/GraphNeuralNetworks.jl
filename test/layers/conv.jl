@@ -98,7 +98,7 @@
         for heads in (1, 2), concat in (true, false)
             l = GATConv(in_channel => out_channel; heads, concat)
             for g in test_graphs
-                test_layer(l, g, rtol=1e-4,
+                test_layer(l, g, rtol=1e-3,
                     outsize=(concat ? heads*out_channel : out_channel, g.num_nodes))
             end
         end
@@ -114,7 +114,7 @@
         for heads in (1, 2), concat in (true, false)
             l = GATv2Conv(in_channel => out_channel; heads, concat)
             for g in test_graphs
-                test_layer(l, g, rtol=1e-4,
+                test_layer(l, g, rtol=1e-3,
                     outsize=(concat ? heads*out_channel : out_channel, g.num_nodes))
             end
         end
