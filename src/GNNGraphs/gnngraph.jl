@@ -232,7 +232,14 @@ Flux.Data._nobs(g::GNNGraph) = g.num_graphs
 Flux.Data._getobs(g::GNNGraph, i) = getgraph(g, i)
 
 #########################
+
 function Base.:(==)(g1::GNNGraph, g2::GNNGraph)
     g1 === g2 && return true
     all(k -> getfield(g1, k) == getfield(g2, k), fieldnames(typeof(g1)))
+end
+
+function Base.hash(g::T, h::UInt) where T<:GNNGraph
+    fs = (getfield(g, k) for k in fieldnames(typeof(g)))
+    foldl((h, f) -> hash(f, h),  fs, init=hash(T, h))
+    # collect(fs)
 end
