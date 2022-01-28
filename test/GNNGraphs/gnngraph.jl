@@ -268,7 +268,7 @@
         
         g2 = GNNGraph(g1, edata=rand(6), graph_type=GRAPH_T)
         @test g1 != g2
-        @test g1 !== g2 # this is true since GNNGraph is immutable
+        @test g1 !== g2
     end
 
     @testset "hash" begin
