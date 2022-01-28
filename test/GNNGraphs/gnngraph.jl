@@ -276,9 +276,9 @@
         @test hash(g1) == hash(g1)
         @test hash(g1) == hash(deepcopy(g1))
         @test hash(g1) == hash(GNNGraph(g1, ndata=g1.ndata, graph_type=GRAPH_T))
-        @test hash(g1) == hash(GNNGraph(g1, ndata=g1.ndata))
-        @test hash(g1) != hash(GNNGraph(g1, ndata=rand(5)))
-        @test hash(g1) != hash(GNNGraph(g1, edata=rand(6)))
+        @test hash(g1) == hash(GNNGraph(g1, ndata=g1.ndata, graph_type=GRAPH_T))
+        @test hash(g1) != hash(GNNGraph(g1, ndata=rand(5), graph_type=GRAPH_T))
+        @test hash(g1) != hash(GNNGraph(g1, edata=rand(6), graph_type=GRAPH_T))
     end
 end
 
