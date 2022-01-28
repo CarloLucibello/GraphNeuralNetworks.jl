@@ -240,6 +240,5 @@ end
 
 function Base.hash(g::T, h::UInt) where T<:GNNGraph
     fs = (getfield(g, k) for k in fieldnames(typeof(g)))
-    foldl((h, f) -> hash(f, h),  fs, init=hash(T, h))
-    # collect(fs)
+    return foldl((h, f) -> hash(f, h),  fs, init=hash(T, h))
 end
