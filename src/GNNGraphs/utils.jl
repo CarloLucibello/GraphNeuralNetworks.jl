@@ -20,11 +20,31 @@ cat_features(x1::Union{Number, AbstractVector}, x2::Union{Number, AbstractVector
 
 # workaround for issue #98 #104
 cat_features(x1::NamedTuple{(), Tuple{}}, x2::NamedTuple{(), Tuple{}}) = (;)
+cat_features(xs::AbstractVector{NamedTuple{(), Tuple{}}}) = (;)
 
 function cat_features(x1::NamedTuple, x2::NamedTuple)
     sort(collect(keys(x1))) == sort(collect(keys(x2))) || @error "cannot concatenate feature data with different keys"
     
     NamedTuple(k => cat_features(getfield(x1,k), getfield(x2,k)) for k in keys(x1))
+end
+
+function cat_features(xs::AbstractVector{<:AbstractArray{T,N}}) where {T<:Number, N}
+   cat(xs...; dims=N) 
+end
+
+cat_features(xs::AbstractVector{Nothing}) = nothing
+cat_features(xs::AbstractVector{<:Number}) = xs
+
+function cat_features(xs::AbstractVector{<:NamedTuple})
+    symbols = [sort(collect(keys(x))) for x in xs]
+    all(y -> y==symbols[1], symbols) || @error "cannot concatenate feature data with different keys"
+    length(xs) == 1 && return xs[1] 
+
+    # concatenate 
+    syms = symbols[1]
+    NamedTuple(
+        k => cat_features([x[k] for x in xs]) for (ii,k) in enumerate(syms)
+    )
 end
 
 # Turns generic type into named tuple
@@ -70,9 +90,10 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
     return data
 end
 
-ones_like(x::AbstractArray, T=eltype(x), sz=size(x)) = fill!(similar(x, T, sz), 1)
-ones_like(x::SparseMatrixCSC, T=eltype(x), sz=size(x)) = ones(T, sz)
-ones_like(x::CUMAT_T, T=eltype(x), sz=size(x)) = CUDA.ones(T, sz)
+ones_like(x::AbstractArray, T::Type, sz=size(x)) = fill!(similar(x, T, sz), 1)
+ones_like(x::SparseMatrixCSC, T::Type, sz=size(x)) = ones(T, sz)
+ones_like(x::CUMAT_T, T::Type, sz=size(x)) = CUDA.ones(T, sz)
+ones_like(x, sz=size(x)) = ones_like(x, eltype(x), sz)
 
 numnonzeros(a::AbstractSparseMatrix) = nnz(a)
 numnonzeros(a::AbstractMatrix) = count(!=(0), a)

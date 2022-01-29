@@ -270,12 +270,12 @@ function SparseArrays.blockdiag(g1::GNNGraph, g2::GNNGraph)
         t = vcat(t1, nv1 .+ t2)
         w = cat_features(get_edge_weight(g1), get_edge_weight(g2))
         graph = (s, t, w)
-        ind1 = isnothing(g1.graph_indicator) ? ones_like(s1, Int, nv1) : g1.graph_indicator 
-        ind2 = isnothing(g2.graph_indicator) ? ones_like(s2, Int, nv2) : g2.graph_indicator     
+        ind1 = isnothing(g1.graph_indicator) ? ones_like(s1, nv1) : g1.graph_indicator 
+        ind2 = isnothing(g2.graph_indicator) ? ones_like(s2, nv2) : g2.graph_indicator     
     elseif g1.graph isa ADJMAT_T        
         graph = blockdiag(g1.graph, g2.graph)
-        ind1 = isnothing(g1.graph_indicator) ? ones_like(graph, Int, nv1) : g1.graph_indicator 
-        ind2 = isnothing(g2.graph_indicator) ? ones_like(graph, Int, nv2) : g2.graph_indicator     
+        ind1 = isnothing(g1.graph_indicator) ? ones_like(graph, nv1) : g1.graph_indicator 
+        ind2 = isnothing(g2.graph_indicator) ? ones_like(graph, nv2) : g2.graph_indicator     
     end
     graph_indicator = vcat(ind1, g1.num_graphs .+ ind2)
     
@@ -358,8 +358,37 @@ julia> g12.ndata.x
  1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
 ```
 """
-Flux.batch(gs::Vector{<:GNNGraph}) = blockdiag(gs...)
+Flux.batch(gs::AbstractVector{<:GNNGraph}) = blockdiag(gs...)
 
+function Flux.batch(gs::AbstractVector{<:GNNGraph{T}}) where T<:COO_T
+    v_num_nodes = [g.num_nodes for g in gs]
+    edge_indices = [edge_index(g) for g in gs]
+    nodesum = cumsum([0; v_num_nodes])[1:end-1]
+    s = cat_features([ei[1] .+ nodesum[ii] for (ii, ei) in enumerate(edge_indices)])
+    t = cat_features([ei[2] .+ nodesum[ii] for (ii, ei) in enumerate(edge_indices)])
+    w = cat_features([get_edge_weight(g) for g in gs])
+    graph = (s, t, w)
+
+    function materialize_graph_indicator(g)
+        g.graph_indicator === nothing ? ones_like(s, g.num_nodes) : g.graph_indicator
+    end
+
+    v_gi = materialize_graph_indicator.(gs)
+    v_num_graphs = [g.num_graphs for g in gs]
+    graphsum = cumsum([0; v_num_graphs])[1:end-1]
+    v_gi = [ng .+ gi  for (ng, gi) in zip(graphsum, v_gi)]
+    graph_indicator = cat_features(v_gi)
+    
+    GNNGraph(graph,
+        sum(v_num_nodes), 
+        sum([g.num_edges for g in gs]),
+        sum(v_num_graphs),
+        graph_indicator,
+        cat_features([g.ndata for g in gs]),
+        cat_features([g.edata for g in gs]),
+        cat_features([g.gdata for g in gs]),
+    )
+end
 
 """
     unbatch(g::GNNGraph)
