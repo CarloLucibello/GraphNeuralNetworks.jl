@@ -199,7 +199,7 @@ function test_approx_structs(l, l̄, l̄2; atol=1e-5, rtol=1e-5,
             end
         else
             verbose && println("C")
-            test_approx_structs(x, f̄, f̄2; exclude_grad_fields, broken_grad_fields, verbose)
+            test_approx_structs(x, f̄, f̄2; atol, rtol, exclude_grad_fields, broken_grad_fields, verbose)
         end
     end
     return true

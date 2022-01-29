@@ -248,8 +248,37 @@
     end
 
     @testset "Graphs.jl integration" begin
-        g = GNNGraph(erdos_renyi(10, 20))
+        g = GNNGraph(erdos_renyi(10, 20), graph_type=GRAPH_T)
         @test g isa Graphs.AbstractGraph
+    end
+
+    @testset "==" begin
+        g1 = rand_graph(5, 6, ndata=rand(5), edata=rand(6), graph_type=GRAPH_T)
+        @test g1 == g1
+        @test g1 == deepcopy(g1)
+        @test g1 !== deepcopy(g1)
+        
+        g2 = GNNGraph(g1, graph_type=GRAPH_T)
+        @test g1 == g2
+        @test g1 === g2 # this is true since GNNGraph is immutable
+        
+        g2 = GNNGraph(g1, ndata=rand(5), graph_type=GRAPH_T)
+        @test g1 != g2
+        @test g1 !== g2
+        
+        g2 = GNNGraph(g1, edata=rand(6), graph_type=GRAPH_T)
+        @test g1 != g2
+        @test g1 !== g2
+    end
+
+    @testset "hash" begin
+        g1 = rand_graph(5, 6, ndata=rand(5), edata=rand(6), graph_type=GRAPH_T)
+        @test hash(g1) == hash(g1)
+        @test hash(g1) == hash(deepcopy(g1))
+        @test hash(g1) == hash(GNNGraph(g1, ndata=g1.ndata, graph_type=GRAPH_T))
+        @test hash(g1) == hash(GNNGraph(g1, ndata=g1.ndata, graph_type=GRAPH_T))
+        @test hash(g1) != hash(GNNGraph(g1, ndata=rand(5), graph_type=GRAPH_T))
+        @test hash(g1) != hash(GNNGraph(g1, edata=rand(6), graph_type=GRAPH_T))
     end
 end
 
