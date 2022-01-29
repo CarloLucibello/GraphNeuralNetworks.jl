@@ -18,10 +18,9 @@
     end
 
     @testset "batch"  begin
-        #TODO add graph_type=GRAPH_T
-        g1 = GNNGraph(random_regular_graph(10,2), ndata=rand(16,10))
-        g2 = GNNGraph(random_regular_graph(4,2), ndata=rand(16,4))
-        g3 = GNNGraph(random_regular_graph(7,2), ndata=rand(16,7))
+        g1 = GNNGraph(random_regular_graph(10,2), ndata=rand(16,10), graph_type=GRAPH_T)
+        g2 = GNNGraph(random_regular_graph(4,2), ndata=rand(16,4), graph_type=GRAPH_T)
+        g3 = GNNGraph(random_regular_graph(7,2), ndata=rand(16,7), graph_type=GRAPH_T)
         
         g12 = Flux.batch([g1, g2])
         g12b = blockdiag(g1, g2)
@@ -36,16 +35,21 @@
         @test node_features(g123)[:,11:14] ≈ node_features(g2) 
 
         # scalar graph features
-        g1 = GNNGraph(random_regular_graph(10,2), gdata=rand())
-        g2 = GNNGraph(random_regular_graph(4,2), gdata=rand())
-        g3 = GNNGraph(random_regular_graph(4,2), gdata=rand())
+        g1 = GNNGraph(g1, gdata=rand())
+        g2 = GNNGraph(g2, gdata=rand())
+        g3 = GNNGraph(g3, gdata=rand())
         g123 = Flux.batch([g1, g2, g3])
         @test g123.gdata.u == [g1.gdata.u, g2.gdata.u, g3.gdata.u]
+
+        # Batch of batches
+        g123123 = Flux.batch([g123, g123])
+        @test g123123.graph_indicator == [fill(1, 10); fill(2, 4); fill(3, 7); fill(4, 10); fill(5, 4); fill(6, 7)]
+        @test g123123.num_graphs == 6
     end
 
     @testset "unbatch" begin
-        g1 = rand_graph(10, 20)
-        g2 = rand_graph(5, 10)
+        g1 = rand_graph(10, 20, graph_type=GRAPH_T)
+        g2 = rand_graph(5, 10, graph_type=GRAPH_T)
         g12 = Flux.batch([g1, g2])
         gs = Flux.unbatch([g1,g2])
         @test length(gs) == 2
