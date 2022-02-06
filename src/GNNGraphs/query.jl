@@ -396,8 +396,8 @@ end
 
 
 @non_differentiable adjacency_list(x...)
-@non_differentiable adjacency_matrix(x...)
-@non_differentiable degree(x...)
+@non_differentiable adjacency_matrix(g::GNNGraph{<:ADJMAT_T})
+# @non_differentiable degree(x...)
 @non_differentiable graph_indicator(x...)
 @non_differentiable has_multi_edges(x...)
 @non_differentiable Graphs.has_self_loops(x...) 

@@ -105,5 +105,28 @@
         Abin = adjacency_matrix(g, Float32, weighted=false)
         @test Abin ≈ abin
         @test eltype(Abin) == Float32    
+
+        @testset "gradient" begin 
+            s = [1,2,3]
+            t = [2,3,1]
+            w = [0.1,0.1,0.2]
+            gw = gradient(w) do w
+                    g = GNNGraph(s, t, w, graph_type=GRAPH_T)
+                    A = adjacency_matrix(g, weighted=false)
+                    sum(A)
+                end[1]
+            @test gw === nothing  
+
+            if GRAPH_T == :coo
+
+                gw = gradient(w) do w
+                    g = GNNGraph(s, t, w, graph_type=GRAPH_T)
+                    A = adjacency_matrix(g, weighted=true)
+                    sum(A)
+                end[1]
+
+                @test gw == [1,1,1]
+            end
+        end
     end
 end

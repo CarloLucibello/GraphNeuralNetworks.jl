@@ -173,6 +173,6 @@ function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=
     return A, num_nodes, num_edges
 end
 
-@non_differentiable to_coo(x...)
-@non_differentiable to_dense(x...)
-@non_differentiable to_sparse(x...)
+# @non_differentiable to_coo(x...)
+# @non_differentiable to_dense(x...)
+# @non_differentiable to_sparse(x...)
