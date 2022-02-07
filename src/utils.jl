@@ -1,5 +1,18 @@
 ofeltype(x, y) = convert(float(eltype(x)), y)
 
+# function NNlib.scatter(op,
+#                 src::Number,
+#                 idx::AbstractArray{Tidx,Nidx};
+#                 init = nothing, dstsize = nothing) where {Tsrc,Tidx,Nsrc,Nidx}
+    
+#     dims = Nsrc - Nidx
+#     dstsz = isnothing(dstsize) ? (size(src)[1:dims]..., NNlib.maximum_dims(idx)...) : dstsize 
+#     dst = similar(src, Tsrc, dstsz)
+#     xinit = isnothing(init) ? NNlib.scatter_empty(op, Tsrc) : init 
+#     fill!(dst, xinit)
+#     NNlib.scatter!(op, dst, src, idx)
+# end
+
 # Considers the src a zero dimensional object.
 # Useful for implementing `StatsBase.counts`, `degree`, etc...
 # function NNlib.scatter!(op, dst::AbstractArray, src::Number, idx::AbstractArray)

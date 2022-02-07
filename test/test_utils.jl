@@ -12,6 +12,13 @@ function FiniteDifferences.to_vec(x::Integer)
     return Int[x], Integer_from_vec
 end
 
+# Test that forward pass on cpu and gpu are the same. 
+# Tests also gradient on cpu and gpu comparing with
+# finite difference methods.
+# Test gradients with respects to layer weights and to input. 
+# If `g` has edge features, it is assumed that the layer can be 
+# use them in the forward pass as `l(g, x, e)`.
+# Test also gradient with repspect to `e`. 
 function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,
                                  exclude_grad_fields = [],
                                  broken_grad_fields =[],
@@ -135,12 +142,14 @@ function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,
 
     # TEST e INPUT GRADIENT
     if e !== nothing
+        verbose && println("Test e gradient cpu")
         ē  = gradient(e -> loss(l, g, x, e), e)[1]
         ē_fd = FiniteDifferences.grad(fdm, e64 -> loss(l64, g64, x64, e64), e64)[1]
         @test eltype(ē) == eltype(e)
         @test ē ≈ ē_fd    atol=atol rtol=rtol
 
         if test_gpu
+            verbose && println("Test e gradient gpu")
             ēgpu  = gradient(egpu -> loss(lgpu, ggpu, xgpu, egpu), egpu)[1]
             @test ēgpu isa CuArray 
             @test eltype(ēgpu) == eltype(ē)

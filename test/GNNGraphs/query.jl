@@ -70,16 +70,27 @@
                 @test d ==  [1, 1, 1, 0]
             end
             @test eltype(d) <: Integer
-            if GRAPH_T == :coo
-                @test degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0]
-            end
-
+            @test degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0]   broken = (GRAPH_T != :coo)
+            
             if TEST_GPU
                 g_gpu = g |> gpu
                 d = degree(g)
                 d_gpu = degree(g_gpu)
                 @test d_gpu isa CuVector{Float32}
                 @test Array(d_gpu) ≈ d
+            end
+            @testset "gradient" begin
+                gw = gradient(eweight) do w
+                        g = GNNGraph((s, t, w), graph_type=GRAPH_T)
+                        sum(degree(g, edge_weight=false))
+                    end[1]
+                @test gw === nothing
+                
+                gw = gradient(eweight) do w
+                    g = GNNGraph((s, t, w), graph_type=GRAPH_T)
+                    sum(degree(g, edge_weight=true))
+                end[1]
+                @test gw isa Vector{Float64}
             end
         end
     end
@@ -117,16 +128,13 @@
                 end[1]
             @test gw === nothing  
 
-            if GRAPH_T == :coo
+            gw = gradient(w) do w
+                g = GNNGraph(s, t, w, graph_type=GRAPH_T)
+                A = adjacency_matrix(g, weighted=true)
+                sum(A)
+            end[1]
 
-                gw = gradient(w) do w
-                    g = GNNGraph(s, t, w, graph_type=GRAPH_T)
-                    A = adjacency_matrix(g, weighted=true)
-                    sum(A)
-                end[1]
-
-                @test gw == [1,1,1]
-            end
+            @test gw == [1,1,1]     broken = (GRAPH_T != :coo)
         end
     end
 end
