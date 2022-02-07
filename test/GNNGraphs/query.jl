@@ -70,7 +70,7 @@
                 @test d ==  [1, 1, 1, 0]
             end
             @test eltype(d) <: Integer
-            @test degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0]   broken = (GRAPH_T != :coo)
+            @test (degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0])   broken = (GRAPH_T != :coo)
             
             if TEST_GPU
                 g_gpu = g |> gpu

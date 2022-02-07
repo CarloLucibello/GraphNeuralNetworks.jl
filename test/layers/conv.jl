@@ -52,13 +52,13 @@
             @test y[1,2] ≈ w[3] / √(d[2]*d[1]) + w[4] / √(d[2]*d[3])
             @test y ≈ l(g, x, w)
 
-            if GRAPH_T != :sparse
-                # test gradient with respect to edge weights
-                g = GNNGraph((s, t, w), ndata=x, graph_type=GRAPH_T, edata=w)
-                l = GCNConv(1 => 1, add_self_loops=false, use_edge_weight=true)
-                test_layer(l, g, rtol=1e-5, outsize=(1, g.num_nodes), test_gpu=false)
-                @test gradient(w -> sum(l(g, x, w)), w)[1] isa AbstractVector{T}   # redundan test but more esplicit
-            end
+            # test gradient with respect to edge weights
+            w = rand(T, 6)
+            x = rand(T, 1, 3)
+            g = GNNGraph((s, t, w), ndata=x, graph_type=GRAPH_T, edata=w)
+            l = GCNConv(1 => 1, add_self_loops=false, use_edge_weight=true)
+            test_layer(l, g, rtol=1e-5, outsize=(1, g.num_nodes), test_gpu=false)
+            @test gradient(w -> sum(l(g, x, w)), w)[1] isa AbstractVector{T}   # redundan test but more esplicit
         end
     end
 
