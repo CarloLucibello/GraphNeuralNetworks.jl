@@ -115,7 +115,7 @@ function to_dense(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=t
     # The output will always be a adjmat in :out format (e.g. A[i,j] denotes from i to j)
     s, t, val = coo
     n::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes
-    val = isnothing(val) ? eltype(s)(1) : val
+    val = isnothing(val) ? ones_like(s) : val
     T = T === nothing ? eltype(val) : T
     if !weighted
         val = T(1)

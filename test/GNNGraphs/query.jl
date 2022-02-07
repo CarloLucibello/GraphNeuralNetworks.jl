@@ -70,7 +70,12 @@
                 @test d ==  [1, 1, 1, 0]
             end
             @test eltype(d) <: Integer
-            @test (degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0])   broken = (GRAPH_T != :coo)
+            if GRAPH_T == :coo
+            # TODO use the @test option broken = (GRAPH_T != :coo) on julia >= 1.7
+                @test degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0]
+            else
+                @test_broken degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0]
+            end
             
             if TEST_GPU
                 g_gpu = g |> gpu
@@ -133,8 +138,12 @@
                 A = adjacency_matrix(g, weighted=true)
                 sum(A)
             end[1]
-
-            @test gw == [1,1,1]     broken = (GRAPH_T != :coo)
+            if GRAPH_T == :coo
+                # TODO use the @test option broken = (GRAPH_T != :coo) on julia >= 1.7
+                @test gw == [1,1,1]
+            else
+                @test_broken gw == [1,1,1]
+            end
         end
     end
 end
