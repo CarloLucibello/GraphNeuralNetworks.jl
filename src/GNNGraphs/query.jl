@@ -413,13 +413,11 @@ function has_multi_edges(g::GNNGraph)
     length(union(idxs)) < length(idxs)
 end
 
-
 @non_differentiable adjacency_list(x...)
-@non_differentiable adjacency_matrix(g::GNNGraph{<:ADJMAT_T}) # TODO remove this in the future
 @non_differentiable graph_indicator(x...)
 @non_differentiable has_multi_edges(x...)
 @non_differentiable Graphs.has_self_loops(x...) 
 @non_differentiable is_bidirected(x...)
 @non_differentiable normalized_adjacency(x...) # TODO remove this in the future
 @non_differentiable normalized_laplacian(x...) # TODO remove this in the future
-@non_differentiable scaled_laplacian(x...)
+@non_differentiable scaled_laplacian(x...) # TODO remove this in the future

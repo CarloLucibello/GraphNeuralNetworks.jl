@@ -120,11 +120,14 @@ function to_dense(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=t
     if !weighted
         val = T(1)
     end
-    A = fill!(similar(s, T, (n, n)), 0)
-    v = vec(A) # vec view of A
     idxs = s .+ n .* (t .- 1) 
+    
+    ## using scatter instead of indexing since there could be multiple edges
+    # A = fill!(similar(s, T, (n, n)), 0)
+    # v = vec(A) # vec view of A
     # A[idxs] .= val # exploiting linear indexing
-    NNlib.scatter!(+, v, val, idxs) # using scatter instead of indexing since there could be multiple edges 
+    v = NNlib.scatter(+, val, idxs, dstsize=n^2) 
+    A = reshape(v, (n, n))
     return A, n, length(s)
 end
 
