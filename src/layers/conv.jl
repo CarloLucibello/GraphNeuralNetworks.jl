@@ -251,12 +251,10 @@ end
 
 
 @doc raw"""
-    GATConv(in => out, σ=identity;
-            heads=1,
-            concat=true,
-            init=glorot_uniform    
-            bias=true, 
-            negative_slope=0.2f0)
+    GATConv(in => out, σ=identity; 
+            heads=1, concat=true, init=glorot_uniform, bias=true, negative_slope=0.2f0)
+
+    GATConv((in, ein) => out), ...)
 
 Graph attentional layer from the paper [Graph Attention Networks](https://arxiv.org/abs/1710.10903).
 
@@ -272,8 +270,9 @@ with ``z_i`` a normalization factor.
 
 # Arguments
 
-- `in`: The dimension of input features.
-- `out`: The dimension of output features.
+- `in`: The dimension of input node features.
+- `ein`:
+- `out`: The dimension of output node features.
 - `bias`: Learn the additive bias if true.
 - `heads`: Number attention heads.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
@@ -344,12 +343,10 @@ function Base.show(io::IO, l::GATConv)
 end
 
 @doc raw"""
-    GATv2Conv(in => out, σ=identity;
-            heads=1,
-            concat=true,
-            init=glorot_uniform    
-            bias=true, 
-            negative_slope=0.2f0)
+    GATv2Conv(in => out, [σ; heads, concat, init, bias, negative_slope, add_self_loops])
+
+    GATv2Conv((in, ein) => out, ...)
+
 
 GATv2 attentional layer from the paper [How Attentive are Graph Attention Networks?](https://arxiv.org/abs/2105.14491).
 
@@ -363,42 +360,67 @@ where the attention coefficients ``\alpha_{ij}`` are given by
 ```
 with ``z_i`` a normalization factor.
 
+In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
+and the attention coefficients will be calculated as  
+```
+\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_3 \mathbf{e}_{j\to i}; W_2 \mathbf{x}_i; W_1 \mathbf{x}_j]))
+````
+
 # Arguments
 
-- `in`: The dimension of input features.
-- `out`: The dimension of output features.
-- `bias`: Learn the additive bias if true.
-- `heads`: Number attention heads.
-- `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
-- `negative_slope`: The parameter of LeakyReLU.
+- `in`: The dimension of input node features.
+- `ein`: The dimension of input edget features. Default 0 (i.e. no edge features passed in the forward).
+- `out`: The dimension of output node features.
+- `σ`: Activation function. Default `identity`.
+- `bias`: Learn the additive bias if true. Dafault `true`. 
+- `heads`: Number attention heads. Dafault `1.
+- `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
+- `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+```
 """
-struct GATv2Conv{T, A1, A2, B, C<:AbstractMatrix} <: GNNLayer
+struct GATv2Conv{T, A1, A2, A3, B, C<:AbstractMatrix} <: GNNLayer
     dense_i::A1
     dense_j::A2
+    dense_e::A3
     bias::B
     a::C
     σ
     negative_slope::T
-    channel::Pair{Int, Int}
+    channel::Pair{NTuple{2,Int},Int}
     heads::Int
     concat::Bool
+    add_self_loops::Bool
 end
 
 @functor GATv2Conv
 Flux.trainable(l::GATv2Conv) = (l.dense_i, l.dense_j, l.bias, l.a)
 
+GATv2Conv(ch::Pair{Int,Int}, args...; kws...) = GATv2Conv((ch[1], 0) => ch[2], args...; kws...)
+
 function GATv2Conv(
-    channel::Pair{Int,Int},
+    ch::Pair{NTuple{2,Int},Int},
     σ=identity;
     heads::Int=1,
     concat::Bool=true,
     negative_slope=0.2,
     init=glorot_uniform,
     bias::Bool=true,
+    add_self_loops=true
 )
-    in, out = channel
+    (in, ein), out = ch
+
+    if add_self_loops
+        @assert ein == 0 "Using edge features and setting add_self_loops=true at the same time is not yet supported."
+    end
+    
     dense_i = Dense(in, out*heads; bias=bias, init=init)
     dense_j = Dense(in, out*heads; bias=false, init=init)
+    if ein > 0 
+        dense_e = Dense(ein, out*heads; bias=false, init=init)
+    else
+        dense_e = nothing
+    end
     if concat
         b = bias ? Flux.create_bias(dense_i.weight, bias, out*heads) : false
     else
@@ -407,12 +429,17 @@ function GATv2Conv(
     a = init(out, heads)
 
     negative_slope = convert(eltype(dense_i.weight), negative_slope)
-    GATv2Conv(dense_i, dense_j, b, a, σ, negative_slope, channel, heads, concat)
+    GATv2Conv(dense_i, dense_j, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops)
 end
 
-function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix)
+function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, AbstractMatrix}=nothing)
     check_num_nodes(g, x)
-    g = add_self_loops(g)
+    @assert !xor(e === nothing, l.dense_e === nothing)
+       
+    if l.add_self_loops
+        @assert e === nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
+        g = add_self_loops(g)
+    end
     in, out = l.channel
     heads = l.heads
 
@@ -421,12 +448,16 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix)
 
 
     function message(Wix, Wjx, e)
-        eij = sum(l.a .* leakyrelu.(Wix + Wjx, l.negative_slope), dims=1)   # 1 × heads × nedges
+        Wx = Wix + Wjx
+        if e !== nothing
+            Wx += reshape(l.dense_e(e), out, heads, :)
+        end 
+        eij = sum(l.a .* leakyrelu.(Wx, l.negative_slope), dims=1)   # 1 × heads × nedges
         α = exp.(eij)
         return (α = α, β = α .* Wjx)
     end
 
-    m = propagate(message, g, +; xi=Wix, xj=Wjx)                            # out × heads × nnodes
+    m = propagate(message, g, +; xi=Wix, xj=Wjx, e)                            # out × heads × nnodes
     x = m.β ./ m.α
 
     if !l.concat
@@ -439,10 +470,15 @@ end
 
 
 function Base.show(io::IO, l::GATv2Conv)
-    out, in = size(l.dense_i.weight)
-    print(io, "GATv2Conv(", in, " => ", out ÷ l.heads)
-    print(io, ", LeakyReLU(λ=", l.negative_slope)
-    print(io, "))")
+    (in, ein), out = l.channel
+    if ein == 0
+        print(io, "GATv2Conv(", in, " => ", out ÷ l.heads)
+    else
+        print(io, "GATv2Conv(", (in, ein), " => ", out ÷ l.heads)
+    end
+    l.σ == identity || print(io, ", ", l.σ)
+    print(io, ", negative_slope=", l.negative_slope)
+    print(io, ")")
 end
 
 
@@ -784,8 +820,8 @@ end
 
 
 @doc raw"""
-    CGConv((nin, ein) => nout, f, act=identity; bias=true, init=glorot_uniform, residual=false)
-    CGConv(nin => nout, ...)
+    CGConv((in, ein) => out, f, act=identity; bias=true, init=glorot_uniform, residual=false)
+    CGConv(in => out, ...)
 
 The crystal graph convolutional layer from the paper
 [Crystal Graph Convolutional Neural Networks for an Accurate and
@@ -801,15 +837,13 @@ where ``\mathbf{z}_{ij}``  is the node and edge features concatenation
 and ``\sigma`` is the sigmoid function.
 The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
 as the input size.
-If `nein`
-
 
 # Arguments
 
-- `nin`: The dimension of input node features.
-- `nein`: The dimension of input edge features. 
-If not given, assumes that no edge features are given as input in the forward pass.
-- `nout`: The dimension of output node features.
+- `in`: The dimension of input node features.
+- `ein`: The dimension of input edge features. 
+If `ein` is not given, assumes that no edge features are passed as input in the forward pass.
+- `out`: The dimension of output node features.
 - `act`: Activation function.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
@@ -823,12 +857,10 @@ x = rand(Float32, 2, g.num_nodes)
 e = rand(Float32, 3, g.num_edges)
 
 l = CGConv((2, 3) => 4, tanh)
-
 y = l(g, x, e)    # size: (4, num_nodes)
 
 # No edge features
 l = CGConv(2 => 4, tanh)
-
 y = l(g, x)    # size: (4, num_nodes)
 ```
 """
@@ -866,13 +898,15 @@ function (l::CGConv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, AbstractM
     end
 
     m = propagate(message, g, +, xi=x, xj=x, e=e)
+
     if l.residual
         if size(x, 1) == size(m, 1)
             m += x
         else
-            @warn "number of output features different from number of input features, residual not applyed."
+            @warn "number of output features different from number of input features, residual not applied."
         end
     end
+
     return m
 end
 
