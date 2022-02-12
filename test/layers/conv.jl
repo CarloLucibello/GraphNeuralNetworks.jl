@@ -194,8 +194,8 @@
 
         # no edge features
         l1 = CGConv(in_channel => out_channel, tanh, residual=false, bias=true)
-        @test l1(g1, g1.ndata.x) == l1(g1)
-        @test l1(g1, g1.ndata.x, nothing) == l1(g1) 
+        @test l1(g1, g1.ndata.x) == l1(g1).ndata.x
+        @test l1(g1, g1.ndata.x, nothing) == l1(g1).ndata.x 
     end
 
 
