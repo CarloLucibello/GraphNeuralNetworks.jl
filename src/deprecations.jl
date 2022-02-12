@@ -28,3 +28,6 @@ end
 ## Deprecated in v0.3 
 
 @deprecate copyxj(xi, xj, e)  copy_xj(xi, xj, e) 
+
+@deprecate CGConv(nin::Int, ein::Int, out::Int, args...; kws...) CGConv((nin, ein) => out, args...; kws...)
+

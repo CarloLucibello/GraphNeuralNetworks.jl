@@ -191,6 +191,11 @@
             g = GNNGraph(g, edata=rand(T, edim, g.num_edges))
             test_layer(l, g, rtol=1e-5, outsize=(out_channel, g.num_nodes)) 
         end
+
+        # no edge features
+        l1 = CGConv(in_channel => out_channel, tanh, residual=false, bias=true)
+        @test l1(g1, g1.ndata.x) == l1(g1)
+        @test l1(g1, g1.ndata.x, nothing) == l1(g1) 
     end
 
 

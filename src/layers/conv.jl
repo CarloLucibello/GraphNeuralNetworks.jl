@@ -785,6 +785,7 @@ end
 
 @doc raw"""
     CGConv((nin, ein) => nout, f, act=identity; bias=true, init=glorot_uniform, residual=false)
+    CGConv(nin => nout, ...)
 
 The crystal graph convolutional layer from the paper
 [Crystal Graph Convolutional Neural Networks for an Accurate and
@@ -800,13 +801,15 @@ where ``\mathbf{z}_{ij}``  is the node and edge features concatenation
 and ``\sigma`` is the sigmoid function.
 The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
 as the input size.
+If `nein`
 
 
 # Arguments
 
 - `nin`: The dimension of input node features.
-- `nout`: The dimension of input edge features.
-- `out`: The dimension of output node features.
+- `nein`: The dimension of input edge features. 
+If not given, assumes that no edge features are given as input in the forward pass.
+- `nout`: The dimension of output node features.
 - `act`: Activation function.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
@@ -815,16 +818,22 @@ as the input size.
 # Examples 
 
 ```julia
+g = rand_graph(5, 6)
 x = rand(Float32, 2, g.num_nodes)
 e = rand(Float32, 3, g.num_edges)
 
-l = CGConv((2,3) => 4, tanh)
+l = CGConv((2, 3) => 4, tanh)
 
 y = l(g, x, e)    # size: (4, num_nodes)
+
+# No edge features
+l = CGConv(2 => 4, tanh)
+
+y = l(g, x)    # size: (4, num_nodes)
 ```
 """
 struct CGConv <: GNNLayer
-    ch
+    ch::Pair{NTuple{2,Int},Int}
     dense_f::Dense
     dense_s::Dense
     residual::Bool
@@ -832,7 +841,7 @@ end
 
 @functor CGConv
 
-CGConv(nin::Int, ein::Int, out::Int, args...; kws...) = CGConv((nin, ein) => out, args...; kws...)
+CGConv(ch::Pair{Int,Int}, args...; kws...) = CGConv((ch[1], 0) => ch[2], args...; kws...)
 
 function CGConv(ch::Pair{NTuple{2,Int},Int}, act=identity; residual=false, bias=true, init=glorot_uniform)
     (nin, ein), out = ch
@@ -841,12 +850,18 @@ function CGConv(ch::Pair{NTuple{2,Int},Int}, act=identity; residual=false, bias=
     return CGConv(ch, dense_f, dense_s, residual)
 end
 
-function (l::CGConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
+function (l::CGConv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, AbstractMatrix}=nothing)
     check_num_nodes(g, x)
-    check_num_edges(g, e)
+    if e !== nothing
+        check_num_edges(g, e)
+    end
 
     function message(xi, xj, e)
-        z = vcat(xi, xj, e)
+        if e !== nothing
+            z = vcat(xi, xj, e)
+        else
+            z = vcat(xi, xj)
+        end
         return l.dense_f(z) .* l.dense_s(z)
     end
 
