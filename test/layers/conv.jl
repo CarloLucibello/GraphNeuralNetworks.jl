@@ -103,18 +103,21 @@
             end
         end
 
-        @testset "bias=false" begin
-            @test length(Flux.params(GATConv(2=>3))) == 3
-            @test length(Flux.params(GATConv(2=>3, bias=false))) == 2
-        end
-
-
         @testset "edge features" begin
             ein = 3
             l = GATConv((in_channel, ein) => out_channel, add_self_loops=false)
             g = GNNGraph(g1, edata=rand(T, ein, g1.num_edges))
             test_layer(l, g, rtol=1e-3, outsize=(out_channel, g.num_nodes))
-        end 
+        end
+
+        @testset "num params" begin
+            l = GATConv(2 => 3, add_self_loops=false)
+            @test length(Flux.params(l)) == 3
+            l = GATConv((2,4) => 3, add_self_loops=false)
+            @test length(Flux.params(l)) == 4
+            l = GATConv((2,4) => 3, add_self_loops=false, bias=false)
+            @test length(Flux.params(l)) == 3            
+        end
     end
 
     @testset "GATv2Conv" begin
@@ -127,9 +130,20 @@
             end
         end
 
-        @testset "bias=false" begin
-            @test length(Flux.params(GATv2Conv(2=>3))) == 5
-            @test length(Flux.params(GATv2Conv(2=>3, bias=false))) == 3
+        @testset "edge features" begin
+            ein = 3
+            l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops=false)
+            g = GNNGraph(g1, edata=rand(T, ein, g1.num_edges))
+            test_layer(l, g, rtol=1e-3, outsize=(out_channel, g.num_nodes))
+        end
+
+        @testset "num params" begin
+            l = GATv2Conv(2 => 3, add_self_loops=false)
+            @test length(Flux.params(l)) == 5
+            l = GATv2Conv((2,4) => 3, add_self_loops=false)
+            @test length(Flux.params(l)) == 6
+            l = GATv2Conv((2,4) => 3, add_self_loops=false, bias=false)
+            @test length(Flux.params(l)) == 4            
         end
 
         @testset "edge features" begin

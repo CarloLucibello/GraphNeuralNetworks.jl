@@ -38,7 +38,14 @@ function add_self_loops(g::GNNGraph{<:ADJMAT_T})
             g.ndata, g.edata, g.gdata)
 end
 
+"""
+    remove_self_loops(g::GNNGraph)
 
+Return a graph constructed from `g` where self-loops (edges from a node to itself)
+are removed. 
+
+See also [`add_self_loops`](@ref) and [`remove_multi_edges`](@ref).
+"""
 function remove_self_loops(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
     w = get_edge_weight(g)
