@@ -4,14 +4,15 @@ CurrentModule = GraphNeuralNetworks
 
 # Convolutional Layers
 
-There exist a rich zoology of convolutional layers. Which one to choose heavily depends on your application. Some of the most commonly used layers are the [`GCNConv`](@ref) and the [`GATv2Conv`](@ref) layers.
+Many different types of graphs convolutional layers have been proposed in the literature.
+Choosing the right layer for your application can be a matter of trial and error. 
+Some of the most commonly used layers are the [`GCNConv`](@ref) and the [`GATv2Conv`](@ref) layers. Multiple graph convolutional layers are stacked to create a graph neural network model
+(see [`GNNChain`](@ref)).
 
-The table below lists all convolutional layers implemented in the library and highlights
-the possible presence of some features in addition to the basic propagation of node features:
+The table below lists all graph convolutional layers implemented in the *GraphNeuralNetworks.jl*. It also highlights the presence of some additional capabilities with respect to basic message passing:
 - *Sparse Ops*: implements message passing as multiplication by sparse adjacency matrix instead of the gather/scatter mechanism. This can lead to better cpu performances but it is not supported on gpu yet. 
-- *Edge Weights*: supports scalar weights on edges. 
+- *Edge Weights*: supports scalar weights (or equivalently scalar features) on edges. 
 - *Edge Features*: supports feature vectors on edges.
-
 
 | Layer                       |Sparse Ops|Edge Weight|Edge Features| 
 | :--------                   |  :---:   |:---:      |:---:        |               
@@ -25,7 +26,7 @@ the possible presence of some features in addition to the basic propagation of n
 | [`GCNConv`](@ref)           |     ✓    |     ✓     |             | 
 | [`GINConv`](@ref)           |     ✓    |           |             |
 | [`GraphConv`](@ref)         |     ✓    |           |             |
-| [`MEGNetConv`](@ref)        |          |           |             |
+| [`MEGNetConv`](@ref)        |          |           |     ✓       |
 | [`NNConv`](@ref)            |          |           |     ✓       |
 | [`ResGatedGraphConv`](@ref) |          |           |             |
 | [`SAGEConv`](@ref)          |     ✓    |           |             |
