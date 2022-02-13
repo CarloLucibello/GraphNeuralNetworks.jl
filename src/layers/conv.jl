@@ -251,10 +251,8 @@ end
 
 
 @doc raw"""
-    GATConv(in => out, σ=identity; 
-            heads=1, concat=true, init=glorot_uniform, bias=true, negative_slope=0.2f0)
-
-    GATConv((in, ein) => out), ...)
+    GATConv(in => out, [σ; heads, concat, init, bias, negative_slope, add_self_loops])
+    GATConv((in, ein) => out, ...)
 
 Graph attentional layer from the paper [Graph Attention Networks](https://arxiv.org/abs/1710.10903).
 
@@ -266,63 +264,93 @@ where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
 \alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W \mathbf{x}_i; W \mathbf{x}_j]))
 ```
-with ``z_i`` a normalization factor.
+with ``z_i`` a normalization factor. 
+
+In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
+and the attention coefficients will be calculated as  
+```
+\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_3 \mathbf{e}_{j\to i}; W_2 \mathbf{x}_i; W_1 \mathbf{x}_j]))
+````
 
 # Arguments
 
 - `in`: The dimension of input node features.
-- `ein`:
+- `ein`: The dimension of input edget features. Default 0 (i.e. no edge features passed in the forward).
 - `out`: The dimension of output node features.
-- `bias`: Learn the additive bias if true.
-- `heads`: Number attention heads.
-- `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads.
-- `negative_slope`: The parameter of LeakyReLU.
+- `σ`: Activation function. Default `identity`.
+- `bias`: Learn the additive bias if true. Dafault `true`. 
+- `heads`: Number attention heads. Dafault `1.
+- `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
+- `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
 """
-struct GATConv{T, A<:AbstractMatrix, B} <: GNNLayer
-    weight::A
+struct GATConv{DX<:Dense,DE<:Union{Dense,Nothing}, T, A<:AbstractMatrix, B} <: GNNLayer
+    dense_x::DX
+    dense_e::DE
     bias::B
     a::A
     σ
     negative_slope::T
-    channel::Pair{Int, Int}
+    channel::Pair{NTuple{2,Int}, Int}
     heads::Int
     concat::Bool
+    add_self_loops::Bool
 end
 
 @functor GATConv
-Flux.trainable(l::GATConv) = (l.weight, l.bias, l.a)
+Flux.trainable(l::GATConv) = (l.dense_x, l.dense_e, l.bias, l.a)
 
-function GATConv(ch::Pair{Int,Int}, σ=identity;
+GATConv(ch::Pair{Int,Int}, args...; kws...) = GATConv((ch[1], 0) => ch[2], args...; kws...)
+
+function GATConv(ch::Pair{NTuple{2,Int},Int}, σ=identity;
                  heads::Int=1, concat::Bool=true, negative_slope=0.2,
-                 init=glorot_uniform, bias::Bool=true)
-    in, out = ch             
-    W = init(out*heads, in)
-    if concat 
-        b = bias ? Flux.create_bias(W, true, out*heads) : false
-    else
-        b = bias ? Flux.create_bias(W, true, out) : false
+                 init=glorot_uniform, bias::Bool=true, add_self_loops=true)
+    (in, ein), out = ch    
+    if add_self_loops
+        @assert ein == 0 "Using edge features and setting add_self_loops=true at the same time is not yet supported."
     end
-    a = init(2*out, heads)
-    negative_slope = convert(eltype(W), negative_slope)
-    GATConv(W, b, a, σ, negative_slope, ch, heads, concat)
+             
+    dense_x = Dense(in, out*heads, bias=false)
+    dense_e = ein > 0 ? Dense(in, out*heads, bias=false) : nothing
+    b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out*heads : out) : false
+    a = init(2*out + ein, heads)
+    negative_slope = convert(Float32, negative_slope)
+    GATConv(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat)
 end
 
-function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
+(l::GATConv)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g), edge_features(g)))
+
+function (l::GATConv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing,AbstractMatrix}=nothing)
     check_num_nodes(g, x)
+    @assert (e === nothing) && (l.dense_e !== nothing) "Input edge features required for this layer"  
+    @assert (e !== nothing) && (l.dense_e === nothing) "Input edge features were not specified in the layer constructor"  
+    
+    if l.add_self_loops
+        @assert e === nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
+        g = add_self_loops(g)
+    end
+    
     g = add_self_loops(g)
-    chin, chout = l.channel
+    _, chout = l.channel
     heads = l.heads
 
-    Wx = l.weight * x
+    Wx = l.dense_x(x)
     Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
 
     function message(Wxi, Wxj, e)
-        aWW = sum(l.a .* vcat(Wxi, Wxj), dims=1)   # 1 × nheads × nedges
+        if e === nothing
+            Wxx = vcat(Wxi, Wxj)
+        else
+            We = l.dense_e(e)
+            We = reshape(We, chout, heads, :)                   # chout × nheads × nnodes
+            Wxx = vcat(Wxi, Wxj, We)
+        end
+        aWW = sum(l.a .* Wxx, dims=1)   # 1 × nheads × nedges
         α = exp.(leakyrelu.(aWW, l.negative_slope))       
         return (α = α, β = α .* Wxj)
     end
 
-    m = propagate(message, g, +; xi=Wx, xj=Wx)                 ## chout × nheads × nnodes
+    m = propagate(message, g, +; xi=Wx, xj=Wx, e)                 ## chout × nheads × nnodes
     x = m.β ./ m.α
 
     if !l.concat
@@ -334,17 +362,21 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix)
     return x
 end
 
-
 function Base.show(io::IO, l::GATConv)
-    out_channel, in_channel = size(l.weight)
-    print(io, "GATConv(", in_channel, " => ", out_channel ÷ l.heads)
-    print(io, ", LeakyReLU(λ=", l.negative_slope)
-    print(io, "))")
+    (in, ein), out = l.channel
+    if ein == 0
+        print(io, "GATConv(", in, " => ", out ÷ l.heads)
+    else
+        print(io, "GATConv(", (in, ein), " => ", out ÷ l.heads)
+    end
+    l.σ == identity || print(io, ", ", l.σ)
+    print(io, ", negative_slope=", l.negative_slope)
+    print(io, ")")
 end
+
 
 @doc raw"""
     GATv2Conv(in => out, [σ; heads, concat, init, bias, negative_slope, add_self_loops])
-
     GATv2Conv((in, ein) => out, ...)
 
 
@@ -377,7 +409,6 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
-```
 """
 struct GATv2Conv{T, A1, A2, A3, B, C<:AbstractMatrix} <: GNNLayer
     dense_i::A1
@@ -394,7 +425,7 @@ struct GATv2Conv{T, A1, A2, A3, B, C<:AbstractMatrix} <: GNNLayer
 end
 
 @functor GATv2Conv
-Flux.trainable(l::GATv2Conv) = (l.dense_i, l.dense_j, l.bias, l.a)
+Flux.trainable(l::GATv2Conv) = (l.dense_i, l.dense_j, l.dense_j, l.bias, l.a)
 
 GATv2Conv(ch::Pair{Int,Int}, args...; kws...) = GATv2Conv((ch[1], 0) => ch[2], args...; kws...)
 
@@ -421,26 +452,24 @@ function GATv2Conv(
     else
         dense_e = nothing
     end
-    if concat
-        b = bias ? Flux.create_bias(dense_i.weight, bias, out*heads) : false
-    else
-        b = bias ? Flux.create_bias(dense_i.weight, bias, out) : false
-    end
+    b = bias ? Flux.create_bias(dense_i.weight, true, concat ? out*heads : out) : false
     a = init(out, heads)
-
     negative_slope = convert(eltype(dense_i.weight), negative_slope)
     GATv2Conv(dense_i, dense_j, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops)
 end
 
+(l::GATv2Conv)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g), edge_features(g)))
+
 function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, AbstractMatrix}=nothing)
     check_num_nodes(g, x)
-    @assert !xor(e === nothing, l.dense_e === nothing)
-       
+    @assert (e === nothing) && (l.dense_e !== nothing) "Input edge features required for this layer"  
+    @assert (e !== nothing) && (l.dense_e === nothing) "Input edge features were not specified in the layer constructor"  
+   
     if l.add_self_loops
         @assert e === nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
         g = add_self_loops(g)
     end
-    in, out = l.channel
+    _, out = l.channel
     heads = l.heads
 
     Wix = reshape(l.dense_i(x), out, heads, :)                                  # out × heads × nnodes

@@ -107,12 +107,20 @@
             @test length(Flux.params(GATConv(2=>3))) == 3
             @test length(Flux.params(GATConv(2=>3, bias=false))) == 2
         end
+
+
+        @testset "edge features" begin
+            ein = 3
+            l = GATv2Conv((in_channel, ein) => out_channel)
+            g = GNNGraph(g1, edata=rand(T, ein, g.num_edges))
+            test_layer(l, g, rtol=1e-3, outsize=(out_channel, g.num_nodes))
+        end 
     end
 
     @testset "GATv2Conv" begin
 
         for heads in (1, 2), concat in (true, false)
-            l = GATv2Conv(in_channel => out_channel; heads, concat)
+            l = GATv2Conv(in_channel => out_channel, tanh; heads, concat)
             for g in test_graphs
                 test_layer(l, g, rtol=1e-3,
                     outsize=(concat ? heads*out_channel : out_channel, g.num_nodes))
@@ -123,6 +131,13 @@
             @test length(Flux.params(GATv2Conv(2=>3))) == 5
             @test length(Flux.params(GATv2Conv(2=>3, bias=false))) == 3
         end
+
+        @testset "edge features" begin
+            ein = 3
+            l = GATv2Conv((in_channel, ein) => out_channel)
+            g = GNNGraph(g1, edata=rand(T, ein, g.num_edges))
+            test_layer(l, g, rtol=1e-3, outsize=(out_channel, g.num_nodes))
+        end 
     end
 
 
@@ -211,7 +226,7 @@
         l = MEGNetConv(in_channel => out_channel, aggr=+)
         for g in test_graphs
             g = GNNGraph(g, edata=rand(T, in_channel, g.num_edges))
-            test_layer(l, g, rtol=1e-5,
+            test_layer(l, g, rtol=1e-4,
                 outtype=:node_edge, 
                 outsize=((out_channel, g.num_nodes), (out_channel, g.num_edges))) 
         end
