@@ -315,15 +315,15 @@ function GATConv(ch::Pair{NTuple{2,Int},Int}, σ=identity;
     b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out*heads : out) : false
     a = init(2*out + ein, heads)
     negative_slope = convert(Float32, negative_slope)
-    GATConv(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat)
+    GATConv(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops)
 end
 
 (l::GATConv)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g), edge_features(g)))
 
 function (l::GATConv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing,AbstractMatrix}=nothing)
     check_num_nodes(g, x)
-    @assert (e === nothing) && (l.dense_e !== nothing) "Input edge features required for this layer"  
-    @assert (e !== nothing) && (l.dense_e === nothing) "Input edge features were not specified in the layer constructor"  
+    @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"  
+    @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"  
     
     if l.add_self_loops
         @assert e === nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
@@ -462,8 +462,8 @@ end
 
 function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, AbstractMatrix}=nothing)
     check_num_nodes(g, x)
-    @assert (e === nothing) && (l.dense_e !== nothing) "Input edge features required for this layer"  
-    @assert (e !== nothing) && (l.dense_e === nothing) "Input edge features were not specified in the layer constructor"  
+    @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"  
+    @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"  
    
     if l.add_self_loops
         @assert e === nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."

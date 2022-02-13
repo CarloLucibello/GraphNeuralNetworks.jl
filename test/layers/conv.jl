@@ -111,8 +111,8 @@
 
         @testset "edge features" begin
             ein = 3
-            l = GATv2Conv((in_channel, ein) => out_channel)
-            g = GNNGraph(g1, edata=rand(T, ein, g.num_edges))
+            l = GATConv((in_channel, ein) => out_channel, add_self_loops=false)
+            g = GNNGraph(g1, edata=rand(T, ein, g1.num_edges))
             test_layer(l, g, rtol=1e-3, outsize=(out_channel, g.num_nodes))
         end 
     end
@@ -134,8 +134,8 @@
 
         @testset "edge features" begin
             ein = 3
-            l = GATv2Conv((in_channel, ein) => out_channel)
-            g = GNNGraph(g1, edata=rand(T, ein, g.num_edges))
+            l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops=false)
+            g = GNNGraph(g1, edata=rand(T, ein, g1.num_edges))
             test_layer(l, g, rtol=1e-3, outsize=(out_channel, g.num_nodes))
         end 
     end

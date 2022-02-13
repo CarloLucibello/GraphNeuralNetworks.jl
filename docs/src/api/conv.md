@@ -19,16 +19,16 @@ the possible presence of some features in addition to the basic propagation of n
 | [`CGConv`](@ref)            |          |           |             |
 | [`ChebConv`](@ref)          |          |           |             |
 | [`EdgeConv`](@ref)          |          |           |             |
-| [`GATConv`](@ref)           |          |           |             |
-| [`GATv2Conv`](@ref)         |          |           |             |
-| [`GatedGraphConv`](@ref)    |          |           |             |
+| [`GATConv`](@ref)           |          |           |     ✓       |
+| [`GATv2Conv`](@ref)         |          |           |     ✓       |
+| [`GatedGraphConv`](@ref)    |     ✓    |           |             |
 | [`GCNConv`](@ref)           |     ✓    |     ✓     |             | 
-| [`GINConv`](@ref)           |          |           |             |
-| [`GraphConv`](@ref)         |          |           |             |
+| [`GINConv`](@ref)           |     ✓    |           |             |
+| [`GraphConv`](@ref)         |     ✓    |           |             |
 | [`MEGNetConv`](@ref)        |          |           |             |
 | [`NNConv`](@ref)            |          |           |     ✓       |
 | [`ResGatedGraphConv`](@ref) |          |           |             |
-| [`SAGEConv`](@ref)          |          |           |             |
+| [`SAGEConv`](@ref)          |     ✓    |           |             |
 
 
 ## Docs
