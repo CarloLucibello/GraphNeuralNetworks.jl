@@ -313,7 +313,7 @@ function GATConv(ch::Pair{NTuple{2,Int},Int}, σ=identity;
     dense_x = Dense(in, out*heads, bias=false)
     dense_e = ein > 0 ? Dense(ein, out*heads, bias=false) : nothing
     b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out*heads : out) : false
-    a = init(2*out + ein, heads)
+    a = init(ein > 0 ? 3out : 2out, heads)
     negative_slope = convert(Float32, negative_slope)
     GATConv(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops)
 end
