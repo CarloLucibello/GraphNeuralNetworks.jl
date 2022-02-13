@@ -269,11 +269,7 @@ with ``z_i`` a normalization factor.
 In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
 and the attention coefficients will be calculated as  
 ```
-<<<<<<< HEAD
-\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_3 \mathbf{e}_{j\to i}; W_2 \mathbf{x}_i; W_1 \mathbf{x}_j]))
-=======
 \alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W_e \mathbf{e}_{j\to i}; W \mathbf{x}_i; W \mathbf{x}_j]))
->>>>>>> 07276df (docs)
 ````
 
 # Arguments
@@ -393,15 +389,9 @@ with ``z_i`` a normalization factor.
 
 In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
 and the attention coefficients will be calculated as  
-<<<<<<< HEAD
-```
-\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_3 \mathbf{e}_{j\to i}; W_2 \mathbf{x}_i; W_1 \mathbf{x}_j]))
-````
-=======
 ```math
 \alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_3 \mathbf{e}_{j\to i}; W_2 \mathbf{x}_i; W_1 \mathbf{x}_j])).
 ```
->>>>>>> 07276df (docs)
 
 # Arguments
 
@@ -430,11 +420,7 @@ struct GATv2Conv{T, A1, A2, A3, B, C<:AbstractMatrix} <: GNNLayer
 end
 
 @functor GATv2Conv
-<<<<<<< HEAD
-Flux.trainable(l::GATv2Conv) = (l.dense_i, l.dense_j, l.dense_j, l.bias, l.a)
-=======
 Flux.trainable(l::GATv2Conv) = (l.dense_i, l.dense_j, l.dense_e, l.bias, l.a)
->>>>>>> 07276df (docs)
 
 GATv2Conv(ch::Pair{Int,Int}, args...; kws...) = GATv2Conv((ch[1], 0) => ch[2], args...; kws...)
 

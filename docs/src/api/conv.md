@@ -4,14 +4,8 @@ CurrentModule = GraphNeuralNetworks
 
 # Convolutional Layers
 
-<<<<<<< HEAD
-Many different types of graphs convolutional layers have been proposed in the literature.
-Choosing the right layer for your application can be a matter of trial and error. 
-Some of the most commonly used layers are the [`GCNConv`](@ref) and the [`GATv2Conv`](@ref) layers. Multiple graph convolutional layers are stacked to create a graph neural network model
-=======
 Many different types of graphs convolutional layers have been proposed in the literature. Choosing the right layer for your application can bould involve a lot of exploration. 
 Some of the most commonly used layers are the [`GCNConv`](@ref) and the [`GATv2Conv`](@ref). Multiple graph convolutional layers are typically stacked together to create a graph neural network model
->>>>>>> 07276df (docs)
 (see [`GNNChain`](@ref)).
 
 The table below lists all graph convolutional layers implemented in the *GraphNeuralNetworks.jl*. It also highlights the presence of some additional capabilities with respect to basic message passing:
