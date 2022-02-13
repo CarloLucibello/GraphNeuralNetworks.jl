@@ -311,7 +311,7 @@ function GATConv(ch::Pair{NTuple{2,Int},Int}, σ=identity;
     end
              
     dense_x = Dense(in, out*heads, bias=false)
-    dense_e = ein > 0 ? Dense(in, out*heads, bias=false) : nothing
+    dense_e = ein > 0 ? Dense(ein, out*heads, bias=false) : nothing
     b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out*heads : out) : false
     a = init(2*out + ein, heads)
     negative_slope = convert(Float32, negative_slope)
@@ -330,7 +330,6 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing,AbstractM
         g = add_self_loops(g)
     end
     
-    g = add_self_loops(g)
     _, chout = l.channel
     heads = l.heads
 
@@ -364,11 +363,7 @@ end
 
 function Base.show(io::IO, l::GATConv)
     (in, ein), out = l.channel
-    if ein == 0
-        print(io, "GATConv(", in, " => ", out ÷ l.heads)
-    else
-        print(io, "GATConv(", (in, ein), " => ", out ÷ l.heads)
-    end
+    print(io, "GATConv(", ein == 0 ? in : (in, ein), " => ", out ÷ l.heads)
     l.σ == identity || print(io, ", ", l.σ)
     print(io, ", negative_slope=", l.negative_slope)
     print(io, ")")
@@ -500,11 +495,7 @@ end
 
 function Base.show(io::IO, l::GATv2Conv)
     (in, ein), out = l.channel
-    if ein == 0
-        print(io, "GATv2Conv(", in, " => ", out ÷ l.heads)
-    else
-        print(io, "GATv2Conv(", (in, ein), " => ", out ÷ l.heads)
-    end
+    print(io, "GATv2Conv(", ein == 0 ? in : (in, ein), " => ", out ÷ l.heads)
     l.σ == identity || print(io, ", ", l.σ)
     print(io, ", negative_slope=", l.negative_slope)
     print(io, ")")
