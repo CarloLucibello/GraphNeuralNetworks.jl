@@ -269,7 +269,7 @@ with ``z_i`` a normalization factor.
 In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
 and the attention coefficients will be calculated as  
 ```
-\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_3 \mathbf{e}_{j\to i}; W_2 \mathbf{x}_i; W_1 \mathbf{x}_j]))
+\alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W_e \mathbf{e}_{j\to i}; W \mathbf{x}_i; W \mathbf{x}_j]))
 ````
 
 # Arguments
@@ -389,9 +389,9 @@ with ``z_i`` a normalization factor.
 
 In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
 and the attention coefficients will be calculated as  
+```math
+\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_3 \mathbf{e}_{j\to i}; W_2 \mathbf{x}_i; W_1 \mathbf{x}_j])).
 ```
-\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_3 \mathbf{e}_{j\to i}; W_2 \mathbf{x}_i; W_1 \mathbf{x}_j]))
-````
 
 # Arguments
 
@@ -420,7 +420,7 @@ struct GATv2Conv{T, A1, A2, A3, B, C<:AbstractMatrix} <: GNNLayer
 end
 
 @functor GATv2Conv
-Flux.trainable(l::GATv2Conv) = (l.dense_i, l.dense_j, l.dense_j, l.bias, l.a)
+Flux.trainable(l::GATv2Conv) = (l.dense_i, l.dense_j, l.dense_e, l.bias, l.a)
 
 GATv2Conv(ch::Pair{Int,Int}, args...; kws...) = GATv2Conv((ch[1], 0) => ch[2], args...; kws...)
 
@@ -509,7 +509,7 @@ Gated graph convolution layer from [Gated Graph Sequence Neural Networks](https:
 
 Implements the recursion
 ```math
-\mathbf{h}^{(0)}_i = [\mathbf{x}_i || \mathbf{0}] \\
+\mathbf{h}^{(0)}_i = [\mathbf{x}_i; \mathbf{0}] \\
 \mathbf{h}^{(l)}_i = GRU(\mathbf{h}^{(l-1)}_i, \square_{j \in N(i)} W \mathbf{h}^{(l-1)}_j)
 ```
 
@@ -572,14 +572,14 @@ Edge convolutional layer from paper [Dynamic Graph CNN for Learning on Point Clo
 
 Performs the operation
 ```math
-\mathbf{x}_i' = \square_{j \in N(i)} nn(\mathbf{x}_i || \mathbf{x}_j - \mathbf{x}_i)
+\mathbf{x}_i' = \square_{j \in N(i)}\, nn([\mathbf{x}_i; \mathbf{x}_j - \mathbf{x}_i])
 ```
 
 where `nn` generally denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
 
 # Arguments
 
-- `nn`: A (possibly learnable) function acting on edge features. 
+- `nn`: A (possibly learnable) function. 
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 """
 struct EdgeConv <: GNNLayer
@@ -946,19 +946,19 @@ end
 Attention-based Graph Neural Network layer from paper [Attention-based
 Graph Neural Network for Semi-Supervised Learning](https://arxiv.org/abs/1803.03735).
 
-THe forward pass is given by
+The forward pass is given by
 ```math
-\mathbf{x}_i' = \sum_{j \in {N(i) \cup \{i\}} \alpha_{ij} W \mathbf{x}_j
+\mathbf{x}_i' = \sum_{j \in {N(i) \cup \{i\}}} \alpha_{ij} W \mathbf{x}_j
 ```
 where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
 \alpha_{ij} =\frac{e^{\beta \cos(\mathbf{x}_i, \mathbf{x}_j)}}
-                  {\sum_{j'}e^{\beta \cos(\mathbf{x}_i, \mathbf{x}_j'}}
+                  {\sum_{j'}e^{\beta \cos(\mathbf{x}_i, \mathbf{x}_{j'})}}
 ```
 with the cosine distance defined by
 ```math 
 \cos(\mathbf{x}_i, \mathbf{x}_j) = 
-  \mathbf{x}_i \cdot \mathbf{x}_j / \lVert\mathbf{x}_i\rVert \lVert\mathbf{x}_j\rVert``
+  \frac{\mathbf{x}_i \cdot \mathbf{x}_j}{\lVert\mathbf{x}_i\rVert \lVert\mathbf{x}_j\rVert}
 ```
 and ``\beta`` a trainable parameter.
 
