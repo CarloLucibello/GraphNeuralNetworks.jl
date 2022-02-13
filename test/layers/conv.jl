@@ -216,7 +216,7 @@
 
     @testset "AGNNConv" begin
         l = AGNNConv()
-        l.β == [1f0]
+        @test l.β == [1f0]
         for g in test_graphs
             test_layer(l, g, rtol=1e-5, outsize=(in_channel, g.num_nodes)) 
         end
