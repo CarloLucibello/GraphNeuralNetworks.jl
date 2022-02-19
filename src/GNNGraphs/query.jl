@@ -127,26 +127,6 @@ end
 #     return [fneighs(g, i) for i in nodes]
 # end
 
-using ChainRulesCore: unthunk, NoTangent, ZeroTangent
-
-function ChainRulesCore.rrule(::typeof(findnz), A::AbstractSparseMatrix)
-    I, J, V = findnz(A)
-
-    function findnz_pullback(Δ)
-        Δ === NoTangent() && return (NoTangent(), Δ)
-        Δ === ZeroTangent() && return (NoTangent(), Δ)
-        
-        _, _, V̄ = unthunk(Δ)
-
-        V̄ === NoTangent() && return (NoTangent(), V̄)
-        V̄ === ZeroTangent() && return (NoTangent(), V̄)
-        
-        return NoTangent(), sparse(I, J, V̄)
-    end
-
-    return (I, J, V), findnz_pullback
-end
-
 adjacency_list(g::GNNGraph; dir=:out) = adjacency_list(g, 1:g.num_nodes; dir)
 
 

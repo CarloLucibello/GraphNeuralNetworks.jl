@@ -138,12 +138,8 @@
                 A = adjacency_matrix(g, weighted=true)
                 sum(A)
             end[1]
-            if GRAPH_T == :coo
-                # TODO use the @test option broken = (GRAPH_T != :coo) on julia >= 1.7
-                @test gw == [1,1,1]
-            else
-                @test_broken gw == [1,1,1]
-            end
+
+            @test gw == [1,1,1]
         end
     end
 end

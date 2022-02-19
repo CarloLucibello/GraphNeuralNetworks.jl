@@ -29,9 +29,16 @@ function to_coo(A::SPARSE_T; dir=:out, num_nodes=nothing, weighted=true)
     return (s, t, v), num_nodes, num_edges
 end
 
-function to_coo(A::ADJMAT_T; dir=:out, num_nodes=nothing, weighted=true)
+function _findnz_idx(A)
     nz = findall(!=(0), A) # vec of cartesian indexes
     s, t = ntuple(i -> map(t->t[i], nz), 2)
+    return s, t, nz
+end
+
+@non_differentiable _findnz_idx(A)
+
+function to_coo(A::ADJMAT_T; dir=:out, num_nodes=nothing, weighted=true)
+    s, t, nz = _findnz_idx(A)
     v = A[nz] 
     if dir == :in
         s, t = t, s
@@ -175,7 +182,3 @@ function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=
     end
     return A, num_nodes, num_edges
 end
-
-# @non_differentiable to_coo(x...)
-# @non_differentiable to_dense(x...)
-# @non_differentiable to_sparse(x...)

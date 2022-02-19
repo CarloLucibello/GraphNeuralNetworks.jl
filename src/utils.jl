@@ -100,3 +100,13 @@ function broadcast_edges(g::GNNGraph, x)
     return gather(x, gi)
 end
 
+
+function ChainRulesCore.rrule(::typeof(Broadcast.broadcasted), T::Type{<:Number}, x::AbstractSparseArray)
+    proj = ProjectTo(x)
+
+    function broadcasted_cast_sparse(Δ)
+        return NoTangent(), NoTangent(), proj(Δ)         
+    end
+
+    return T.(x), broadcasted_cast_sparse
+end
