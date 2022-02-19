@@ -100,13 +100,16 @@ function broadcast_edges(g::GNNGraph, x)
     return gather(x, gi)
 end
 
-
-function ChainRulesCore.rrule(::typeof(Broadcast.broadcasted), T::Type{<:Number}, x::AbstractSparseArray)
+# More generic version of
+# https://github.com/JuliaDiff/ChainRules.jl/pull/586
+# This applies to all arrays
+# Withouth this, gradient of T.(A) for A dense gpu matrix errors.
+function ChainRulesCore.rrule(::typeof(Broadcast.broadcasted), T::Type{<:Number}, x::AbstractArray)
     proj = ProjectTo(x)
 
-    function broadcasted_cast_sparse(Δ)
+    function broadcasted_cast(Δ)
         return NoTangent(), NoTangent(), proj(Δ)         
     end
 
-    return T.(x), broadcasted_cast_sparse
+    return T.(x), broadcasted_cast
 end
