@@ -122,11 +122,16 @@ function to_dense(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=t
     # The output will always be a adjmat in :out format (e.g. A[i,j] denotes from i to j)
     s, t, val = coo
     n::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes
-    val = isnothing(val) ? ones_like(s) : val
-    T = T === nothing ? eltype(val) : T
-    if !weighted
-        val = T(1)
+    if T === nothing
+        T = isnothing(val) ? eltype(s) : eltype(val) 
     end
+    if val === nothing || !weighted  
+        val = ones_like(s, T)            
+    end
+    if eltype(val) != T
+        val = T.(val)
+    end
+    
     idxs = s .+ n .* (t .- 1) 
     
     ## using scatter instead of indexing since there could be multiple edges
