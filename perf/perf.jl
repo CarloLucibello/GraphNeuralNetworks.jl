@@ -1,17 +1,30 @@
 using Flux, GraphNeuralNetworks, Graphs, BenchmarkTools, CUDA
 using DataFrames, Statistics, JLD2, SparseArrays
-CUDA.device!(2)
+using Unitful
+# CUDA.device!(2)
 CUDA.allowscalar(false)
 
-BenchmarkTools.ratio(::Missing, x) = Inf
-BenchmarkTools.ratio(x, ::Missing) = 0.0
-BenchmarkTools.ratio(::Missing, ::Missing) = missing
+function getres(res, str)
+    ismissing(res[str]) && return missing 
+    t = median(res[str]).time
+    if t < 1e3
+        t * u"ns"
+    elseif t < 1e6
+        t / 1e3 * u"μs"
+    elseif t < 1e9
+        t / 1e6 * u"ms"
+    else
+        t / 1e9 * u"s"
+    end
+end
 
 function run_single_benchmark(N, c, D, CONV; gtype=:lg)
-    data = erdos_renyi(N, c / (N-1), seed=17)
     X = randn(Float32, D, N)
-    
+
+    data = erdos_renyi(N, c / (N-1), seed=17)
     g = GNNGraph(data; ndata=X, graph_type=gtype)
+    
+    # g = rand_graph(N, c*N; ndata=X, graph_type=gtype)
     g_gpu = g |> gpu    
     
     m = CONV(D => D)
@@ -58,11 +71,12 @@ function run_benchmarks(;
         c = 6,
         D = 100,
         layers = [GCNConv, GATConv],
-        gtypes = [:coo, :sparse, :dense],
+        gtypes = [:coo],
         )
 
-    df = DataFrame(N=Int[], c=Float64[], layer=String[], gtype=Symbol[], 
-                   time_cpu=Any[], time_gpu=Any[]) |> allowmissing
+    df = DataFrame(N=Int[], c=Int[], layer=String[], gtype=Symbol[], 
+                   time_fwd_cpu=Any[], time_fwd_gpu=Any[],
+                   time_grad_cpu=Any[], time_grad_gpu=Any[])
     
     for gtype in gtypes
         for N in Ns
@@ -73,31 +87,34 @@ function run_benchmarks(;
                         N = N,
                         c = c,
                         gtype = gtype, 
-                        time_cpu = ismissing(res["CPU"]) ? missing : median(res["CPU"]),
-                        time_gpu = ismissing(res["GPU"]) ? missing : median(res["GPU"]),
+                        time_fwd_cpu = getres(res, "CPU_FWD"),
+                        time_fwd_gpu = getres(res, "GPU_FWD"),
+                        time_grad_cpu = getres(res, "CPU_GRAD"),
+                        time_grad_gpu = getres(res, "GPU_GRAD"),
                     )
                 push!(df, row)
+                println(row)
             end
         end
     end
 
-    df.gpu_to_cpu = ratio.(df.time_gpu, df.time_cpu)
+    df.grad_gpu_to_cpu = NoUnits.(df.time_grad_gpu ./ df.time_grad_cpu)
     sort!(df, [:layer, :N, :c, :gtype])
     return df
 end
 
-# df = run_benchmarks()
-# for g in groupby(df, :layer); println(g, "\n"); end
+df = run_benchmarks()
+for g in groupby(df, :layer); println(g, "\n"); end
 
-# @save "perf/perf_master_20210803_carlo.jld2" dfmaster=df
+# @save "master_2021_11_01_arrakis.jld2" dfmaster=df
 ## or
-# @save "perf/perf_pr.jld2" dfpr=df
+# @save "pr.jld2" dfpr=df
 
 
 function compare(dfpr, dfmaster; on=[:N, :c, :gtype, :layer])
     df = outerjoin(dfpr, dfmaster; on=on, makeunique=true, renamecols = :_pr => :_master)
-    df.pr_to_master_cpu = ratio.(df.time_cpu_pr, df.time_cpu_master)
-    df.pr_to_master_gpu = ratio.(df.time_gpu_pr, df.time_gpu_master) 
+    df.pr_to_master_cpu = df.time_cpu_pr ./ df.time_cpu_master
+    df.pr_to_master_gpu = df.time_gpu_pr ./ df.time_gpu_master 
     return df[:,[:N, :c, :gtype, :layer, :pr_to_master_cpu, :pr_to_master_gpu]]
 end
 
