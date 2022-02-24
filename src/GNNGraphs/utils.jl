@@ -162,19 +162,37 @@ _sparse(s, t, w, m, n) = sparse(s, t, w, m, n)
 using CUDA.CUSPARSE: CuSparseMatrixCSR, AbstractCuSparseMatrix
     
 # https://github.com/JuliaGPU/CUDA.jl/issues/1402
-function _sparse(s::AnyCuVector, t::AnyCuVector, w, m, n)
-    CuSparseMatrixCSR(sparse(s, t, Float32.(w), m, n))
+function _sparse(s::AnyCuVector, t::AnyCuVector, w::AnyCuVector{T}, m, n) where T
+    T.(sparse(s, t, Float32.(w), m, n)) #CSC
+    # T.(CuSparseMatrixCSR(sparse(s, t, Float32.(w), m, n)))
 end
 
 # TODO https://github.com/JuliaGPU/CUDA.jl/issues/1403
 Base.:*(x::AnyCuMatrix, y::AbstractCuSparseMatrix) = (y' * x')' |> CuMatrix
 
-# TODO remove this piracy when is merged
-# https://github.com/JuliaGPU/CUDA.jl/pull/1401
-function CUDA.cu(x::SparseMatrixCSC)
-    # Avoid casting to CuSparseMatrixCSC since it is not well supported
-    CuSparseMatrixCSR(x)
+# Workaround https://github.com/JuliaGPU/CUDA.jl/issues/1406
+Base.sum(x::AbstractCuSparseMatrix; dims=:) = cusparse_sum(x, Val(dims))
+
+cusparse_sum(x, ::Val{:}) = sum(cusparse_sum(x, Val(1)))
+
+function cusparse_sum(x::AbstractCuSparseMatrix, ::Val{1})
+    m, n = size(x)
+    v = ones_like(x, (1, m))
+    return v * x
 end
+
+function cusparse_sum(x::AbstractCuSparseMatrix, ::Val{2})
+    m, n = size(x)
+    v = ones_like(x, (n, 1))
+    return x * v
+end
+
+# # TODO remove this piracy when this is merged
+# # https://github.com/JuliaGPU/CUDA.jl/pull/1401
+# function CUDA.cu(x::SparseMatrixCSC)
+#     # Avoid casting to CuSparseMatrixCSC since it is not well supported
+#     CuSparseMatrixCSR(x)
+# end
 
 ####################################
 # FROM MLBASE.jl
