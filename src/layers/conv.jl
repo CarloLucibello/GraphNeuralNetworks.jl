@@ -79,9 +79,14 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW=nothing
     
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
 
+    if edge_weight !== nothing
+        @assert length(edge_weight) == g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))" 
+    end
+
     if l.add_self_loops
         g = add_self_loops(g)
         if edge_weight !== nothing
+            # Pad weights with ones
             # TODO for ADJMAT_T the new edges are not generally at the end
             edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
             @assert length(edge_weight) == g.num_edges

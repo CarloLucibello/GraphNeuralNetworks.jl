@@ -127,8 +127,6 @@ end
 #     return [fneighs(g, i) for i in nodes]
 # end
 
-
-
 adjacency_list(g::GNNGraph; dir=:out) = adjacency_list(g, 1:g.num_nodes; dir)
 
 
@@ -159,7 +157,7 @@ function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g);
     @assert dir ∈ [:in, :out]
     A = g.graph
     if !weighted
-        A = map(>(0), A)
+        A = binarize(A)
     end
     A = T != eltype(A) ? T.(A) : A
     return dir == :out ? A : A'
@@ -201,15 +199,16 @@ function Graphs.degree(g::GNNGraph{<:COO_T}, T::TT=nothing; dir=:out, edge_weigh
     s, t = edge_index(g)
 
     edge_weight = _get_edge_weight(g, edge_weight)
-    edge_weight = edge_weight === nothing ? eltype(s)(1) : edge_weight
+    edge_weight = edge_weight === nothing ? ones_like(s) : edge_weight
 
     T = isnothing(T) ? eltype(edge_weight) : T
     degs = fill!(similar(s, T, g.num_nodes), 0)
+
     if dir ∈ [:out, :both]
-        NNlib.scatter!(+, degs, edge_weight, s)
+        degs = degs .+ NNlib.scatter(+, edge_weight, s, dstsize=(g.num_nodes,))
     end
     if dir ∈ [:in, :both]
-        NNlib.scatter!(+, degs, edge_weight, t)
+        degs = degs .+ NNlib.scatter(+, edge_weight, t, dstsize=(g.num_nodes,))
     end
     return degs 
 end
@@ -233,7 +232,7 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT=nothing; dir=:out, edge_we
     end
     A = adjacency_matrix(g)
     if edge_weight === false
-        A = map(>(0), A)
+        A = binarize(A)
     end
     A = eltype(A) != T ? T.(A) : A
     return dir == :out ? vec(sum(A, dims=2)) : 
@@ -394,14 +393,12 @@ function has_multi_edges(g::GNNGraph)
     length(union(idxs)) < length(idxs)
 end
 
-
+@non_differentiable edge_index(x...)
 @non_differentiable adjacency_list(x...)
-@non_differentiable adjacency_matrix(x...)
-@non_differentiable degree(x...)
 @non_differentiable graph_indicator(x...)
 @non_differentiable has_multi_edges(x...)
 @non_differentiable Graphs.has_self_loops(x...) 
 @non_differentiable is_bidirected(x...)
-@non_differentiable normalized_adjacency(x...)
-@non_differentiable normalized_laplacian(x...)
-@non_differentiable scaled_laplacian(x...)
+@non_differentiable normalized_adjacency(x...) # TODO remove this in the future
+@non_differentiable normalized_laplacian(x...) # TODO remove this in the future
+@non_differentiable scaled_laplacian(x...) # TODO remove this in the future

@@ -29,9 +29,16 @@ function to_coo(A::SPARSE_T; dir=:out, num_nodes=nothing, weighted=true)
     return (s, t, v), num_nodes, num_edges
 end
 
-function to_coo(A::ADJMAT_T; dir=:out, num_nodes=nothing, weighted=true)
+function _findnz_idx(A)
     nz = findall(!=(0), A) # vec of cartesian indexes
     s, t = ntuple(i -> map(t->t[i], nz), 2)
+    return s, t, nz
+end
+
+@non_differentiable _findnz_idx(A)
+
+function to_coo(A::ADJMAT_T; dir=:out, num_nodes=nothing, weighted=true)
+    s, t, nz = _findnz_idx(A)
     v = A[nz] 
     if dir == :in
         s, t = t, s
@@ -115,16 +122,24 @@ function to_dense(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=t
     # The output will always be a adjmat in :out format (e.g. A[i,j] denotes from i to j)
     s, t, val = coo
     n::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes
-    val = isnothing(val) ? eltype(s)(1) : val
-    T = T === nothing ? eltype(val) : T
-    if !weighted
-        val = T(1)
+    if T === nothing
+        T = isnothing(val) ? eltype(s) : eltype(val) 
     end
-    A = fill!(similar(s, T, (n, n)), 0)
-    v = vec(A) # vec view of A
+    if val === nothing || !weighted  
+        val = ones_like(s, T)            
+    end
+    if eltype(val) != T
+        val = T.(val)
+    end
+    
     idxs = s .+ n .* (t .- 1) 
+    
+    ## using scatter instead of indexing since there could be multiple edges
+    # A = fill!(similar(s, T, (n, n)), 0)
+    # v = vec(A) # vec view of A
     # A[idxs] .= val # exploiting linear indexing
-    NNlib.scatter!(+, v, val, idxs) # using scatter instead of indexing since there could be multiple edges 
+    v = NNlib.scatter(+, val, idxs, dstsize=n^2) 
+    A = reshape(v, (n, n))
     return A, n, length(s)
 end
 
@@ -172,7 +187,3 @@ function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=
     end
     return A, num_nodes, num_edges
 end
-
-@non_differentiable to_coo(x...)
-@non_differentiable to_dense(x...)
-@non_differentiable to_sparse(x...)

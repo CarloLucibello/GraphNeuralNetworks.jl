@@ -149,6 +149,9 @@ function edge_decoding(idx, n; directed=true)
     return s, t
 end
 
+binarize(x) = map(>(0), x)
+
+@non_differentiable binarize(x...)
 @non_differentiable edge_encoding(x...)
 @non_differentiable edge_decoding(x...)
 

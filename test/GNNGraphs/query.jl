@@ -71,15 +71,38 @@
             end
             @test eltype(d) <: Integer
             if GRAPH_T == :coo
+            # TODO use the @test option broken = (GRAPH_T != :coo) on julia >= 1.7
                 @test degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0]
+            else
+                @test_broken degree(g, edge_weight=2*eweight) == [4.4, 2.4, 2.0, 0.0]
             end
-
+            
             if TEST_GPU
                 g_gpu = g |> gpu
                 d = degree(g)
                 d_gpu = degree(g_gpu)
                 @test d_gpu isa CuVector{Float32}
                 @test Array(d_gpu) ≈ d
+            end
+            @testset "gradient" begin
+                gw = gradient(eweight) do w
+                        g = GNNGraph((s, t, w), graph_type=GRAPH_T)
+                        sum(degree(g, edge_weight=false))
+                    end[1]
+                    
+                @test gw === nothing
+                
+                gw = gradient(eweight) do w
+                    g = GNNGraph((s, t, w), graph_type=GRAPH_T)
+                    sum(degree(g, edge_weight=true))
+                end[1]
+
+                if GRAPH_T == :sparse
+                    @test_broken gw isa Vector{Float64}
+                    @test gw isa AbstractVector{Float64}
+                else 
+                    @test gw isa Vector{Float64}
+                end
             end
         end
     end
@@ -105,5 +128,25 @@
         Abin = adjacency_matrix(g, Float32, weighted=false)
         @test Abin ≈ abin
         @test eltype(Abin) == Float32    
+
+        @testset "gradient" begin 
+            s = [1,2,3]
+            t = [2,3,1]
+            w = [0.1,0.1,0.2]
+            gw = gradient(w) do w
+                    g = GNNGraph(s, t, w, graph_type=GRAPH_T)
+                    A = adjacency_matrix(g, weighted=false)
+                    sum(A)
+                end[1]
+            @test gw === nothing  
+
+            gw = gradient(w) do w
+                g = GNNGraph(s, t, w, graph_type=GRAPH_T)
+                A = adjacency_matrix(g, weighted=true)
+                sum(A)
+            end[1]
+
+            @test gw == [1,1,1]
+        end
     end
 end
