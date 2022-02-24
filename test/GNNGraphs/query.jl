@@ -124,7 +124,11 @@
         A = adjacency_matrix(g, Float32)
         @test A ≈ a
         @test eltype(A) == Float32
-    
+        if GRAPH_T == :dense
+            A isa AbstractSparseMatrix{Float32}
+        else
+            A isa Matrix{Float32}
+        end    
         Abin = adjacency_matrix(g, Float32, weighted=false)
         @test Abin ≈ abin
         @test eltype(Abin) == Float32    
@@ -147,6 +151,21 @@
             end[1]
 
             @test gw == [1,1,1]
+        end
+
+        if TEST_GPU 
+            g = rand_graph(10, 30, graph_type=GRAPH_T)
+            A = adjacency_matrix(g)
+            
+            g_gpu = g |> gpu
+            A_gpu = adjacency_matrix(g_gpu)
+            
+            if GRAPH_T == :dense
+                @test A_gpu isa CuMatrix
+            else
+                @test A_gpu isa CuSparseMatrix
+            end
+            @test Array(A_gpu) == Array(A)
         end
     end
 end

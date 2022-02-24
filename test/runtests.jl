@@ -2,6 +2,7 @@ using GraphNeuralNetworks
 using GraphNeuralNetworks.GNNGraphs: sort_edge_index
 using Flux
 using CUDA
+using CUDA.CUSPARSE
 using Flux: gpu, @functor
 using LinearAlgebra, Statistics, Random
 using NNlib
@@ -16,7 +17,7 @@ using InlineStrings  # not used but with the import we test #98 and #104
 
 CUDA.allowscalar(false)
 
-const ACUMatrix{T} = Union{CuMatrix{T}, CUDA.CUSPARSE.CuSparseMatrix{T}}
+const ACUMatrix{T} = Union{CuMatrix{T}, CuSparseMatrix{T}}
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 
@@ -32,16 +33,16 @@ tests = [
     "GNNGraphs/sampling",
     "utils",
     "msgpass",
-    "layers/basic",
-    "layers/conv",
-    "layers/pool",
-    "examples/node_classification_cora",
-    "deprecations",
+    # "layers/basic",
+    # "layers/conv",
+    # "layers/pool",
+    # "examples/node_classification_cora",
+    # "deprecations",
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
 
-@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo,)#(:coo, :dense, :sparse) 
+@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :dense, :sparse) 
     global GRAPH_T = graph_type
     # global TEST_GPU = CUDA.functional() && (GRAPH_T != :sparse)
     global TEST_GPU = true

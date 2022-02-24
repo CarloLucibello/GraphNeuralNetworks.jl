@@ -86,7 +86,7 @@
                     @test mat_gpu isa CuMatrix{Int}
                 else
                     @test mat_gpu isa CuSparseMatrix
-                    @test_broken mat_gpu isa CuSparseMatrix{Int}
+                    # @test_broken mat_gpu isa CuSparseMatrix{Int}
                 end
                 @test Array(mat_gpu) == adj_mat 
             end

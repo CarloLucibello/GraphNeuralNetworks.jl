@@ -81,20 +81,16 @@ to_dense(A::AbstractSparseMatrix, x...; kws...) = to_dense(collect(A), x...; kws
 
 function to_dense(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted=true)
     @assert dir ∈ [:out, :in]
-    T = T === nothing ? eltype(A) : T
     num_nodes = size(A, 1)
     @assert num_nodes == size(A, 2)
-    # @assert all(x -> (x == 1) || (x == 0), A)
     num_edges = numnonzeros(A)
     if dir == :in
         A = A'
     end
-    if T != eltype(A)
-        A = T.(A)
-    end
     if !weighted
-        A = map(x -> ifelse(x > 0, T(1), T(0)), A)
+        A = binarize(A)
     end
+    A = convert_eltype(T, A)
     return A, num_nodes, num_edges
 end
 
@@ -128,10 +124,7 @@ function to_dense(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=t
     if val === nothing || !weighted  
         val = ones_like(s, T)            
     end
-    if eltype(val) != T
-        val = T.(val)
-    end
-    
+    val = convert_eltype(T, val)
     idxs = s .+ n .* (t .- 1) 
     
     ## using scatter instead of indexing since there could be multiple edges
@@ -149,7 +142,6 @@ function to_sparse(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted
     @assert dir ∈ [:out, :in]
     num_nodes = size(A, 1)
     @assert num_nodes == size(A, 2)
-    T = T === nothing ? eltype(A) : T
     if dir == :in
         A = A'
     end
@@ -159,9 +151,7 @@ function to_sparse(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted
     if !weighted
         A = binarize(A)
     end
-    if T != eltype(A)
-        A = T.(A)
-    end
+    A = convert_eltype(T, A)
     num_edges = nnz(A)
     return A, num_nodes, num_edges
 end
@@ -182,8 +172,6 @@ function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=
     num_nodes::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     A = _sparse(s, t, eweight, num_nodes, num_nodes)
     num_edges::Int = nnz(A)
-    if eltype(A) != T
-        A = T.(A)
-    end
+    A = convert_eltype(T, A)
     return A, num_nodes, num_edges
 end

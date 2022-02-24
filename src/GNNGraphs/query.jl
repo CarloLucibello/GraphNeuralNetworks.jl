@@ -131,30 +131,32 @@ adjacency_list(g::GNNGraph; dir=:out) = adjacency_list(g, 1:g.num_nodes; dir)
 
 
 """
-    adjacency_matrix(g::GNNGraph, T=eltype(g); dir=:out, weighted=true)
+    adjacency_matrix(g::GNNGraph, [T]; dir=:out, weighted=true)
 
 Return the adjacency matrix `A` for the graph `g`. 
 
 If `dir=:out`, `A[i,j] > 0` denotes the presence of an edge from node `i` to node `j`.
 If `dir=:in` instead, `A[i,j] > 0` denotes the presence of an edge from node `j` to node `i`.
 
-User may specify the eltype `T` of the returned matrix. 
+The user can specify the eltype `T` of the returned matrix. 
 
 If `weighted=true`, the `A` will contain the edge weigths if any, otherwise the elements of `A` will be either 0 or 1.
 """
-function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=eltype(g); dir=:out, weighted=true)
+function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::TT=eltype(g); dir=:out, weighted=true) where 
+        {TT <: Union{DataType}}
     A, num_nodes, num_edges = to_sparse(g.graph, T; num_nodes=g.num_nodes, weighted)
     @assert size(A) == (num_nodes, num_nodes)
     return dir == :out ? A : A'
 end
 
-function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g); dir=:out, weighted=true)
+function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::TT=eltype(g); dir=:out, weighted=true) where
+        {TT <: Union{DataType}}
     @assert dir ∈ [:in, :out]
     A = g.graph
     if !weighted
         A = binarize(A)
     end
-    A = T != eltype(A) ? T.(A) : A
+    A = convert_eltype(T, A)
     return dir == :out ? A : A'
 end
 
@@ -172,7 +174,7 @@ function _get_edge_weight(g, edge_weight)
 end
 
 """
-    degree(g::GNNGraph, T=nothing; dir=:out, edge_weight=true)
+    degree(g::GNNGraph, [T]; dir=:out, edge_weight=true)
 
 Return a vector containing the degrees of the nodes in `g`.
 
@@ -229,7 +231,7 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT=nothing; dir=:out, edge_we
     if edge_weight === false
         A = binarize(A)
     end
-    A = eltype(A) != T ? T.(A) : A
+    A = convert_eltype(T, A)
     return dir == :out ? vec(sum(A, dims=2)) : 
            dir == :in  ? vec(sum(A, dims=1)) :
                   vec(sum(A, dims=1)) .+ vec(sum(A, dims=2)) 
