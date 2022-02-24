@@ -156,6 +156,15 @@ binarize(x) = map(>(0), x)
 @non_differentiable edge_decoding(x...)
 
 
+_sparse(x::AbstractMatrix) = sparse(x)
+_sparse(x::AbstractVector) = sparse(x)
+_sparse(s, t, w, m, n) = sparse(s, t, w, m, n)
+
+using CUDA.CUSPARSE: CuSparseMatrixCSR
+
+function _sparse(s::AnyCuVector, t::AnyCuVector, w, m, n)
+    CuSparseMatrixCSR(sparse(s, t, Float32.(w), m, n))
+end
 
 ####################################
 # FROM MLBASE.jl
@@ -215,3 +224,4 @@ function getobs!(buffers::Union{Tuple, NamedTuple},
             end
 end
 #######################################################
+
