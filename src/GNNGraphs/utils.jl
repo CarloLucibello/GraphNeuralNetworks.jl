@@ -98,6 +98,7 @@ ones_like(x, sz=size(x)) = ones_like(x, eltype(x), sz)
 numnonzeros(a::AbstractSparseMatrix) = nnz(a)
 numnonzeros(a::AbstractMatrix) = count(!=(0), a)
 
+
 # each edge is represented by a number in
 # 1:N^2
 function edge_encoding(s, t, n; directed=true)
@@ -151,11 +152,56 @@ end
 
 binarize(x) = map(>(0), x)
 
+@non_differentiable numnonzeros(x...)
 @non_differentiable binarize(x...)
 @non_differentiable edge_encoding(x...)
 @non_differentiable edge_decoding(x...)
 
+convert_eltype(::Nothing, x) = x
+convert_eltype(::Type{T}, x::AbstractArray{T}) where T = x
+convert_eltype(::Type{T}, x::AbstractArray) where T = T.(x)
 
+_sparse(x::AbstractMatrix) = sparse(x)
+_sparse(x::AbstractVector) = sparse(x)
+_sparse(s, t, w, m, n) = sparse(s, t, w, m, n)
+
+using CUDA.CUSPARSE: CuSparseMatrixCSR, AbstractCuSparseMatrix
+    
+# This is working around 2 issues:
+# https://github.com/JuliaGPU/CUDA.jl/issues/1402
+# https://github.com/JuliaGPU/CUDA.jl/issues/1407
+function _sparse(s::AnyCuVector, t::AnyCuVector, w::AnyCuVector{T}, m, n) where T
+    p = sortperm(s) # issue CUDA#1407
+    s, t, w = s[p], t[p], w[p]
+    T.(sparse(s, t, Float32.(w), m, n))
+end
+
+# TODO https://github.com/JuliaGPU/CUDA.jl/issues/1403
+Base.:*(x::AnyCuMatrix, y::AbstractCuSparseMatrix) = (y' * x')' |> CuMatrix
+
+# Workaround https://github.com/JuliaGPU/CUDA.jl/issues/1406
+Base.sum(x::AbstractCuSparseMatrix; dims=:) = cusparse_sum(x, Val(dims))
+
+cusparse_sum(x, ::Val{:}) = sum(cusparse_sum(x, Val(1)))
+
+function cusparse_sum(x::AbstractCuSparseMatrix, ::Val{1})
+    m, n = size(x)
+    v = ones_like(x, (1, m))
+    return v * x
+end
+
+function cusparse_sum(x::AbstractCuSparseMatrix, ::Val{2})
+    m, n = size(x)
+    v = ones_like(x, (n, 1))
+    return x * v
+end
+
+# # TODO remove this piracy when this is merged
+# # https://github.com/JuliaGPU/CUDA.jl/pull/1401
+# function CUDA.cu(x::SparseMatrixCSC)
+#     # Avoid casting to CuSparseMatrixCSC since it is not well supported
+#     CuSparseMatrixCSR(x)
+# end
 
 ####################################
 # FROM MLBASE.jl
@@ -215,3 +261,4 @@ function getobs!(buffers::Union{Tuple, NamedTuple},
             end
 end
 #######################################################
+
