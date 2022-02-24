@@ -161,12 +161,20 @@ _sparse(s, t, w, m, n) = sparse(s, t, w, m, n)
 
 using CUDA.CUSPARSE: CuSparseMatrixCSR, AbstractCuSparseMatrix
     
+# https://github.com/JuliaGPU/CUDA.jl/issues/1402
 function _sparse(s::AnyCuVector, t::AnyCuVector, w, m, n)
     CuSparseMatrixCSR(sparse(s, t, Float32.(w), m, n))
 end
 
+# TODO https://github.com/JuliaGPU/CUDA.jl/issues/1403
 Base.:*(x::AnyCuMatrix, y::AbstractCuSparseMatrix) = (y' * x')' |> CuMatrix
 
+# TODO remove this piracy when is merged
+# https://github.com/JuliaGPU/CUDA.jl/pull/1401
+function CUDA.cu(x::SparseMatrixCSC)
+    # Avoid casting to CuSparseMatrixCSC since it is not well supported
+    CuSparseMatrixCSR(x)
+end
 
 ####################################
 # FROM MLBASE.jl
