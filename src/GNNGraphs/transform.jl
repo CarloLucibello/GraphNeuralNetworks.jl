@@ -109,8 +109,8 @@ function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr=+)
         idxs .= 1:num_edges
         idxs .= idxs .- cumsum(.!mask)
         num_edges = length(s)
-        w = _scatter(aggr, w, idxs)
-        edata = _scatter(aggr, edata, idxs)
+        w = _scatter(aggr, w, idxs, num_edges)
+        edata = _scatter(aggr, edata, idxs, num_edges)
     end
 
     GNNGraph((s, t, w),

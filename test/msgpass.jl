@@ -28,8 +28,14 @@
         m = propagate(message, g, +, xj=X)
 
         @test size(m) == (out_channel, num_V)
-    end
 
+        @testset "isolated nodes" begin
+            x1 = rand(1, 6)
+            g1 = GNNGraph(collect(1:5), collect(1:5), num_nodes=6)
+            y1 = propagate((xi,xj,e) -> xj, g, +, xj=x1)
+            @test size(y1) == (1, 6)
+        end
+    end
 
     @testset "apply_edges" begin
         m = apply_edges(g, e=E) do xi, xj, e
@@ -85,7 +91,7 @@
         @test spmm_copyxj_fused(g) ≈ X * Adj
     end
 
-    @testset "e_mul_xj adn w_mul_xj for weighted conv" begin
+    @testset "e_mul_xj and w_mul_xj for weighted conv" begin
         n = 128
         A = sprand(n, n, 0.1)
         Adj = map(x -> x > 0 ? 1 : 0, A)
