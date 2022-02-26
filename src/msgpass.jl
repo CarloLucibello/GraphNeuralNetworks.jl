@@ -134,7 +134,7 @@ where it comes after [`apply_edges`](@ref).
 """
 function aggregate_neighbors(g::GNNGraph, aggr, m)
     s, t = edge_index(g)
-    return GNNGraphs._scatter(aggr, m, t)
+    return GNNGraphs._scatter(aggr, m, t; dstsize=g.num_nodes)
 end
 
 
