@@ -231,11 +231,24 @@ LearnBase.getobs(g::GNNGraph, i) = getgraph(g, i)
 Flux.Data._nobs(g::GNNGraph) = g.num_graphs
 Flux.Data._getobs(g::GNNGraph, i) = getgraph(g, i)
 
+# DataLoader compatibility passing a vector of graphs and
+# effectively using `batch` as a collated function.
+StatsBase.nobs(data::Vector{<:GNNGraph}) = length(data)
+LearnBase.getobs(data::Vector{<:GNNGraph}, i::Int) = data[i]
+LearnBase.getobs(data::Vector{<:GNNGraph}, i) = Flux.batch(data[i])
+Flux.Data._nobs(g::Vector{<:GNNGraph}) = StatsBase.nobs(g)
+Flux.Data._getobs(g::Vector{<:GNNGraph}, i) = LearnBase.getobs(g, i)
+
+
 #########################
 
 function Base.:(==)(g1::GNNGraph, g2::GNNGraph)
     g1 === g2 && return true
-    all(k -> getfield(g1, k) == getfield(g2, k), fieldnames(typeof(g1)))
+    for k in fieldnames(typeof(g1))
+        k === :graph_indicator && continue
+        getfield(g1, k) != getfield(g2, k) && return false
+    end
+    return true
 end
 
 function Base.hash(g::T, h::UInt) where T<:GNNGraph
