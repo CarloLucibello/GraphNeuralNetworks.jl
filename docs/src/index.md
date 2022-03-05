@@ -23,64 +23,50 @@ Usage examples on real datasets can be found in the [examples](https://github.co
 
 ### Data preparation
 
-First, we create our dataset consisting in multiple random graphs and associated data features. 
-Then we batch the graphs together into a unique graph.
+We create a dataset consisting in multiple random graphs and associated data features. 
 
 ```julia
-julia> using GraphNeuralNetworks, Graphs, Flux, CUDA, Statistics
+using GraphNeuralNetworks, Graphs, Flux, CUDA, Statistics
+using Flux.Data: DataLoader
 
-julia> all_graphs = GNNGraph[];
+all_graphs = GNNGraph[]
 
-julia> for _ in 1:1000
-           g = GNNGraph(random_regular_graph(10, 4),  
-                       ndata=(; x = randn(Float32, 16,10)),  # input node features
-                       gdata=(; y = randn(Float32)))         # regression target   
-           push!(all_graphs, g)
-       end
-
-julia> gbatch = Flux.batch(all_graphs)
-GNNGraph:
-    num_nodes = 10000
-    num_edges = 40000
-    num_graphs = 1000
-    ndata:
-        x => (16, 10000)
-    gdata:
-        y => (1000,)
+for _ in 1:1000
+    g = GNNGraph(random_regular_graph(10, 4),  
+            ndata=(; x = randn(Float32, 16,10)),  # input node features
+            gdata=(; y = randn(Float32)))         # regression target   
+    push!(all_graphs, g)
+end
 ```
-
 
 ### Model building 
 
-We concisely define our model as a [`GNNChain`](@ref) containing 2 graph convolutional 
-layers. If CUDA is available, our model will live on the gpu.
+We concisely define our model as a [`GNNChain`](@ref) containing two graph convolutional layers. If CUDA is available, our model will live on the gpu.
 
 ```julia
-julia> device = CUDA.functional() ? Flux.gpu : Flux.cpu;
+device = CUDA.functional() ? Flux.gpu : Flux.cpu;
 
-julia> model = GNNChain(GCNConv(16 => 64),
-                        BatchNorm(64),     # Apply batch normalization on node features (nodes dimension is batch dimension)
-                        x -> relu.(x),     
-                        GCNConv(64 => 64, relu),
-                        GlobalPool(mean),  # aggregate node-wise features into graph-wise features
-                        Dense(64, 1)) |> device;
+model = GNNChain(GCNConv(16 => 64),
+                BatchNorm(64),     # Apply batch normalization on node features (nodes dimension is batch dimension)
+                x -> relu.(x),     
+                GCNConv(64 => 64, relu),
+                GlobalPool(mean),  # aggregate node-wise features into graph-wise features
+                Dense(64, 1)) |> device
 
-julia> ps = Flux.params(model);
-
-julia> opt = ADAM(1f-4);
+ps = Flux.params(model)
+opt = ADAM(1f-4)
 ```
 
 ### Training 
 
 Finally, we use a standard Flux training pipeline to fit our dataset.
-Flux's DataLoader iterates over mini-batches of graphs 
+Flux's `DataLoader` iterates over mini-batches of graphs 
 (batched together into a `GNNGraph` object). 
 
 ```julia
-gtrain = getgraph(gbatch, 1:800)
-gtest = getgraph(gbatch, 801:gbatch.num_graphs)
-train_loader = Flux.Data.DataLoader(gtrain, batchsize=32, shuffle=true)
-test_loader = Flux.Data.DataLoader(gtest, batchsize=32, shuffle=false)
+train_size = round(Int, 0.8 * length(all_graphs))
+train_loader = DataLoader(all_graphs[1:train_size], batchsize=32, shuffle=true)
+test_loader = DataLoader(all_graphs[train_size+1:end], batchsize=32, shuffle=false)
 
 loss(g::GNNGraph) = mean((vec(model(g, g.ndata.x)) - g.gdata.y).^2)
 

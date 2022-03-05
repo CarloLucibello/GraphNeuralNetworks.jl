@@ -27,18 +27,21 @@ function eval_loss_accuracy(model, data_loader, device)
 end
 
 function getdataset()
-    data = TUDataset("MUTAG")
+    tudata = TUDataset("MUTAG")
     
-    x = Array{Float32}(onehotbatch(data.node_labels, 0:6))
-    y = (1 .+ Array{Float32}(data.graph_labels)) ./ 2
+    x = Array{Float32}(onehotbatch(tudata.node_labels, 0:6))
+    y = (1 .+ Array{Float32}(tudata.graph_labels)) ./ 2
     @assert all(∈([0,1]), y) # binary classification 
-    # The dataset also has edge features but we won't be using them
-    e = Array{Float32}(onehotbatch(data.edge_labels, sort(unique(data.edge_labels))))
     
-    return GNNGraph(data.source, data.target, 
-                num_nodes=data.num_nodes, 
-                graph_indicator=data.graph_indicator,
-                ndata=(; x), edata=(; e), gdata=(; y))
+    ## The dataset also has edge features but we won't be using them
+    # e = Array{Float32}(onehotbatch(data.edge_labels, sort(unique(data.edge_labels))))
+    
+    gall = GNNGraph(tudata.source, tudata.target, 
+                num_nodes=tudata.num_nodes, 
+                graph_indicator=tudata.graph_indicator,
+                ndata=(; x), gdata=(; y))
+
+    return [getgraph(gall, i) for i=1:gall.num_graphs]
 end
 
 # arguments for the `train` function 
@@ -66,23 +69,17 @@ function train(; kws...)
     end
 
     # LOAD DATA
-
-    
     NUM_TRAIN = 150
     
-    gfull = getdataset()
-
-    @info gfull
+    data = getdataset()
+    shuffle!(data)
     
-    perm = randperm(gfull.num_graphs)
-    gtrain = getgraph(gfull, perm[1:NUM_TRAIN])
-    gtest = getgraph(gfull, perm[NUM_TRAIN+1:end]) 
-    train_loader = DataLoader(gtrain, batchsize=args.batchsize, shuffle=true)
-    test_loader = DataLoader(gtest, batchsize=args.batchsize, shuffle=false)
+    train_loader = DataLoader(data[1:NUM_TRAIN], batchsize=args.batchsize, shuffle=true)
+    test_loader = DataLoader(data[NUM_TRAIN+1:end], batchsize=args.batchsize, shuffle=false)
     
     # DEFINE MODEL
 
-    nin = size(gtrain.ndata.x, 1)
+    nin = size(data[1].ndata.x, 1)
     nhidden = args.nhidden
     
     model = GNNChain(GraphConv(nin => nhidden, relu),
@@ -94,7 +91,6 @@ function train(; kws...)
     ps = Flux.params(model)
     opt = ADAM(args.η)
 
-    
     # LOGGING FUNCTION
 
     function report(epoch)

@@ -229,22 +229,34 @@
         # Attach non array data
         g = GNNGraph(erdos_renyi(10,  30), edata="ciao", graph_type=GRAPH_T)
         @test g.edata.e == "ciao"
-    end 
+    end
 
     @testset "LearnBase and DataLoader compat" begin
         n, m, num_graphs = 10, 30, 50
         X = rand(10, n)
-        E = rand(10, 2m)
+        E = rand(10, m)
         U = rand(10, 1)
-        g = Flux.batch([GNNGraph(erdos_renyi(n, m), ndata=X, edata=E, gdata=U, graph_type=GRAPH_T) 
-                        for _ in 1:num_graphs])
-        
-        @test LearnBase.getobs(g, 3) == getgraph(g, 3)
-        @test LearnBase.getobs(g, 3:5) == getgraph(g, 3:5)
-        @test StatsBase.nobs(g) == g.num_graphs
-        
-        d = Flux.Data.DataLoader(g, batchsize = 2, shuffle=false)
-        @test first(d) == getgraph(g, 1:2)
+        data = [rand_graph(n, m, ndata=X, edata=E, gdata=U, graph_type=GRAPH_T) 
+                for _ in 1:num_graphs]
+        g = Flux.batch(data)
+
+        @testset "batch then pass to dataloader" begin
+            @test LearnBase.getobs(g, 3) == getgraph(g, 3)
+            @test LearnBase.getobs(g, 3:5) == getgraph(g, 3:5)
+            @test StatsBase.nobs(g) == g.num_graphs
+            
+            d = Flux.Data.DataLoader(g, batchsize=2, shuffle=false)
+            @test first(d) == getgraph(g, 1:2)
+        end
+
+        @testset "pass to dataloader and collate" begin
+            @test LearnBase.getobs(data, 3) == getgraph(g, 3)
+            @test LearnBase.getobs(data, 3:5) == getgraph(g, 3:5)
+            @test StatsBase.nobs(data) == g.num_graphs
+
+            d = Flux.Data.DataLoader(data, batchsize=2, shuffle=false)
+            @test first(d) == getgraph(g, 1:2)
+        end
     end
 
     @testset "Graphs.jl integration" begin

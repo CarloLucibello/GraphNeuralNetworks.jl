@@ -144,36 +144,60 @@ julia> get_edge_weight(g)
 ## Batches and Subgraphs
 
 Multiple `GNNGraph`s can be batched togheter into a single graph
-containing the total number of the original nodes 
+that contains the total number of the original nodes 
 and where the original graphs are disjoint subgraphs.
 
 ```julia
 using Flux
+using Flux.Data: DataLoader
 
-gall = Flux.batch([GNNGraph(erdos_renyi(10, 30), ndata=rand(Float32,3,10)) for _ in 1:160])
+data = [rand_graph(10, 30, ndata=rand(Float32, 3, 10)) for _ in 1:160]
+gall = Flux.batch(data)
 
+# gall is a GNNGraph containing many graphs
 @assert gall.num_graphs == 160 
 @assert gall.num_nodes == 1600   # 10 nodes x 160 graphs
 @assert gall.num_edges == 9600  # 30 undirected edges x 2 directions x 160 graphs
 
+# Let's create a mini-batch from gall
 g23, _ = getgraph(gall, 2:3)
 @assert g23.num_graphs == 2
 @assert g23.num_nodes == 20   # 10 nodes x 160 graphs
 @assert g23.num_edges == 120  # 30 undirected edges x 2 directions x 2 graphs x
 
-
-# DataLoader compatibility
-train_loader = Flux.Data.DataLoader(gall, batchsize=16, shuffle=true)
+# We can pass a GNNGraph to Flux's DataLoader
+train_loader = DataLoader(gall, batchsize=16, shuffle=true)
 
 for g in train_loader
     @assert g.num_graphs == 16
     @assert g.num_nodes == 160
     @assert size(g.ndata.x) = (3, 160)    
-    .....
+    # .....
 end
 
 # Access the nodes' graph memberships 
 graph_indicator(gall)
+```
+
+## DataLoader and mini-batch iteration
+
+While constructing a batched graph and passing it to the `DataLoader` is always 
+an option for mini-batch iteration, the recommended way is
+to pass an array of graphs directly:
+
+```julia
+using Flux.Data: DataLoader
+
+data = [rand_graph(10, 30, ndata=rand(Float32, 3, 10)) for _ in 1:320]
+
+train_loader = DataLoader(data, batchsize=16, shuffle=true)
+
+for g in train_loader
+    @assert g.num_graphs == 16
+    @assert g.num_nodes == 160
+    @assert size(g.ndata.x) = (3, 160)    
+    # .....
+end
 ```
 
 ## Graph Manipulation
