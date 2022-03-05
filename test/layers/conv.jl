@@ -103,8 +103,7 @@
     end
 
     @testset "GATConv" begin
-        # exclude_grad_fields = [:negative_slope],
-                
+        
         for heads in (1, 2), concat in (true, false)
             l = GATConv(in_channel => out_channel; heads, concat)
             for g in test_graphs
