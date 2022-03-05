@@ -103,11 +103,13 @@
     end
 
     @testset "GATConv" begin
-
+        # exclude_grad_fields = [:negative_slope],
+                
         for heads in (1, 2), concat in (true, false)
             l = GATConv(in_channel => out_channel; heads, concat)
             for g in test_graphs
                 test_layer(l, g, rtol=RTOL_LOW,
+                    exclude_grad_fields = [:negative_slope],
                     outsize=(concat ? heads*out_channel : out_channel, g.num_nodes))
             end
         end
@@ -116,7 +118,9 @@
             ein = 3
             l = GATConv((in_channel, ein) => out_channel, add_self_loops=false)
             g = GNNGraph(g1, edata=rand(T, ein, g1.num_edges))
-            test_layer(l, g, rtol=RTOL_LOW, outsize=(out_channel, g.num_nodes))
+            test_layer(l, g, rtol=RTOL_LOW, 
+                exclude_grad_fields = [:negative_slope],
+                outsize=(out_channel, g.num_nodes))
         end
 
         @testset "num params" begin
@@ -135,6 +139,7 @@
             l = GATv2Conv(in_channel => out_channel, tanh; heads, concat)
             for g in test_graphs
                 test_layer(l, g, rtol=RTOL_LOW,
+                    exclude_grad_fields = [:negative_slope],
                     outsize=(concat ? heads*out_channel : out_channel, g.num_nodes))
             end
         end
@@ -143,7 +148,9 @@
             ein = 3
             l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops=false)
             g = GNNGraph(g1, edata=rand(T, ein, g1.num_edges))
-            test_layer(l, g, rtol=RTOL_LOW, outsize=(out_channel, g.num_nodes))
+            test_layer(l, g, rtol=RTOL_LOW, 
+                exclude_grad_fields = [:negative_slope],
+                outsize=(out_channel, g.num_nodes))
         end
 
         @testset "num params" begin
@@ -159,7 +166,9 @@
             ein = 3
             l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops=false)
             g = GNNGraph(g1, edata=rand(T, ein, g1.num_edges))
-            test_layer(l, g, rtol=1e-3, outsize=(out_channel, g.num_nodes))
+            test_layer(l, g, rtol=1e-3, 
+                exclude_grad_fields = [:negative_slope],
+                outsize=(out_channel, g.num_nodes))
         end 
     end
 

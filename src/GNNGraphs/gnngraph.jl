@@ -252,6 +252,6 @@ function Base.:(==)(g1::GNNGraph, g2::GNNGraph)
 end
 
 function Base.hash(g::T, h::UInt) where T<:GNNGraph
-    fs = (getfield(g, k) for k in fieldnames(typeof(g)))
+    fs = (getfield(g, k) for k in fieldnames(typeof(g)) if k !== :graph_indicator)
     return foldl((h, f) -> hash(f, h),  fs, init=hash(T, h))
 end
