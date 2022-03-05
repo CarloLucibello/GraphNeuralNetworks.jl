@@ -183,7 +183,7 @@ graph_indicator(gall)
 
 While constructing a batched graph and passing it to the `DataLoader` is always 
 an option for mini-batch iteration, the recommended way is
-to pass an array of graphs directly
+to pass an array of graphs directly:
 
 ```julia
 using Flux.Data: DataLoader

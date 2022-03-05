@@ -10,3 +10,6 @@ Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
 NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
 NNlibCUDA = "a00861dc-f156-4864-bf3c-e6376f28a68d"
+
+[extras]
+CPUSummary = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
