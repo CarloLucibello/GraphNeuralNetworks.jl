@@ -223,9 +223,8 @@ function Base.show(io::IO, g::GNNGraph)
     end
 end
 
-### StatsBase/LearnBase compatibility
-StatsBase.nobs(g::GNNGraph) = g.num_graphs 
-LearnBase.getobs(g::GNNGraph, i) = getgraph(g, i)
+MLUtils.numobs(g::GNNGraph) = g.num_graphs 
+MLUtils.getobs(g::GNNGraph, i) = getgraph(g, i)
 
 # Flux's Dataloader compatibility. Related PR https://github.com/FluxML/Flux.jl/pull/1683
 Flux.Data._nobs(g::GNNGraph) = g.num_graphs

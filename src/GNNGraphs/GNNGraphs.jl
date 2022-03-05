@@ -9,7 +9,7 @@ import Flux
 using Flux: batch
 import NearestNeighbors
 import NNlib
-import LearnBase
+import MLUtils
 import StatsBase
 import KrylovKit
 using ChainRulesCore
