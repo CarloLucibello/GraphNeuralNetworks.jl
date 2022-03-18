@@ -16,19 +16,17 @@ and to ``\gamma_x`` and ``\gamma_e`` as to the node update and edge update funct
 respectively. The aggregation ``\square`` is over the neighborhood ``N(i)`` of node ``i``, 
 and it is usually equal either to ``\sum``, to `max` or to a `mean` operation. 
 
-In GraphNeuralNetworks.jl, the function [`propagate`](@ref) takes care of materializing the
-node features on each edge, applying the message function, performing the
+In GraphNeuralNetworks.jl, the message passing mechanism is exposed by the [`propagate`](@ref) function.
+[`propagate`](@ref) takes care of materializing the node features on each edge, applying the message function, performing the
 aggregation, and returning ``\bar{\mathbf{m}}``. 
 It is then left to the user to perform further node and edge updates,
 manipulating arrays of size ``D_{node} \times num\_nodes`` and   
 ``D_{edge} \times num\_edges``.
 
-[`propagate`](@ref) is composed of two steps corresponding to two
-exported methods:
-1.  [`apply_edges`](@ref) materializes node features on edges and 
-performs edge-related computation without. 
-2. [`aggregate_neighbors`](@ref) applies a reduction operator on the messages coming
-from the neighborhood of each node.
+[`propagate`](@ref) is composed of two steps, also available as two independent methods:
+
+1. [`apply_edges`](@ref) materializes node features on edges and applyes the message function. 
+2. [`aggregate_neighbors`](@ref) applies a reduction operator on the messages coming from the neighborhood of each node.
 
 The whole propagation mechanism internally relies on the [`NNlib.gather`](@ref) 
 and [`NNlib.scatter`](@ref) methods.
