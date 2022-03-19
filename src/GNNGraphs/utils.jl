@@ -57,10 +57,14 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
     # This had to workaround two Zygote bugs with NamedTuples
     # https://github.com/FluxML/Zygote.jl/issues/1071
     # https://github.com/FluxML/Zygote.jl/issues/1072
+
+    if n != 1
+        @assert all(x -> x isa AbstractArray, data) "Non-array features provided."
+    end
     
     if n == 1
         # If last array dimension is not 1, add a new dimension. 
-        # This is mostly usefule to reshape globale feature vectors
+        # This is mostly useful to reshape global feature vectors
         # of size D to Dx1 matrices.
         function unsqz(v)
             if v isa AbstractArray && size(v)[end] != 1
@@ -73,19 +77,20 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
     end
 
     sz = map(x -> x isa AbstractArray ? size(x)[end] : 0, data)
+
     if duplicate_if_needed 
         # Used to copy edge features on reverse edges    
         @assert all(s -> s == 0 ||  s == n || s == n÷2, sz)  "Wrong size in last dimension for feature array."
     
         function duplicate(v)
-            if v isa AbstractArray && size(v)[end] == n÷2
+            if size(v)[end] == n÷2
                 v = cat(v, v, dims=ndims(v))
             end
             v
         end
         data = NamedTuple{keys(data)}(duplicate.(values(data)))
     else
-        @assert all(s -> s == 0 ||  s == n, sz) "Wrong size in last dimension for feature array."
+        @assert all(x -> x == 0 || x == n, sz) "Wrong size in last dimension for feature array."
     end
     return data
 end

@@ -229,6 +229,11 @@
         # Attach non array data
         g = GNNGraph(erdos_renyi(10,  30), edata="ciao", graph_type=GRAPH_T)
         @test g.edata.e == "ciao"
+
+
+        # Wrong need number of features
+        g = GNNGraph(erdos_renyi(10,  30), edata="ciao", graph_type=GRAPH_T)
+
     end
 
     @testset "LearnBase and DataLoader compat" begin
