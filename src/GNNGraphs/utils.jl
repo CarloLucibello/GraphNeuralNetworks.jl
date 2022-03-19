@@ -77,14 +77,9 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
     # unsqz_first(v) = v
     # data = map(unsqz_first, data)
     
-    sz = map(x -> x isa AbstractArray ? size(x)[end] : 0, data)
-
     if duplicate_if_needed 
-        # Used to copy edge features on reverse edges    
-        @assert all(s -> s == 0 ||  s == n || s == n÷2, sz)  "Wrong size in last dimension for feature array."
-    
         function duplicate(v)
-            if size(v)[end] == n÷2
+            if v isa AbstractArray && size(v)[end] == n÷2
                 v = cat(v, v, dims=ndims(v))
             end
             v
@@ -92,7 +87,7 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
         data = map(duplicate, data)
     end
     
-    @assert all(x -> x == 0 || x == n, sz) "Wrong size in last dimension for feature array."
+    @assert all(x -> x isa AbstractArray ? size(x)[end] == n : true, data)  "Wrong size in last dimension for feature array."
     
     return data
 end
