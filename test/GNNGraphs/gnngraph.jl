@@ -225,10 +225,24 @@
         g = GNNGraph(erdos_renyi(10,  30), edata=e, graph_type=GRAPH_T)
         @test g.edata.e == [e; e]
 
-
-        # Attach non array data
-        g = GNNGraph(erdos_renyi(10,  30), edata="ciao", graph_type=GRAPH_T)
-        @test g.edata.e == "ciao"
+        # non-array global 
+        g = rand_graph(10,  30, gdata="ciao", graph_type=GRAPH_T)
+        @test g.gdata.u == "ciao"
+    
+        # vectors stays vectors
+        g = rand_graph(10,  30, ndata=rand(10),
+                                edata=rand(30),
+                                gdata=(u=rand(2), z=rand(1), q=1),
+                                graph_type=GRAPH_T)
+        @test size(g.ndata.x) == (10,)
+        @test size(g.edata.e) == (30,)
+        @test size(g.gdata.u) == (2, 1)
+        @test size(g.gdata.z) == (1,)
+        @test g.gdata.q === 1
+        
+        # Error for non-array ndata
+        @test_throws AssertionError rand_graph(10,  30, ndata="ciao", graph_type=GRAPH_T)
+        @test_throws AssertionError rand_graph(10,  30, ndata=1, graph_type=GRAPH_T)
     end
 
     @testset "LearnBase and DataLoader compat" begin
