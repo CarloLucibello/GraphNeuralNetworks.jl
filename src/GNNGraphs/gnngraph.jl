@@ -206,7 +206,6 @@ function Base.show(io::IO, g::GNNGraph)
     if !isempty(g.ndata)
         print(io, "\n    ndata:")
         for k in keys(g.ndata)
-            # print(io, "\n        $k => $(size(g.ndata[k]))")
             print(io, "\n        $k => $(summary(g.ndata[k]))")
         end
     end
