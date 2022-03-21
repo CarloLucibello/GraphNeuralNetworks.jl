@@ -1145,9 +1145,6 @@ end
 
 function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, u::AbstractMatrix)
 
-    if g.graph[3]!==nothing
-        @warn g.graph[3] !== nothing "Edge weights $(g.graph[3]) provided, will not be used for computation"
-    end
     
     @assert (l.u_dim == size(u)[1] && g.num_edges == size(u)[2]) "Pseudo-cordinate dim $(size(u)) does not match (u_dim=$(u_dim),num_edge=$(g.num_edges))"
 
