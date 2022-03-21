@@ -1098,13 +1098,13 @@ t = [2,3,1,1]
 g = GNNGraph(s,t)
 in_feature, out_feature, n_k, e_dim = 4, 7, 8, 10
 x = randn(in_feature, g.num_nodes)
-u = randn(e_dim, g.num_edges)
+e = randn(e_dim, g.num_edges)
 
 # create layer
 l = GMMConv(in_feature=>out_feature, n_k, e_dim)
 
 # forward pass
-l(g, x, u)
+l(g, x, e)
 ```
 """
 
