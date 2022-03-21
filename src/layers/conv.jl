@@ -1077,8 +1077,7 @@ Performs the operation
 
 where
 ```math
-\mathbf{w_{k}} = \exp(\frac{-1}{2}(u-\mu_k)^T \Sigma_k^{-1}(u-\mu
-_k))
+w^a_{k}(e^a) = \exp(\frac{-1}{2}(e^a - \mu^a_k)^T \Sigma^a_k^{-1}(e^a - \mu^a_k))
 ```
 
 The input to the layer is a node feature array 'X' of size `(num_features, num_nodes)` and
