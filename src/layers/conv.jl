@@ -1066,7 +1066,7 @@ function (l::MEGNetConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
 end
 
 @doc raw"""
-    GMMConv(in => out, n_kernel, e_dim, σ=identity; [init, bias])
+    GMMConv(in => out, K, e_dim, σ=identity; [init, bias])
 Graph mixture model convolution layer from the paper [Geometric deep learning on graphs and manifolds using mixture model CNNs](https://arxiv.org/abs/1611.08402)
 Performs the operation
 ```math
@@ -1083,7 +1083,7 @@ edge pseudo-cordinate array 'U' of size `(num_features, num_edges)`
 # Arguments 
 - `in`: Number of input features.
 - `out`: Number of output features.
-- `n_kernel` : Number of kernels.
+- `K` : Number of kernels.
 - `e_dim` : Dimensionality of pseudo coordinates.
 - `σ`: Activation function. Default `identity`.
 - `bias`: Add learnable bias. Default `true`.
@@ -1096,12 +1096,12 @@ edge pseudo-cordinate array 'U' of size `(num_features, num_edges)`
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s,t)
-in_feature, out_feature, n_k, e_dim = 4, 7, 8, 10
+in_feature, out_feature, K, e_dim = 4, 7, 8, 10
 x = randn(in_feature, g.num_nodes)
 e = randn(e_dim, g.num_edges)
 
 # create layer
-l = GMMConv(in_feature=>out_feature, n_k, e_dim)
+l = GMMConv(in_feature=>out_feature, K, e_dim)
 
 # forward pass
 l(g, x, e)
@@ -1114,42 +1114,41 @@ struct GMMConv{A<:AbstractMatrix, B, F} <:GNNLayer
     bias::B
     σ::F
     ch::Pair{Int, Int}
-    n_kernel::Int
+    K::Int
     e_dim::Int
     dense_x::Dense
 end
 
-Flux.@functor GMMConv
+@functor GMMConv
 
 function GMMConv(ch::Pair{Int, Int}, 
-                n_kernel::Int,
-                e_dim::Int,
                 σ=identity;
+                K::Int=1,
+                e_dim::Int=1,
                 init=Flux.glorot_uniform,
                 bias::Bool=true)
     in, out = ch
-    mu = init(n_kernel, e_dim)
-    sigma_inv = init(n_kernel, e_dim)
+    mu = init(K, e_dim)
+    sigma_inv = init(K, e_dim)
     b = bias ? Flux.create_bias(ones(out), true) : false
-    dense_x = Dense(in, out*n_kernel, bias=false)
-    GMMConv(mu, sigma_inv, b, σ, ch, n_kernel, e_dim, dense_x)
+    dense_x = Dense(in, out*K, bias=false)
+    GMMConv(mu, sigma_inv, b, σ, ch, K, e_dim, dense_x)
 end
 
 function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, u::AbstractMatrix)
 
-    
     @assert (l.e_dim == size(u)[1] && g.num_edges == size(u)[2]) "Pseudo-cordinate dim $(size(u)) does not match (e_dim=$(e_dim),num_edge=$(g.num_edges))"
 
     num_edges = g.num_edges
     d = degree(g, dir=:in)
     u = reshape(u, (l.e_dim, 1, num_edges))
-    mu = reshape(l.mu, (l.e_dim, l.n_kernel, 1))
+    mu = reshape(l.mu, (l.e_dim, l.K, 1))
     
     e = -0.5*(u.-mu).^2
-    e = e .* ((reshape(l.sigma_inv, (l.e_dim, l.n_kernel, 1)).^2) )
-    e = exp.(sum(e, dims = 1 )) # (1, n_kernel, num_edge) 
+    e = e .* ((reshape(l.sigma_inv, (l.e_dim, l.K, 1)).^2) )
+    e = exp.(sum(e, dims = 1 )) # (1, K, num_edge) 
 
-    xj = reshape(l.dense_x(x), (l.ch[2],l.n_kernel,:)) # (out, n_kernel, num_nodes) 
+    xj = reshape(l.dense_x(x), (l.ch[2],l.K,:)) # (out, K, num_nodes) 
     x = propagate(e_mul_xj, g, +, xj=xj, e=e)
     x = dropdims(mean(x, dims=2), dims=2) # (out, num_nodes)
     x = 1 / d .* x 
@@ -1158,10 +1157,10 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, u::AbstractMatrix)
 end
 
 function Base.show(io::IO, l::GMMConv)
-    in, out, n_kernel, e_dim = l.ch[1], l.ch[2], l.n_kernel, l.e_dim
+    in, out, K, e_dim = l.ch[1], l.ch[2], l.K, l.e_dim
     print(io, "GMMConv(", in, " => ", out)
-    print(io, ", n_kernel= ", n_kernel)
-    print(io, ", e_dim = ", e_dim)
+    print(io, ", K=", K)
+    print(io, ", e_dim=", e_dim)
     print(io, ")")
 
 end
