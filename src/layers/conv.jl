@@ -1161,7 +1161,7 @@ function Base.show(io::IO, l::GMMConv)
     in, out, n_kernel, e_dim = l.ch[1], l.ch[2], l.n_kernel, l.e_dim
     print(io, "GMMConv(", in, " => ", out)
     print(io, ", n_kernel= ", n_kernel)
-    print(io, ", pseudo-cordinate dimension = ", e_dim)
+    print(io, ", e_dim = ", e_dim)
     print(io, ")")
 
 end
