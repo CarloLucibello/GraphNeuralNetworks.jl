@@ -1165,7 +1165,7 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, u::AbstractMatrix)
     
     x = propagate(e_mul_xj, g, +, xj=xj, e=w)
     x = dropdims(mean(x, dims=2), dims=2)
-    x = 1/d.*x
+    x = 1 / d .* x
 
     return l.σ(x .+ l.bias)
 end
