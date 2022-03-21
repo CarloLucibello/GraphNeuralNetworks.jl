@@ -1153,7 +1153,7 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, u::AbstractMatrix)
 
     num_edges = g.num_edges
     d = degree(g, dir=:in)
-    u = reshape(u,(num_edges, 1, l.u_dim))
+    u = reshape(u, (num_edges, 1, l.u_dim))
     mu = reshape(l.mu, (1, l.n_kernel, l.u_dim))
 
     w = -0.5*(u.-mu).^2
