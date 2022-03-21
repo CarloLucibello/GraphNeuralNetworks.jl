@@ -1072,7 +1072,7 @@ Graph mixture model convolution layer from the paper [Geometric deep learning on
 
 Performs the operation
 ```math
-\mathbf{x}_i' = \frac{1}{|N(i)|} \sum_{j\in N(i)}\frac{1}{K}\sum_{k=1}^k\mathbf{w}_k(u_{i,j})\odot \mathbf{\theta}_k \mathbf{x}_j
+\mathbf{x}_i' = \frac{1}{|N(i)|} \sum_{j\in N(i)}\frac{1}{K}\sum_{k=1}^k \mathbf{w}_k(\mathbf{e}_{j\to i}) \odot \Theta_k \mathbf{x}_j
 ```
 
 where
