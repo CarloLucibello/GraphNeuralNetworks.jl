@@ -1066,29 +1066,25 @@ function (l::MEGNetConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
 end
 
 @doc raw"""
-    GMMConv(in => out, n_kernel, u_dim, σ=identity; [init, bias])
-
+    GMMConv(in => out, n_kernel, e_dim, σ=identity; [init, bias])
 Graph mixture model convolution layer from the paper [Geometric deep learning on graphs and manifolds using mixture model CNNs](https://arxiv.org/abs/1611.08402)
-
 Performs the operation
 ```math
 \mathbf{x}_i' = \frac{1}{|N(i)|} \sum_{j\in N(i)}\frac{1}{K}\sum_{k=1}^k \mathbf{w}_k(\mathbf{e}_{j\to i}) \odot \Theta_k \mathbf{x}_j
 ```
-
 where
 ```math
 w^a_{k}(e^a) = \exp(\frac{-1}{2}(e^a - \mu^a_k)^T \Sigma^a_k^{-1}(e^a - \mu^a_k))
 ```
+$\Theta_k$, $\mu^a_k$, $\Sigma^a_k^{-1}$ are learnable parameters.
 
 The input to the layer is a node feature array 'X' of size `(num_features, num_nodes)` and
 edge pseudo-cordinate array 'U' of size `(num_features, num_edges)`
-
 # Arguments 
-
 - `in`: Number of input features.
 - `out`: Number of output features.
 - `n_kernel` : Number of kernels.
-- `u_dim` : Dimensionality of pseudo coordinates.
+- `e_dim` : Dimensionality of pseudo coordinates.
 - `σ`: Activation function. Default `identity`.
 - `bias`: Add learnable bias. Default `true`.
 - `init`: Weights' initializer. Default `glorot_uniform`.
@@ -1096,23 +1092,19 @@ edge pseudo-cordinate array 'U' of size `(num_features, num_edges)`
 #Examples
 
 ```julia
-
 # create data
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s,t)
-
-in_feature, out_feature, n_k, u_dim = 4, 7, 8, 10
-
+in_feature, out_feature, n_k, e_dim = 4, 7, 8, 10
 x = randn(in_feature, g.num_nodes)
-u = randn(u_dim, g.num_edges)
+u = randn(e_dim, g.num_edges)
 
 # create layer
-l = GMMConv(in_feature=>out_feature, n_k, u_dim)
+l = GMMConv(in_feature=>out_feature, n_k, e_dim)
 
 # forward pass
 l(g, x, u)
-
 ```
 """
 
@@ -1123,7 +1115,7 @@ struct GMMConv{A<:AbstractMatrix, B, F} <:GNNLayer
     σ::F
     ch::Pair{Int, Int}
     n_kernel::Int
-    u_dim::Int
+    e_dim::Int
     dense_x::Dense
 end
 
@@ -1131,47 +1123,45 @@ Flux.@functor GMMConv
 
 function GMMConv(ch::Pair{Int, Int}, 
                 n_kernel::Int,
-                u_dim::Int,
+                e_dim::Int,
                 σ=identity;
                 init=Flux.glorot_uniform,
                 bias::Bool=true)
     in, out = ch
-    mu = init(n_kernel, u_dim)
-    sigma_inv = init(n_kernel, u_dim)
+    mu = init(n_kernel, e_dim)
+    sigma_inv = init(n_kernel, e_dim)
     b = bias ? Flux.create_bias(ones(out), true) : false
     dense_x = Dense(in, out*n_kernel, bias=false)
-    GMMConv(mu, sigma_inv, b, σ, ch, n_kernel, u_dim, dense_x)
+    GMMConv(mu, sigma_inv, b, σ, ch, n_kernel, e_dim, dense_x)
 end
 
 function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, u::AbstractMatrix)
 
     
-    @assert (l.u_dim == size(u)[1] && g.num_edges == size(u)[2]) "Pseudo-cordinate dim $(size(u)) does not match (u_dim=$(u_dim),num_edge=$(g.num_edges))"
+    @assert (l.e_dim == size(u)[1] && g.num_edges == size(u)[2]) "Pseudo-cordinate dim $(size(u)) does not match (e_dim=$(e_dim),num_edge=$(g.num_edges))"
 
     num_edges = g.num_edges
     d = degree(g, dir=:in)
-    u = reshape(u, (num_edges, 1, l.u_dim))
-    mu = reshape(l.mu, (1, l.n_kernel, l.u_dim))
+    u = reshape(u, (l.e_dim, 1, num_edges))
+    mu = reshape(l.mu, (l.e_dim, l.n_kernel, 1))
+    
+    e = -0.5*(u.-mu).^2
+    e = e .* ((reshape(l.sigma_inv, (l.e_dim, l.n_kernel, 1)).^2) )
+    e = exp.(sum(e, dims = 1 )) # (1, n_kernel, num_edge) 
 
-    w = -0.5*(u.-mu).^2
-    w = w .* ((reshape(l.sigma_inv, (1, l.n_kernel, l.u_dim)).^2) )
-    w = exp.(sum(w, dims = 3 )) # n_edges, n_kernel,  1
-    w = permutedims(w, [3,2,1])
-    
-    xj = reshape(l.dense_x(x), (l.ch[2],l.n_kernel,:))
-    
-    x = propagate(e_mul_xj, g, +, xj=xj, e=w)
-    x = dropdims(mean(x, dims=2), dims=2)
-    x = 1 / d .* x
+    xj = reshape(l.dense_x(x), (l.ch[2],l.n_kernel,:)) # (out, n_kernel, num_nodes) 
+    x = propagate(e_mul_xj, g, +, xj=xj, e=e)
+    x = dropdims(mean(x, dims=2), dims=2) # (out, num_nodes)
+    x = 1 / d .* x 
 
     return l.σ(x .+ l.bias)
 end
 
 function Base.show(io::IO, l::GMMConv)
-    in, out, n_kernel, u_dim = l.ch[1], l.ch[2], l.n_kernel, l.u_dim
+    in, out, n_kernel, e_dim = l.ch[1], l.ch[2], l.n_kernel, l.e_dim
     print(io, "GMMConv(", in, " => ", out)
     print(io, ", n_kernel= ", n_kernel)
-    print(io, ", pseudo-cordinate dimension = ", u_dim)
+    print(io, ", pseudo-cordinate dimension = ", e_dim)
     print(io, ")")
 
 end
