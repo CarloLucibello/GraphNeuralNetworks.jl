@@ -1133,7 +1133,7 @@ function GMMConv(ch::Pair{NTuple{2,Int},Int},
     
     (nin, ein), out = ch
     mu = init(ein, K)
-    sigma_inv = init(K, ein)
+    sigma_inv = init(ein, K)
     b = bias ? Flux.create_bias(ones(out), true) : false
     dense_x = Dense(nin, out*K, bias=false)
     GMMConv(mu, sigma_inv, b, σ, ch, K, dense_x, residual)
