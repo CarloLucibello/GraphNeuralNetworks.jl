@@ -1101,8 +1101,8 @@ s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s,t)
 nin, ein, out, K = 4, 10, 7, 8 
-x = randn(nin, g.num_nodes)
-e = randn(ein, g.num_edges)
+x = randn(Float32, nin, g.num_nodes)
+e = randn(Float32, ein, g.num_edges)
 
 # create layer
 l = GMMConv((nin, ein) => out, K=K)
