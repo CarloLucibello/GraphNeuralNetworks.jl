@@ -1083,7 +1083,7 @@ edge pseudo-cordinate array 'U' of size `(num_features, num_edges)`
 # Arguments 
 - `in`: Number of input features.
 - `out`: Number of output features.
-- `K` : Number of kernels.
+- `K` : Number of kernels. Default `1`.
 - `e_dim` : Dimensionality of pseudo coordinates.
 - `σ`: Activation function. Default `identity`.
 - `bias`: Add learnable bias. Default `true`.
