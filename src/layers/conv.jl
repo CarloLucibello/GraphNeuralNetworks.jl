@@ -1142,29 +1142,31 @@ end
 function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     (nin, ein), out = l.ch #Notational Simplicity
 
-    @assert (ein == size(e)[1] && g.num_edges == size(e)[2]) "Pseudo-cordinate dim $(size(e)) does not match (ein=$(ein),num_edge=$(g.num_edges))"
+    @assert (ein == size(e)[1] && g.num_edges == size(e)[2]) "Pseudo-cordinate dimension is not equal to (ein,num_edge)"
 
     num_edges = g.num_edges
     d = degree(g, dir=:in)
+    print(eltype(d))
     w = reshape(e, (ein, 1, num_edges))
     mu = reshape(l.mu, (ein, l.K, 1))
     
-    w = @. -0.5 * (w - mu)^2
+    w = @. ((w - mu)^2) / 2
     w = w .* reshape(l.sigma_inv, (ein, l.K, 1))
     w = exp.(sum(w, dims = 1 )) # (1, K, num_edge) 
 
     xj = reshape(l.dense_x(x), (out, l.K, :)) # (out, K, num_nodes) 
+
     m = propagate(e_mul_xj, g, +, xj=xj, e=w)
     m = dropdims(mean(m, dims=2), dims=2) # (out, num_nodes)
-    m = 1 / d .* m 
-    
+    m = m ./ reshape(d, (1, g.num_nodes))   
+
     m = l.σ(m .+ l.bias)
     
     if l.residual
         if size(x, 1) == size(m, 1)
             m += x
         else
-            @warn "Residual not applied : output feature $(size(m,1)) !== input_feature $(size(x,1))"
+            @warn "Residual not applied : output feature is not equal to input_feature"
         end
     end
 
