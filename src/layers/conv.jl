@@ -1170,6 +1170,8 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
 
     return m
 end
+                            
+(l::GMMConv)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g), edge_features(g)))
 
 function Base.show(io::IO, l::GMMConv)
     (nin, ein), out = l.ch
