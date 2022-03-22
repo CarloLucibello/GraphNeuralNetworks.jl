@@ -1144,7 +1144,7 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, u::AbstractMatrix)
     mu = reshape(l.mu, (l.e_dim, l.K, 1))
     
     e = -0.5*(u.-mu).^2
-    e = e .* ((reshape(l.sigma_inv, (l.e_dim, l.K, 1)).^2) )
+    e = e .* reshape(l.sigma_inv, (l.e_dim, l.K, 1))
     e = exp.(sum(e, dims = 1 )) # (1, K, num_edge) 
 
     xj = reshape(l.dense_x(x), (l.ch[2],l.K,:)) # (out, K, num_nodes) 
