@@ -1107,7 +1107,6 @@ l = GMMConv(in_feature=>out_feature, K, e_dim)
 l(g, x, e)
 ```
 """
-
 struct GMMConv{A<:AbstractMatrix, B, F} <:GNNLayer
     mu::A
     sigma_inv::A
