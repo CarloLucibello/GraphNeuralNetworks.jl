@@ -1161,7 +1161,7 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     m = l.σ(m .+ l.bias)
     
     if l.residual
-        if size(x,1)==size(m,1)
+        if size(x, 1) == size(m, 1)
             m += x
         else
             @warn "Residual not applied : output feature $(size(m,1)) !== input_feature $(size(x,1))"
