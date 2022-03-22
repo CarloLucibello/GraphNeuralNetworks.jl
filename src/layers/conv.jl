@@ -1142,7 +1142,7 @@ end
 function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     (nin, ein), out = l.ch #Notational Simplicity
 
-    @assert (ein == size(e)[1] && g.num_edges == size(e)[2]) "Pseudo-cordinate dim $(size(u)) does not match (ein=$(ein),num_edge=$(g.num_edges))"
+    @assert (ein == size(e)[1] && g.num_edges == size(e)[2]) "Pseudo-cordinate dim $(size(e)) does not match (ein=$(ein),num_edge=$(g.num_edges))"
 
     num_edges = g.num_edges
     d = degree(g, dir=:in)
