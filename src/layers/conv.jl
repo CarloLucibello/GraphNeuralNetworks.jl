@@ -1149,7 +1149,7 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     w = reshape(e, (ein, 1, num_edges))
     mu = reshape(l.mu, (ein, l.K, 1))
     
-    w = -0.5*(w.-mu).^2
+    w = @. -0.5 * (w - mu)^2
     w = w .* reshape(l.sigma_inv, (ein, l.K, 1))
     w = exp.(sum(w, dims = 1 )) # (1, K, num_edge) 
 
