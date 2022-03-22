@@ -1112,39 +1112,37 @@ struct GMMConv{A<:AbstractMatrix, B, F} <:GNNLayer
     sigma_inv::A
     bias::B
     σ::F
-    ch::Pair{Int, Int}
+    ch::Pair{NTuple{2,Int}, Int}
     K::Int
-    e_dim::Int
     dense_x::Dense
 end
 
 @functor GMMConv
 
-function GMMConv(ch::Pair{Int, Int}, 
+function GMMConv(ch::Pair{NTuple{2,Int}, Int}, 
                 σ=identity;
                 K::Int=1,
-                e_dim::Int=1,
                 init=Flux.glorot_uniform,
                 bias::Bool=true)
-    in, out = ch
-    mu = init(K, e_dim)
-    sigma_inv = init(K, e_dim)
+    (nin, ein), out = ch
+    mu = init(ein, K)
+    sigma_inv = init(K, ein)
     b = bias ? Flux.create_bias(ones(out), true) : false
     dense_x = Dense(in, out*K, bias=false)
-    GMMConv(mu, sigma_inv, b, σ, ch, K, e_dim, dense_x)
+    GMMConv(mu, sigma_inv, b, σ, ch, K, dense_x)
 end
 
 function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, u::AbstractMatrix)
 
-    @assert (l.e_dim == size(u)[1] && g.num_edges == size(u)[2]) "Pseudo-cordinate dim $(size(u)) does not match (e_dim=$(e_dim),num_edge=$(g.num_edges))"
+    @assert (l.ein == size(u)[1] && g.num_edges == size(u)[2]) "Pseudo-cordinate dim $(size(u)) does not match (ein=$(ein),num_edge=$(g.num_edges))"
 
     num_edges = g.num_edges
     d = degree(g, dir=:in)
-    u = reshape(u, (l.e_dim, 1, num_edges))
-    mu = reshape(l.mu, (l.e_dim, l.K, 1))
+    u = reshape(u, (l.ein, 1, num_edges))
+    mu = reshape(l.mu, (l.ein, l.K, 1))
     
     e = -0.5*(u.-mu).^2
-    e = e .* ((reshape(l.sigma_inv, (l.e_dim, l.K, 1)).^2) )
+    e = e .* ((reshape(l.sigma_inv, (l.ein, l.K, 1)).^2) )
     e = exp.(sum(e, dims = 1 )) # (1, K, num_edge) 
 
     xj = reshape(l.dense_x(x), (l.ch[2],l.K,:)) # (out, K, num_nodes) 
@@ -1156,10 +1154,10 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, u::AbstractMatrix)
 end
 
 function Base.show(io::IO, l::GMMConv)
-    in, out, K, e_dim = l.ch[1], l.ch[2], l.K, l.e_dim
+    in, out, K, ein = l.ch[1], l.ch[2], l.K, l.ein
     print(io, "GMMConv(", in, " => ", out)
     print(io, ", K=", K)
-    print(io, ", e_dim=", e_dim)
+    print(io, ", ein=", ein)
     print(io, ")")
 
 end
