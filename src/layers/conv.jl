@@ -1153,7 +1153,7 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     w = w .* reshape(l.sigma_inv, (ein, l.K, 1))
     w = exp.(sum(w, dims = 1 )) # (1, K, num_edge) 
 
-    xj = reshape(l.dense_x(x), (out,l.K,:)) # (out, K, num_nodes) 
+    xj = reshape(l.dense_x(x), (out, l.K, :)) # (out, K, num_nodes) 
     m = propagate(e_mul_xj, g, +, xj=xj, e=w)
     m = dropdims(mean(m, dims=2), dims=2) # (out, num_nodes)
     m = 1 / d .* m 
