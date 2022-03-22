@@ -1091,7 +1091,7 @@ edge pseudo-cordinate array 'U' of size `(num_features, num_edges)`
 - `K`: Number of kernels. Default `1`.
 - `bias`: Add learnable bias. Default `true`.
 - `init`: Weights' initializer. Default `glorot_uniform`.
-- `residual`: Residual conncetion. Default `false`
+- `residual`: Residual conncetion. Default `false`.
 
 #Examples
 
