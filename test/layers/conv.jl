@@ -264,11 +264,11 @@
     end
 
     @testset "GMMConv" begin
-        e_dim = 10
+        ein_channel = 10
         K = 5
-        l = GMMConv(in_channel => out_channel, K=K, e_dim=e_dim)
+        l = GMMConv((in_channel, ein_channel )=> out_channel, K=K)
         for g in test_graphs
-            g = GNNGraph(g, edata=rand(e_dim, g.num_edges))
+            g = GNNGraph(g, edata=rand(ein_channel, g.num_edges))
             test_layer(l, g, rtol=RTOL_HIGH, outsize = (out_channel, g.num_nodes))
         end
     end
