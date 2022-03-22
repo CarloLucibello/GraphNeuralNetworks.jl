@@ -1084,7 +1084,7 @@ edge pseudo-cordinate array 'U' of size `(num_features, num_edges)`
 - `in`: Number of input features.
 - `out`: Number of output features.
 - `K` : Number of kernels. Default `1`.
-- `e_dim` : Dimensionality of pseudo coordinates.
+- `e_dim` : Dimensionality of pseudo coordinates. Has to correspond to the edge features dimension in the forward pass.
 - `σ`: Activation function. Default `identity`.
 - `bias`: Add learnable bias. Default `true`.
 - `init`: Weights' initializer. Default `glorot_uniform`.
