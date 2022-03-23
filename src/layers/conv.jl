@@ -1073,7 +1073,7 @@ Performs the operation
 ```math
 \mathbf{x}_i' = \mathbf{x}_i + \frac{1}{|N(i)|} \sum_{j\in N(i)}\frac{1}{K}\sum_{k=1}^K \mathbf{w}_k(\mathbf{e}_{j\to i}) \odot \Theta_k \mathbf{x}_j
 ```
-where ``$w^a_{k}(e^a)$`` for node `a` and kernel `k` is given by
+where ``w^a_{k}(e^a)`` for feature `a` and kernel `k` is given by
 ```math
 w^a_{k}(e^a) = \exp(\frac{-1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_k))
 ```
