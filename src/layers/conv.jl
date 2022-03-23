@@ -1145,7 +1145,6 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     @assert (ein == size(e)[1] && g.num_edges == size(e)[2]) "Pseudo-cordinate dimension is not equal to (ein,num_edge)"
 
     num_edges = g.num_edges
-    d = degree(g, dir=:in)
     w = reshape(e, (ein, 1, num_edges))
     mu = reshape(l.mu, (ein, l.K, 1))
     
@@ -1155,9 +1154,8 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
 
     xj = reshape(l.dense_x(x), (out, l.K, :)) # (out, K, num_nodes) 
 
-    m = propagate(e_mul_xj, g, +, xj=xj, e=w)
-    m = dropdims(mean(m, dims=2), dims=2) # (out, num_nodes)
-    m = m ./ reshape(d, (1, g.num_nodes))   
+    m = propagate(e_mul_xj, g, mean, xj=xj, e=w)
+    m = dropdims(mean(m, dims=2), dims=2) # (out, num_nodes)  
 
     m = l.σ(m .+ l.bias)
     
