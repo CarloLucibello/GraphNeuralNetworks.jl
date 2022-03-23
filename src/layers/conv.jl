@@ -1175,7 +1175,8 @@ end
 function Base.show(io::IO, l::GMMConv)
     (nin, ein), out = l.ch
     print(io, "GMMConv((", nin, ",", ein, ")=>", out)
+    l.σ == identity || print(io, ", σ=", l.dense_s.σ)
     print(io, ", K=", l.K)
-    print(io, ", σ=", l.σ)
+    l.residual==true || print(io, ", residual=", l.residual)
     print(io, ")")
 end
