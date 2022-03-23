@@ -1077,7 +1077,7 @@ where ``$w^a_{k}(e^a)$`` for node `a` and kernel `k` is given by
 ```math
 w^a_{k}(e^a) = \exp(\frac{-1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_k))
 ```
-``\Theta_k, \mu^a_k, \Sigma^{-1})^a_k`` are learnable parameters.
+``\Theta_k, \mu^a_k, \(Sigma^{-1})^a_k`` are learnable parameters.
 
 The input to the layer is a node feature array 'x' of size `(num_features, num_nodes)` and
 edge pseudo-cordinate array 'e' of size `(num_features, num_edges)`
