@@ -1149,7 +1149,7 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     mu = reshape(l.mu, (ein, l.K, 1))
     
     w = @. ((w - mu)^2) / 2
-    w = w .* reshape(l.sigma_inv, (ein, l.K, 1))
+    w = w .* reshape(l.sigma_inv.^2, (ein, l.K, 1))
     w = exp.(sum(w, dims = 1 )) # (1, K, num_edge) 
 
     xj = reshape(l.dense_x(x), (out, l.K, :)) # (out, K, num_nodes) 
