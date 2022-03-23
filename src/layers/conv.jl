@@ -1079,8 +1079,8 @@ w^a_{k}(e^a) = \exp(\frac{-1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_
 ```
 ``\Theta_k, \mu^a_k, (\Sigma^{-1})^a_k`` are learnable parameters.
 
-The input to the layer is a node feature array 'x' of size `(num_features, num_nodes)` and
-edge pseudo-cordinate array 'e' of size `(num_features, num_edges)`
+The input to the layer is a node feature array `x` of size `(num_features, num_nodes)` and
+edge pseudo-coordinate array `e` of size `(num_features, num_edges)`
 The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
 as the input size.
 # Arguments 
