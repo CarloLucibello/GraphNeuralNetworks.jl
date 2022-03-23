@@ -1075,7 +1075,7 @@ Performs the operation
 ```
 where ``w^a_{k}(e^a)`` for feature `a` and kernel `k` is given by
 ```math
-w^a_{k}(e^a) = \exp(\frac{-1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_k))
+w^a_{k}(e^a) = \exp(-\frac{1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_k))
 ```
 ``\Theta_k, \mu^a_k, (\Sigma^{-1})^a_k`` are learnable parameters.
 
