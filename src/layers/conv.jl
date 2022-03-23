@@ -273,7 +273,7 @@ with ``z_i`` a normalization factor.
 
 In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
 and the attention coefficients will be calculated as  
-```
+```math
 \alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W_e \mathbf{e}_{j\to i}; W \mathbf{x}_i; W \mathbf{x}_j]))
 ````
 
@@ -1071,17 +1071,18 @@ end
 Graph mixture model convolution layer from the paper [Geometric deep learning on graphs and manifolds using mixture model CNNs](https://arxiv.org/abs/1611.08402)
 Performs the operation
 ```math
-\mathbf{x}_i' = \frac{1}{|N(i)|} \sum_{j\in N(i)}\frac{1}{K}\sum_{k=1}^k \mathbf{w}_k(\mathbf{e}_{j\to i}) \odot \Theta_k \mathbf{x}_j
+\mathbf{x}_i' = \mathbf{x}_i + \frac{1}{|N(i)|} \sum_{j\in N(i)}\frac{1}{K}\sum_{k=1}^K \mathbf{w}_k(\mathbf{e}_{j\to i}) \odot \Theta_k \mathbf{x}_j
 ```
-where
+where ``w^a_{k}(e^a)`` for feature `a` and kernel `k` is given by
 ```math
-w^a_{k}(e^a) = \exp(\frac{-1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_k))
+w^a_{k}(e^a) = \exp(-\frac{1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_k))
 ```
-$\Theta_k$, $\mu^a_k$, $\Sigma^{-1})^a_k$ are learnable parameters.
+``\Theta_k, \mu^a_k, (\Sigma^{-1})^a_k`` are learnable parameters.
 
-The input to the layer is a node feature array 'X' of size `(num_features, num_nodes)` and
-edge pseudo-cordinate array 'U' of size `(num_features, num_edges)`
-
+The input to the layer is a node feature array `x` of size `(num_features, num_nodes)` and
+edge pseudo-coordinate array `e` of size `(num_features, num_edges)`
+The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
+as the input size.
 # Arguments 
 
 - `in`: Number of input node features.

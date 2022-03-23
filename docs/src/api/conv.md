@@ -24,6 +24,7 @@ The table below lists all graph convolutional layers implemented in the *GraphNe
 | [`GatedGraphConv`](@ref)    |     ✓    |           |             |
 | [`GCNConv`](@ref)           |     ✓    |     ✓     |             | 
 | [`GINConv`](@ref)           |     ✓    |           |             |
+| [`GMMConv`](@ref)           |          |           |     ✓       |
 | [`GraphConv`](@ref)         |     ✓    |           |             |
 | [`MEGNetConv`](@ref)        |          |           |     ✓       |
 | [`NNConv`](@ref)            |          |           |     ✓       |
