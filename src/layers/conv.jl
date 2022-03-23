@@ -1146,7 +1146,6 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
 
     num_edges = g.num_edges
     d = degree(g, dir=:in)
-    print(eltype(d))
     w = reshape(e, (ein, 1, num_edges))
     mu = reshape(l.mu, (ein, l.K, 1))
     
