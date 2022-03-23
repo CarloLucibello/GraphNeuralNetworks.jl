@@ -1178,5 +1178,4 @@ function Base.show(io::IO, l::GMMConv)
     print(io, ", K=", l.K)
     print(io, ", σ=", l.σ)
     print(io, ")")
-
 end
