@@ -1065,4 +1065,118 @@ function (l::MEGNetConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     return x̄, ē
 end
 
+@doc raw"""
+    GMMConv((in, ein) => out, σ=identity; K=1, bias=true, init=glorot_uniform, residual=false)
 
+Graph mixture model convolution layer from the paper [Geometric deep learning on graphs and manifolds using mixture model CNNs](https://arxiv.org/abs/1611.08402)
+Performs the operation
+```math
+\mathbf{x}_i' = \frac{1}{|N(i)|} \sum_{j\in N(i)}\frac{1}{K}\sum_{k=1}^k \mathbf{w}_k(\mathbf{e}_{j\to i}) \odot \Theta_k \mathbf{x}_j
+```
+where
+```math
+w^a_{k}(e^a) = \exp(\frac{-1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_k))
+```
+$\Theta_k$, $\mu^a_k$, $\Sigma^{-1})^a_k$ are learnable parameters.
+
+The input to the layer is a node feature array 'X' of size `(num_features, num_nodes)` and
+edge pseudo-cordinate array 'U' of size `(num_features, num_edges)`
+
+# Arguments 
+
+- `in`: Number of input node features.
+- `ein`: Number of input edge features.
+- `out`: Number of output features.
+- `σ`: Activation function. Default `identity`.
+- `K`: Number of kernels. Default `1`.
+- `bias`: Add learnable bias. Default `true`.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `residual`: Residual conncetion. Default `false`.
+
+#Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s,t)
+nin, ein, out, K = 4, 10, 7, 8 
+x = randn(Float32, nin, g.num_nodes)
+e = randn(Float32, ein, g.num_edges)
+
+# create layer
+l = GMMConv((nin, ein) => out, K=K)
+
+# forward pass
+l(g, x, e)
+```
+"""
+struct GMMConv{A<:AbstractMatrix, B, F} <:GNNLayer
+    mu::A
+    sigma_inv::A
+    bias::B
+    σ::F
+    ch::Pair{NTuple{2,Int},Int}
+    K::Int
+    dense_x::Dense
+    residual::Bool
+end
+
+@functor GMMConv
+
+function GMMConv(ch::Pair{NTuple{2,Int},Int}, 
+                σ=identity;
+                K::Int=1,
+                bias::Bool=true,
+                init=Flux.glorot_uniform,
+                residual=false)
+    
+    (nin, ein), out = ch
+    mu = init(ein, K)
+    sigma_inv = init(ein, K)
+    b = bias ? Flux.create_bias(mu, true, out) : false
+    dense_x = Dense(nin, out*K, bias=false)
+    GMMConv(mu, sigma_inv, b, σ, ch, K, dense_x, residual)
+end
+
+function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
+    (nin, ein), out = l.ch #Notational Simplicity
+
+    @assert (ein == size(e)[1] && g.num_edges == size(e)[2]) "Pseudo-cordinate dimension is not equal to (ein,num_edge)"
+
+    num_edges = g.num_edges
+    w = reshape(e, (ein, 1, num_edges))
+    mu = reshape(l.mu, (ein, l.K, 1))
+    
+    w = @. ((w - mu)^2) / 2
+    w = w .* reshape(l.sigma_inv.^2, (ein, l.K, 1))
+    w = exp.(sum(w, dims = 1 )) # (1, K, num_edge) 
+
+    xj = reshape(l.dense_x(x), (out, l.K, :)) # (out, K, num_nodes) 
+
+    m = propagate(e_mul_xj, g, mean, xj=xj, e=w)
+    m = dropdims(mean(m, dims=2), dims=2) # (out, num_nodes)  
+
+    m = l.σ(m .+ l.bias)
+    
+    if l.residual
+        if size(x, 1) == size(m, 1)
+            m += x
+        else
+            @warn "Residual not applied : output feature is not equal to input_feature"
+        end
+    end
+
+    return m
+end
+                            
+(l::GMMConv)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g), edge_features(g)))
+
+function Base.show(io::IO, l::GMMConv)
+    (nin, ein), out = l.ch
+    print(io, "GMMConv((", nin, ",", ein, ")=>", out)
+    l.σ == identity || print(io, ", σ=", l.dense_s.σ)
+    print(io, ", K=", l.K)
+    l.residual==true || print(io, ", residual=", l.residual)
+    print(io, ")")
+end

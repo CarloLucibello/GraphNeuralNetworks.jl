@@ -262,4 +262,14 @@
                 outsize=((out_channel, g.num_nodes), (out_channel, g.num_edges))) 
         end
     end
+
+    @testset "GMMConv" begin
+        ein_channel = 10
+        K = 5
+        l = GMMConv((in_channel, ein_channel )=> out_channel, K=K)
+        for g in test_graphs
+            g = GNNGraph(g, edata=rand(Float32, ein_channel, g.num_edges))
+            test_layer(l, g, rtol=RTOL_HIGH, outsize = (out_channel, g.num_nodes))
+        end
+    end
 end

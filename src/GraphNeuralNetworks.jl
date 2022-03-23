@@ -60,7 +60,7 @@ export
     NNConv,
     ResGatedGraphConv,
     SAGEConv,
-
+    GMMConv,
     
     # layers/pool
     GlobalPool,
