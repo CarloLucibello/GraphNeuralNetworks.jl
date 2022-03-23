@@ -1094,7 +1094,7 @@ as the input size.
 - `init`: Weights' initializer. Default `glorot_uniform`.
 - `residual`: Residual conncetion. Default `false`.
 
-#Examples
+# Examples
 
 ```julia
 # create data
