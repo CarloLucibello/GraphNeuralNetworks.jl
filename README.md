@@ -28,6 +28,20 @@ pkg> add GraphNeuralNetworks
 
 Usage examples can be found in the [examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) folder. Also, make sure to read the [documentation](https://CarloLucibello.github.io/GraphNeuralNetworks.jl/dev) for a comprehensive introduction to the library.
 
+
+## Citing
+
+If you use GraphNeuralNetworks.jl in a scientific publication, we would appreciate the following reference:
+
+```
+@misc{Lucibello2021GNN,
+  author       = {Carlo Lucibello and other contributors},
+  title        = {GraphNeuralNetworks.jl: a geometric deep learning library for the Julia programming language},
+  year         = 2021,
+  url          = {https://github.com/CarloLucibello/GraphNeuralNetworks.jl}
+}
+```
+
 ## Acknowledgments
 
 GraphNeuralNetworks.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/), [Deep Graph Library](https://docs.dgl.ai/),
