@@ -1181,3 +1181,67 @@ function Base.show(io::IO, l::GMMConv)
     l.residual==true || print(io, ", residual=", l.residual)
     print(io, ")")
 end
+
+@doc raw"""
+    SGConv(int => out, k=1; [bias, init, add_self_loops, use_edge_weight])
+SGC layer from [Simplifying Graph Convolutional Networks](https://arxiv.org/pdf/1902.07153.pdf)
+Performs operation
+```math
+H^{K} = (\tilde{D}^{-1/2} \tilde{A} \tilde{D}^{-1/2})^K X \Theta
+```
+where ``\tilde{A}`` is ``A + I``. 
+
+# Arguments
+
+- `in`: Number of input features.
+- `out`: Number of output features.
+- `k` : Number of hops k. Default `1`.
+- `bias`: Add learnable bias. Default `true`.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
+- `use_edge_weight`: If `true`, consider the edge weights in the input graph (if available).
+                     If `add_self_loops=true` the new weights will be set to 1. Default `false`.
+
+# Examples
+		
+#
+"""
+
+struct SGConv{A<:AbstractMatrix, B} <: GNNLayer
+    weight::A
+    bias::B
+		k::Int 
+    add_self_loops::Bool
+    use_edge_weight::Bool
+end
+
+@functor SGConv
+
+function SGConv(ch::Pair{Int,Int}, k=1;
+                 init=glorot_uniform, 
+                 bias::Bool=true,
+                 add_self_loops=true,
+                 use_edge_weight=false)
+    in, out = ch
+    W = init(out, in)
+    b = bias ? Flux.create_bias(W, true, out) : false
+    SGConv(W, b, k, add_self_loops, use_edge_weight)
+end
+
+function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW=nothing) where 
+    {T, EW<:Union{Nothing,AbstractVector}}
+		#
+end
+
+function (l::SGConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix, edge_weight::AbstractVector)
+    g = GNNGraph(edge_index(g)...; g.num_nodes)  
+    return l(g, x, edge_weight)
+end
+
+function Base.show(io::IO, l::SGConv)
+    out, in = size(l.weight)
+    print(io, "SGConv($in => $out")
+    l.k == 1 || print(io, ", ", l.k)
+    print(io, ")")
+end
+
