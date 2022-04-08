@@ -1210,7 +1210,7 @@ where ``\tilde{A}`` is ``A + I``.
 struct SGConv{A<:AbstractMatrix, B} <: GNNLayer
     weight::A
     bias::B
-    k::Int 
+    k::Int
     add_self_loops::Bool
     use_edge_weight::Bool
 end

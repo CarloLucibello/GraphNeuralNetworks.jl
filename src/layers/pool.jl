@@ -11,8 +11,8 @@ and performs the operation
 \mathbf{u}_V = \square_{i \in V} \mathbf{x}_i
 ```
 
-where ``V`` is the set of nodes of the input graph and 
-the type of aggregation represented by ``\square`` is selected by the `aggr` argument. 
+where ``V`` is the set of nodes of the input graph and
+the type of aggregation represented by ``\square`` is selected by the `aggr` argument.
 Commonly used aggregations are `mean`, `max`, and `+`.
 
 See also [`reduce_nodes`](@ref).
@@ -65,24 +65,24 @@ operation:
 
 # Arguments
 
-- `fgate`: The function ``f_{gate}: \mathbb{R}^{D_{in}} \to \mathbb{R}``. 
+- `fgate`: The function ``f_{gate}: \mathbb{R}^{D_{in}} \to \mathbb{R}``.
            It is tipically expressed by a neural network.
 
-- `ffeat`: The function ``f_{feat}: \mathbb{R}^{D_{in}} \to \mathbb{R}^{D_{out}}``. 
+- `ffeat`: The function ``f_{feat}: \mathbb{R}^{D_{in}} \to \mathbb{R}^{D_{out}}``.
            It is tipically expressed by a neural network.
 
 # Examples
 
 ```julia
 chin = 6
-chout = 5    
+chout = 5
 
 fgate = Dense(chin, 1)
 ffeat = Dense(chin, chout)
 pool = GlobalAttentionPool(fgate, ffeat)
 
-g = Flux.batch([GNNGraph(random_regular_graph(10, 4), 
-                         ndata=rand(Float32, chin, 10)) 
+g = Flux.batch([GNNGraph(random_regular_graph(10, 4),
+                         ndata=rand(Float32, chin, 10))
                 for i=1:3])
 
 u = pool(g, g.ndata.x)
@@ -103,7 +103,7 @@ function (l::GlobalAttentionPool)(g::GNNGraph, x::AbstractArray)
     α = softmax_nodes(g, l.fgate(x))
     feats = α .* l.ffeat(x)
     u = reduce_nodes(+, g, feats)
-    return u   
+    return u
 end
 
 (l::GlobalAttentionPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
