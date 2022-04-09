@@ -21,14 +21,14 @@ using .GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
 
 export
     # utils
-    reduce_nodes,
+    reduce_nodes, 
     reduce_edges,
-    softmax_nodes,
+    softmax_nodes, 
     softmax_edges,
     broadcast_nodes,
     broadcast_edges,
     softmax_edge_neighbors,
-
+    
     # msgpass
     apply_edges,
     aggregate_neighbors,
@@ -56,13 +56,13 @@ export
     GCNConv,
     GINConv,
     GraphConv,
-    MEGNetConv,
+    MEGNetConv, 
     NNConv,
     ResGatedGraphConv,
     SAGEConv,
     GMMConv,
     SGConv,
-
+    
     # layers/pool
     GlobalPool,
     GlobalAttentionPool,
