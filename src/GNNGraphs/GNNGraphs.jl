@@ -14,6 +14,7 @@ import KrylovKit
 using ChainRulesCore
 using LinearAlgebra, Random, Statistics
 import MLUtils
+using MLUtils: getobs, numobs
 
 include("gnngraph.jl")
 export GNNGraph, 
