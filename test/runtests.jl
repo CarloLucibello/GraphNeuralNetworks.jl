@@ -5,7 +5,6 @@ using CUDA
 using Flux: gpu, @functor
 using LinearAlgebra, Statistics, Random
 using NNlib
-using LearnBase
 import StatsBase
 using SparseArrays
 using Graphs

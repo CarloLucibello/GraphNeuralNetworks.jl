@@ -245,7 +245,7 @@
         @test_throws AssertionError rand_graph(10,  30, ndata=1, graph_type=GRAPH_T)
     end
 
-    @testset "LearnBase and DataLoader compat" begin
+    @testset "MLUtils and DataLoader compat" begin
         n, m, num_graphs = 10, 30, 50
         X = rand(10, n)
         E = rand(10, m)
@@ -255,18 +255,18 @@
         g = Flux.batch(data)
 
         @testset "batch then pass to dataloader" begin
-            @test LearnBase.getobs(g, 3) == getgraph(g, 3)
-            @test LearnBase.getobs(g, 3:5) == getgraph(g, 3:5)
-            @test StatsBase.nobs(g) == g.num_graphs
+            @test MLUtils.getobs(g, 3) == getgraph(g, 3)
+            @test MLUtils.getobs(g, 3:5) == getgraph(g, 3:5)
+            @test MLUtils.numobs(g) == g.num_graphs
             
             d = Flux.Data.DataLoader(g, batchsize=2, shuffle=false)
             @test first(d) == getgraph(g, 1:2)
         end
 
         @testset "pass to dataloader and collate" begin
-            @test LearnBase.getobs(data, 3) == getgraph(g, 3)
-            @test LearnBase.getobs(data, 3:5) == getgraph(g, 3:5)
-            @test StatsBase.nobs(data) == g.num_graphs
+            @test MLUtils.getobs(data, 3) == getgraph(g, 3)
+            @test MLUtils.getobs(data, 3:5) == getgraph(g, 3:5)
+            @test MLUtils.numobs(data) == g.num_graphs
 
             d = Flux.Data.DataLoader(data, batchsize=2, shuffle=false)
             @test first(d) == getgraph(g, 1:2)

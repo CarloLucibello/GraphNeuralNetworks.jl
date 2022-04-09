@@ -223,21 +223,14 @@ function Base.show(io::IO, g::GNNGraph)
     end
 end
 
-### StatsBase/LearnBase compatibility
-StatsBase.nobs(g::GNNGraph) = g.num_graphs 
-LearnBase.getobs(g::GNNGraph, i) = getgraph(g, i)
-
-# Flux's Dataloader compatibility. Related PR https://github.com/FluxML/Flux.jl/pull/1683
-Flux.Data._nobs(g::GNNGraph) = g.num_graphs
-Flux.Data._getobs(g::GNNGraph, i) = getgraph(g, i)
+MLUtils.numobs(g::GNNGraph) = g.num_graphs 
+MLUtils.getobs(g::GNNGraph, i) = getgraph(g, i)
 
 # DataLoader compatibility passing a vector of graphs and
 # effectively using `batch` as a collated function.
-StatsBase.nobs(data::Vector{<:GNNGraph}) = length(data)
-LearnBase.getobs(data::Vector{<:GNNGraph}, i::Int) = data[i]
-LearnBase.getobs(data::Vector{<:GNNGraph}, i) = Flux.batch(data[i])
-Flux.Data._nobs(g::Vector{<:GNNGraph}) = StatsBase.nobs(g)
-Flux.Data._getobs(g::Vector{<:GNNGraph}, i) = LearnBase.getobs(g, i)
+MLUtils.numobs(data::Vector{<:GNNGraph}) = length(data)
+MLUtils.getobs(data::Vector{<:GNNGraph}, i::Int) = data[i]
+MLUtils.getobs(data::Vector{<:GNNGraph}, i) = Flux.batch(data[i])
 
 
 #########################
