@@ -156,29 +156,3 @@ binarize(x) = map(>(0), x)
 @non_differentiable binarize(x...)
 @non_differentiable edge_encoding(x...)
 @non_differentiable edge_decoding(x...)
-
-
-
-####################################
-# FROM MLBASE.jl
-# https://github.com/JuliaML/MLBase.jl/pull/1/files
-# remove when package is registered
-##############################################
-
-numobs(A::AbstractArray{<:Any, N}) where {N} = size(A, N)
-
-# 0-dim arrays
-numobs(A::AbstractArray{<:Any, 0}) = 1
-
-function getobs(A::AbstractArray{<:Any, N}, idx) where N
-    I = ntuple(_ -> :, N-1)
-    return A[I..., idx]
-end
-
-getobs(A::AbstractArray{<:Any, 0}, idx) = A[idx]
-
-function getobs!(buffer::AbstractArray, A::AbstractArray{<:Any, N}, idx) where N
-    I = ntuple(_ -> :, N-1)
-    buffer .= A[I..., idx]
-    return buffer
-end
