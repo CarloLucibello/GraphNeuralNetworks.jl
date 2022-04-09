@@ -7,7 +7,7 @@ Performs the operation
 ```math
 \mathbf{x}'_i = \sum_{j\in N(i)} a_{ij} W \mathbf{x}_j
 ```
-where ``a_{ij} = 1 / \sqrt{|N(i)||N(j)|}`` is a normalization factor computed from the node degrees.
+where ``a_{ij} = 1 / \sqrt{|N(i)||N(j)|}`` is a normalization factor computed from the node degrees. 
 
 If the input graph has weighted edges and `use_edge_weight=true`, than ``a_{ij}`` will be computed as
 ```math
@@ -38,7 +38,7 @@ g = GNNGraph(s, t)
 x = randn(3, g.num_nodes)
 
 # create layer
-l = GCNConv(3 => 5)
+l = GCNConv(3 => 5) 
 
 # forward pass
 y = l(g, x)       # size:  5 × num_nodes
@@ -49,8 +49,8 @@ y = l(g, x, w)
 
 # Edge weights can also be embedded in the graph.
 g = GNNGraph(s, t, w)
-l = GCNConv(3 => 5, use_edge_weight=true)
-y = l(g, x) # same as l(g, x, w)
+l = GCNConv(3 => 5, use_edge_weight=true) 
+y = l(g, x) # same as l(g, x, w) 
 ```
 """
 struct GCNConv{A<:AbstractMatrix, B, F} <: GNNLayer
@@ -64,7 +64,7 @@ end
 @functor GCNConv
 
 function GCNConv(ch::Pair{Int,Int}, σ=identity;
-                 init=glorot_uniform,
+                 init=glorot_uniform, 
                  bias::Bool=true,
                  add_self_loops=true,
                  use_edge_weight=false)
@@ -74,13 +74,13 @@ function GCNConv(ch::Pair{Int,Int}, σ=identity;
     GCNConv(W, b, σ, add_self_loops, use_edge_weight)
 end
 
-function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW=nothing) where
+function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW=nothing) where 
     {T, EW<:Union{Nothing,AbstractVector}}
-
+    
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
 
     if edge_weight !== nothing
-        @assert length(edge_weight) == g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
+        @assert length(edge_weight) == g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))" 
     end
 
     if l.add_self_loops
@@ -102,7 +102,7 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW=nothing
     x = x .* c'
     if edge_weight !== nothing
         x = propagate(e_mul_xj, g, +, xj=x, e=edge_weight)
-    elseif l.use_edge_weight
+    elseif l.use_edge_weight        
         x = propagate(w_mul_xj, g, +, xj=x)
     else
         x = propagate(copy_xj, g, +, xj=x)
@@ -176,7 +176,7 @@ end
 function (c::ChebConv)(g::GNNGraph, X::AbstractMatrix{T}) where T
     check_num_nodes(g, X)
     @assert size(X, 1) == size(c.weight, 2) "Input feature size must match input channel size."
-
+    
     L̃ = scaled_laplacian(g, eltype(X))
 
     Z_prev = X
@@ -269,10 +269,10 @@ where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
 \alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W \mathbf{x}_i; W \mathbf{x}_j]))
 ```
-with ``z_i`` a normalization factor.
+with ``z_i`` a normalization factor. 
 
-In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass
-and the attention coefficients will be calculated as
+In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
+and the attention coefficients will be calculated as  
 ```math
 \alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W_e \mathbf{e}_{j\to i}; W \mathbf{x}_i; W \mathbf{x}_j]))
 ````
@@ -283,7 +283,7 @@ and the attention coefficients will be calculated as
 - `ein`: The dimension of input edget features. Default 0 (i.e. no edge features passed in the forward).
 - `out`: The dimension of output node features.
 - `σ`: Activation function. Default `identity`.
-- `bias`: Learn the additive bias if true. Dafault `true`.
+- `bias`: Learn the additive bias if true. Dafault `true`. 
 - `heads`: Number attention heads. Dafault `1.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
@@ -310,11 +310,11 @@ GATConv(ch::Pair{Int,Int}, args...; kws...) = GATConv((ch[1], 0) => ch[2], args.
 function GATConv(ch::Pair{NTuple{2,Int},Int}, σ=identity;
                  heads::Int=1, concat::Bool=true, negative_slope=0.2,
                  init=glorot_uniform, bias::Bool=true, add_self_loops=true)
-    (in, ein), out = ch
+    (in, ein), out = ch    
     if add_self_loops
         @assert ein == 0 "Using edge features and setting add_self_loops=true at the same time is not yet supported."
     end
-
+             
     dense_x = Dense(in, out*heads, bias=false)
     dense_e = ein > 0 ? Dense(ein, out*heads, bias=false) : nothing
     b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out*heads : out) : false
@@ -327,14 +327,14 @@ end
 
 function (l::GATConv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing,AbstractMatrix}=nothing)
     check_num_nodes(g, x)
-    @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
-    @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"
-
+    @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"  
+    @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"  
+    
     if l.add_self_loops
         @assert e === nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
         g = add_self_loops(g)
     end
-
+    
     _, chout = l.channel
     heads = l.heads
 
@@ -350,7 +350,7 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing,AbstractM
             Wxx = vcat(Wxi, Wxj, We)
         end
         aWW = sum(l.a .* Wxx, dims=1)   # 1 × nheads × nedges
-        α = exp.(leakyrelu.(aWW, l.negative_slope))
+        α = exp.(leakyrelu.(aWW, l.negative_slope))       
         return (α = α, β = α .* Wxj)
     end
 
@@ -392,8 +392,8 @@ where the attention coefficients ``\alpha_{ij}`` are given by
 ```
 with ``z_i`` a normalization factor.
 
-In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass
-and the attention coefficients will be calculated as
+In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
+and the attention coefficients will be calculated as  
 ```math
 \alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_3 \mathbf{e}_{j\to i}; W_2 \mathbf{x}_i; W_1 \mathbf{x}_j])).
 ```
@@ -404,7 +404,7 @@ and the attention coefficients will be calculated as
 - `ein`: The dimension of input edget features. Default 0 (i.e. no edge features passed in the forward).
 - `out`: The dimension of output node features.
 - `σ`: Activation function. Default `identity`.
-- `bias`: Learn the additive bias if true. Dafault `true`.
+- `bias`: Learn the additive bias if true. Dafault `true`. 
 - `heads`: Number attention heads. Dafault `1.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
@@ -444,10 +444,10 @@ function GATv2Conv(
     if add_self_loops
         @assert ein == 0 "Using edge features and setting add_self_loops=true at the same time is not yet supported."
     end
-
+    
     dense_i = Dense(in, out*heads; bias=bias, init=init)
     dense_j = Dense(in, out*heads; bias=false, init=init)
-    if ein > 0
+    if ein > 0 
         dense_e = Dense(ein, out*heads; bias=false, init=init)
     else
         dense_e = nothing
@@ -462,9 +462,9 @@ end
 
 function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, AbstractMatrix}=nothing)
     check_num_nodes(g, x)
-    @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
-    @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"
-
+    @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"  
+    @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"  
+   
     if l.add_self_loops
         @assert e === nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
         g = add_self_loops(g)
@@ -480,7 +480,7 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, Abstra
         Wx = Wix + Wjx
         if e !== nothing
             Wx += reshape(l.dense_e(e), out, heads, :)
-        end
+        end 
         eij = sum(l.a .* leakyrelu.(Wx, l.negative_slope), dims=1)   # 1 × heads × nedges
         α = exp.(eij)
         return (α = α, β = α .* Wjx)
@@ -494,7 +494,7 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, Abstra
     end
     x = reshape(x, :, size(x, 3))
     x = l.σ.(x .+ l.bias)
-    return x
+    return x  
 end
 
 
@@ -584,7 +584,7 @@ where `nn` generally denotes a learnable function, e.g. a linear layer or a mult
 
 # Arguments
 
-- `nn`: A (possibly learnable) function.
+- `nn`: A (possibly learnable) function. 
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 """
 struct EdgeConv <: GNNLayer
@@ -623,7 +623,7 @@ where ``f_\Theta`` typically denotes a learnable function, e.g. a linear layer o
 
 # Arguments
 
-- `f`: A (possibly learnable) function acting on node features.
+- `f`: A (possibly learnable) function acting on node features. 
 - `ϵ`: Weighting factor.
 """
 struct GINConv{R<:Real} <: GNNLayer
@@ -653,9 +653,9 @@ end
 @doc raw"""
     NNConv(in => out, f, σ=identity; aggr=+, bias=true, init=glorot_uniform)
 
-The continuous kernel-based convolutional operator from the
-[Neural Message Passing for Quantum Chemistry](https://arxiv.org/abs/1704.01212) paper.
-This convolution is also known as the edge-conditioned convolution from the
+The continuous kernel-based convolutional operator from the 
+[Neural Message Passing for Quantum Chemistry](https://arxiv.org/abs/1704.01212) paper. 
+This convolution is also known as the edge-conditioned convolution from the 
 [Dynamic Edge-Conditioned Filters in Convolutional Neural Networks on Graphs](https://arxiv.org/abs/1704.02901) paper.
 
 Performs the operation
@@ -665,7 +665,7 @@ Performs the operation
 ```
 
 where ``f_\Theta``  denotes a learnable function (e.g. a linear layer or a multi-layer perceptron).
-Given an input of batched edge features `e` of size `(num_edge_features, num_edges)`,
+Given an input of batched edge features `e` of size `(num_edge_features, num_edges)`, 
 the function `f` will return an batched matrices array whose size is `(out, in, num_edges)`.
 For convenience, also functions returning a single `(out*in, num_edges)` matrix are allowed.
 
@@ -699,7 +699,7 @@ end
 function (l::NNConv)(g::GNNGraph, x::AbstractMatrix, e)
     check_num_nodes(g, x)
 
-    function message(xi, xj, e)
+    function message(xi, xj, e) 
         nin, nedges = size(xj)
         W = reshape(l.nn(e), (:, nin, nedges))
         xj = reshape(xj, (nin, 1, nedges)) # needed by batched_mul
@@ -763,7 +763,7 @@ function (l::SAGEConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
     m = propagate(copy_xj, g, l.aggr, xj=x)
     x = l.σ.(l.weight * vcat(x, m) .+ l.bias)
-    return x
+    return x 
 end
 
 function Base.show(io::IO, l::SAGEConv)
@@ -796,7 +796,7 @@ where the edge gates ``\eta_{ij}`` are given by
 - `in`: The dimension of input features.
 - `out`: The dimension of output features.
 - `act`: Activation function.
-- `init`: Weight matrices' initializing function.
+- `init`: Weight matrices' initializing function. 
 - `bias`: Learn an additive bias if true.
 """
 struct ResGatedGraphConv <: GNNLayer
@@ -812,7 +812,7 @@ end
 
 function ResGatedGraphConv(ch::Pair{Int,Int}, σ=identity;
                       init=glorot_uniform, bias::Bool=true)
-    in, out = ch
+    in, out = ch             
     A = init(out, in)
     B = init(out, in)
     U = init(out, in)
@@ -825,14 +825,14 @@ function (l::ResGatedGraphConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
 
     message(xi, xj, e) = sigmoid.(xi.Ax .+ xj.Bx) .* xj.Vx
-
+    
     Ax = l.A * x
     Bx = l.B * x
     Vx = l.V * x
-
+    
     m = propagate(message, g, +, xi=(; Ax), xj=(; Bx, Vx))
-
-    return l.σ.(l.U*x .+ m .+ l.bias)
+    
+    return l.σ.(l.U*x .+ m .+ l.bias)                                      
 end
 
 function Base.show(io::IO, l::ResGatedGraphConv)
@@ -857,16 +857,16 @@ Performs the operation
 \mathbf{x}_i' = \mathbf{x}_i + \sum_{j\in N(i)}\sigma(W_f \mathbf{z}_{ij} + \mathbf{b}_f)\, act(W_s \mathbf{z}_{ij} + \mathbf{b}_s)
 ```
 
-where ``\mathbf{z}_{ij}``  is the node and edge features concatenation
-``[\mathbf{x}_i; \mathbf{x}_j; \mathbf{e}_{j\to i}]``
+where ``\mathbf{z}_{ij}``  is the node and edge features concatenation 
+``[\mathbf{x}_i; \mathbf{x}_j; \mathbf{e}_{j\to i}]`` 
 and ``\sigma`` is the sigmoid function.
-The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same
+The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
 as the input size.
 
 # Arguments
 
 - `in`: The dimension of input node features.
-- `ein`: The dimension of input edge features.
+- `ein`: The dimension of input edge features. 
 If `ein` is not given, assumes that no edge features are passed as input in the forward pass.
 - `out`: The dimension of output node features.
 - `act`: Activation function.
@@ -874,7 +874,7 @@ If `ein` is not given, assumes that no edge features are passed as input in the 
 - `init`: Weights' initializer.
 - `residual`: Add a residual connection.
 
-# Examples
+# Examples 
 
 ```julia
 g = rand_graph(5, 6)
@@ -961,8 +961,8 @@ where the attention coefficients ``\alpha_{ij}`` are given by
                   {\sum_{j'}e^{\beta \cos(\mathbf{x}_i, \mathbf{x}_{j'})}}
 ```
 with the cosine distance defined by
-```math
-\cos(\mathbf{x}_i, \mathbf{x}_j) =
+```math 
+\cos(\mathbf{x}_i, \mathbf{x}_j) = 
   \frac{\mathbf{x}_i \cdot \mathbf{x}_j}{\lVert\mathbf{x}_i\rVert \lVert\mathbf{x}_j\rVert}
 ```
 and ``\beta`` a trainable parameter.
@@ -993,7 +993,7 @@ function (l::AGNNConv)(g::GNNGraph, x::AbstractMatrix)
             α .* xj
         end
 
-    return x
+    return x  
 end
 
 @doc raw"""
@@ -1002,7 +1002,7 @@ end
 
 Convolution from [Graph Networks as a Universal Machine Learning Framework for Molecules and Crystals](https://arxiv.org/pdf/1812.05055.pdf)
 paper. In the forward pass, takes as inputs node features `x` and edge features `e` and returns
-updated features `x'` and `e'` according to
+updated features `x'` and `e'` according to 
 
 ```math
 \mathbf{e}_{i\to j}'  = \phi_e([\mathbf{x}_i;\,  \mathbf{x}_j;\,  \mathbf{e}_{i\to j}]),\\
@@ -1012,7 +1012,7 @@ updated features `x'` and `e'` according to
 `aggr` defines the aggregation to be performed.
 
 If the neural networks `ϕe` and  `ϕv` are not provided, they will be constructed from
-the `in` and `out` arguments instead as multi-layer perceptron with one hidden layer and `relu`
+the `in` and `out` arguments instead as multi-layer perceptron with one hidden layer and `relu` 
 activations.
 
 # Examples
@@ -1027,7 +1027,7 @@ x′, e′ = m(g, x, e)
 """
 struct MEGNetConv <: GNNLayer
     ϕe
-    ϕv
+    ϕv 
     aggr
 end
 
@@ -1036,7 +1036,7 @@ end
 MEGNetConv(ϕe, ϕv; aggr=mean) = MEGNetConv(ϕe, ϕv, aggr)
 
 function MEGNetConv(ch::Pair{Int,Int}; aggr=mean)
-    nin, nout = ch
+    nin, nout = ch 
     ϕe = Chain(Dense(3nin, nout, relu),
                Dense(nout, nout))
 
@@ -1081,9 +1081,9 @@ w^a_{k}(e^a) = \exp(-\frac{1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_
 
 The input to the layer is a node feature array `x` of size `(num_features, num_nodes)` and
 edge pseudo-coordinate array `e` of size `(num_features, num_edges)`
-The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same
+The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
 as the input size.
-# Arguments
+# Arguments 
 
 - `in`: Number of input node features.
 - `ein`: Number of input edge features.
@@ -1101,7 +1101,7 @@ as the input size.
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s,t)
-nin, ein, out, K = 4, 10, 7, 8
+nin, ein, out, K = 4, 10, 7, 8 
 x = randn(Float32, nin, g.num_nodes)
 e = randn(Float32, ein, g.num_edges)
 
@@ -1125,13 +1125,13 @@ end
 
 @functor GMMConv
 
-function GMMConv(ch::Pair{NTuple{2,Int},Int},
+function GMMConv(ch::Pair{NTuple{2,Int},Int}, 
                 σ=identity;
                 K::Int=1,
                 bias::Bool=true,
                 init=Flux.glorot_uniform,
                 residual=false)
-
+    
     (nin, ein), out = ch
     mu = init(ein, K)
     sigma_inv = init(ein, K)
@@ -1148,18 +1148,18 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     num_edges = g.num_edges
     w = reshape(e, (ein, 1, num_edges))
     mu = reshape(l.mu, (ein, l.K, 1))
-
+    
     w = @. ((w - mu)^2) / 2
     w = w .* reshape(l.sigma_inv.^2, (ein, l.K, 1))
-    w = exp.(sum(w, dims = 1 )) # (1, K, num_edge)
+    w = exp.(sum(w, dims = 1 )) # (1, K, num_edge) 
 
-    xj = reshape(l.dense_x(x), (out, l.K, :)) # (out, K, num_nodes)
+    xj = reshape(l.dense_x(x), (out, l.K, :)) # (out, K, num_nodes) 
 
     m = propagate(e_mul_xj, g, mean, xj=xj, e=w)
-    m = dropdims(mean(m, dims=2), dims=2) # (out, num_nodes)
+    m = dropdims(mean(m, dims=2), dims=2) # (out, num_nodes)  
 
     m = l.σ(m .+ l.bias)
-
+    
     if l.residual
         if size(x, 1) == size(m, 1)
             m += x
@@ -1170,7 +1170,7 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
 
     return m
 end
-
+                            
 (l::GMMConv)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g), edge_features(g)))
 
 function Base.show(io::IO, l::GMMConv)
