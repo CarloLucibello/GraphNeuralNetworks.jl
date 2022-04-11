@@ -1229,8 +1229,41 @@ function SGConv(ch::Pair{Int,Int}, k=1;
 end
 
 function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW=nothing) where
-    {T, EW<:Union{Nothing,AbstractVector}}
-		#
+    {T, EW<:Union{Nothing,AbstractVector}}    
+    @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+
+    if edge_weight !== nothing
+        @assert length(edge_weight) == g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
+    end
+
+    if l.add_self_loops
+        g = add_self_loops(g)
+        if edge_weight !== nothing
+            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            @assert length(edge_weight) == g.num_edges
+        end
+    end
+    Dout, Din = size(l.weight)
+    if Dout < Din
+        x = l.weight * x
+    end
+    d = degree(g, T; dir=:in, edge_weight)
+    c = 1 ./ sqrt.(d)
+    for iter in 1:l.k
+        x = x .* c'
+        if edge_weight !== nothing            
+            x = propagate(e_mul_xj, g, +, xj=x, e=edge_weight)
+        elseif l.use_edge_weight        
+            x = propagate(w_mul_xj, g, +, xj=x)
+        else
+            x = propagate(copy_xj, g, +, xj=x)
+        end
+        x = x .* c'
+    end    
+    if Dout >= Din
+        x = l.weight * x
+    end
+    return (x .+ l.bias)
 end
 
 function (l::SGConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix, edge_weight::AbstractVector)
