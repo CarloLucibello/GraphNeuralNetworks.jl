@@ -1204,7 +1204,28 @@ where ``\tilde{A}`` is ``A + I``.
 
 # Examples
 
-#
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+x = randn(3, g.num_nodes)
+
+# create layer
+l = SGConv(3 => 5; add_self_loops = true) 
+
+# forward pass
+y = l(g, x)       # size:  5 × num_nodes
+
+# convolution with edge weights
+w = [1.1, 0.1, 2.3, 0.5]
+y = l(g, x, w)
+
+# Edge weights can also be embedded in the graph.
+g = GNNGraph(s, t, w)
+l = SGConv(3 => 5, add_self_loops = true, use_edge_weight=true) 
+y = l(g, x) # same as l(g, x, w) 
+```
 """
 
 struct SGConv{A<:AbstractMatrix, B} <: GNNLayer
@@ -1229,7 +1250,7 @@ function SGConv(ch::Pair{Int,Int}, k=1;
 end
 
 function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW=nothing) where
-    {T, EW<:Union{Nothing,AbstractVector}}    
+    {T, EW<:Union{Nothing,AbstractVector}}     
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
 
     if edge_weight !== nothing
