@@ -44,6 +44,25 @@ end
 
 (l::GlobalPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
 
+@doc raw"""
+    GlobalConcatPool(aggr)
+
+```math
+\mathbf{x}_i' = [\mathbf{x}_i; \square_{i \in V} \mathbf{x}_i]
+
+"""
+struct GlobalConcatPool{F} <: GNNLayer
+    aggr::F
+end
+  
+function (l::GlobalConcatPool)(g::GNNGraph, x::AbstractArray)
+    g_feat = reduce_nodes(l.aggr, g, x)
+    feat_arr = gather(g_feat, graph_indicator(g))
+    return vcat(x, feat_arr)
+end
+
+(l::GlobalConcatPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
+
 
 @doc raw"""
     GlobalAttentionPool(fgate, ffeat=identity)
