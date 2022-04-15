@@ -1195,7 +1195,7 @@ norm_both = `false` yields the following normalization term:
 ```math
 c_{ji} = (\sum_{k\in\mathcal{N}(i)}e_{ki})
 ```
-where ``e_ji`` is the scalar weight on the edge from node j to node i.
+where ``e_{ji}`` is the scalar weight on the edge from node j to node i.
 
 Return value is the normalized weight ``e_{ji} / c_{ji}`` for all edges in vector form.
 
