@@ -57,7 +57,7 @@ end
   
 function (l::GlobalConcatPool)(g::GNNGraph, x::AbstractArray)
     g_feat = reduce_nodes(l.aggr, g, x)
-    feat_arr = gather(g_feat, graph_indicator(g))
+    feat_arr = broadcast_nodes(g, g_feat)
     return vcat(x, feat_arr)
 end
 
