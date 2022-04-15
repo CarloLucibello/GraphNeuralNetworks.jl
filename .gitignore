@@ -1,6 +1,9 @@
 *.jl.*.cov
 *.jl.cov
 *.jl.mem
+*~
+*.swp
+*.swo
 Manifest.toml
 /docs/build/
 .vscode

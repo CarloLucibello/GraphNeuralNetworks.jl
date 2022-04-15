@@ -1181,3 +1181,120 @@ function Base.show(io::IO, l::GMMConv)
     l.residual==true || print(io, ", residual=", l.residual)
     print(io, ")")
 end
+
+@doc raw"""
+    SGConv(int => out, k=1; [bias, init, add_self_loops, use_edge_weight])
+                                
+SGC layer from [Simplifying Graph Convolutional Networks](https://arxiv.org/pdf/1902.07153.pdf)
+Performs operation
+```math
+H^{K} = (\tilde{D}^{-1/2} \tilde{A} \tilde{D}^{-1/2})^K X \Theta
+```
+where ``\tilde{A}`` is ``A + I``.
+
+# Arguments
+
+- `in`: Number of input features.
+- `out`: Number of output features.
+- `k` : Number of hops k. Default `1`.
+- `bias`: Add learnable bias. Default `true`.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
+- `use_edge_weight`: If `true`, consider the edge weights in the input graph (if available).
+                     If `add_self_loops=true` the new weights will be set to 1. Default `false`.
+
+# Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+x = randn(3, g.num_nodes)
+
+# create layer
+l = SGConv(3 => 5; add_self_loops = true) 
+
+# forward pass
+y = l(g, x)       # size:  5 × num_nodes
+
+# convolution with edge weights
+w = [1.1, 0.1, 2.3, 0.5]
+y = l(g, x, w)
+
+# Edge weights can also be embedded in the graph.
+g = GNNGraph(s, t, w)
+l = SGConv(3 => 5, add_self_loops = true, use_edge_weight=true) 
+y = l(g, x) # same as l(g, x, w) 
+```
+"""
+struct SGConv{A<:AbstractMatrix, B} <: GNNLayer
+    weight::A
+    bias::B
+    k::Int
+    add_self_loops::Bool
+    use_edge_weight::Bool
+end
+
+@functor SGConv
+
+function SGConv(ch::Pair{Int,Int}, k=1;
+                 init=glorot_uniform,
+                 bias::Bool=true,
+                 add_self_loops=true,
+                 use_edge_weight=false)
+    in, out = ch
+    W = init(out, in)
+    b = bias ? Flux.create_bias(W, true, out) : false
+    SGConv(W, b, k, add_self_loops, use_edge_weight)
+end
+
+function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW=nothing) where
+    {T, EW<:Union{Nothing,AbstractVector}}     
+    @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+
+    if edge_weight !== nothing
+        @assert length(edge_weight) == g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
+    end
+
+    if l.add_self_loops
+        g = add_self_loops(g)
+        if edge_weight !== nothing
+            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            @assert length(edge_weight) == g.num_edges
+        end
+    end
+    Dout, Din = size(l.weight)
+    if Dout < Din
+        x = l.weight * x
+    end
+    d = degree(g, T; dir=:in, edge_weight)
+    c = 1 ./ sqrt.(d)
+    for iter in 1:l.k
+        x = x .* c'
+        if edge_weight !== nothing            
+            x = propagate(e_mul_xj, g, +, xj=x, e=edge_weight)
+        elseif l.use_edge_weight        
+            x = propagate(w_mul_xj, g, +, xj=x)
+        else
+            x = propagate(copy_xj, g, +, xj=x)
+        end
+        x = x .* c'
+    end    
+    if Dout >= Din
+        x = l.weight * x
+    end
+    return (x .+ l.bias)
+end
+
+function (l::SGConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix, edge_weight::AbstractVector)
+    g = GNNGraph(edge_index(g)...; g.num_nodes)
+    return l(g, x, edge_weight)
+end
+
+function Base.show(io::IO, l::SGConv)
+    out, in = size(l.weight)
+    print(io, "SGConv($in => $out")
+    l.k == 1 || print(io, ", ", l.k)
+    print(io, ")")
+end
