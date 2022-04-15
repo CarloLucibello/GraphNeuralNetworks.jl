@@ -61,6 +61,7 @@ export
     ResGatedGraphConv,
     SAGEConv,
     GMMConv,
+    EdgeWeightNorm,
     
     # layers/pool
     GlobalPool,
