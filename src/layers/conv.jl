@@ -1184,6 +1184,7 @@ end
 
 @doc raw"""
     SGConv(int => out, k=1; [bias, init, add_self_loops, use_edge_weight])
+                                
 SGC layer from [Simplifying Graph Convolutional Networks](https://arxiv.org/pdf/1902.07153.pdf)
 Performs operation
 ```math
@@ -1227,7 +1228,6 @@ l = SGConv(3 => 5, add_self_loops = true, use_edge_weight=true)
 y = l(g, x) # same as l(g, x, w) 
 ```
 """
-
 struct SGConv{A<:AbstractMatrix, B} <: GNNLayer
     weight::A
     bias::B
