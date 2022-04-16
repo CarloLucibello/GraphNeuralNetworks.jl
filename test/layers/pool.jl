@@ -35,7 +35,7 @@
         @test u[1:chin,:] ≈ X
         @test u[chin+1:end,:] ≈ repeat(p, 1, n)
 
-        n = [1, 2, 3]
+        n = [5, 6, 7]
         ng = length(n)
         g = Flux.batch([GNNGraph(random_regular_graph(n[i], 4), 
                                  ndata=rand(Float32, chin, n[i]),
