@@ -48,8 +48,7 @@ end
     GlobalConcatPool(aggr)
 
 ```math
-\mathbf{x}_i' = [\mathbf{x}_i; \square_{i \in V} \mathbf{x}_i]
-
+\mathbf{x}_i' = [\mathbf{x}_i; \square_{j \in V} \mathbf{x}_j]
 """
 struct GlobalConcatPool{F} <: GNNLayer
     aggr::F
