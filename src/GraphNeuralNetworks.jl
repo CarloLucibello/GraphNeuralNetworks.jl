@@ -64,6 +64,7 @@ export
     SGConv,
     
     # layers/pool
+    ConcatPool,
     GlobalPool,
     GlobalAttentionPool,
     TopKPool,
