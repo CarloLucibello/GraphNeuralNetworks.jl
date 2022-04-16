@@ -33,7 +33,7 @@
 
         @test size(u) == (chin*2, n)
         @test u[1:chin,:] ≈ X
-        @test u[chin+1:end,:] ≈ repeat(p, 1, n)
+        @test u[chin+1:end,:] ≈ repeat(y, 1, n)
 
         n = [5, 6, 7]
         ng = length(n)
