@@ -21,6 +21,35 @@
         test_layer(p, g, rtol=1e-5, exclude_grad_fields = [:aggr], outtype=:graph)
     end
 
+    @testset "ConcatPool" begin
+        p = GlobalPool(+)
+        l = ConcatPool(p)
+        n = 10
+        chin = 6
+        X = rand(Float32, chin, n)
+        g = GNNGraph(random_regular_graph(n, 4), ndata=X, graph_type=GRAPH_T)
+        y = p(g, X)
+        u = l(g, X)
+
+        @test size(u) == (chin*2, n)
+        @test u[1:chin,:] ≈ X
+        @test u[chin+1:end,:] ≈ repeat(p, 1, n)
+
+        n = [1, 2, 3]
+        ng = length(n)
+        g = Flux.batch([GNNGraph(random_regular_graph(n, 4), 
+                                 ndata=rand(Float32, chin, n[i]),
+                                 graph_type=GRAPH_T) 
+                        for i=1:ng])
+        y = p(g, g.ndata.x)
+        u = l(g, g.ndata.x)
+        @test size(u) == (chin*2, sum(n))
+        @test u[1:chin,:] ≈ g.ndata.x
+        @test u[chin+1:end,:] ≈ hcat([repeat(y[:,i], 1, n[i]) for i=1:ng]...)
+      
+        test_layer(p, g, rtol=1e-5, exclude_grad_fields = [:aggr], outtype=:graph)
+    end
+
     @testset "GlobalAttentionPool" begin
         n = 10
         chin = 6
