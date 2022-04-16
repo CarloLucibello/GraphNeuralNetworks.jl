@@ -1,6 +1,41 @@
 using DataStructures: nlargest
 
 @doc raw"""
+    ConcatPool(pooling_layer)
+
+```math
+\mathbf{x}_i' = [\mathbf{x}_i; \mathbf{u}_V]
+```
+
+# Arguments
+
+- `pooling_layer`: 
+
+# Examples
+
+```julia
+using Flux, GraphNeuralNetworks, Graphs
+
+add_pool = ConcatPool(GlobalPool(mean))
+
+g = GNNGraph(rand_graph(10, 4))
+X = rand(32, 10)
+pool(g, X) # => 64x10 matrix
+```
+"""
+struct ConcatPool <: GNNLayer
+    pool::GNNLayer
+end
+  
+function (l::ConcatPool)(g::GNNGraph, x::AbstractArray)
+    g_feat = applylayer(l.pool, g, x)
+    feat_arr = broadcast_nodes(g, g_feat)
+    return vcat(x, feat_arr)
+end
+
+(l::ConcatPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
+
+@doc raw"""
     GlobalPool(aggr)
 
 Global pooling layer for graph neural networks.
@@ -43,25 +78,6 @@ function (l::GlobalPool)(g::GNNGraph, x::AbstractArray)
 end
 
 (l::GlobalPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
-
-@doc raw"""
-    GlobalConcatPool(aggr)
-
-```math
-\mathbf{x}_i' = [\mathbf{x}_i; \square_{j \in V} \mathbf{x}_j]
-"""
-struct GlobalConcatPool{F} <: GNNLayer
-    aggr::F
-end
-  
-function (l::GlobalConcatPool)(g::GNNGraph, x::AbstractArray)
-    g_feat = reduce_nodes(l.aggr, g, x)
-    feat_arr = broadcast_nodes(g, g_feat)
-    return vcat(x, feat_arr)
-end
-
-(l::GlobalConcatPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
-
 
 @doc raw"""
     GlobalAttentionPool(fgate, ffeat=identity)
