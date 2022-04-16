@@ -37,7 +37,7 @@
 
         n = [1, 2, 3]
         ng = length(n)
-        g = Flux.batch([GNNGraph(random_regular_graph(n, 4), 
+        g = Flux.batch([GNNGraph(random_regular_graph(n[i], 4), 
                                  ndata=rand(Float32, chin, n[i]),
                                  graph_type=GRAPH_T) 
                         for i=1:ng])
