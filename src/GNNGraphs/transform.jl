@@ -433,6 +433,9 @@ function Flux.unbatch(g::GNNGraph)
     [getgraph(g, i) for i in 1:g.num_graphs]
 end
 
+function Flux.unbatch(g::GNNGraph, x) 
+    return [x[g.graph_indicator .∈ Ref(i)] for i in 1:g.num_graphs]
+end
 
 """
     getgraph(g::GNNGraph, i; nmap=false)
