@@ -1230,8 +1230,8 @@ function EdgeWeightNorm(norm_both::Bool = true,
     EdgeWeightNorm(norm_both, eps)
 end
 
-function (l::EdgeWeightNorm)(g::GNNGraph, edge_weight::AbstractVector)
-    norm_val = Vector{Float64}()    
+function (l::EdgeWeightNorm)(g::GNNGraph, edge_weight::T) where T <: AbstractVector
+    norm_val = T()    
     edge_in, edge_out = edge_index(g)
     
     dg_in = degree(g; dir = :in, edge_weight)
