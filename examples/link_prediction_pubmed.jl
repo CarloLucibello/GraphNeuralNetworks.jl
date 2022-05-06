@@ -49,7 +49,7 @@ function train(; kws...)
     g = mldataset2gnngraph(PubMed())
     
     # Print some info
-    show(g, "text/plain")
+    display(g)
     @show is_bidirected(g)
     @show has_self_loops(g)
     @show has_multi_edges(g)
