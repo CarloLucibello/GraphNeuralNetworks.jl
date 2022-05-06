@@ -30,8 +30,6 @@ epochs = 40
 # Define the Neural GDE
 diffeqsol_to_array(x) = reshape(device(x), size(x)[1:2])
 
-# GCNConv(nhidden => nhidden, graph=g),
-
 node_chain = GNNChain(GCNConv(nhidden => nhidden, relu),
                       GCNConv(nhidden => nhidden, relu)) |> device
 
