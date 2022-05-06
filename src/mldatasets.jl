@@ -4,6 +4,23 @@
     mldataset2gnngraph(dataset)
 
 Convert a graph dataset from the package MLDatasets.jl into one or many [`GNNGraph`](@ref)s.
+
+# Examples
+
+```julia-repl
+julia> using MLDatasets, GraphNeuralNetworks
+
+julia> mldataset2gnngraph(Cora())
+GNNGraph:
+    num_nodes = 2708
+    num_edges = 10556
+    ndata:
+        features => 1433×2708 Matrix{Float32}
+        targets => 2708-element Vector{Int64}
+        train_mask => 2708-element BitVector
+        val_mask => 2708-element BitVector
+        test_mask => 2708-element BitVector
+```
 """
 function mldataset2gnngraph(dataset::D) where D
     @assert hasproperty(dataset, :graphs)
