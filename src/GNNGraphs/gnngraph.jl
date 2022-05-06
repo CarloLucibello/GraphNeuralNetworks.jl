@@ -199,6 +199,13 @@ function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata, grap
 end
 
 function Base.show(io::IO, g::GNNGraph)
+    print(io, "GNNGraph($(g.num_nodes), $(g.num_edges))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", g::GNNGraph)
+    if get(io, :compact, false)
+        print(io, "GNNGraph($(g.num_nodes), $(g.num_edges))")
+    else # if the following block is indented the printing is ruined
     print(io, "GNNGraph:
     num_nodes = $(g.num_nodes)
     num_edges = $(g.num_edges)")
@@ -221,6 +228,7 @@ function Base.show(io::IO, g::GNNGraph)
             print(io, "\n        $k => $(summary(g.gdata[k]))")
         end
     end
+    end #else
 end
 
 MLUtils.numobs(g::GNNGraph) = g.num_graphs 

@@ -35,9 +35,8 @@ function train(Layer; verbose=false, kws...)
     end
 
     # LOAD DATA
-    data = Cora.dataset()
-    g = GNNGraph(data.adjacency_list, graph_type=GRAPH_T) |> device
-    X = data.node_features |> device
+    g = mldataset2gnngraph(Cora()) |> device
+    X = g.ndata.features
     y = onehotbatch(data.node_labels, 1:data.num_classes) |> device
     train_ids = data.train_indices |> device
     val_ids = data.val_indices |> device
