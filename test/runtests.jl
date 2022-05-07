@@ -35,6 +35,7 @@ tests = [
     "layers/basic",
     "layers/conv",
     "layers/pool",
+    "mldatasets",
     "examples/node_classification_cora",
     "deprecations",
 ]

@@ -67,7 +67,10 @@ export
     GlobalPool,
     GlobalAttentionPool,
     TopKPool,
-    topk_index
+    topk_index,
+    
+    # mldatasets
+    mldataset2gnngraph
 
 
 include("utils.jl")
@@ -75,6 +78,7 @@ include("layers/basic.jl")
 include("layers/conv.jl")
 include("layers/pool.jl")
 include("msgpass.jl")
+include("mldatasets.jl")
 include("deprecations.jl")
 
 end

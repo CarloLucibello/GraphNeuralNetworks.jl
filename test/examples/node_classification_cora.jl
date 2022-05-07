@@ -35,16 +35,16 @@ function train(Layer; verbose=false, kws...)
     end
 
     # LOAD DATA
-    data = Cora.dataset()
-    g = GNNGraph(data.adjacency_list, graph_type=GRAPH_T) |> device
-    X = data.node_features |> device
-    y = onehotbatch(data.node_labels, 1:data.num_classes) |> device
-    train_ids = data.train_indices |> device
-    val_ids = data.val_indices |> device
-    test_ids = data.test_indices |> device
-    ytrain = y[:,train_ids]
+    dataset = Cora()
+    classes = dataset.metadata["classes"]
+    g = mldataset2gnngraph(dataset) |> device
+    X = g.ndata.features
+    y = onehotbatch(g.ndata.targets |> cpu, classes) |> device # remove when https://github.com/FluxML/Flux.jl/pull/1959 tagged
+    train_mask = g.ndata.train_mask
+    test_mask = g.ndata.test_mask
+    ytrain = y[:,train_mask]
 
-    nin, nhidden, nout = size(X,1), args.nhidden, data.num_classes 
+    nin, nhidden, nout = size(X,1), args.nhidden, length(classes)
     
     ## DEFINE MODEL
     model = GNNChain(Layer(nin, nhidden),
@@ -67,14 +67,14 @@ function train(Layer; verbose=false, kws...)
     @time for epoch in 1:args.epochs
         gs = Flux.gradient(ps) do
             ŷ = model(g, X)
-            logitcrossentropy(ŷ[:,train_ids], ytrain)
+            logitcrossentropy(ŷ[:,train_mask], ytrain)
         end
         Flux.Optimise.update!(opt, ps, gs)
         verbose && report(epoch)
     end
 
-    train_res = eval_loss_accuracy(X, y, train_ids, model, g)
-    test_res = eval_loss_accuracy(X, y, test_ids, model, g)        
+    train_res = eval_loss_accuracy(X, y, train_mask, model, g)
+    test_res = eval_loss_accuracy(X, y, test_mask, model, g)        
     return train_res, test_res
 end
 
@@ -99,7 +99,6 @@ function train_many(; usecuda=false)
     end
 end
 
-## if GRAPH_T != :dense # some erratic errors with :dense
 train_many(usecuda=false)
 if TEST_GPU
     train_many(usecuda=true)

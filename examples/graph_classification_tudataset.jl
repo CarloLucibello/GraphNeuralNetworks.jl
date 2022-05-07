@@ -7,6 +7,7 @@ using Flux.Data: DataLoader
 using GraphNeuralNetworks
 using MLDatasets: TUDataset
 using Statistics, Random
+using MLUtils
 using CUDA
 CUDA.allowscalar(false)
 
@@ -14,10 +15,10 @@ function eval_loss_accuracy(model, data_loader, device)
     loss = 0.
     acc = 0.
     ntot = 0
-    for g in data_loader
-        g = g |> device
-        n = g.num_graphs
-        y = g.gdata.y
+    for (graphs, y) in data_loader
+        g = Flux.batch(graphs) |> device
+        y = y |> device
+        n = length(y)
         ŷ = model(g, g.ndata.x) |> vec
         loss += logitbinarycrossentropy(ŷ, y) * n 
         acc += mean((ŷ .> 0) .== y) * n
@@ -28,26 +29,19 @@ end
 
 function getdataset()
     tudata = TUDataset("MUTAG")
-    
-    x = Array{Float32}(onehotbatch(tudata.node_labels, 0:6))
-    y = (1 .+ Array{Float32}(tudata.graph_labels)) ./ 2
+    display(tudata)
+    graphs = mldataset2gnngraph(tudata)
+    oh(x) = Float32.(onehotbatch(x, 0:6))
+    graphs = [GNNGraph(g, ndata=oh(g.ndata.targets)) for g in graphs]
+    y = (1 .+ Float32.(tudata.graph_data.targets)) ./ 2
     @assert all(∈([0,1]), y) # binary classification 
-    
-    ## The dataset also has edge features but we won't be using them
-    # e = Array{Float32}(onehotbatch(data.edge_labels, sort(unique(data.edge_labels))))
-    
-    gall = GNNGraph(tudata.source, tudata.target, 
-                num_nodes=tudata.num_nodes, 
-                graph_indicator=tudata.graph_indicator,
-                ndata=(; x), gdata=(; y))
-
-    return [getgraph(gall, i) for i=1:gall.num_graphs]
+    return graphs, y
 end
 
 # arguments for the `train` function 
 Base.@kwdef mutable struct Args
     η = 1f-3             # learning rate
-    batchsize = 64      # batch size (number of graphs in each batch)
+    batchsize = 32      # batch size (number of graphs in each batch)
     epochs = 200         # number of epochs
     seed = 17             # set seed > 0 for reproducibility
     usecuda = true      # if true use cuda (if available)
@@ -71,19 +65,18 @@ function train(; kws...)
     # LOAD DATA
     NUM_TRAIN = 150
     
-    data = getdataset()
-    shuffle!(data)
+    dataset = getdataset()
+    train_data, test_data = splitobs(dataset, at=NUM_TRAIN/numobs(dataset), shuffle=true)
     
-    train_loader = DataLoader(data[1:NUM_TRAIN], batchsize=args.batchsize, shuffle=true)
-    test_loader = DataLoader(data[NUM_TRAIN+1:end], batchsize=args.batchsize, shuffle=false)
+    train_loader = DataLoader(train_data, batchsize=args.batchsize, shuffle=true)
+    test_loader = DataLoader(test_data, batchsize=args.batchsize, shuffle=false)
     
     # DEFINE MODEL
 
-    nin = size(data[1].ndata.x, 1)
+    nin = size(dataset[1][1].ndata.x, 1)
     nhidden = args.nhidden
     
     model = GNNChain(GraphConv(nin => nhidden, relu),
-                     Dropout(0.5),
                      GraphConv(nhidden => nhidden, relu),
                      GlobalPool(mean), 
                      Dense(nhidden, 1))  |> device
@@ -103,15 +96,15 @@ function train(; kws...)
     
     report(0)
     for epoch in 1:args.epochs
-        for g in train_loader
-            g = g |> device
+        for (graphs, y) in train_loader
+            g = Flux.batch(graphs) |> device
+            y = y |> device
             gs = Flux.gradient(ps) do
                 ŷ = model(g, g.ndata.x) |> vec
-                logitbinarycrossentropy(ŷ, g.gdata.y)
+                logitbinarycrossentropy(ŷ, y)
             end
             Flux.Optimise.update!(opt, ps, gs)
         end
-        
         epoch % args.infotime == 0 && report(epoch)
     end
 end

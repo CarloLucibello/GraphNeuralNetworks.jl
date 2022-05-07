@@ -46,11 +46,10 @@ function train(; kws...)
     end
 
     ### LOAD DATA
-    data = PubMed.dataset()
-    g = GNNGraph(data.adjacency_list)
-
+    g = mldataset2gnngraph(PubMed())
+    
     # Print some info
-    @info g
+    display(g)
     @show is_bidirected(g)
     @show has_self_loops(g)
     @show has_multi_edges(g)
@@ -59,7 +58,7 @@ function train(; kws...)
 
     # Move to device
     g = g |> device
-    X = data.node_features |> device
+    X = g.ndata.features
     
     #### TRAIN/TEST splits
     # With bidirected graph, we make sure that an edge and its reverse
@@ -117,4 +116,4 @@ function train(; kws...)
     end
 end
 
-# train()
+train()

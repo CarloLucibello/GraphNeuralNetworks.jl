@@ -47,7 +47,7 @@ end
 WithGraph(model, g::GNNGraph; traingraph=false) = WithGraph(model, g, traingraph)
 
 @functor WithGraph
-Flux.trainable(l::WithGraph) = l.traingraph ? (l.model, l.g) : (l.model,)
+Flux.trainable(l::WithGraph) = l.traingraph ? (; l.model, l.g) : (; l.model,)
 
 # Work around 
 # https://github.com/FluxML/Flux.jl/issues/1733

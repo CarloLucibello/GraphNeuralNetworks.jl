@@ -9,10 +9,10 @@ using Statistics, Random
 using CUDA
 CUDA.allowscalar(false)
 
-function eval_loss_accuracy(X, y, ids, model, g)
+function eval_loss_accuracy(X, y, mask, model, g)
     ŷ = model(g, X)
-    l = logitcrossentropy(ŷ[:,ids], y[:,ids])
-    acc = mean(onecold(ŷ[:,ids]) .== onecold(y[:,ids]))
+    l = logitcrossentropy(ŷ[:,mask], y[:,mask])
+    acc = mean(onecold(ŷ[:,mask]) .== onecold(y[:,mask]))
     return (loss = round(l, digits=4), acc = round(acc*100, digits=2))
 end
 
@@ -41,32 +41,30 @@ function train(; kws...)
     end
 
     # LOAD DATA
-    data = Cora.dataset()
-    g = GNNGraph(data.adjacency_list) |> device
-    X = data.node_features |> device
-    y = onehotbatch(data.node_labels, 1:data.num_classes) |> device
-    train_ids = data.train_indices |> device
-    val_ids = data.val_indices |> device
-    test_ids = data.test_indices |> device
-    ytrain = y[:,train_ids]
+    dataset = Cora()
+    classes = dataset.metadata["classes"]
+    g = mldataset2gnngraph(dataset) |> device
+    X = g.ndata.features
+    y = onehotbatch(g.ndata.targets |> cpu, classes) |> device # remove when https://github.com/FluxML/Flux.jl/pull/1959 tagged
+    (; train_mask, val_mask, test_mask) = g.ndata
+    ytrain = y[:,train_mask]
 
-    nin, nhidden, nout = size(X,1), args.nhidden, data.num_classes 
+    nin, nhidden, nout = size(X,1), args.nhidden, length(classes)
     
     ## DEFINE MODEL
     model = GNNChain(GCNConv(nin => nhidden, relu),
-                     Dropout(0.5),
                      GCNConv(nhidden => nhidden, relu), 
                      Dense(nhidden, nout))  |> device
 
     ps = Flux.params(model)
     opt = ADAM(args.η)
 
-    @info g
+    display(g)
     
     ## LOGGING FUNCTION
     function report(epoch)
-        train = eval_loss_accuracy(X, y, train_ids, model, g)
-        test = eval_loss_accuracy(X, y, test_ids, model, g)        
+        train = eval_loss_accuracy(X, y, train_mask, model, g)
+        test = eval_loss_accuracy(X, y, test_mask, model, g)        
         println("Epoch: $epoch   Train: $(train)   Test: $(test)")
     end
     
@@ -75,7 +73,7 @@ function train(; kws...)
     for epoch in 1:args.epochs
         gs = Flux.gradient(ps) do
             ŷ = model(g, X)
-            logitcrossentropy(ŷ[:,train_ids], ytrain)
+            logitcrossentropy(ŷ[:,train_mask], ytrain)
         end
 
         Flux.Optimise.update!(opt, ps, gs)
@@ -85,3 +83,4 @@ function train(; kws...)
 end
 
 train()
+
