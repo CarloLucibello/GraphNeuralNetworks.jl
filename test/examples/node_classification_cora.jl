@@ -40,7 +40,8 @@ function train(Layer; verbose=false, kws...)
     g = mldataset2gnngraph(dataset) |> device
     X = g.ndata.features
     y = onehotbatch(g.ndata.targets |> cpu, classes) |> device # remove when https://github.com/FluxML/Flux.jl/pull/1959 tagged
-    (; train_mask, val_mask, test_mask) = g.ndata
+    train_mask = g.ndata.train_mask
+    test_mask = g.ndata.test_mask
     ytrain = y[:,train_mask]
 
     nin, nhidden, nout = size(X,1), args.nhidden, length(classes)
@@ -98,7 +99,6 @@ function train_many(; usecuda=false)
     end
 end
 
-## if GRAPH_T != :dense # some erratic errors with :dense
 train_many(usecuda=false)
 if TEST_GPU
     train_many(usecuda=true)
