@@ -1,7 +1,7 @@
 # GraphNeuralNetworks
 
 This is the documentation page for [GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl), a graph neural network library written in Julia and based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
-GraphNeuralNetworks.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/),[Deep Graph Library](https://docs.dgl.ai/),
+GraphNeuralNetworks.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/), [Deep Graph Library](https://docs.dgl.ai/),
 and [GeometricFlux.jl](https://fluxml.ai/GeometricFlux.jl/stable/).
 
 Among its features:
