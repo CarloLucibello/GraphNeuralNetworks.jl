@@ -96,7 +96,7 @@ such tensors.
 - `xi`: An array or a named tuple containing arrays whose last dimension's size 
         is `g.num_nodes`. It will be appropriately materialized on the
         target node of each edge (see also [`edge_index`](@ref)).
-- `xj`: As `xj`, but to be materialized on edges' sources. 
+- `xj`: As `xi`, but now to be materialized on each edge's source node. 
 - `e`: An array or a named tuple containing arrays whose last dimension's size is `g.num_edges`.
 - `f`: A function that takes as inputs the edge-materialized `xi`, `xj`, and `e`.
        These are arrays (or named tuples of arrays) whose last dimension' size is the size of
