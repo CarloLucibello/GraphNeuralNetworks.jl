@@ -150,7 +150,7 @@
 
         @test g.num_edges == 4
         @test g.num_nodes == 4
-        @test collect(edges(g)) |> sort == collect(zip(s, t)) |> sort
+        @test length(edges(g)) == 4
         @test sort(outneighbors(g, 1)) == [2] 
         @test sort(inneighbors(g, 1)) == [4] 
         @test is_directed(g) == true
