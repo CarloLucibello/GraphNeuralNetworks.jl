@@ -21,6 +21,14 @@
         end
     end
 
+    @testset "edges" begin
+        g = rand_graph(4, 10, graph_type=GRAPH_T)
+        @test edgetype(g) <: Graphs.Edge
+        for e in edges(g)
+            @test e isa Graphs.Edge
+        end
+    end
+
     @testset "has_self_loops" begin
         s = [1, 1, 2, 3]
         t = [2, 2, 2, 4]

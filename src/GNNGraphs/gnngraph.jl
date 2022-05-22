@@ -155,6 +155,8 @@ function (::Type{<:GNNGraph})(num_nodes::T; kws...) where {T<:Integer}
     return GNNGraph(s, t; num_nodes, kws...)
 end
 
+Base.zero(::Type{G}) where G<:GNNGraph = G(0) 
+
 # COO convenience constructors
 GNNGraph(s::AbstractVector, t::AbstractVector, v = nothing; kws...) = GNNGraph((s, t, v); kws...)
 GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
