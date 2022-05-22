@@ -168,6 +168,12 @@
         @test adjacency_list(g, dir=:in) ==  adj_list_in
     end
 
+    @testset "zero" begin
+        g = rand_graph(4, 6, graph_type=GRAPH_T)
+        G = typeof(g)
+        @test zero(G) == G(0)
+    end
+
     @testset "Graphs.jl constructor" begin
         lg = random_regular_graph(10, 4)
         @test !Graphs.is_directed(lg)
