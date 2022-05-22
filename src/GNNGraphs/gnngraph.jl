@@ -155,6 +155,8 @@ function (::Type{<:GNNGraph})(num_nodes::T; kws...) where {T<:Integer}
     return GNNGraph(s, t; num_nodes, kws...)
 end
 
+Base.zero(::Type{G}) where G<:GNNGraph = G(0) 
+
 # COO convenience constructors
 GNNGraph(s::AbstractVector, t::AbstractVector, v = nothing; kws...) = GNNGraph((s, t, v); kws...)
 GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
@@ -209,7 +211,7 @@ function Base.show(io::IO, ::MIME"text/plain", g::GNNGraph)
     print(io, "GNNGraph:
     num_nodes = $(g.num_nodes)
     num_edges = $(g.num_edges)")
-    g.num_graphs > 1 && print("\n    num_graphs = $(g.num_graphs)")
+    g.num_graphs > 1 && print(io, "\n    num_graphs = $(g.num_graphs)")
     if !isempty(g.ndata)
         print(io, "\n    ndata:")
         for k in keys(g.ndata)

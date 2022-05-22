@@ -17,9 +17,9 @@ get_edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
 
 get_edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes=g.num_nodes)[1][3]
 
-Graphs.edges(g::GNNGraph) = zip(edge_index(g)...)
+Graphs.edges(g::GNNGraph) = Graphs.Edge.(edge_index(g)...)
 
-Graphs.edgetype(g::GNNGraph) = Tuple{Int, Int}
+Graphs.edgetype(g::GNNGraph) = Graphs.Edge{eltype(g)}
 
 # """
 #     eltype(g::GNNGraph)
@@ -42,9 +42,9 @@ end
 
 Graphs.has_edge(g::GNNGraph{<:ADJMAT_T}, i::Integer, j::Integer) = g.graph[i,j] != 0
 
-graph_type_symbol(g::GNNGraph{<:COO_T}) = :coo 
-graph_type_symbol(g::GNNGraph{<:SPARSE_T}) = :sparse
-graph_type_symbol(g::GNNGraph{<:ADJMAT_T}) = :dense
+graph_type_symbol(::GNNGraph{<:COO_T}) = :coo 
+graph_type_symbol(::GNNGraph{<:SPARSE_T}) = :sparse
+graph_type_symbol(::GNNGraph{<:ADJMAT_T}) = :dense
 
 Graphs.nv(g::GNNGraph) = g.num_nodes
 Graphs.ne(g::GNNGraph) = g.num_edges
