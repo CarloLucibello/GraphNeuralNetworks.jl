@@ -63,7 +63,7 @@
         @test g.num_nodes == 4
         @test nv(g) == g.num_nodes
         @test ne(g) == g.num_edges
-        @test collect(edges(g)) |> sort == collect(zip(s, t)) |> sort
+        @test Tuple.(collect(edges(g))) |> sort == collect(zip(s, t)) |> sort
         @test sort(outneighbors(g, 1)) == [2, 4] 
         @test sort(inneighbors(g, 1)) == [2, 4] 
         @test is_directed(g) == true
