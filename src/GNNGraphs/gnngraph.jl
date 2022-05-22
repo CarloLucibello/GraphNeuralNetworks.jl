@@ -211,7 +211,7 @@ function Base.show(io::IO, ::MIME"text/plain", g::GNNGraph)
     print(io, "GNNGraph:
     num_nodes = $(g.num_nodes)
     num_edges = $(g.num_edges)")
-    g.num_graphs > 1 && print("\n    num_graphs = $(g.num_graphs)")
+    g.num_graphs > 1 && print(io, "\n    num_graphs = $(g.num_graphs)")
     if !isempty(g.ndata)
         print(io, "\n    ndata:")
         for k in keys(g.ndata)
