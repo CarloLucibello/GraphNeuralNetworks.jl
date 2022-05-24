@@ -36,6 +36,7 @@ export adjacency_list,
        adjacency_matrix, 
        degree, 
        has_self_loops,
+       has_isolated_nodes,
        inneighbors,
        outneighbors 
 

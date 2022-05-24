@@ -29,6 +29,14 @@
         end
     end
 
+    @testset "has_isolated_nodes" begin
+        s = [1, 2, 3]
+        t = [2, 3, 2]
+        g = GNNGraph(s, t, graph_type=GRAPH_T)
+        @test has_isolated_nodes(g) == false
+        @test has_isolated_nodes(g, dir=:in) == true
+    end
+
     @testset "has_self_loops" begin
         s = [1, 1, 2, 3]
         t = [2, 2, 2, 4]

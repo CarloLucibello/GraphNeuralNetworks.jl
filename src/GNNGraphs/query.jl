@@ -240,6 +240,17 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT=nothing; dir=:out, edge_we
                   vec(sum(A, dims=1)) .+ vec(sum(A, dims=2)) 
 end
 
+"""
+    has_isolated_nodes(g::GNNGraph; dir=:out)
+
+Return true if the graph `g` contains nodes with out-degree (if `dir=:out`)
+or in-degree (if `dir=:in`) equal to zero.
+"""
+function has_isolated_nodes(g::GNNGraph; dir=:out)
+    return any(iszero, degree(g; dir))
+end
+
+
 function Graphs.laplacian_matrix(g::GNNGraph, T::DataType=eltype(g); dir::Symbol=:out)
     A = adjacency_matrix(g, T; dir=dir)
     D = Diagonal(vec(sum(A; dims=2)))
