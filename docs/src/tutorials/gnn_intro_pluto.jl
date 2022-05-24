@@ -14,17 +14,15 @@ begin
 	import GraphMakie
 	import CairoMakie as Makie
 	using Graphs
-end
-
-# ╔═╡ 5de79e7a-46e6-4cbc-9cf4-0e21823fd9ed
-## These Pluto noteboook is a julia adaptation of the
-## Pytorch Geometric tutorials that can be found at  
-## https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html
+	using PlutoUI
+	Random.seed!(17); # for reproducibility
+end;
 
 # ╔═╡ 03a9e023-e682-4ea3-a10b-14c4d101b291
-
 md"""
 # Introduction: Hands-on Graph Neural Networks
+
+*This Pluto noteboook is a julia adaptation of the Pytorch Geometric tutorials that can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html).*
 
 Recently, deep learning on graphs has emerged to one of the hottest research fields in the deep learning community.
 Here, **Graph Neural Networks (GNNs)** aim to generalize classical deep learning concepts to irregular structured data (in contrast to images or texts) and to enable neural networks to reason about objects and their relations.
@@ -32,12 +30,17 @@ Here, **Graph Neural Networks (GNNs)** aim to generalize classical deep learning
 This is done by following a simple **neural message passing scheme**, where node features ``\mathbf{x}_i^{(\ell)}`` of all nodes ``i \in \mathcal{V}`` in a graph ``\mathcal{G} = (\mathcal{V}, \mathcal{E})`` are iteratively updated by aggregating localized information from their neighbors ``\mathcal{N}(i)``:
 
 ```math
-\mathbf{x}_i^{(\ell + 1)} = f^{(\ell + 1)}_{\theta} \left( \mathbf{x}_i^{(\ell)}, \left\{ \mathbf{x}_w^{(\ell)} : w \in \mathcal{N}(i) \right\} \right)
+\mathbf{x}_i^{(\ell + 1)} = f^{(\ell + 1)}_{\theta} \left( \mathbf{x}_i^{(\ell)}, \left\{ \mathbf{x}_j^{(\ell)} : j \in \mathcal{N}(i) \right\} \right)
 ```
 
 This tutorial will introduce you to some fundamental concepts regarding deep learning on graphs via Graph Neural Networks based on the **[GraphNeuralNetworks.jl library](https://github.com/CarloLucibello/GraphNeuralNetworks.jl)**.
 GNN.jl is an extension library to the popular deep learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/), and consists of various methods and utilities to ease the implementation of Graph Neural Networks.
 
+Let's first import the packages we need:
+"""
+
+# ╔═╡ ef96f5ae-724d-4b8e-b7d7-c116ad1c3279
+md"""
 Following [Kipf et al. (2017)](https://arxiv.org/abs/1609.02907), let's dive into the world of GNNs by looking at a simple graph-structured example, the well-known [**Zachary's karate club network**](https://en.wikipedia.org/wiki/Zachary%27s_karate_club). This graph describes a social network of 34 members of a karate club and documents links between members who interacted outside the club. Here, we are interested in detecting communities that arise from the member's interaction.
 
 GNN.jl provides utilities to convert [MLDatasets.jl](https://github.com/JuliaML/MLDatasets.jl)'s datasets to its own type:
@@ -88,7 +91,7 @@ Let's now look at the underlying graph in more detail:
 """
 
 # ╔═╡ a7ad9de3-3e18-4aff-b118-a4d798a2f4ec
-begin
+with_terminal() do
 	# Gather some statistics about the graph.
 	println("Number of nodes: $(g.num_nodes)")
 	println("Number of edges: $(g.num_edges)")
@@ -139,13 +142,7 @@ Since a `GNNGraph` is an `AbstractGraph` from the `Graphs.jl` library, it suppor
 """
 
 # ╔═╡ 9820cc77-ae0a-454a-86b6-a23dbc56b6fd
-begin
-	g2= rand_graph(g.num_nodes, 30, bidirected=false)
-	GraphMakie.graphplot(Graph(g2), node_size=20, node_color=labels, arrow_show=false) 
-end
-
-# ╔═╡ cf428e12-17fc-46c9-b0ec-906a79f001cb
-?GraphMakie.graphplot
+GraphMakie.graphplot(g, node_size=20, node_color=labels) 
 
 # ╔═╡ 86135c51-950c-4c08-b9e0-6c892234ff87
 md"""
@@ -323,6 +320,7 @@ GraphNeuralNetworks = "cffab07f-9bc2-4db1-8861-388f63bf7694"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
@@ -333,6 +331,7 @@ GraphMakie = "~0.3.5"
 GraphNeuralNetworks = "~0.4.2"
 Graphs = "~1.7.0"
 MLDatasets = "~0.7.1"
+PlutoUI = "~0.7.39"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -347,6 +346,12 @@ deps = ["ChainRulesCore", "LinearAlgebra"]
 git-tree-sha1 = "6f1d9bc1c08f9f4a8fa92e3ea3cb50153a1b40d4"
 uuid = "621f4979-c628-5d54-868e-fcf4e3e8185c"
 version = "1.1.0"
+
+[[deps.AbstractPlutoDingetjes]]
+deps = ["Pkg"]
+git-tree-sha1 = "8eaf9f1b4921132a4cff3f36a1d9ba923b14a481"
+uuid = "6e696c72-6542-2067-7265-42206c756150"
+version = "1.1.4"
 
 [[deps.AbstractTrees]]
 git-tree-sha1 = "03e0550477d86222521d254b741d470ba17ea0b5"
@@ -931,6 +936,24 @@ git-tree-sha1 = "cb7099a0109939f16a4d3b572ba8396b1f6c7c31"
 uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 version = "0.3.10"
 
+[[deps.Hyperscript]]
+deps = ["Test"]
+git-tree-sha1 = "8d511d5b81240fc8e6802386302675bdf47737b9"
+uuid = "47d2ed2b-36de-50cf-bf87-49c2cf4b8b91"
+version = "0.0.4"
+
+[[deps.HypertextLiteral]]
+deps = ["Tricks"]
+git-tree-sha1 = "c47c5fa4c5308f27ccaac35504858d8914e102f9"
+uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+version = "0.9.4"
+
+[[deps.IOCapture]]
+deps = ["Logging", "Random"]
+git-tree-sha1 = "f7be53659ab06ddc986428d3a9dcc95f6fa6705a"
+uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
+version = "0.2.2"
+
 [[deps.IRTools]]
 deps = ["InteractiveUtils", "MacroTools", "Test"]
 git-tree-sha1 = "af14a478780ca78d5eb9908b263023096c2b9d64"
@@ -1505,6 +1528,12 @@ git-tree-sha1 = "bb16469fd5224100e422f0b027d26c5a25de1200"
 uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.2.0"
 
+[[deps.PlutoUI]]
+deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
+git-tree-sha1 = "8d1f54886b9037091edf146b517989fc4a09efec"
+uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+version = "0.7.39"
+
 [[deps.PolygonOps]]
 git-tree-sha1 = "77b3d3605fc1cd0b42d95eba87dfcd2bf67d5ff6"
 uuid = "647866c9-e3ac-4575-94e7-e3d426903924"
@@ -1837,6 +1866,11 @@ git-tree-sha1 = "c76399a3bbe6f5a88faa33c8f8a65aa631d95013"
 uuid = "28d57a85-8fef-5791-bfe6-a80928e7c999"
 version = "0.4.73"
 
+[[deps.Tricks]]
+git-tree-sha1 = "6bac775f2d42a611cdfcd1fb217ee719630c4175"
+uuid = "410a4b4d-49e4-4fbc-ab6d-cb71b17b3775"
+version = "0.1.6"
+
 [[deps.TupleTools]]
 git-tree-sha1 = "3c712976c47707ff893cf6ba4354aa14db1d8938"
 uuid = "9d95972d-f1c8-5527-a6e0-b4b365fa01f6"
@@ -2016,9 +2050,9 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╠═361e0948-d91a-11ec-2d95-2db77435a0c1
-# ╠═5de79e7a-46e6-4cbc-9cf4-0e21823fd9ed
 # ╟─03a9e023-e682-4ea3-a10b-14c4d101b291
+# ╠═361e0948-d91a-11ec-2d95-2db77435a0c1
+# ╟─ef96f5ae-724d-4b8e-b7d7-c116ad1c3279
 # ╠═4ba372d4-7a6a-41e0-92a0-9547a78e2898
 # ╟─55aca2f0-4bbb-4d3a-9777-703896cfc548
 # ╠═a1d35896-0f52-4c8b-b7dc-ec65649237c8
@@ -2031,7 +2065,6 @@ version = "3.5.0+0"
 # ╠═d627736a-fd5a-4cdc-bd4e-89ff8b8c55bd
 # ╟─98bb86d2-a7b9-4110-8851-8829a9f9b4d0
 # ╠═9820cc77-ae0a-454a-86b6-a23dbc56b6fd
-# ╠═cf428e12-17fc-46c9-b0ec-906a79f001cb
 # ╟─86135c51-950c-4c08-b9e0-6c892234ff87
 # ╠═88d1e59f-73d6-46ee-87e8-35beb7bc7674
 # ╟─9838189c-5cf6-4f21-b58e-3bb905408ad3

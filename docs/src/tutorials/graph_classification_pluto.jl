@@ -15,15 +15,11 @@ begin
 	using GraphNeuralNetworks
 	using MLDatasets
 	using LinearAlgebra, Random, Statistics
-end
+	Random.seed!(17)
+end;
 
 # ╔═╡ 3ef587b4-3fbe-4d29-9a03-16edc2c25f9a
 using MLUtils
-
-# ╔═╡ 5de79e7a-46e6-4cbc-9cf4-0e21823fd9ed
-## These Pluto noteboook is a julia adaptation of the
-## Pytorch Geometric tutorials that can be found at  
-## https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html
 
 # ╔═╡ 15136fd8-f9b2-4841-9a95-9de7b8969687
 md"""
@@ -54,9 +50,6 @@ reduce(vcat, g.node_data.targets for (g,_) in dataset) |> union
 
 # ╔═╡ a8d6a133-a828-4d51-83c4-fb44f9d5ede1
 reduce(vcat, g.edge_data.targets for (g,_) in dataset)|> union
-
-# ╔═╡ 74d6c67a-286b-4dc0-99cb-375d886edbdd
-g1.edge_data.targets |> union
 
 # ╔═╡ 3b3e0a79-264b-47d7-8bda-2a6db7290828
 md"""
@@ -129,10 +122,10 @@ first(train_loader)[1]
 md"""
 Here, we opt for a `batch_size` of 64, leading to 3 (randomly shuffled) mini-batches, containing all ``2 \cdot 64+22 = 150`` graphs.
 
-Furthermore, each batched graph object is equipped with a **`graph)indicator` vector**, which maps each node to its respective graph in the batch:
+Furthermore, each batched graph object is equipped with a **`graph_indicator` vector**, which maps each node to its respective graph in the batch:
 
 ```math
-\textrm{graph\_indicator} = [1, \ldots, 1, 2, \ldots, 2, 3, \ldots ]
+\textrm{graph-indicator} = [1, \ldots, 1, 2, \ldots, 2, 3, \ldots ]
 ```
 
 ## Training a Graph Neural Network (GNN)
@@ -190,7 +183,8 @@ end
 
 # ╔═╡ 968c7087-7637-4844-9509-dd838cf99a8c
 function train!(model; epochs=200, η=1e-2, infotime=10)
-	device = Flux.gpu
+	# device = Flux.gpu # uncomment this for GPU training
+	device = Flux.cpu
 	model = model |> device
 	ps = Flux.params(model)
     opt = ADAM(1e-3)
@@ -237,7 +231,7 @@ As multiple papers pointed out ([Xu et al. (2018)](https://arxiv.org/abs/1810.00
 An alternative formulation ([Morris et al. (2018)](https://arxiv.org/abs/1810.02244)) omits neighborhood normalization completely and adds a simple skip-connection to the GNN layer in order to preserve central node information:
 
 ```math
-\mathbf{x}_v^{(\ell+1)} = \mathbf{W}^{(\ell + 1)}_1 \mathbf{x}_v^{(\ell)} + \mathbf{W}^{(\ell + 1)}_2 \sum_{w \in \mathcal{N}(v)} \mathbf{x}_w^{(\ell)}
+\mathbf{x}_i^{(\ell+1)} = \mathbf{W}^{(\ell + 1)}_1 \mathbf{x}_i^{(\ell)} + \mathbf{W}^{(\ell + 1)}_2 \sum_{j \in \mathcal{N}(i)} \mathbf{x}_j^{(\ell)}
 ```
 
 This layer is implemented under the name `GraphConv` in GNN.jl.
@@ -249,7 +243,6 @@ This should bring you close to **82% test accuracy**.
 
 
 # ╔═╡ 93e08871-2929-4279-9f8a-587168617365
-
 md"""
 ## Conclusion
 
@@ -1290,14 +1283,12 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 
 # ╔═╡ Cell order:
 # ╠═361e0948-d91a-11ec-2d95-2db77435a0c1
-# ╠═5de79e7a-46e6-4cbc-9cf4-0e21823fd9ed
 # ╟─15136fd8-f9b2-4841-9a95-9de7b8969687
 # ╠═f6e86958-e96f-4c77-91fc-c72d8967575c
 # ╠═24f76360-8599-46c8-a49f-4c31f02eb7d8
 # ╠═5d5e5152-c860-4158-8bc7-67ee1022f9f8
 # ╠═33163dd2-cb35-45c7-ae5b-d4854d141773
 # ╠═a8d6a133-a828-4d51-83c4-fb44f9d5ede1
-# ╟─74d6c67a-286b-4dc0-99cb-375d886edbdd
 # ╟─3b3e0a79-264b-47d7-8bda-2a6db7290828
 # ╠═936c09f6-ee62-4bc2-a0c6-749a66080fd2
 # ╠═3ef587b4-3fbe-4d29-9a03-16edc2c25f9a
