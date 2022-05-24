@@ -235,6 +235,27 @@ function to_bidirected(g::GNNGraph{<:COO_T})
     return remove_multi_edges(g; aggr=mean)
 end
 
+"""
+    to_unidirected(g::GNNGraph)
+
+Return a graph that for each multiple edge between two nodes in `g`
+keeps only an edge in one direction.
+"""
+function to_unidirected(g::GNNGraph{<:COO_T})
+    s, t = edge_index(g)
+    w = get_edge_weight(g)
+    idxs, _ = edge_encoding(s, t, g.num_nodes, directed=false)
+    snew, tnew = edge_decoding(idxs, g.num_nodes, directed=false)
+
+    g = GNNGraph((snew, tnew, w),
+                g.num_nodes, g.num_edges, g.num_graphs,
+                g.graph_indicator,
+                g.ndata, g.edata, g.gdata)
+
+    return remove_multi_edges(g; aggr=mean)
+end
+
+
 
 """
     add_nodes(g::GNNGraph, n; [ndata])

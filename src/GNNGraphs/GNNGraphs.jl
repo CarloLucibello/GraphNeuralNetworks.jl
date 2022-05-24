@@ -50,6 +50,7 @@ export add_nodes,
        remove_multi_edges,
        set_edge_weight,
        to_bidirected,
+       to_unidirected,
        # from Flux
        batch,
        unbatch,
