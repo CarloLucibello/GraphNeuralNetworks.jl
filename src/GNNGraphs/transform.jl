@@ -433,8 +433,10 @@ function Flux.unbatch(g::GNNGraph)
     [getgraph(g, i) for i in 1:g.num_graphs]
 end
 
-function Flux.unbatch(g::GNNGraph, x) 
-    return [x[g.graph_indicator .∈ Ref(i)] for i in 1:g.num_graphs]
+function Flux.unbatch(g::GNNGraph, x)
+    changes = g.graph_indicator[1:end-1] .!= g.graph_indicator[2:end]
+    indexes = [0; Array(findall(changes)); length(g.graph_indicator)]
+    return [x[indexes[i]+1:indexes[i+1]] for i in 1:g.num_graphs]
 end
 
 """
