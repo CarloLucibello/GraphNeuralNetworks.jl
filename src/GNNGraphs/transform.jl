@@ -255,6 +255,20 @@ function to_unidirected(g::GNNGraph{<:COO_T})
     return remove_multi_edges(g; aggr=mean)
 end
 
+function Graphs.SimpleGraph(g::GNNGraph)
+    G = Graphs.SimpleGraph(g.num_nodes)
+    for e in Graphs.edges(g)
+        Graphs.add_edge!(G, e)
+    end
+    return G
+end
+function Graphs.SimpleDiGraph(g::GNNGraph)
+    G = Graphs.SimpleDiGraph(g.num_nodes)
+    for e in Graphs.edges(g)
+        Graphs.add_edge!(G, e)
+    end
+    return G
+end
 
 
 """

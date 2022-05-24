@@ -258,4 +258,16 @@
             @test g2.edata.e == [10.0, 20.0, 35.0, 50.0]
         end
     end
+
+    @testset "Graphs.Graph from GNNGraph" begin
+        g = rand_graph(10, 20, graph_type=GRAPH_T)
+        
+        G = Graphs.Graph(g)
+        @test nv(G) == g.num_nodes
+        @test ne(G) == g.num_edges ÷ 2
+        
+        DG = Graphs.DiGraph(g)
+        @test nv(DG) == g.num_nodes
+        @test ne(DG) == g.num_edges 
+    end
 end
