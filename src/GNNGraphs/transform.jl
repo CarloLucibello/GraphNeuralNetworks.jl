@@ -614,9 +614,9 @@ function rand_edge_split(g::GNNGraph, frac; bidirected=is_bidirected(g))
         s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
         s2, t2 = s[eids[size1+1:end]], t[eids[size1+1:end]]
     else
-        @assert is_bidirected(g)
-        @assert !has_self_loops(g)
-        @assert !has_multi_edges(g)
+        # @assert is_bidirected(g)
+        # @assert !has_self_loops(g)
+        # @assert !has_multi_edges(g)
         mask = s .< t
         s, t = s[mask], t[mask]
         s1, t1 = s[eids[1:size1]], t[eids[1:size1]]

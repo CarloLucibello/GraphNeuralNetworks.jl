@@ -13,6 +13,18 @@ function sort_edge_index(u, v)
     return u[p], v[p]
 end
 
+
+function sort_edge_index(u, v)
+    uv = collect(zip(u, v))
+    p = sortperm(uv) # isless lexicographically defined for tuples
+    return u[p], v[p]
+end
+
+function sort_edge_index(u::AnyCuArray, v::AnyCuArray)
+    #TODO proper cuda friendly implementation
+    sort_edge_index(u |> Flux.cpu, v |> Flux.cpu) |> Flux.gpu
+end
+
 cat_features(x1::Nothing, x2::Nothing) = nothing 
 cat_features(x1::AbstractArray, x2::AbstractArray) = cat(x1, x2, dims=ndims(x1))
 cat_features(x1::Union{Number, AbstractVector}, x2::Union{Number, AbstractVector}) = 
