@@ -15,7 +15,7 @@ begin
 	import CairoMakie as Makie
 	using Graphs
 	using PlutoUI
-	Random.seed!(17); # for reproducibility
+	Random.seed!(17) # for reproducibility
 end;
 
 # ╔═╡ 03a9e023-e682-4ea3-a10b-14c4d101b291
