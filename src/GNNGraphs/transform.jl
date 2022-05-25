@@ -540,7 +540,7 @@ end
 
 Return a graph containing random negative edges (i.e. non-edges) from graph `g` as edges.
 
-Is `bidirected=true`, the output graph will be bidirected and there will be no
+If `bidirected=true`, the output graph will be bidirected and there will be no
 leakage from the origin graph. 
 
 See also [`is_bidirected`](@ref).
