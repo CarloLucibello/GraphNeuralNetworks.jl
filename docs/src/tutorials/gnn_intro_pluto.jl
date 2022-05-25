@@ -5,6 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ 6f20e59c-b002-4d22-9ee0-b62596574776
+# ╠═╡ show_logs = false
 begin
     using Pkg
     Pkg.activate(; temp=true)
@@ -328,7 +329,7 @@ Furthermore, we did this all with a few lines of code, thanks to the GraphNeural
 
 # ╔═╡ Cell order:
 # ╟─03a9e023-e682-4ea3-a10b-14c4d101b291
-# ╠═6f20e59c-b002-4d22-9ee0-b62596574776
+# ╟─6f20e59c-b002-4d22-9ee0-b62596574776
 # ╠═361e0948-d91a-11ec-2d95-2db77435a0c1
 # ╟─ef96f5ae-724d-4b8e-b7d7-c116ad1c3279
 # ╠═4ba372d4-7a6a-41e0-92a0-9547a78e2898
