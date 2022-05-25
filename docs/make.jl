@@ -8,31 +8,47 @@ using Documenter: MathJax3
 
 tutorial_menu = Array{Pair{String,String},1}()
 
+with_terminal() do
+  global xMean = gradient_descent(
+    M,
+    F,
+    gradF,
+    data[1];
+    debug=[
+        :Iteration,
+        (:Change, "change: %1.9f | "),
+        (:Cost, " F(x): %1.11f | "),
+        "\n",
+        :Stop,
+    ],
+)
+end
 #
 # Generate Pluto Tutorial HTMLs
 
-# pluto_src_folder = joinpath(@__DIR__, "src", "tutorials")
+pluto_src_folder = joinpath(@__DIR__, "src", "tutorials")
 # pluto_output_folder = joinpath(@__DIR__, "src", "tutorials")
 # pluto_relative_path = "tutorials/"
 # mkpath(pluto_output_folder)
 
-# """
-#     build()
-# Run all Pluto notebooks (".jl" files) in `NOTEBOOK_DIR`.
-# """
-# function build()
-#     println("Building notebooks")
-#     hopts = HTMLOptions(; append_build_context=true)
-#     output_format = documenter_output
-#     bopts = BuildOptions(pluto_src_folder; output_format)
-#     build_notebooks(bopts, hopts)
-#     return nothing
-# end
+"""
+    build()
 
-# # Build the notebooks; defaults to true.
-# if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
-#     build()
-# end
+Run all Pluto notebooks (".jl" files) in `NOTEBOOK_DIR`.
+"""
+function build()
+    println("Building notebooks")
+    hopts = HTMLOptions(; append_build_context=true)
+    output_format = documenter_output
+    bopts = BuildOptions(pluto_src_folder; output_format)
+    build_notebooks(bopts, hopts)
+    return nothing
+end
+
+# Build the notebooks; defaults to true.
+if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
+    build()
+end
 
 # # Please do not use the same name as for a(n old) literate Tutorial
 # pluto_files = [
@@ -87,11 +103,11 @@ makedocs(;
              "Model Building" => "models.md",
              "Datasets" => "datasets.md",
             #  "Tutorials" => tutorial_menu,
-            #  "Tutorials" => 
-            #     [
-            #         "Intro to Graph Neural Networks" => "gnn_intro_pluto.md",
-            #         "Graph Classification" => "graph_classification_pluto.md",
-            #     ],
+             "Tutorials" => 
+                [
+                    "Intro to Graph Neural Networks" => "gnn_intro_pluto.md",
+                    "Graph Classification" => "graph_classification_pluto.md",
+                ],
              "API Reference" =>
                [
                 "GNNGraph" => "api/gnngraph.md",

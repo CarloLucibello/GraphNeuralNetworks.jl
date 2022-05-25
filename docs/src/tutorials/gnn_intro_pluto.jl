@@ -39,6 +39,22 @@ GNN.jl is an extension library to the popular deep learning framework [Flux.jl](
 Let's first import the packages we need:
 """
 
+# ╔═╡ 6f20e59c-b002-4d22-9ee0-b62596574776
+begin
+    using Pkg
+    Pkg.activate(; temp=true)
+    packages = [
+        PackageSpec(; path=dirname(dirname(@__DIR__))),
+        PackageSpec(; name="Flux", version="0.13")
+		PackageSpec(; name="MLDatasets", version="0.7")
+		PackageSpec(; name="GraphMakie")
+		PackageSpec(; name="Graphs")
+		PackageSpec(; name="CairoMakie")
+		PackageSpec(; name="PlutoUI")
+    ]
+    Pkg.add(packages)
+end
+
 # ╔═╡ ef96f5ae-724d-4b8e-b7d7-c116ad1c3279
 md"""
 Following [Kipf et al. (2017)](https://arxiv.org/abs/1609.02907), let's dive into the world of GNNs by looking at a simple graph-structured example, the well-known [**Zachary's karate club network**](https://en.wikipedia.org/wiki/Zachary%27s_karate_club). This graph describes a social network of 34 members of a karate club and documents links between members who interacted outside the club. Here, we are interested in detecting communities that arise from the member's interaction.
@@ -2051,6 +2067,7 @@ version = "3.5.0+0"
 
 # ╔═╡ Cell order:
 # ╟─03a9e023-e682-4ea3-a10b-14c4d101b291
+# ╠═6f20e59c-b002-4d22-9ee0-b62596574776
 # ╠═361e0948-d91a-11ec-2d95-2db77435a0c1
 # ╟─ef96f5ae-724d-4b8e-b7d7-c116ad1c3279
 # ╠═4ba372d4-7a6a-41e0-92a0-9547a78e2898
