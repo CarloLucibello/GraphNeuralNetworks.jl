@@ -32,6 +32,7 @@ begin
 	import CairoMakie as Makie
 	using Graphs
 	using PlutoUI
+	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
 	Random.seed!(17) # for reproducibility
 end;
 

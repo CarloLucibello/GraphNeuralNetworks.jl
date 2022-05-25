@@ -22,14 +22,16 @@ begin
 end
 
 # ╔═╡ 361e0948-d91a-11ec-2d95-2db77435a0c1
+# ╠═╡ show_logs = false
 begin
 	using Flux
 	using Flux: onecold, onehotbatch, logitcrossentropy
 	using GraphNeuralNetworks
 	using MLDatasets
 	using LinearAlgebra, Random, Statistics
-	Random.seed!(17)
-end;
+	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
+	Random.seed!(17) # for reproducibility
+end
 
 # ╔═╡ 3ef587b4-3fbe-4d29-9a03-16edc2c25f9a
 using MLUtils
