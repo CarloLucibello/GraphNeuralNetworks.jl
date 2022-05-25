@@ -9,7 +9,7 @@ begin
     using Pkg
     Pkg.activate(; temp=true)
     packages = [
-        PackageSpec(; path=dirname(dirname(@__DIR__))),
+        PackageSpec(; path=joinpath(@__DIR__,"..","..","..")),
         PackageSpec(; name="Flux", version="0.13"),
 		PackageSpec(; name="MLDatasets", version="0.7"),
 		PackageSpec(; name="GraphMakie"),

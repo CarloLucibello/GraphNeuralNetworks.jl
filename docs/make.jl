@@ -6,23 +6,8 @@ using Documenter
 using Pluto, PlutoStaticHTML
 using Documenter: MathJax3
 
-tutorial_menu = Array{Pair{String,String},1}()
+# tutorial_menu = Array{Pair{String,String},1}()
 
-with_terminal() do
-  global xMean = gradient_descent(
-    M,
-    F,
-    gradF,
-    data[1];
-    debug=[
-        :Iteration,
-        (:Change, "change: %1.9f | "),
-        (:Cost, " F(x): %1.11f | "),
-        "\n",
-        :Stop,
-    ],
-)
-end
 #
 # Generate Pluto Tutorial HTMLs
 
