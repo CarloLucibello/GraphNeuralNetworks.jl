@@ -16,7 +16,7 @@ Base.@kwdef mutable struct Args
     η = 1f-3             # learning rate
     epochs = 200          # number of epochs
     seed = 17             # set seed > 0 for reproducibility
-    usecuda = false      # if true use cuda (if available)
+    usecuda = true      # if true use cuda (if available)
     nhidden = 64        # dimension of hidden features
     infotime = 10 	     # report every `infotime` epochs
 end

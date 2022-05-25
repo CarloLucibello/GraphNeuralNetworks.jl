@@ -36,6 +36,7 @@ export adjacency_list,
        adjacency_matrix, 
        degree, 
        has_self_loops,
+       has_isolated_nodes,
        inneighbors,
        outneighbors 
 
@@ -50,6 +51,7 @@ export add_nodes,
        remove_multi_edges,
        set_edge_weight,
        to_bidirected,
+       to_unidirected,
        # from Flux
        batch,
        unbatch,

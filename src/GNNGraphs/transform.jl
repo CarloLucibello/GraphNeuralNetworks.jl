@@ -235,6 +235,41 @@ function to_bidirected(g::GNNGraph{<:COO_T})
     return remove_multi_edges(g; aggr=mean)
 end
 
+"""
+    to_unidirected(g::GNNGraph)
+
+Return a graph that for each multiple edge between two nodes in `g`
+keeps only an edge in one direction.
+"""
+function to_unidirected(g::GNNGraph{<:COO_T})
+    s, t = edge_index(g)
+    w = get_edge_weight(g)
+    idxs, _ = edge_encoding(s, t, g.num_nodes, directed=false)
+    snew, tnew = edge_decoding(idxs, g.num_nodes, directed=false)
+
+    g = GNNGraph((snew, tnew, w),
+                g.num_nodes, g.num_edges, g.num_graphs,
+                g.graph_indicator,
+                g.ndata, g.edata, g.gdata)
+
+    return remove_multi_edges(g; aggr=mean)
+end
+
+function Graphs.SimpleGraph(g::GNNGraph)
+    G = Graphs.SimpleGraph(g.num_nodes)
+    for e in Graphs.edges(g)
+        Graphs.add_edge!(G, e)
+    end
+    return G
+end
+function Graphs.SimpleDiGraph(g::GNNGraph)
+    G = Graphs.SimpleDiGraph(g.num_nodes)
+    for e in Graphs.edges(g)
+        Graphs.add_edge!(G, e)
+    end
+    return G
+end
+
 
 """
     add_nodes(g::GNNGraph, n; [ndata])
@@ -579,9 +614,9 @@ function rand_edge_split(g::GNNGraph, frac; bidirected=is_bidirected(g))
         s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
         s2, t2 = s[eids[size1+1:end]], t[eids[size1+1:end]]
     else
-        @assert is_bidirected(g)
-        @assert !has_self_loops(g)
-        @assert !has_multi_edges(g)
+        # @assert is_bidirected(g)
+        # @assert !has_self_loops(g)
+        # @assert !has_multi_edges(g)
         mask = s .< t
         s, t = s[mask], t[mask]
         s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
