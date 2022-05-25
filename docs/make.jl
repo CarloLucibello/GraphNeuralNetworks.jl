@@ -90,8 +90,8 @@ makedocs(;
             #  "Tutorials" => tutorial_menu,
              "Tutorials" => 
                 [
-                    "Intro to Graph Neural Networks" => "gnn_intro_pluto.md",
-                    "Graph Classification" => "graph_classification_pluto.md",
+                    "Intro to Graph Neural Networks" => "tutorials/gnn_intro_pluto.md",
+                    # "Graph Classification" => "graph_classification_pluto.md",
                 ],
              "API Reference" =>
                [
