@@ -26,15 +26,13 @@ end
 begin
 	using Flux
 	using Flux: onecold, onehotbatch, logitcrossentropy
+	using Flux.Data: DataLoader
 	using GraphNeuralNetworks
 	using MLDatasets
 	using LinearAlgebra, Random, Statistics
 	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
 	Random.seed!(17) # for reproducibility
 end;
-
-# ╔═╡ 3ef587b4-3fbe-4d29-9a03-16edc2c25f9a
-using MLUtils
 
 # ╔═╡ 15136fd8-f9b2-4841-9a95-9de7b8969687
 md"""
@@ -278,7 +276,6 @@ You have learned how graphs can be batched together for better GPU utilization, 
 # ╠═a8d6a133-a828-4d51-83c4-fb44f9d5ede1
 # ╟─3b3e0a79-264b-47d7-8bda-2a6db7290828
 # ╠═936c09f6-ee62-4bc2-a0c6-749a66080fd2
-# ╠═3ef587b4-3fbe-4d29-9a03-16edc2c25f9a
 # ╠═519477b2-8323-4ece-a7eb-141e9841117c
 # ╟─2a1c501e-811b-4ddd-887b-91e8c929c8b7
 # ╠═c202e3b7-1f39-496a-98e7-e03ada53b5c7
