@@ -1,9 +1,6 @@
 using Flux, NNlib, GraphNeuralNetworks, Graphs, SparseArrays
 using Documenter
 
-## For Pluto notebooks
-using GraphMakie, Flux, GraphNeuralNetworks, Graphs, MLDatasets, PlutoUI
-
 # See this for a template of Pluto+Documenter 
 # https://github.com/rikhuijzer/PlutoStaticHTML.jl/blob/main/docs/make.jl
 using Pluto, PlutoStaticHTML
