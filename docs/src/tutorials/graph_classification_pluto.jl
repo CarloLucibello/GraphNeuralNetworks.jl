@@ -31,7 +31,7 @@ begin
 	using LinearAlgebra, Random, Statistics
 	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
 	Random.seed!(17) # for reproducibility
-end
+end;
 
 # ╔═╡ 3ef587b4-3fbe-4d29-9a03-16edc2c25f9a
 using MLUtils
