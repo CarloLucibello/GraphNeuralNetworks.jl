@@ -13,13 +13,6 @@ function sort_edge_index(u, v)
     return u[p], v[p]
 end
 
-
-function sort_edge_index(u, v)
-    uv = collect(zip(u, v))
-    p = sortperm(uv) # isless lexicographically defined for tuples
-    return u[p], v[p]
-end
-
 function sort_edge_index(u::AnyCuArray, v::AnyCuArray)
     #TODO proper cuda friendly implementation
     sort_edge_index(u |> Flux.cpu, v |> Flux.cpu) |> Flux.gpu
