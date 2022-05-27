@@ -275,7 +275,7 @@ In case `ein > 0` is given, edge features of dimension `ein` will be expected in
 and the attention coefficients will be calculated as  
 ```math
 \alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W_e \mathbf{e}_{j\to i}; W \mathbf{x}_i; W \mathbf{x}_j]))
-````
+```
 
 # Arguments
 
@@ -283,8 +283,8 @@ and the attention coefficients will be calculated as
 - `ein`: The dimension of input edget features. Default 0 (i.e. no edge features passed in the forward).
 - `out`: The dimension of output node features.
 - `σ`: Activation function. Default `identity`.
-- `bias`: Learn the additive bias if true. Dafault `true`. 
-- `heads`: Number attention heads. Dafault `1.
+- `bias`: Learn the additive bias if true. Default `true`.
+- `heads`: Number attention heads. Default `1`.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
@@ -388,14 +388,14 @@ Implements the operation
 ```
 where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
-\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_2 \mathbf{x}_i; W_1 \mathbf{x}_j]))
+\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU(W_2 \mathbf{x}_i + W_1 \mathbf{x}_j))
 ```
 with ``z_i`` a normalization factor.
 
 In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
 and the attention coefficients will be calculated as  
 ```math
-\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU([W_3 \mathbf{e}_{j\to i}; W_2 \mathbf{x}_i; W_1 \mathbf{x}_j])).
+\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU(W_3 \mathbf{e}_{j\to i} + W_2 \mathbf{x}_i + W_1 \mathbf{x}_j)).
 ```
 
 # Arguments
@@ -404,8 +404,8 @@ and the attention coefficients will be calculated as
 - `ein`: The dimension of input edget features. Default 0 (i.e. no edge features passed in the forward).
 - `out`: The dimension of output node features.
 - `σ`: Activation function. Default `identity`.
-- `bias`: Learn the additive bias if true. Dafault `true`. 
-- `heads`: Number attention heads. Dafault `1.
+- `bias`: Learn the additive bias if true. Default `true`.
+- `heads`: Number attention heads. Default `1`.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
@@ -477,7 +477,7 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, Abstra
 
 
     function message(Wix, Wjx, e)
-        Wx = Wix + Wjx
+        Wx = Wix + Wjx  # Note: this is equivalent to W * vcat(x_i, x_j) as in "How Attentive are Graph Attention Networks?"
         if e !== nothing
             Wx += reshape(l.dense_e(e), out, heads, :)
         end 
