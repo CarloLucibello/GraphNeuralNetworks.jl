@@ -147,7 +147,7 @@ to its neighbors within a given distance `r`.
                      in which case the returned graph will be a batch of graphs. 
 - `self_loops`: If `true`, consider the node itself among its neighbors, in which
                 case the graph will contain self-loops. 
-- `dir`: The direction of the edges. If `dir=:in` edges go from the `k` 
+- `dir`: The direction of the edges. If `dir=:in` edges go from the
          neighbors to the central node. If `dir=:out` we have the opposite
          direction.
 - `kws`: Further keyword arguments will be passed to the [`GNNGraph ](@ref) constructor.
