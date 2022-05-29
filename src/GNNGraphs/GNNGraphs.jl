@@ -60,7 +60,8 @@ export add_nodes,
 
 include("generate.jl")
 export rand_graph, 
-       knn_graph
+       knn_graph,
+       radius_graph
 
 include("sampling.jl")
 export sample_neighbors
