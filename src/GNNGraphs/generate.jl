@@ -145,7 +145,7 @@ to its neighbors within a given distance `r`.
 - `r`: The radius.
 - `graph_indicator`: Either nothing or a vector containing the graph assigment of each node, 
                      in which case the returned graph will be a batch of graphs. 
-- `self_loops`: If `true`, consider the node itself among its `k` nearest neighbors, in which
+- `self_loops`: If `true`, consider the node itself among its neighbors, in which
                 case the graph will contain self-loops. 
 - `dir`: The direction of the edges. If `dir=:in` edges go from the `k` 
          neighbors to the central node. If `dir=:out` we have the opposite
