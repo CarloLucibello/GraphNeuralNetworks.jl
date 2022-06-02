@@ -136,4 +136,12 @@
         @test spmm_fused(g) ≈ X * A
         @test spmm_fused2(g) ≈ X * A
     end
+
+    @testset "aggregate_neighbors" begin
+        m = rand(2, g.num_edges-1)
+        @test_throws AssertionError aggregate_neighbors(g, +, m)
+
+        m = (a=rand(2, g.num_edges+1), b=nothing)
+        @test_throws AssertionError aggregate_neighbors(g, +, m)        
+    end
 end

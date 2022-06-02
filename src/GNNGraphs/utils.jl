@@ -2,7 +2,7 @@ function check_num_nodes(g::GNNGraph, x::AbstractArray)
     @assert g.num_nodes == size(x, ndims(x)) "Got $(size(x, ndims(x))) as last dimension size instead of num_edges=$(g.num_nodes)"
     return true
 end
-function check_num_nodes(g::GNNGraph, x::NamedTuple)
+function check_num_nodes(g::GNNGraph, x::Union{Tuple,NamedTuple})
     map(x -> check_num_nodes(g, x), x)
     return true
 end
@@ -13,7 +13,7 @@ function check_num_edges(g::GNNGraph, e::AbstractArray)
     @assert g.num_edges == size(e, ndims(e)) "Got $(size(e, ndims(e))) as last dimension size instead of num_edges=$(g.num_edges)"
     return true    
 end
-function check_num_edges(g::GNNGraph, x::NamedTuple)
+function check_num_edges(g::GNNGraph, x::Union{Tuple,NamedTuple})
     map(x -> check_num_edges(g, x), x)
     return true
 end
