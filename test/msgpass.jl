@@ -62,6 +62,19 @@
         end 
 
         @test m.a == ones(out_channel, num_E)
+
+        @testset "sizecheck" begin
+            x = rand(3, g.num_nodes-1)
+            @test_throws AssertionError apply_edges(copy_xj, g, xj=x)
+            @test_throws AssertionError apply_edges(copy_xj, g, xi=x)
+            
+            x = (a=rand(3, g.num_nodes), b=rand(3, g.num_nodes+1))
+            @test_throws AssertionError apply_edges(copy_xj, g, xj=x)
+            @test_throws AssertionError apply_edges(copy_xj, g, xi=x)
+
+            e = rand(3, g.num_edges-1)
+            @test_throws AssertionError apply_edges(copy_xj, g, e=e)
+        end
     end
 
     @testset "copy_xj" begin
@@ -122,5 +135,15 @@
         @test spmm_unfused(g) ≈ X * A
         @test spmm_fused(g) ≈ X * A
         @test spmm_fused2(g) ≈ X * A
+    end
+
+    @testset "aggregate_neighbors" begin
+        @testset "sizecheck" begin
+            m = rand(2, g.num_edges-1)
+            @test_throws AssertionError aggregate_neighbors(g, +, m)
+
+            m = (a=rand(2, g.num_edges+1), b=nothing)
+            @test_throws AssertionError aggregate_neighbors(g, +, m)
+        end        
     end
 end

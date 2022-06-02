@@ -13,7 +13,7 @@ function _scatter(aggr,
                  n::Integer)
 
     dstsize =  (size(src)[1:end-1]..., n)
-    NNlib.scatter(aggr, src, idx; dstsize)
+    return NNlib.scatter(aggr, src, idx; dstsize)
 end
 
 

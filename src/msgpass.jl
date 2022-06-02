@@ -111,6 +111,9 @@ apply_edges(l, g::GNNGraph; xi=nothing, xj=nothing, e=nothing) =
     apply_edges(l, g, xi, xj, e)
 
 function apply_edges(f, g::GNNGraph, xi, xj, e)
+    check_num_nodes(g, xi)
+    check_num_nodes(g, xj)
+    check_num_edges(g, e)
     s, t = edge_index(g)
     xi = GNNGraphs._gather(xi, t)   # size: (D, num_nodes) -> (D, num_edges)
     xj = GNNGraphs._gather(xj, s)
@@ -133,6 +136,7 @@ Neighborhood aggregation is the second step of [`propagate`](@ref),
 where it comes after [`apply_edges`](@ref).
 """
 function aggregate_neighbors(g::GNNGraph, aggr, m)
+    check_num_edges(g, m)
     s, t = edge_index(g)
     return GNNGraphs._scatter(aggr, m, t, g.num_nodes)
 end
