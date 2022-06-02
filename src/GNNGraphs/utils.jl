@@ -1,5 +1,5 @@
 function check_num_nodes(g::GNNGraph, x::AbstractArray)
-    @assert g.num_nodes == size(x, ndims(x)) "Got $(size(x, ndims(x))) as last dimension size instead of num_edges=$(g.num_nodes)"
+    @assert g.num_nodes == size(x, ndims(x)) "Got $(size(x, ndims(x))) as last dimension size instead of num_nodes=$(g.num_nodes)"
     return true
 end
 function check_num_nodes(g::GNNGraph, x::Union{Tuple,NamedTuple})
