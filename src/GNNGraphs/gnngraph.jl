@@ -236,12 +236,6 @@ end
 MLUtils.numobs(g::GNNGraph) = g.num_graphs 
 MLUtils.getobs(g::GNNGraph, i) = getgraph(g, i)
 
-# DataLoader compatibility passing a vector of graphs and
-# effectively using `batch` as a collated function.
-MLUtils.numobs(data::Vector{<:GNNGraph}) = length(data)
-MLUtils.getobs(data::Vector{<:GNNGraph}, i::Int) = data[i]
-MLUtils.getobs(data::Vector{<:GNNGraph}, i) = Flux.batch(data[i])
-
 
 #########################
 

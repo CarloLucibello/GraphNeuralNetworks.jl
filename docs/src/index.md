@@ -60,8 +60,8 @@ opt = Adam(1f-4)
 ### Training 
 
 Finally, we use a standard Flux training pipeline to fit our dataset.
-Flux's `DataLoader` iterates over mini-batches of graphs 
-(batched together into a `GNNGraph` object). 
+We use Flux's `DataLoader` to iterate over mini-batches of graphs 
+that we glue together into a single `GNNGraph` using the [`batch`](@ref) method:
 
 ```julia
 train_size = round(Int, 0.8 * length(all_graphs))
@@ -74,7 +74,7 @@ loss(loader) = mean(loss(g |> device) for g in loader)
 
 for epoch in 1:100
     for g in train_loader
-        g = g |> device
+        g = Flux.batch(g) |> device
         grad = gradient(() -> loss(g), ps)
         Flux.Optimise.update!(opt, ps, grad)
     end
