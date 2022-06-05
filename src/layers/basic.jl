@@ -14,13 +14,13 @@ abstract type GNNLayer end
 function (l::GNNLayer)(g::AbstractVector{<:GNNGraph}, args...; kws...)
     @warn "Passing an array of graphs to a `GNNLayer` is discouraged. 
            Explicitely call `MLUtils.batch(graphs)` first instead." maxlog=1
-    return l(MLUtils.batch(g), args...; kws...)
+    return l(batch(g), args...; kws...)
 end
 
 function (l::GNNLayer)(g::AbstractVector{<:GNNGraph}) 
     @warn "Passing an array of graphs to a `GNNLayer` is discouraged. 
     Explicitely call `MLUtils.batch(graphs)` first instead." maxlog=1
-    g = Flux.batch(g)
+    g = batch(g)
     return GNNGraph(g, ndata=l(g, node_features(g)))
 end
 

@@ -66,7 +66,7 @@ function train(; kws...)
     NUM_TRAIN = 150
     
     dataset = getdataset()
-    train_data, test_data = splitobs(dataset, at=NUM_TRAIN/numobs(dataset), shuffle=true)
+    train_data, test_data = splitobs(dataset, at=NUM_TRAIN, shuffle=true)
     
     train_loader = DataLoader(train_data, batchsize=args.batchsize, shuffle=true)
     test_loader = DataLoader(test_data, batchsize=args.batchsize, shuffle=false)

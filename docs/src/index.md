@@ -26,7 +26,7 @@ Usage examples on real datasets can be found in the [examples](https://github.co
 We create a dataset consisting in multiple random graphs and associated data features. 
 
 ```julia
-using GraphNeuralNetworks, Graphs, Flux, CUDA, Statistics
+using GraphNeuralNetworks, Graphs, Flux, CUDA, Statistics, MLUtils
 using Flux.Data: DataLoader
 
 all_graphs = GNNGraph[]
@@ -61,7 +61,7 @@ opt = Adam(1f-4)
 
 Finally, we use a standard Flux training pipeline to fit our dataset.
 We use Flux's `DataLoader` to iterate over mini-batches of graphs 
-that we glue together into a single `GNNGraph` using the [`batch`](@ref) method:
+that we glue together into a single `GNNGraph` using the [`MLUtils.batch`](@ref) method:
 
 ```julia
 train_size = round(Int, 0.8 * length(all_graphs))
@@ -74,7 +74,7 @@ loss(loader) = mean(loss(g |> device) for g in loader)
 
 for epoch in 1:100
     for g in train_loader
-        g = Flux.batch(g) |> device
+        g = MLUtils.batch(g) |> device
         grad = gradient(() -> loss(g), ps)
         Flux.Optimise.update!(opt, ps, grad)
     end
