@@ -401,7 +401,7 @@ and the attention coefficients will be calculated as
 # Arguments
 
 - `in`: The dimension of input node features.
-- `ein`: The dimension of input edget features. Default 0 (i.e. no edge features passed in the forward).
+- `ein`: The dimension of input edge features. Default 0 (i.e. no edge features passed in the forward).
 - `out`: The dimension of output node features.
 - `σ`: Activation function. Default `identity`.
 - `bias`: Learn the additive bias if true. Default `true`.
