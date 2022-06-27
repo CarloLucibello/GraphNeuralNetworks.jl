@@ -4,7 +4,7 @@ CurrentModule = GraphNeuralNetworks
 
 # Convolutional Layers
 
-Many different types of graphs convolutional layers have been proposed in the literature. Choosing the right layer for your application can bould involve a lot of exploration. 
+Many different types of graphs convolutional layers have been proposed in the literature. Choosing the right layer for your application could involve a lot of exploration. 
 Some of the most commonly used layers are the [`GCNConv`](@ref) and the [`GATv2Conv`](@ref). Multiple graph convolutional layers are typically stacked together to create a graph neural network model
 (see [`GNNChain`](@ref)).
 
