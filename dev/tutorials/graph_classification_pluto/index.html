@@ -134,8 +134,8 @@ end</code></pre>
     ytest = onehotbatch(dataset.graph_data.targets[test_idxs], [-1, 1])
 end</code></pre>
 <pre id='var-train_idxs' class='code-output documenter-example-output'>2×38 OneHotMatrix(::Vector{UInt32}) with eltype Bool:
- 1  1  1  1  1  ⋅  ⋅  ⋅  1  1  ⋅  ⋅  ⋅  ⋅  …  1  ⋅  ⋅  ⋅  ⋅  1  ⋅  1  ⋅  ⋅  ⋅  ⋅  ⋅
- ⋅  ⋅  ⋅  ⋅  ⋅  1  1  1  ⋅  ⋅  1  1  1  1     ⋅  1  1  1  1  ⋅  1  ⋅  1  1  1  1  1</pre>
+ ⋅  ⋅  ⋅  1  1  ⋅  1  ⋅  1  1  ⋅  1  ⋅  ⋅  …  ⋅  1  ⋅  ⋅  1  ⋅  ⋅  1  ⋅  ⋅  1  ⋅  ⋅
+ 1  1  1  ⋅  ⋅  1  ⋅  1  ⋅  ⋅  1  ⋅  1  1     1  ⋅  1  1  ⋅  1  1  ⋅  1  1  ⋅  1  1</pre>
 
 
 <div class="markdown"><h2>Mini-batching of graphs</h2>
@@ -155,24 +155,24 @@ end</code></pre>
     train_loader = DataLoader((train_graphs, ytrain), batchsize=64, shuffle=true)
     test_loader = DataLoader((test_graphs, ytest), batchsize=64, shuffle=false)
 end</code></pre>
-<pre id='var-test_loader' class='code-output documenter-example-output'>DataLoader{Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, Flux.OneHotArray{UInt32, 2, 1, 2, Vector{UInt32}}}, Random._GLOBAL_RNG, Val{nothing}}((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(13, 28), GNNGraph(16, 34), GNNGraph(14, 28), GNNGraph(13, 26), GNNGraph(16, 36), GNNGraph(18, 40), GNNGraph(17, 38), GNNGraph(22, 50), GNNGraph(13, 28), GNNGraph(12, 24)  …  GNNGraph(19, 40), GNNGraph(13, 28), GNNGraph(21, 44), GNNGraph(20, 46), GNNGraph(11, 22), GNNGraph(19, 42), GNNGraph(23, 54), GNNGraph(23, 54), GNNGraph(22, 50), GNNGraph(25, 56)], Bool[1 1 … 0 0; 0 0 … 1 1]), 64, false, true, false, false, Val{nothing}(), Random._GLOBAL_RNG())</pre>
+<pre id='var-test_loader' class='code-output documenter-example-output'>DataLoader{Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, Flux.OneHotArray{UInt32, 2, 1, 2, Vector{UInt32}}}, Random._GLOBAL_RNG, Val{nothing}}((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(28, 62), GNNGraph(13, 26), GNNGraph(16, 36), GNNGraph(11, 22), GNNGraph(10, 20), GNNGraph(20, 46), GNNGraph(16, 34), GNNGraph(23, 50), GNNGraph(13, 28), GNNGraph(14, 30)  …  GNNGraph(23, 54), GNNGraph(13, 28), GNNGraph(23, 52), GNNGraph(15, 34), GNNGraph(13, 28), GNNGraph(15, 34), GNNGraph(23, 54), GNNGraph(16, 34), GNNGraph(25, 56), GNNGraph(20, 44)], Bool[0 0 … 0 0; 1 1 … 1 1]), 64, false, true, false, false, Val{nothing}(), Random._GLOBAL_RNG())</pre>
 
 <pre class='language-julia'><code class='language-julia'>first(train_loader)</code></pre>
-<pre id='var-hash113787' class='code-output documenter-example-output'>(GNNGraph(1197, 2660), Bool[0 0 … 0 0; 1 1 … 1 1])</pre>
+<pre id='var-hash113787' class='code-output documenter-example-output'>(GNNGraph(1136, 2496), Bool[0 1 … 0 1; 1 0 … 1 0])</pre>
 
 <pre class='language-julia'><code class='language-julia'>collect(train_loader)</code></pre>
 <pre id='var-hash151660' class='code-output documenter-example-output'>3-element Vector{Tuple{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}, Flux.OneHotArray{UInt32, 2, 1, 2, Vector{UInt32}}}}:
- (GNNGraph(1142, 2510), [0 0 … 0 0; 1 1 … 1 1])
- (GNNGraph(1165, 2586), [0 1 … 1 0; 1 0 … 0 1])
- (GNNGraph(403, 892), [0 0 … 0 1; 1 1 … 1 0])</pre>
+ (GNNGraph(1140, 2514), [1 0 … 1 1; 0 1 … 0 0])
+ (GNNGraph(1148, 2506), [0 0 … 0 0; 1 1 … 1 1])
+ (GNNGraph(419, 952), [0 0 … 0 1; 1 1 … 1 0])</pre>
 
 <pre class='language-julia'><code class='language-julia'>first(train_loader)[1]</code></pre>
 <pre id='var-hash134244' class='code-output documenter-example-output'>GNNGraph:
-    num_nodes = 1188
-    num_edges = 2620
+    num_nodes = 1155
+    num_edges = 2538
     num_graphs = 64
     ndata:
-        x => 7×1188 Matrix{Float32}</pre>
+        x => 7×1155 Matrix{Float32}</pre>
 
 
 <div class="markdown"><p>Here, we opt for a <code>batch_size</code> of 64, leading to 3 &#40;randomly shuffled&#41; mini-batches, containing all <span class="tex">$2 \cdot 64&#43;22 &#61; 150$</span> graphs.</p>
@@ -277,4 +277,4 @@ end</code></pre>
 <p>In this chapter, you have learned how to apply GNNs to the task of graph classification. You have learned how graphs can be batched together for better GPU utilization, and how to apply readout layers for obtaining graph embeddings rather than node embeddings.</p>
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gnn_intro_pluto/">« Intro to Graph Neural Networks</a><a class="docs-footer-nextpage" href="../../api/gnngraph/">GNNGraph »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.19 on <span class="colophon-date" title="Tuesday 28 June 2022 02:34">Tuesday 28 June 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gnn_intro_pluto/">« Intro to Graph Neural Networks</a><a class="docs-footer-nextpage" href="../../api/gnngraph/">GNNGraph »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.19 on <span class="colophon-date" title="Tuesday 5 July 2022 17:04">Tuesday 5 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
