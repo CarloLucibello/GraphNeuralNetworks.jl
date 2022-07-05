@@ -68,7 +68,7 @@ to its `k` closest `points`.
 - `dir`: The direction of the edges. If `dir=:in` edges go from the `k` 
          neighbors to the central node. If `dir=:out` we have the opposite
          direction.
-- `kws`: Further keyword arguments will be passed to the [`GNNGraph ](@ref) constructor.
+- `kws`: Further keyword arguments will be passed to the [`GNNGraph`](@ref) constructor.
 
 # Examples
 
@@ -130,11 +130,11 @@ end
 
 """
     radius_graph(points::AbstractMatrix, 
-              r::AbstractFloat; 
-              graph_indicator = nothing,
-              self_loops = false, 
-              dir = :in, 
-              kws...)
+                 r::AbstractFloat; 
+                 graph_indicator = nothing,
+                 self_loops = false, 
+                 dir = :in, 
+                 kws...)
 
 Create a graph where each node is linked 
 to its neighbors within a given distance `r`.  
@@ -150,7 +150,7 @@ to its neighbors within a given distance `r`.
 - `dir`: The direction of the edges. If `dir=:in` edges go from the
          neighbors to the central node. If `dir=:out` we have the opposite
          direction.
-- `kws`: Further keyword arguments will be passed to the [`GNNGraph ](@ref) constructor.
+- `kws`: Further keyword arguments will be passed to the [`GNNGraph`](@ref) constructor.
 
 # Examples
 
