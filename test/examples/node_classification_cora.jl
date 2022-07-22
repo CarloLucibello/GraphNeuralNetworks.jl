@@ -53,7 +53,7 @@ function train(Layer; verbose=false, kws...)
                      Dense(nhidden, nout))  |> device
 
     ps = Flux.params(model)
-    opt = ADAM(args.η)
+    opt = Adam(args.η)
     
 
     ## TRAINING

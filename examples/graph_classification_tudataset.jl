@@ -82,7 +82,7 @@ function train(; kws...)
                      Dense(nhidden, 1))  |> device
 
     ps = Flux.params(model)
-    opt = ADAM(args.η)
+    opt = Adam(args.η)
 
     # LOGGING FUNCTION
 

@@ -202,7 +202,7 @@ function train!(model; epochs=200, η=1e-2, infotime=10)
 	device = Flux.cpu
 	model = model |> device
 	ps = Flux.params(model)
-    opt = ADAM(1e-3)
+    opt = Adam(1e-3)
 	
 
     function report(epoch)
