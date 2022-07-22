@@ -1,7 +1,7 @@
 name = "GraphNeuralNetworks"
 uuid = "cffab07f-9bc2-4db1-8861-388f63bf7694"
 authors = ["Carlo Lucibello and contributors"]
-version = "0.4.4"
+version = "0.4.5"
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
@@ -29,7 +29,7 @@ Adapt = "3"
 CUDA = "3.3"
 ChainRulesCore = "1"
 DataStructures = "0.18"
-Flux = "0.13"
+Flux = "0.13.4"
 Functors = "0.2, 0.3"
 Graphs = "1.4"
 KrylovKit = "0.5"
