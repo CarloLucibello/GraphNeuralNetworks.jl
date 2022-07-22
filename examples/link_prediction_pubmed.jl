@@ -77,7 +77,7 @@ function train(; kws...)
     pred = DotPredictor()
 
     ps = Flux.params(model)
-    opt = ADAM(args.η)
+    opt = Adam(args.η)
 
     ### LOSS FUNCTION ############
 
