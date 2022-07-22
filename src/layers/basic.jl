@@ -106,25 +106,26 @@ end
 (c::GNNChain)(g::GNNGraph) = _applychain(c.layers, g)
 
 ## TODO see if this is faster for small chains
-# @generated function applychain(layers::Tuple{Vararg{<:Any,N}}, g::GNNGraph, x) where {N}
+## see https://github.com/FluxML/Flux.jl/pull/1809#discussion_r781691180
+# @generated function _applychain(layers::Tuple{Vararg{<:Any,N}}, g::GNNGraph, x) where {N}
 #     symbols = vcat(:x, [gensym() for _ in 1:N])
 #     calls = [:($(symbols[i+1]) = _applylayer(layers[$i], $(symbols[i]))) for i in 1:N]
 #     Expr(:block, calls...)
 # end
-
+# _applychain(layers::NamedTuple, g, x) = _applychain(Tuple(layers), x)
 
 function _applychain(layers, g::GNNGraph, x)  # type-unstable path, helps compile times
     for l in layers
         x = _applylayer(l, g, x)
     end
-    x
+    return x
 end
 
 function _applychain(layers, g::GNNGraph)  # type-unstable path, helps compile times
     for l in layers
         g = _applylayer(l, g)
     end
-    g
+    return g
 end
 
 # # explicit input
