@@ -68,7 +68,7 @@
     @testset "Flux restructure" begin
         chain = GNNChain(GraphConv(2=>2))
         params, restructure = Flux.destructure(chain)
-        restructure(params)
+        @test restructure(params) isa GNNChain
     end
 end
 
