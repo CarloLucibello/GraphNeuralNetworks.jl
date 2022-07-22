@@ -64,5 +64,11 @@
         wg = WithGraph(model, g, traingraph=true)
         @test length(Flux.params(wg)) == length(Flux.params(model)) + length(Flux.params(g))
     end
+
+    @testset "Flux restructure" begin
+        chain = GNNChain(GraphConv(2=>2))
+        params, restructure = Flux.destructure(chain)
+        @test restructure(params) isa GNNChain
+    end
 end
 

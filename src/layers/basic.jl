@@ -115,6 +115,7 @@ end
     Base.iterate, Base.lastindex, Base.keys
 
 Flux.functor(::Type{<:GNNChain}, c) = c.layers, ls -> GNNChain(ls...)
+Flux.functor(::Type{<:GNNChain}, c::Tuple) = c, ls -> GNNChain(ls...)
 
 # input from graph
 applylayer(l, g::GNNGraph) = GNNGraph(g, ndata=l(node_features(g)))
