@@ -54,7 +54,7 @@ model = GNNChain(GCNConv(16 => 64),
                 Dense(64, 1)) |> device
 
 ps = Flux.params(model)
-opt = ADAM(1f-4)
+opt = Adam(1f-4)
 ```
 
 ### Training 

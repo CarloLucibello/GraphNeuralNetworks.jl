@@ -40,7 +40,7 @@ model = Chain(Flux.flatten,
 ps = Flux.params(model);
 
 # ## Optimizer
-opt = ADAM(0.01)
+opt = Adam(0.01)
 
 function eval_loss_accuracy(X, y)
     ŷ = model(X)
