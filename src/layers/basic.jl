@@ -95,11 +95,6 @@ julia> m(g, x)
 
 julia> m2 = GNNChain(enc = m, 
                      dec = DotDecoder())
- m2 = GNNChain(enc = m, 
-                     dec = DotDecoder())
-
-julia> m2 = GNNChain(enc = m, 
-                     dec = DotDecoder())
 GNNChain(enc = GNNChain(GCNConv(2 => 5), BatchNorm(5), #7, Dense(5 => 4)), dec = DotDecoder())
 
 julia> m2(g, x)

@@ -17,6 +17,20 @@
         
         test_layer(gnn, g, rtol=1e-5, exclude_grad_fields=[:μ, :σ²])
 
+        @testset "constructor with names" begin
+            m = GNNChain(GCNConv(2=>5), 
+                    BatchNorm(5), 
+                    x -> relu.(x), 
+                    Dense(5, 4))
+            x = randn(Float32, 2, 3);
+            g = rand_graph(3, 6)
+
+            m2 = GNNChain(enc = m, 
+                     dec = DotDecoder())
+            
+            @test m2[:enc] === m
+            @test m2(g, x) == m2[:dec](g, m2[:enc](g, x))
+        end
 
         @testset "Parallel" begin
             AddResidual(l) = Parallel(+, identity, l) 
