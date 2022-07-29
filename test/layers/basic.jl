@@ -1,11 +1,13 @@
 @testset "basic" begin
     @testset "GNNChain" begin
         n, din, d, dout = 10, 3, 4, 2
+        deg = 4
         
-        g = GNNGraph(random_regular_graph(n, 4), 
+        g = GNNGraph(random_regular_graph(n, deg), 
                     graph_type=GRAPH_T,
                     ndata= randn(Float32, din, n))
-        
+        x = g.ndata.x
+
         gnn = GNNChain(GCNConv(din => d),
                        BatchNorm(d),
                        x -> tanh.(x),
@@ -17,6 +19,27 @@
         
         test_layer(gnn, g, rtol=1e-5, exclude_grad_fields=[:μ, :σ²])
 
+        @testset "constructor with names" begin
+            m = GNNChain(GCNConv(din=>d), 
+                    BatchNorm(d), 
+                    x -> relu.(x), 
+                    Dense(d, dout))
+       
+            m2 = GNNChain(enc = m, 
+                     dec = DotDecoder())
+            
+            @test m2[:enc] === m
+            @test m2(g, x) == m2[:dec](g, m2[:enc](g, x))
+        end
+
+        @testset "constructor with vector" begin
+            m = GNNChain(GCNConv(din=>d), 
+                    BatchNorm(d), 
+                    x -> relu.(x), 
+                    Dense(d, dout))
+            m2 = GNNChain([m.layers...])
+            @test m2(g, x) == m(g, x)
+        end
 
         @testset "Parallel" begin
             AddResidual(l) = Parallel(+, identity, l) 
