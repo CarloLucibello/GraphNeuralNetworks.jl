@@ -34,8 +34,6 @@ Private = false
 ```
 
 ```@docs
-Graphs.adjacency_matrix
-Graphs.degree
 Graphs.outneighbors
 Graphs.inneighbors
 ```
