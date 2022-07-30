@@ -93,5 +93,14 @@
         params, restructure = Flux.destructure(chain)
         @test restructure(params) isa GNNChain
     end
+    @testset "GNNGraph array input" begin
+        gs = [rand_graph(5, 6, ndata=rand(2, 5), graph_type=GRAPH_T) for _ in 1:4]
+        l = GCNConv(2 => 3)
+        y = l(gs, rand(2, 20))
+        @test size(y) == (3, 20)
+
+        gout = l(gs)
+        @test size(gout.ndata.x) == (3, 20)
+    end
 end
 

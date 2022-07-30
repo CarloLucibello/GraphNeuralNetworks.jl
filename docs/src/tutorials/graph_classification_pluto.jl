@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.5
+# v0.19.6
 
 #> [frontmatter]
 #> title = "Graph Classification with Graph Neural Networks"
@@ -13,12 +13,13 @@ using InteractiveUtils
 begin
     using Pkg
     Pkg.activate(; temp=true)
-    packages = [
+    Pkg.add([
         PackageSpec(; path=joinpath(@__DIR__,"..","..","..")),
         PackageSpec(; name="Flux", version="0.13"),
 		PackageSpec(; name="MLDatasets", version="0.7"),
-    ]
-    Pkg.add(packages)
+		PackageSpec(; name="MLUtils"),
+	])
+	Pkg.develop("GraphNeuralNetworks")
 end
 
 # ╔═╡ 361e0948-d91a-11ec-2d95-2db77435a0c1
@@ -29,6 +30,7 @@ begin
 	using Flux.Data: DataLoader
 	using GraphNeuralNetworks
 	using MLDatasets
+	using MLUtils
 	using LinearAlgebra, Random, Statistics
 	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
 	Random.seed!(17) # for reproducibility
@@ -73,8 +75,11 @@ This dataset provides **188 different graphs**, and the task is to classify each
 By inspecting the first graph object of the dataset, we can see that it comes with **17 nodes** and **38 edges**.
 It also comes with exactly **one graph label**, and provides additional node labels (7 classes) and edge labels (4 classes).
 However, for the sake of simplicity, we will not make use of edge labels.
+"""
 
-We have some useful utilities for working with graph datasets, *e.g.*, we can shuffle the dataset and use the first 150 graphs as training graphs, while using the remaining ones for testing:
+# ╔═╡ 7f7750ff-b7fa-4fe2-a5a8-6c9c26c479bb
+md"""
+We now convert the MLDatasets.jl graph types to our `GNNGraph`s and we also onehot encode both the node labels (which will be used as input features) and the graph labels (what we want to predict):  
 """
 
 # ╔═╡ 936c09f6-ee62-4bc2-a0c6-749a66080fd2
@@ -84,18 +89,26 @@ begin
 		               ndata=Float32.(onehotbatch(g.ndata.targets, 0:6)),
 	                   edata=nothing) 
 		      for g in graphs]
+	y = onehotbatch(dataset.graph_data.targets, [-1, 1])
 end
 
+# ╔═╡ 2c6ccfdd-cf11-415b-b398-95e5b0b2bbd4
+md"""We have some useful utilities for working with graph datasets, *e.g.*, we can shuffle the dataset and use the first 150 graphs as training graphs, while using the remaining ones for testing:
+"""
+
 # ╔═╡ 519477b2-8323-4ece-a7eb-141e9841117c
+train_data, test_data = splitobs((graphs, y), at=150, shuffle=true) |> getobs
+
+# ╔═╡ 3c3d5038-0ef6-47d7-a1b7-50880c5f3a0b
 begin
-	shuffled_idxs = randperm(length(graphs))
-	train_idxs = shuffled_idxs[1:150]
-	test_idxs = shuffled_idxs[151:end]
-	train_graphs = graphs[train_idxs]
-	test_graphs = graphs[test_idxs]
-	ytrain = onehotbatch(dataset.graph_data.targets[train_idxs], [-1, 1])
-	ytest = onehotbatch(dataset.graph_data.targets[test_idxs], [-1, 1])
+	train_loader = DataLoader(train_data, batchsize=64, shuffle=true)
+	test_loader = DataLoader(test_data, batchsize=64, shuffle=false)
 end
+
+# ╔═╡ f7778e2d-2e2a-4fc8-83b0-5242e4ec5eb4
+md"""
+Here, we opt for a `batch_size` of 64, leading to 3 (randomly shuffled) mini-batches, containing all ``2 \cdot 64+22 = 150`` graphs.
+"""
 
 # ╔═╡ 2a1c501e-811b-4ddd-887b-91e8c929c8b7
 md"""
@@ -114,35 +127,27 @@ This procedure has some crucial advantages over other batching procedures:
 
 2. There is no computational or memory overhead since adjacency matrices are saved in a sparse fashion holding only non-zero entries, *i.e.*, the edges.
 
-GNN.jl can **batch multiple graphs into a single giant graph** with the help of Flux's `DataLoader`:
+GNN.jl can **batch multiple graphs into a single giant graph**:
 """
 
 
-# ╔═╡ c202e3b7-1f39-496a-98e7-e03ada53b5c7
-begin
-	train_loader = DataLoader((train_graphs, ytrain), batchsize=64, shuffle=true)
-	test_loader = DataLoader((test_graphs, ytest), batchsize=64, shuffle=false)
-end
-
 # ╔═╡ a142610a-d862-42a9-88af-c8d8b6825650
-first(train_loader)
+vec_gs, _ = first(train_loader)
 
 # ╔═╡ 6faaf637-a0ff-468c-86b5-b0a7250258d6
-collect(train_loader)
+MLUtils.batch(vec_gs)
 
-# ╔═╡ 6cc5e766-ddcd-4547-b69c-6435428caf44
-first(train_loader)[1]
-
-# ╔═╡ ac69571a-998b-4630-afd6-f3d405618bc5
+# ╔═╡ e314b25f-e904-4c39-bf60-24cddf91fe9d
 md"""
-Here, we opt for a `batch_size` of 64, leading to 3 (randomly shuffled) mini-batches, containing all ``2 \cdot 64+22 = 150`` graphs.
-
-Furthermore, each batched graph object is equipped with a **`graph_indicator` vector**, which maps each node to its respective graph in the batch:
+Each batched graph object is equipped with a **`graph_indicator` vector**, which maps each node to its respective graph in the batch:
 
 ```math
 \textrm{graph-indicator} = [1, \ldots, 1, 2, \ldots, 2, 3, \ldots ]
 ```
+"""
 
+# ╔═╡ ac69571a-998b-4630-afd6-f3d405618bc5
+md"""
 ## Training a Graph Neural Network (GNN)
 
 Training a GNN for graph classification usually follows a simple recipe:
@@ -186,7 +191,7 @@ function eval_loss_accuracy(model, data_loader, device)
     acc = 0.
     ntot = 0
     for (g, y) in data_loader
-        g, y = g |> device, y |> device
+        g, y = MLUtils.batch(g) |> device, y |> device
         n = length(y)
         ŷ = model(g, g.ndata.x)
         loss += logitcrossentropy(ŷ, y) * n 
@@ -214,7 +219,7 @@ function train!(model; epochs=200, η=1e-2, infotime=10)
     report(0)
     for epoch in 1:epochs
         for (g, y) in train_loader
-            g, y = g |> device, y |> device
+            g, y = MLUtils.batch(g) |> device, y |> device
             gs = Flux.gradient(ps) do
                 ŷ = model(g, g.ndata.x)
                 logitcrossentropy(ŷ, y)
@@ -266,7 +271,7 @@ You have learned how graphs can be batched together for better GPU utilization, 
 """
 
 # ╔═╡ Cell order:
-# ╟─c97a0002-2253-45b6-9266-017189dbb6fe
+# ╠═c97a0002-2253-45b6-9266-017189dbb6fe
 # ╠═361e0948-d91a-11ec-2d95-2db77435a0c1
 # ╟─15136fd8-f9b2-4841-9a95-9de7b8969687
 # ╠═f6e86958-e96f-4c77-91fc-c72d8967575c
@@ -274,14 +279,17 @@ You have learned how graphs can be batched together for better GPU utilization, 
 # ╠═5d5e5152-c860-4158-8bc7-67ee1022f9f8
 # ╠═33163dd2-cb35-45c7-ae5b-d4854d141773
 # ╠═a8d6a133-a828-4d51-83c4-fb44f9d5ede1
-# ╟─3b3e0a79-264b-47d7-8bda-2a6db7290828
+# ╠═3b3e0a79-264b-47d7-8bda-2a6db7290828
+# ╠═7f7750ff-b7fa-4fe2-a5a8-6c9c26c479bb
 # ╠═936c09f6-ee62-4bc2-a0c6-749a66080fd2
+# ╟─2c6ccfdd-cf11-415b-b398-95e5b0b2bbd4
 # ╠═519477b2-8323-4ece-a7eb-141e9841117c
+# ╠═3c3d5038-0ef6-47d7-a1b7-50880c5f3a0b
+# ╟─f7778e2d-2e2a-4fc8-83b0-5242e4ec5eb4
 # ╟─2a1c501e-811b-4ddd-887b-91e8c929c8b7
-# ╠═c202e3b7-1f39-496a-98e7-e03ada53b5c7
 # ╠═a142610a-d862-42a9-88af-c8d8b6825650
 # ╠═6faaf637-a0ff-468c-86b5-b0a7250258d6
-# ╠═6cc5e766-ddcd-4547-b69c-6435428caf44
+# ╟─e314b25f-e904-4c39-bf60-24cddf91fe9d
 # ╟─ac69571a-998b-4630-afd6-f3d405618bc5
 # ╠═04402032-18a4-42b5-ad04-19b286bd29b7
 # ╟─2313fd8d-6e84-4bde-bacc-fb697dc33cbb

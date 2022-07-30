@@ -432,6 +432,9 @@ function Flux.batch(gs::AbstractVector{<:GNNGraph{T}}) where T<:COO_T
     )
 end
 
+Flux.batch(g::GNNGraph) = 
+    throw(ArgumentError("Cannot batch a `GNNGraph` (containing $(g.num_graphs) graphs). Pass a vector of `GNNGraph`s instead."))
+
 """
     unbatch(g::GNNGraph)
 
