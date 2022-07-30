@@ -13,7 +13,7 @@ NNlibCUDA = "a00861dc-f156-4864-bf3c-e6376f28a68d"
 [compat]
 DiffEqFlux = "1.45"
 Flux = "0.13"
-GraphNeuralNetworks = "0.4"
+GraphNeuralNetworks = "0.5"
 Graphs = "1"
 MLDatasets = "0.6, 0.7"
 julia = "1.7"
