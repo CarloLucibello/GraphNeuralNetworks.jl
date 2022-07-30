@@ -61,12 +61,16 @@ opt = Adam(1f-4)
 
 Finally, we use a standard Flux training pipeline to fit our dataset.
 We use Flux's `DataLoader` to iterate over mini-batches of graphs 
-that we glue together into a single `GNNGraph` using the [`MLUtils.batch`](@ref) method:
+that are glued together into a single `GNNGraph` using the [`MLUtils.batch`](@ref) method. This is what happens under the hood when creating a `DataLoader` with the
+`collate=true` option. 
 
 ```julia
-train_size = round(Int, 0.8 * length(all_graphs))
-train_loader = DataLoader(all_graphs[1:train_size], batchsize=32, shuffle=true)
-test_loader = DataLoader(all_graphs[train_size+1:end], batchsize=32, shuffle=false)
+train_graphs, test_graphs = MLUtils.split(all_graphs, at=0.8)
+
+train_loader = DataLoader(train_graphs, 
+                batchsize=32, shuffle=true, collate=true)
+test_loader = DataLoader(test_graphs, 
+                batchsize=32, shuffle=false, collate=true)
 
 loss(g::GNNGraph) = mean((vec(model(g, g.ndata.x)) - g.gdata.y).^2)
 
@@ -74,7 +78,7 @@ loss(loader) = mean(loss(g |> device) for g in loader)
 
 for epoch in 1:100
     for g in train_loader
-        g = MLUtils.batch(g) |> device
+        g = g |> device
         grad = gradient(() -> loss(g), ps)
         Flux.Optimise.update!(opt, ps, grad)
     end

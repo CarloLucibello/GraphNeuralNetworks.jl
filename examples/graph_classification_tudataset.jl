@@ -15,9 +15,8 @@ function eval_loss_accuracy(model, data_loader, device)
     loss = 0.
     acc = 0.
     ntot = 0
-    for (graphs, y) in data_loader
-        g = Flux.batch(graphs) |> device
-        y = y |> device
+    for (g, y) in data_loader
+        g, y = (g, y) |> device
         n = length(y)
         ŷ = model(g, g.ndata.x) |> vec
         loss += logitbinarycrossentropy(ŷ, y) * n 
@@ -68,8 +67,8 @@ function train(; kws...)
     dataset = getdataset()
     train_data, test_data = splitobs(dataset, at=NUM_TRAIN, shuffle=true)
     
-    train_loader = DataLoader(train_data, batchsize=args.batchsize, shuffle=true)
-    test_loader = DataLoader(test_data, batchsize=args.batchsize, shuffle=false)
+    train_loader = DataLoader(train_data; args.batchsize, shuffle=true, collate=true)
+    test_loader = DataLoader(test_data; args.batchsize, shuffle=false, collate=true)
     
     # DEFINE MODEL
 
@@ -96,9 +95,8 @@ function train(; kws...)
     
     report(0)
     for epoch in 1:args.epochs
-        for (graphs, y) in train_loader
-            g = Flux.batch(graphs) |> device
-            y = y |> device
+        for (g, y) in train_loader
+            g, y = (g, y) |> device
             gs = Flux.gradient(ps) do
                 ŷ = model(g, g.ndata.x) |> vec
                 logitbinarycrossentropy(ŷ, y)

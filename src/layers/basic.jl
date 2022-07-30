@@ -17,13 +17,6 @@ function (l::GNNLayer)(g::AbstractVector{<:GNNGraph}, args...; kws...)
     return l(batch(g), args...; kws...)
 end
 
-function (l::GNNLayer)(g::AbstractVector{<:GNNGraph}) 
-    @warn "Passing an array of graphs to a `GNNLayer` is discouraged. 
-    Explicitely call `MLUtils.batch(graphs)` first instead." maxlog=1
-    g = batch(g)
-    return GNNGraph(g, ndata=l(g, node_features(g)))
-end
-
 
 """
     WithGraph(model, g::GNNGraph; traingraph=false) 
