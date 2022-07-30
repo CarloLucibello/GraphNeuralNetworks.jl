@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Graph Classification · GraphNeuralNetworks.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">GraphNeuralNetworks.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../gnngraph/">Graphs</a></li><li><a class="tocitem" href="../../messagepassing/">Message Passing</a></li><li><a class="tocitem" href="../../models/">Model Building</a></li><li><a class="tocitem" href="../../datasets/">Datasets</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../gnn_intro_pluto/">Intro to Graph Neural Networks</a></li><li class="is-active"><a class="tocitem" href>Graph Classification</a><ul class="internal"><li><a class="tocitem" href="#Mini-batching-of-graphs"><span>Mini-batching of graphs</span></a></li><li><a class="tocitem" href="#Conclusion"><span>Conclusion</span></a></li></ul></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/gnngraph/">GNNGraph</a></li><li><a class="tocitem" href="../../api/basic/">Basic Layers</a></li><li><a class="tocitem" href="../../api/conv/">Convolutional Layers</a></li><li><a class="tocitem" href="../../api/pool/">Pooling Layers</a></li><li><a class="tocitem" href="../../api/messagepassing/">Message Passing</a></li><li><a class="tocitem" href="../../api/utils/">Utils</a></li></ul></li><li><a class="tocitem" href="../../dev/">Developer Notes</a></li><li><a class="tocitem" href="../../gsoc/">Summer Of Code</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Graph Classification</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Graph Classification</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/master/docs/src/tutorials/graph_classification_pluto.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><style>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Graph Classification · GraphNeuralNetworks.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">GraphNeuralNetworks.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../gnngraph/">Graphs</a></li><li><a class="tocitem" href="../../messagepassing/">Message Passing</a></li><li><a class="tocitem" href="../../models/">Model Building</a></li><li><a class="tocitem" href="../../datasets/">Datasets</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../gnn_intro_pluto/">Intro to Graph Neural Networks</a></li><li class="is-active"><a class="tocitem" href>Graph Classification</a><ul class="internal"><li><a class="tocitem" href="#Mini-batching-of-graphs"><span>Mini-batching of graphs</span></a></li><li><a class="tocitem" href="#Training-a-Graph-Neural-Network-and-#40;GNN-and-#41;"><span>Training a Graph Neural Network &amp;#40;GNN&amp;#41;</span></a></li><li><a class="tocitem" href="#Conclusion"><span>Conclusion</span></a></li></ul></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/gnngraph/">GNNGraph</a></li><li><a class="tocitem" href="../../api/basic/">Basic Layers</a></li><li><a class="tocitem" href="../../api/conv/">Convolutional Layers</a></li><li><a class="tocitem" href="../../api/pool/">Pooling Layers</a></li><li><a class="tocitem" href="../../api/messagepassing/">Message Passing</a></li><li><a class="tocitem" href="../../api/utils/">Utils</a></li></ul></li><li><a class="tocitem" href="../../dev/">Developer Notes</a></li><li><a class="tocitem" href="../../gsoc/">Summer Of Code</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Graph Classification</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Graph Classification</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/master/docs/src/tutorials/graph_classification_pluto.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><style>
     table {
         display: table !important;
         margin: 2rem auto !important;
@@ -25,18 +25,19 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "8548882b696d0bb922c0e72dd300f971cb2f2877da44d80b82b99b60930ff7ec"
+    input_sha = "af530579b3c06c2776f04ae3d7183b773b04c1f41abc2ba117e7d223964925c9"
     julia_version = "1.7.3"
 -->
 <pre class='language-julia'><code class='language-julia'>begin
     using Pkg
     Pkg.activate(; temp=true)
-    packages = [
+    Pkg.add([
         PackageSpec(; path=joinpath(@__DIR__,"..","..","..")),
         PackageSpec(; name="Flux", version="0.13"),
         PackageSpec(; name="MLDatasets", version="0.7"),
-    ]
-    Pkg.add(packages)
+        PackageSpec(; name="MLUtils"),
+    ])
+    Pkg.develop("GraphNeuralNetworks")
 end</code></pre>
 
 
@@ -46,6 +47,7 @@ end</code></pre>
     using Flux.Data: DataLoader
     using GraphNeuralNetworks
     using MLDatasets
+    using MLUtils
     using LinearAlgebra, Random, Statistics
     ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
     Random.seed!(17) # for reproducibility
@@ -98,7 +100,10 @@ end;</code></pre>
 
 <div class="markdown"><p>This dataset provides <strong>188 different graphs</strong>, and the task is to classify each graph into <strong>one out of two classes</strong>.</p>
 <p>By inspecting the first graph object of the dataset, we can see that it comes with <strong>17 nodes</strong> and <strong>38 edges</strong>. It also comes with exactly <strong>one graph label</strong>, and provides additional node labels &#40;7 classes&#41; and edge labels &#40;4 classes&#41;. However, for the sake of simplicity, we will not make use of edge labels.</p>
-<p>We have some useful utilities for working with graph datasets, <em>e.g.</em>, we can shuffle the dataset and use the first 150 graphs as training graphs, while using the remaining ones for testing:</p>
+</div>
+
+
+<div class="markdown"><p>We now convert the MLDatasets.jl graph types to our <code>GNNGraph</code>s and we also onehot encode both the node labels &#40;which will be used as input features&#41; and the graph labels &#40;what we want to predict&#41;:  </p>
 </div>
 
 <pre class='language-julia'><code class='language-julia'>begin
@@ -107,35 +112,28 @@ end;</code></pre>
                        ndata=Float32.(onehotbatch(g.ndata.targets, 0:6)),
                        edata=nothing) 
               for g in graphs]
+    y = onehotbatch(dataset.graph_data.targets, [-1, 1])
 end</code></pre>
-<pre id='var-graphs' class='code-output documenter-example-output'>188-element Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}:
- GNNGraph(17, 38)
- GNNGraph(13, 28)
- GNNGraph(13, 28)
- GNNGraph(19, 44)
- GNNGraph(11, 22)
- GNNGraph(28, 62)
- GNNGraph(16, 34)
- ⋮
- GNNGraph(22, 50)
- GNNGraph(22, 50)
- GNNGraph(13, 26)
- GNNGraph(12, 26)
- GNNGraph(21, 48)
- GNNGraph(16, 36)</pre>
+<pre id='var-y' class='code-output documenter-example-output'>2×188 OneHotMatrix(::Vector{UInt32}) with eltype Bool:
+ ⋅  1  1  ⋅  1  ⋅  1  ⋅  1  ⋅  ⋅  ⋅  ⋅  1  …  ⋅  ⋅  ⋅  1  ⋅  1  1  ⋅  ⋅  1  1  ⋅  1
+ 1  ⋅  ⋅  1  ⋅  1  ⋅  1  ⋅  1  1  1  1  ⋅     1  1  1  ⋅  1  ⋅  ⋅  1  1  ⋅  ⋅  1  ⋅</pre>
+
+
+<div class="markdown"><p>We have some useful utilities for working with graph datasets, <em>e.g.</em>, we can shuffle the dataset and use the first 150 graphs as training graphs, while using the remaining ones for testing:</p>
+</div>
+
+<pre class='language-julia'><code class='language-julia'>train_data, test_data = splitobs((graphs, y), at=150, shuffle=true) |&gt; getobs</code></pre>
+<pre id='var-train_data' class='code-output documenter-example-output'>((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(11, 22), GNNGraph(13, 28), GNNGraph(22, 50), GNNGraph(18, 40), GNNGraph(11, 22), GNNGraph(23, 54), GNNGraph(24, 50), GNNGraph(21, 44), GNNGraph(11, 22), GNNGraph(19, 44)  …  GNNGraph(17, 38), GNNGraph(13, 28), GNNGraph(13, 28), GNNGraph(15, 34), GNNGraph(17, 38), GNNGraph(22, 50), GNNGraph(22, 50), GNNGraph(16, 36), GNNGraph(15, 32), GNNGraph(22, 48)], Bool[1 1 … 1 1; 0 0 … 0 0]), (GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(23, 52), GNNGraph(17, 38), GNNGraph(23, 54), GNNGraph(23, 54), GNNGraph(12, 26), GNNGraph(28, 66), GNNGraph(11, 22), GNNGraph(13, 26), GNNGraph(22, 46), GNNGraph(25, 56)  …  GNNGraph(22, 50), GNNGraph(19, 40), GNNGraph(25, 56), GNNGraph(12, 24), GNNGraph(14, 30), GNNGraph(13, 28), GNNGraph(20, 44), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(21, 46)], Bool[0 0 … 0 1; 1 1 … 1 0]))</pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
-    shuffled_idxs = randperm(length(graphs))
-    train_idxs = shuffled_idxs[1:150]
-    test_idxs = shuffled_idxs[151:end]
-    train_graphs = graphs[train_idxs]
-    test_graphs = graphs[test_idxs]
-    ytrain = onehotbatch(dataset.graph_data.targets[train_idxs], [-1, 1])
-    ytest = onehotbatch(dataset.graph_data.targets[test_idxs], [-1, 1])
+    train_loader = DataLoader(train_data, batchsize=64, shuffle=true)
+    test_loader = DataLoader(test_data, batchsize=64, shuffle=false)
 end</code></pre>
-<pre id='var-train_idxs' class='code-output documenter-example-output'>2×38 OneHotMatrix(::Vector{UInt32}) with eltype Bool:
- ⋅  ⋅  1  ⋅  1  1  1  ⋅  ⋅  1  1  ⋅  1  1  …  1  1  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  ⋅  1  ⋅  ⋅  1
- 1  1  ⋅  1  ⋅  ⋅  ⋅  1  1  ⋅  ⋅  1  ⋅  ⋅     ⋅  ⋅  1  1  1  1  1  1  1  ⋅  1  1  ⋅</pre>
+<pre id='var-test_loader' class='code-output documenter-example-output'>DataLoader{Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, Flux.OneHotArray{UInt32, 2, 1, 2, Vector{UInt32}}}, Random._GLOBAL_RNG, Val{nothing}}((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(23, 52), GNNGraph(17, 38), GNNGraph(23, 54), GNNGraph(23, 54), GNNGraph(12, 26), GNNGraph(28, 66), GNNGraph(11, 22), GNNGraph(13, 26), GNNGraph(22, 46), GNNGraph(25, 56)  …  GNNGraph(22, 50), GNNGraph(19, 40), GNNGraph(25, 56), GNNGraph(12, 24), GNNGraph(14, 30), GNNGraph(13, 28), GNNGraph(20, 44), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(21, 46)], Bool[0 0 … 0 1; 1 1 … 1 0]), 64, false, true, false, false, Val{nothing}(), Random._GLOBAL_RNG())</pre>
+
+
+<div class="markdown"><p>Here, we opt for a <code>batch_size</code> of 64, leading to 3 &#40;randomly shuffled&#41; mini-batches, containing all <span class="tex">$2 \cdot 64&#43;22 &#61; 150$</span> graphs.</p>
+</div>
 
 <h2 id="Mini-batching-of-graphs"><a class="docs-heading-anchor" href="#Mini-batching-of-graphs">Mini-batching of graphs</a><a id="Mini-batching-of-graphs-1"></a><a class="docs-heading-anchor-permalink" href="#Mini-batching-of-graphs" title="Permalink"></a></h2><div class="markdown">
 
@@ -148,37 +146,27 @@ end</code></pre>
 <li><p>There is no computational or memory overhead since adjacency matrices are saved in a sparse fashion holding only non-zero entries, <em>i.e.</em>, the edges.</p>
 </li>
 </ol>
-<p>GNN.jl can <strong>batch multiple graphs into a single giant graph</strong> with the help of Flux&#39;s <code>DataLoader</code>:</p>
+<p>GNN.jl can <strong>batch multiple graphs into a single giant graph</strong>:</p>
 </div>
 
-<pre class='language-julia'><code class='language-julia'>begin
-    train_loader = DataLoader((train_graphs, ytrain), batchsize=64, shuffle=true)
-    test_loader = DataLoader((test_graphs, ytest), batchsize=64, shuffle=false)
-end</code></pre>
-<pre id='var-test_loader' class='code-output documenter-example-output'>DataLoader{Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, Flux.OneHotArray{UInt32, 2, 1, 2, Vector{UInt32}}}, Random._GLOBAL_RNG, Val{nothing}}((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(24, 50), GNNGraph(22, 50), GNNGraph(11, 22), GNNGraph(12, 24), GNNGraph(13, 26), GNNGraph(16, 34), GNNGraph(10, 20), GNNGraph(15, 34), GNNGraph(23, 54), GNNGraph(22, 46)  …  GNNGraph(19, 44), GNNGraph(28, 62), GNNGraph(20, 44), GNNGraph(26, 60), GNNGraph(23, 50), GNNGraph(17, 38), GNNGraph(16, 36), GNNGraph(23, 54), GNNGraph(18, 40), GNNGraph(16, 34)], Bool[0 0 … 0 1; 1 1 … 1 0]), 64, false, true, false, false, Val{nothing}(), Random._GLOBAL_RNG())</pre>
+<pre class='language-julia'><code class='language-julia'>vec_gs, _ = first(train_loader)</code></pre>
+<pre id='var-vec_gs' class='code-output documenter-example-output'>(GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(11, 22), GNNGraph(22, 50), GNNGraph(14, 30), GNNGraph(20, 44), GNNGraph(20, 44), GNNGraph(22, 50), GNNGraph(16, 34), GNNGraph(13, 28), GNNGraph(19, 40), GNNGraph(15, 34)  …  GNNGraph(11, 22), GNNGraph(12, 26), GNNGraph(11, 22), GNNGraph(23, 54), GNNGraph(22, 50), GNNGraph(17, 38), GNNGraph(14, 28), GNNGraph(11, 22), GNNGraph(13, 28), GNNGraph(22, 50)], Bool[1 0 … 1 0; 0 1 … 0 1])</pre>
 
-<pre class='language-julia'><code class='language-julia'>first(train_loader)</code></pre>
-<pre id='var-hash113787' class='code-output documenter-example-output'>(GNNGraph(1167, 2570), Bool[1 1 … 1 0; 0 0 … 0 1])</pre>
-
-<pre class='language-julia'><code class='language-julia'>collect(train_loader)</code></pre>
-<pre id='var-hash151660' class='code-output documenter-example-output'>3-element Vector{Tuple{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}, Flux.OneHotArray{UInt32, 2, 1, 2, Vector{UInt32}}}}:
- (GNNGraph(1155, 2572), [1 1 … 0 0; 0 0 … 1 1])
- (GNNGraph(1101, 2406), [0 0 … 0 0; 1 1 … 1 1])
- (GNNGraph(414, 920), [0 1 … 0 0; 1 0 … 1 1])</pre>
-
-<pre class='language-julia'><code class='language-julia'>first(train_loader)[1]</code></pre>
-<pre id='var-hash134244' class='code-output documenter-example-output'>GNNGraph:
-    num_nodes = 1152
-    num_edges = 2554
+<pre class='language-julia'><code class='language-julia'>MLUtils.batch(vec_gs)</code></pre>
+<pre id='var-hash102363' class='code-output documenter-example-output'>GNNGraph:
+    num_nodes = 1094
+    num_edges = 2408
     num_graphs = 64
     ndata:
-        x => 7×1152 Matrix{Float32}</pre>
+        x => 7×1094 Matrix{Float32}</pre>
 
 
-<div class="markdown"><p>Here, we opt for a <code>batch_size</code> of 64, leading to 3 &#40;randomly shuffled&#41; mini-batches, containing all <span class="tex">$2 \cdot 64&#43;22 &#61; 150$</span> graphs.</p>
-<p>Furthermore, each batched graph object is equipped with a <strong><code>graph_indicator</code> vector</strong>, which maps each node to its respective graph in the batch:</p>
+<div class="markdown"><p>Each batched graph object is equipped with a <strong><code>graph_indicator</code> vector</strong>, which maps each node to its respective graph in the batch:</p>
 <p class="tex">$$\textrm&#123;graph-indicator&#125; &#61; &#91;1, \ldots, 1, 2, \ldots, 2, 3, \ldots &#93;$$</p>
-<h2>Training a Graph Neural Network &#40;GNN&#41;</h2>
+</div>
+
+<h2 id="Training-a-Graph-Neural-Network-and-#40;GNN-and-#41;"><a class="docs-heading-anchor" href="#Training-a-Graph-Neural-Network-and-#40;GNN-and-#41;">Training a Graph Neural Network &amp;#40;GNN&amp;#41;</a><a id="Training-a-Graph-Neural-Network-and-#40;GNN-and-#41;-1"></a><a class="docs-heading-anchor-permalink" href="#Training-a-Graph-Neural-Network-and-#40;GNN-and-#41;" title="Permalink"></a></h2><div class="markdown">
+
 <p>Training a GNN for graph classification usually follows a simple recipe:</p>
 <ol>
 <li><p>Embed each node by performing multiple rounds of message passing</p>
@@ -214,7 +202,7 @@ end</code></pre>
     acc = 0.
     ntot = 0
     for (g, y) in data_loader
-        g, y = g |&gt; device, y |&gt; device
+        g, y = MLUtils.batch(g) |&gt; device, y |&gt; device
         n = length(y)
         ŷ = model(g, g.ndata.x)
         loss += logitcrossentropy(ŷ, y) * n 
@@ -242,7 +230,7 @@ end</code></pre>
     report(0)
     for epoch in 1:epochs
         for (g, y) in train_loader
-            g, y = g |&gt; device, y |&gt; device
+            g, y = MLUtils.batch(g) |&gt; device, y |&gt; device
             gs = Flux.gradient(ps) do
                 ŷ = model(g, g.ndata.x)
                 logitcrossentropy(ŷ, y)
@@ -277,4 +265,4 @@ end</code></pre>
 <p>In this chapter, you have learned how to apply GNNs to the task of graph classification. You have learned how graphs can be batched together for better GPU utilization, and how to apply readout layers for obtaining graph embeddings rather than node embeddings.</p>
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gnn_intro_pluto/">« Intro to Graph Neural Networks</a><a class="docs-footer-nextpage" href="../../api/gnngraph/">GNNGraph »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.22 on <span class="colophon-date" title="Friday 29 July 2022 14:17">Friday 29 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gnn_intro_pluto/">« Intro to Graph Neural Networks</a><a class="docs-footer-nextpage" href="../../api/gnngraph/">GNNGraph »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.22 on <span class="colophon-date" title="Saturday 30 July 2022 09:24">Saturday 30 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
