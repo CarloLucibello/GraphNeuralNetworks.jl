@@ -24,6 +24,7 @@ include("test_utils.jl")
 
 tests = [
     "GNNGraphs/gnngraph",
+    "GNNGraphs/heterograph",
     "GNNGraphs/convert",
     "GNNGraphs/transform",
     "GNNGraphs/operators",
