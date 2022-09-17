@@ -1,4 +1,4 @@
-# We load a Graph Dataset from MLDatasets without explicitely depending on it
+# We load a Graph Dataset from MLDatasets without explicitly depending on it
 
 """
     mldataset2gnngraph(dataset)
