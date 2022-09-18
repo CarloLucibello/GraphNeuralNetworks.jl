@@ -40,7 +40,7 @@ end;
 md"""
 # Introduction: Hands-on Graph Neural Networks
 
-*This Pluto noteboook is a julia adaptation of the Pytorch Geometric tutorials that can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html).*
+*This Pluto notebook is a julia adaptation of the Pytorch Geometric tutorials that can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html).*
 
 Recently, deep learning on graphs has emerged to one of the hottest research fields in the deep learning community.
 Here, **Graph Neural Networks (GNNs)** aim to generalize classical deep learning concepts to irregular structured data (in contrast to images or texts) and to enable neural networks to reason about objects and their relations.
@@ -135,7 +135,7 @@ The  `g` object holds 3 attributes:
 These attributes are `NamedTuples` that can store multiple feature arrays: we can access a specific set of features e.g. `x`, with `g.ndata.x`.
 
 
-In our task, `g.ndata.train_mask` describes for which nodes we already know their community assigments. In total, we are only aware of the ground-truth labels of 4 nodes (one for each community), and the task is to infer the community assignment for the remaining nodes.
+In our task, `g.ndata.train_mask` describes for which nodes we already know their community assignments. In total, we are only aware of the ground-truth labels of 4 nodes (one for each community), and the task is to infer the community assignment for the remaining nodes.
 
 The `g` object also provides some **utility functions** to infer some basic properties of the underlying graph.
 For example, we can easily infer whether there exists isolated nodes in the graph (*i.e.* there exists no edge to any node), whether the graph contains self-loops (*i.e.*, ``(v, v) \in \mathcal{E}``), or whether the graph is bidirected (*i.e.*, for each edge ``(v, w) \in \mathcal{E}`` there also exists the edge ``(w, v) \in \mathcal{E}``).
@@ -262,13 +262,13 @@ This leads to the conclusion that GNNs introduce a strong inductive bias, leadin
 
 But can we do better? Let's look at an example on how to train our network parameters based on the knowledge of the community assignments of 4 nodes in the graph (one for each community):
 
-Since everything in our model is differentiable and parameterized, we can add some labels, train the model and observse how the embeddings react.
+Since everything in our model is differentiable and parameterized, we can add some labels, train the model and observe how the embeddings react.
 Here, we make use of a semi-supervised or transductive learning procedure: We simply train against one node per class, but are allowed to make use of the complete input graph data.
 
 Training our model is very similar to any other Flux model.
 In addition to defining our network architecture, we define a loss criterion (here, `logitcrossentropy` and initialize a stochastic gradient optimizer (here, `Adam`).
 After that, we perform multiple rounds of optimization, where each round consists of a forward and backward pass to compute the gradients of our model parameters w.r.t. to the loss derived from the forward pass.
-If you are not new to Flux, this scheme should appear familar to you. 
+If you are not new to Flux, this scheme should appear familiar to you. 
 
 Note that our semi-supervised learning scenario is achieved by the following line:
 ```
@@ -277,7 +277,7 @@ loss = logitcrossentropy(ŷ[:,train_mask], y[:,train_mask])
 While we compute node embeddings for all of our nodes, we **only make use of the training nodes for computing the loss**.
 Here, this is implemented by filtering the output of the classifier `out` and ground-truth labels `data.y` to only contain the nodes in the `train_mask`.
 
-Let us now start training and see how our node embeddings evolve over time (best experienced by explicitely running the code):
+Let us now start training and see how our node embeddings evolve over time (best experienced by explicitly running the code):
 """
 
 

@@ -117,7 +117,7 @@ g.edata.e
 ## Edge weights
 
 It is common to denote scalar edge features as edge weights. The `GNNGraph` has specific support
-for edge weights: they can be stored as part of internal representions of the graph (COO or adjacency matrix). Some graph convolutional layers, most notably the [`GCNConv`](@ref), can use the edge weights to perform weighted sums over the nodes' neighborhoods.
+for edge weights: they can be stored as part of internal representations of the graph (COO or adjacency matrix). Some graph convolutional layers, most notably the [`GCNConv`](@ref), can use the edge weights to perform weighted sums over the nodes' neighborhoods.
 
 ```julia
 julia> source = [1, 1, 2, 2, 3, 3];
@@ -143,7 +143,7 @@ julia> get_edge_weight(g)
 
 ## Batches and Subgraphs
 
-Multiple `GNNGraph`s can be batched togheter into a single graph
+Multiple `GNNGraph`s can be batched together into a single graph
 that contains the total number of the original nodes 
 and where the original graphs are disjoint subgraphs.
 
