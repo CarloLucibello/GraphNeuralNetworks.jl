@@ -49,6 +49,7 @@ makedocs(;
                 [
                     "Intro to Graph Neural Networks" => "tutorials/gnn_intro_pluto.md",
                     "Graph Classification" => "tutorials/graph_classification_pluto.md",
+                    "Node Classification" => "tutorials/node_classification_pluto.md",
                 ],
              "API Reference" =>
                [
