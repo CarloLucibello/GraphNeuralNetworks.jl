@@ -25,7 +25,7 @@
         g = rand_graph(4, 10, graph_type=GRAPH_T)
         @test edgetype(g) <: Graphs.Edge
         for e in edges(g)
-            @test e isa Graphs.Edge
+            @test e isa Graphs.Edge{Int}
         end
     end
 
