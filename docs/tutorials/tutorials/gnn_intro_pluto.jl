@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.5
+# v0.19.11
 
 using Markdown
 using InteractiveUtils
@@ -10,13 +10,12 @@ begin
     using Pkg
     Pkg.activate(; temp=true)
     packages = [
-        PackageSpec(; path=joinpath(@__DIR__,"..","..","..")),
         PackageSpec(; name="Flux", version="0.13"),
-		PackageSpec(; name="MLDatasets", version="0.7"),
-		PackageSpec(; name="GraphMakie"),
-		PackageSpec(; name="Graphs"),
-		PackageSpec(; name="CairoMakie"),
-		PackageSpec(; name="PlutoUI"),
+        PackageSpec(; name="MLDatasets", version="0.7"),
+        PackageSpec(; name="GraphMakie"),
+        PackageSpec(; name="Graphs"),
+        PackageSpec(; name="CairoMakie"),
+        PackageSpec(; name="PlutoUI"),
     ]
     Pkg.add(packages)
 end
@@ -36,10 +35,19 @@ begin
 	Random.seed!(17) # for reproducibility
 end;
 
+# ╔═╡ cc051aa1-b929-4bca-b261-7f797a644a2b
+md"""
+---
+title: Hands-on introduction to Graph Neural Networks
+cover: assets/logo.svg
+author: "[Carlo Lucibello](https://github.com/CarloLucibello)"
+date: 2022-05-24
+description: A beginner level introduction to graph machine learning using GraphNeuralNetworks.jl.
+---
+"""
+
 # ╔═╡ 03a9e023-e682-4ea3-a10b-14c4d101b291
 md"""
-# Introduction: Hands-on Graph Neural Networks
-
 *This Pluto notebook is a julia adaptation of the Pytorch Geometric tutorials that can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html).*
 
 Recently, deep learning on graphs has emerged to one of the hottest research fields in the deep learning community.
@@ -330,6 +338,7 @@ Furthermore, we did this all with a few lines of code, thanks to the GraphNeural
 """
 
 # ╔═╡ Cell order:
+# ╟─cc051aa1-b929-4bca-b261-7f797a644a2b
 # ╟─03a9e023-e682-4ea3-a10b-14c4d101b291
 # ╟─6f20e59c-b002-4d22-9ee0-b62596574776
 # ╠═361e0948-d91a-11ec-2d95-2db77435a0c1

@@ -10,7 +10,6 @@ begin
     using Pkg
     Pkg.activate(; temp=true)
     packages = [
-        PackageSpec(; path=joinpath(@__DIR__,"..","..","..")),
         PackageSpec(; name="Flux", version="0.13"),
         PackageSpec(; name="MLDatasets", version="0.7"),
         PackageSpec(; name="Plots"),
@@ -38,7 +37,13 @@ end
 
 # ╔═╡ 8db76e69-01ee-42d6-8721-19a3848693ae
 md"""
-# Node Classification
+---
+title: Node Classification with Graph Neural Networks
+cover: assets/logo.svg
+author: "[Deeptendu Santra](https://github.com/Dsantra92)"
+date: 2022-09-25
+description: Tutorial for Node classification using GraphNeuralNetworks.jl
+---
 """
 
 # ╔═╡ ca2f0293-7eac-4d9a-9a2f-fda47fd95a99
@@ -394,7 +399,7 @@ In this tutorial, we have seen how to apply GNNs to real-world problems, and, in
 
 # ╔═╡ Cell order:
 # ╟─8db76e69-01ee-42d6-8721-19a3848693ae
-# ╟─2c710e0f-4275-4440-a3a9-27eabf61823a
+# ╠═2c710e0f-4275-4440-a3a9-27eabf61823a
 # ╟─ca2f0293-7eac-4d9a-9a2f-fda47fd95a99
 # ╟─4455f18c-2bd9-42ed-bce3-cfe6561eab23
 # ╠═5463330a-0161-11ed-1b18-936030a32bbf
