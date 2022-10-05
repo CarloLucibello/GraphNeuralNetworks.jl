@@ -10,6 +10,7 @@ begin
     using Pkg
     Pkg.activate(; temp=true)
     Pkg.add([
+        PackageSpec(; name="GraphNeuralNetworks", version="0.4"),
         PackageSpec(; name="Flux", version="0.13"),
         PackageSpec(; name="MLDatasets", version="0.7"),
         PackageSpec(; name="MLUtils"),
@@ -276,7 +277,7 @@ You have learned how graphs can be batched together for better GPU utilization, 
 
 # ╔═╡ Cell order:
 # ╟─c07e1be9-adb6-4454-8128-bc8917406c58
-# ╠═c97a0002-2253-45b6-9266-017189dbb6fe
+# ╟─cc97a0002-2253-45b6-9266-017189dbb6fe
 # ╠═361e0948-d91a-11ec-2d95-2db77435a0c1
 # ╠═15136fd8-f9b2-4841-9a95-9de7b8969687
 # ╠═f6e86958-e96f-4c77-91fc-c72d8967575c

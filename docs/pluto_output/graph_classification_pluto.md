@@ -25,13 +25,14 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "c34ac85fddf5caef5fd54d483b3d1e36f91571399fa5fc327a8029f3bdaf1c47"
-    julia_version = "1.8.1"
+    input_sha = "fc0899435e98dd644dce14d32d09fe0fcb20fd0d1c3581cabdd193093e3d2f7a"
+    julia_version = "1.8.2"
 -->
 <pre class='language-julia'><code class='language-julia'>begin
     using Pkg
     Pkg.activate(; temp=true)
     Pkg.add([
+        PackageSpec(; name="GraphNeuralNetworks", version="0.4"),
         PackageSpec(; name="Flux", version="0.13"),
         PackageSpec(; name="MLDatasets", version="0.7"),
         PackageSpec(; name="MLUtils"),
@@ -121,13 +122,13 @@ end</code></pre>
 </div>
 
 <pre class='language-julia'><code class='language-julia'>train_data, test_data = splitobs((graphs, y), at=150, shuffle=true) |&gt; getobs</code></pre>
-<pre id='var-train_data' class='code-output documenter-example-output'>((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(23, 54), GNNGraph(11, 22), GNNGraph(16, 34), GNNGraph(16, 34), GNNGraph(19, 44), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(26, 60), GNNGraph(14, 28), GNNGraph(25, 56)  …  GNNGraph(15, 34), GNNGraph(26, 60), GNNGraph(20, 44), GNNGraph(13, 28), GNNGraph(12, 24), GNNGraph(13, 28), GNNGraph(10, 20), GNNGraph(23, 54), GNNGraph(14, 30), GNNGraph(22, 50)], Bool[0 1 … 1 0; 1 0 … 0 1]), (GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(11, 22), GNNGraph(19, 44), GNNGraph(12, 26), GNNGraph(13, 28), GNNGraph(25, 56), GNNGraph(16, 34), GNNGraph(19, 44), GNNGraph(15, 32), GNNGraph(23, 54), GNNGraph(19, 44)  …  GNNGraph(17, 38), GNNGraph(20, 46), GNNGraph(17, 38), GNNGraph(11, 22), GNNGraph(19, 40), GNNGraph(22, 50), GNNGraph(21, 44), GNNGraph(12, 26), GNNGraph(20, 46), GNNGraph(26, 60)], Bool[1 0 … 0 0; 0 1 … 1 1]))</pre>
+<pre id='var-train_data' class='code-output documenter-example-output'>((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(23, 50), GNNGraph(11, 22), GNNGraph(23, 48), GNNGraph(25, 56), GNNGraph(20, 46), GNNGraph(16, 34), GNNGraph(26, 60), GNNGraph(13, 28), GNNGraph(17, 38), GNNGraph(15, 34)  …  GNNGraph(24, 50), GNNGraph(22, 50), GNNGraph(22, 50), GNNGraph(12, 24), GNNGraph(19, 44), GNNGraph(26, 60), GNNGraph(28, 66), GNNGraph(20, 44), GNNGraph(19, 44), GNNGraph(14, 30)], Bool[0 1 … 0 1; 1 0 … 1 0]), (GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(16, 34), GNNGraph(20, 46), GNNGraph(17, 36), GNNGraph(12, 24), GNNGraph(23, 54), GNNGraph(16, 34), GNNGraph(13, 28), GNNGraph(17, 38), GNNGraph(27, 66), GNNGraph(19, 44)  …  GNNGraph(13, 28), GNNGraph(13, 28), GNNGraph(11, 22), GNNGraph(22, 50), GNNGraph(19, 44), GNNGraph(19, 44), GNNGraph(17, 38), GNNGraph(16, 34), GNNGraph(12, 26), GNNGraph(20, 46)], Bool[0 0 … 1 0; 1 1 … 0 1]))</pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
     train_loader = DataLoader(train_data, batchsize=64, shuffle=true)
     test_loader = DataLoader(test_data, batchsize=64, shuffle=false)
 end</code></pre>
-<pre id='var-test_loader' class='code-output documenter-example-output'>DataLoader{Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, OneHotArrays.OneHotMatrix{UInt32, 2, Vector{UInt32}}}, Random._GLOBAL_RNG, Val{nothing}}((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(11, 22), GNNGraph(19, 44), GNNGraph(12, 26), GNNGraph(13, 28), GNNGraph(25, 56), GNNGraph(16, 34), GNNGraph(19, 44), GNNGraph(15, 32), GNNGraph(23, 54), GNNGraph(19, 44)  …  GNNGraph(17, 38), GNNGraph(20, 46), GNNGraph(17, 38), GNNGraph(11, 22), GNNGraph(19, 40), GNNGraph(22, 50), GNNGraph(21, 44), GNNGraph(12, 26), GNNGraph(20, 46), GNNGraph(26, 60)], Bool[1 0 … 0 0; 0 1 … 1 1]), 64, false, true, false, false, Val{nothing}(), Random._GLOBAL_RNG())</pre>
+<pre id='var-test_loader' class='code-output documenter-example-output'>DataLoader{Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, OneHotArrays.OneHotMatrix{UInt32, 2, Vector{UInt32}}}, Random._GLOBAL_RNG, Val{nothing}}((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(16, 34), GNNGraph(20, 46), GNNGraph(17, 36), GNNGraph(12, 24), GNNGraph(23, 54), GNNGraph(16, 34), GNNGraph(13, 28), GNNGraph(17, 38), GNNGraph(27, 66), GNNGraph(19, 44)  …  GNNGraph(13, 28), GNNGraph(13, 28), GNNGraph(11, 22), GNNGraph(22, 50), GNNGraph(19, 44), GNNGraph(19, 44), GNNGraph(17, 38), GNNGraph(16, 34), GNNGraph(12, 26), GNNGraph(20, 46)], Bool[0 0 … 1 0; 1 1 … 0 1]), 64, false, true, false, false, Val{nothing}(), Random._GLOBAL_RNG())</pre>
 
 
 <div class="markdown"><p>Here, we opt for a <code>batch_size</code> of 64, leading to 3 &#40;randomly shuffled&#41; mini-batches, containing all <span class="tex">$2 \cdot 64&#43;22 &#61; 150$</span> graphs.</p>
@@ -152,15 +153,15 @@ end</code></pre>
 </div>
 
 <pre class='language-julia'><code class='language-julia'>vec_gs, _ = first(train_loader)</code></pre>
-<pre id='var-vec_gs' class='code-output documenter-example-output'>(GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(19, 40), GNNGraph(25, 58), GNNGraph(13, 28), GNNGraph(23, 54), GNNGraph(23, 54), GNNGraph(28, 62), GNNGraph(23, 54), GNNGraph(17, 38), GNNGraph(20, 46), GNNGraph(17, 38)  …  GNNGraph(17, 38), GNNGraph(22, 50), GNNGraph(16, 34), GNNGraph(26, 60), GNNGraph(10, 20), GNNGraph(22, 50), GNNGraph(20, 44), GNNGraph(11, 22), GNNGraph(17, 38), GNNGraph(22, 48)], Bool[1 0 … 0 1; 0 1 … 1 0])</pre>
+<pre id='var-vec_gs' class='code-output documenter-example-output'>(GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(25, 56), GNNGraph(11, 22), GNNGraph(17, 38), GNNGraph(13, 28), GNNGraph(12, 24), GNNGraph(21, 44), GNNGraph(22, 50), GNNGraph(13, 26), GNNGraph(21, 48), GNNGraph(12, 26)  …  GNNGraph(21, 44), GNNGraph(16, 34), GNNGraph(23, 54), GNNGraph(20, 46), GNNGraph(12, 24), GNNGraph(12, 26), GNNGraph(23, 54), GNNGraph(19, 40), GNNGraph(23, 54), GNNGraph(14, 30)], Bool[0 1 … 0 1; 1 0 … 1 0])</pre>
 
 <pre class='language-julia'><code class='language-julia'>MLUtils.batch(vec_gs)</code></pre>
 <pre id='var-hash102363' class='code-output documenter-example-output'>GNNGraph:
-    num_nodes = 1136
-    num_edges = 2502
+    num_nodes = 1154
+    num_edges = 2550
     num_graphs = 64
     ndata:
-        x => 7×1136 Matrix{Float32}</pre>
+        x => 7×1154 Matrix{Float32}</pre>
 
 
 <div class="markdown"><p>Each batched graph object is equipped with a <strong><code>graph_indicator</code> vector</strong>, which maps each node to its respective graph in the batch:</p>
@@ -273,11 +274,6 @@ end</code></pre>
 <div class="markdown">
 
 <p>In this chapter, you have learned how to apply GNNs to the task of graph classification. You have learned how graphs can be batched together for better GPU utilization, and how to apply readout layers for obtaining graph embeddings rather than node embeddings.</p>
-</div>
-
-
-<div class="markdown"><hr />
-<p>title: Graph Classification with Graph Neural Networks cover: assets/logo.svg author: &quot;<a href="https://github.com/CarloLucibello">Carlo Lucibello</a>&quot; date: 2022-05-23 description: Tutorial for Graph Classification using GraphNeuralNetworks.jl –-</p>
 </div>
 
 <!-- PlutoStaticHTML.End -->

@@ -10,6 +10,7 @@ begin
     using Pkg
     Pkg.activate(; temp=true)
     packages = [
+        PackageSpec(; name="GraphNeuralNetworks", version="0.4"),
         PackageSpec(; name="Flux", version="0.13"),
         PackageSpec(; name="MLDatasets", version="0.7"),
         PackageSpec(; name="GraphMakie"),
