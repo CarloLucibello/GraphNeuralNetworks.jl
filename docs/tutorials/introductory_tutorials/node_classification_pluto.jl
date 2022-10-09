@@ -40,7 +40,7 @@ end
 md"""
 ---
 title: Node Classification with Graph Neural Networks
-cover: assets/logo.svg
+cover: assets/node_classsification.gif
 author: "[Deeptendu Santra](https://github.com/Dsantra92)"
 date: 2022-09-25
 description: Tutorial for Node classification using GraphNeuralNetworks.jl

@@ -36,7 +36,7 @@ end;
 md"""
 ---
 title: Graph Classification with Graph Neural Networks
-cover: assets/logo.svg
+cover: assets/graph_classification.gif
 author: "[Carlo Lucibello](https://github.com/CarloLucibello)"
 date: 2022-05-23
 description: Tutorial for Graph Classification using GraphNeuralNetworks.jl

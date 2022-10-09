@@ -40,7 +40,7 @@ end;
 md"""
 ---
 title: Hands-on introduction to Graph Neural Networks
-cover: assets/logo.svg
+cover: assets/intro_1.png
 author: "[Carlo Lucibello](https://github.com/CarloLucibello)"
 date: 2022-05-24
 description: A beginner level introduction to graph machine learning using GraphNeuralNetworks.jl.
