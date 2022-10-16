@@ -10,7 +10,7 @@ begin
     using Pkg
     Pkg.activate(; temp=true)
     packages = [
-        PackageSpec(; path=joinpath(@__DIR__,"..","..","..")),
+        PackageSpec(; name="GraphNeuralNetworks", version="0.4"),
         PackageSpec(; name="Flux", version="0.13"),
         PackageSpec(; name="MLDatasets", version="0.7"),
         PackageSpec(; name="Plots"),
@@ -38,7 +38,13 @@ end
 
 # ╔═╡ 8db76e69-01ee-42d6-8721-19a3848693ae
 md"""
-# Node Classification
+---
+title: Node Classification with Graph Neural Networks
+cover: assets/node_classsification.gif
+author: "[Deeptendu Santra](https://github.com/Dsantra92)"
+date: 2022-09-25
+description: Tutorial for Node classification using GraphNeuralNetworks.jl
+---
 """
 
 # ╔═╡ ca2f0293-7eac-4d9a-9a2f-fda47fd95a99
