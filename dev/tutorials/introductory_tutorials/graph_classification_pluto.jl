@@ -1,5 +1,12 @@
 ### A Pluto.jl notebook ###
-# v0.19.11
+# v0.19.13
+
+#> [frontmatter]
+#> author = "[Carlo Lucibello](https://github.com/CarloLucibello)"
+#> title = "Graph Classification with Graph Neural Networks"
+#> date = "2022-05-23"
+#> description = "Tutorial for Graph Classification using GraphNeuralNetworks.jl"
+#> cover = "assets/graph_classification.gif"
 
 using Markdown
 using InteractiveUtils
@@ -31,17 +38,6 @@ begin
 	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
 	Random.seed!(17) # for reproducibility
 end;
-
-# ╔═╡ c07e1be9-adb6-4454-8128-bc8917406c58
-md"""
----
-title: Graph Classification with Graph Neural Networks
-cover: assets/graph_classification.gif
-author: "[Carlo Lucibello](https://github.com/CarloLucibello)"
-date: 2022-05-23
-description: Tutorial for Graph Classification using GraphNeuralNetworks.jl
----
-"""
 
 # ╔═╡ 15136fd8-f9b2-4841-9a95-9de7b8969687
 md"""
@@ -276,16 +272,16 @@ You have learned how graphs can be batched together for better GPU utilization, 
 """
 
 # ╔═╡ Cell order:
-# ╟─cc97a0002-2253-45b6-9266-017189dbb6fe
-# ╠═361e0948-d91a-11ec-2d95-2db77435a0c1
-# ╠═15136fd8-f9b2-4841-9a95-9de7b8969687
+# ╟─c97a0002-2253-45b6-9266-017189dbb6fe
+# ╟─361e0948-d91a-11ec-2d95-2db77435a0c1
+# ╟─15136fd8-f9b2-4841-9a95-9de7b8969687
 # ╠═f6e86958-e96f-4c77-91fc-c72d8967575c
 # ╠═24f76360-8599-46c8-a49f-4c31f02eb7d8
 # ╠═5d5e5152-c860-4158-8bc7-67ee1022f9f8
 # ╠═33163dd2-cb35-45c7-ae5b-d4854d141773
 # ╠═a8d6a133-a828-4d51-83c4-fb44f9d5ede1
-# ╠═3b3e0a79-264b-47d7-8bda-2a6db7290828
-# ╠═7f7750ff-b7fa-4fe2-a5a8-6c9c26c479bb
+# ╟─3b3e0a79-264b-47d7-8bda-2a6db7290828
+# ╟─7f7750ff-b7fa-4fe2-a5a8-6c9c26c479bb
 # ╠═936c09f6-ee62-4bc2-a0c6-749a66080fd2
 # ╟─2c6ccfdd-cf11-415b-b398-95e5b0b2bbd4
 # ╠═519477b2-8323-4ece-a7eb-141e9841117c

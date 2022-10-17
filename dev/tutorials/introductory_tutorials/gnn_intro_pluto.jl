@@ -1,5 +1,12 @@
 ### A Pluto.jl notebook ###
-# v0.19.11
+# v0.19.13
+
+#> [frontmatter]
+#> author = "[Carlo Lucibello](https://github.com/CarloLucibello)"
+#> title = "Hands-on introduction to Graph Neural Networks"
+#> date = "2022-05-22"
+#> description = "A beginner level introduction to graph machine learning using GraphNeuralNetworks.jl"
+#> cover = "assets/intro_1.png"
 
 using Markdown
 using InteractiveUtils
@@ -35,17 +42,6 @@ begin
 	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
 	Random.seed!(17) # for reproducibility
 end;
-
-# ╔═╡ cc051aa1-b929-4bca-b261-7f797a644a2b
-md"""
----
-title: Hands-on introduction to Graph Neural Networks
-cover: assets/intro_1.png
-author: "[Carlo Lucibello](https://github.com/CarloLucibello)"
-date: 2022-05-24
-description: A beginner level introduction to graph machine learning using GraphNeuralNetworks.jl.
----
-"""
 
 # ╔═╡ 03a9e023-e682-4ea3-a10b-14c4d101b291
 md"""

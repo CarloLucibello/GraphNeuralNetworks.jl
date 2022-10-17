@@ -1,5 +1,12 @@
 ### A Pluto.jl notebook ###
-# v0.19.11
+# v0.19.13
+
+#> [frontmatter]
+#> author = "[Deeptendu Santra](https://github.com/Dsantra92)"
+#> title = "Node Classification with Graph Neural Networks"
+#> date = "2022-09-25"
+#> description = "Tutorial for Node classification using GraphNeuralNetworks.jl"
+#> cover = "assets/node_classsification.gif"
 
 using Markdown
 using InteractiveUtils
@@ -35,17 +42,6 @@ begin
     ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
     Random.seed!(17) # for reproducibility
 end
-
-# ╔═╡ 8db76e69-01ee-42d6-8721-19a3848693ae
-md"""
----
-title: Node Classification with Graph Neural Networks
-cover: assets/node_classsification.gif
-author: "[Deeptendu Santra](https://github.com/Dsantra92)"
-date: 2022-09-25
-description: Tutorial for Node classification using GraphNeuralNetworks.jl
----
-"""
 
 # ╔═╡ ca2f0293-7eac-4d9a-9a2f-fda47fd95a99
 md"""
