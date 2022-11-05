@@ -313,6 +313,17 @@
         @test hash(g1) != hash(GNNGraph(g1, ndata=rand(5), graph_type=GRAPH_T))
         @test hash(g1) != hash(GNNGraph(g1, edata=rand(6), graph_type=GRAPH_T))
     end
+
+
+    @testset "copy" begin
+        g1 = rand_graph(10, 4, ndata=rand(2,10), graph_type=GRAPH_T)
+        g2 = copy(g1)
+        @test g1 === g2 # shallow copies are identical for immutable objects
+
+        g2 = copy(g1, deep=true)
+        @test g1 == g2
+        @test g1 !== g2 
+    end
 end
 
 

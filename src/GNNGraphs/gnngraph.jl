@@ -200,6 +200,27 @@ function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata, grap
             ndata, edata, gdata) 
 end
 
+
+"""
+    copy(g::GNNGraph; deep=false)
+
+Create a copy of `g`. If `deep` is `true`, then copy will be a deep copy (equivalent to `deepcopy(g)`),
+otherwise it will be a shallow copy with the same underlying graph data.
+"""
+function Base.copy(g::GNNGraph; deep=false)
+    if deep
+        GNNGraph(deepcopy(g.graph), 
+                g.num_nodes, g.num_edges, g.num_graphs, 
+                deepcopy(g.graph_indicator), 
+                deepcopy(g.ndata), deepcopy(g.edata), deepcopy(g.gdata))
+    else
+        GNNGraph(g.graph, 
+                g.num_nodes, g.num_edges, g.num_graphs, 
+                g.graph_indicator, 
+                g.ndata, g.edata, g.gdata)
+    end
+end
+
 function Base.show(io::IO, g::GNNGraph)
     print(io, "GNNGraph($(g.num_nodes), $(g.num_edges))")
 end
