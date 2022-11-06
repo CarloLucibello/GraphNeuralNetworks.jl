@@ -15,6 +15,8 @@ using ChainRulesCore
 using LinearAlgebra, Random, Statistics
 import MLUtils
 using MLUtils: getobs, numobs
+using CUDA.CUSPARSE: AbstractCuSparseMatrix
+
 
 include("gnngraph.jl")
 export GNNGraph, 

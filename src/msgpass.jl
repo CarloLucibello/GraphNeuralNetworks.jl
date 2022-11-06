@@ -189,14 +189,14 @@ end
 ## COPY_XJ 
 
 function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(+), xi, xj::AbstractMatrix, e)
-    A = adjacency_matrix(g, weighted=false)
+    A = adjacency_matrix(g, eltype(xj), weighted=false)
     return xj * A
 end
 
-## avoid the fast path on gpu until we have better cuda support
-function propagate(::typeof(copy_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
-    propagate((xi,xj,e) -> copy_xj(xi,xj,e), g, +, xi, xj, e)
-end
+# ## avoid the fast path on gpu until we have better cuda support
+# function propagate(::typeof(copy_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e)
+#     propagate((xi,xj,e) -> copy_xj(xi,xj,e), g, +, xi, xj, e)
+# end
 
 ## E_MUL_XJ 
 
@@ -207,10 +207,10 @@ function propagate(::typeof(e_mul_xj), g::GNNGraph, ::typeof(+), xi, xj::Abstrac
     return xj * A
 end
 
-## avoid the fast path on gpu until we have better cuda support
-function propagate(::typeof(e_mul_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e::AbstractVector)
-    propagate((xi,xj,e) -> e_mul_xj(xi,xj,e), g, +, xi, xj, e)
-end
+# ## avoid the fast path on gpu until we have better cuda support
+# function propagate(::typeof(e_mul_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e::AbstractVector)
+#     propagate((xi,xj,e) -> e_mul_xj(xi,xj,e), g, +, xi, xj, e)
+# end
 
 ## W_MUL_XJ 
 
@@ -220,10 +220,10 @@ function propagate(::typeof(w_mul_xj), g::GNNGraph, ::typeof(+), xi, xj::Abstrac
     return xj * A
 end
 
-## avoid the fast path on gpu until we have better cuda support
-function propagate(::typeof(w_mul_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e::Nothing)
-    propagate((xi,xj,e) -> w_mul_xj(xi,xj,e), g, +, xi, xj, e)
-end
+# ## avoid the fast path on gpu until we have better cuda support
+# function propagate(::typeof(w_mul_xj), g::GNNGraph{<:Union{COO_T,SPARSE_T}}, ::typeof(+), xi, xj::AnyCuMatrix, e::Nothing)
+#     propagate((xi,xj,e) -> w_mul_xj(xi,xj,e), g, +, xi, xj, e)
+# end
 
 
 

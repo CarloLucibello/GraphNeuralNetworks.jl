@@ -172,8 +172,46 @@ function edge_decoding(idx, n; directed=true)
     return s, t
 end
 
-binarize(x) = map(>(0), x)
+# binarize(x) = map(>(0), x) # map is not supported by CuSparse types
+binarize(x::AbstractArray) = >(0).(x)
+binarize(x::Number, T::Type)::T = ifelse(x > 0, T(1), T(0)) 
+binarize(x::AbstractArray, T) = T.(binarize(x)) # didn't find a better cusparse compatible implementation
+
 
 @non_differentiable binarize(x...)
 @non_differentiable edge_encoding(x...)
 @non_differentiable edge_decoding(x...)
+
+
+## PIRACY. THESE SHOULD GO in CUDA.jl
+
+# Workaround https://github.com/JuliaGPU/CUDA.jl/issues/1406
+Base.sum(x::AbstractCuSparseMatrix; dims=:) = cusparse_sum(x, Val(dims))
+
+cusparse_sum(x, ::Val{:}) = sum(cusparse_sum(x, Val(1)))
+
+function cusparse_sum(x::AbstractCuSparseMatrix, ::Val{1})
+    m, n = size(x)
+    v = ones_like(x, (1, m))
+    return v * x
+end
+
+function cusparse_sum(x::AbstractCuSparseMatrix, ::Val{2})
+    m, n = size(x)
+    v = ones_like(x, (n, 1))
+    return x * v
+end
+
+# workaround https://github.com/JuliaGPU/CUDA.jl/issues/1664
+function CUDA.CuMatrix{T}(x::AbstractCuSparseMatrix{T}) where T <: Integer
+    return T.(CuMatrix(Float32.(x)))
+end
+
+function Base.:(*)(x::AbstractCuSparseMatrix, d::Diagonal)
+    return x .* d.diag'
+end
+
+function Base.:(*)(d::Diagonal, x::AbstractCuSparseMatrix)
+    return d.diag .* CuArray(x) # couldn't do better
+end
+

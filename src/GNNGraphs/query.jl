@@ -143,12 +143,7 @@ User may specify the eltype `T` of the returned matrix.
 If `weighted=true`, the `A` will contain the edge weigths if any, otherwise the elements of `A` will be either 0 or 1.
 """
 function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=eltype(g); dir=:out, weighted=true)
-    if g.graph[1] isa CuVector
-        # TODO revisit after https://github.com/JuliaGPU/CUDA.jl/pull/1152
-        A, n, m = to_dense(g.graph, T; num_nodes=g.num_nodes, weighted)
-    else
-        A, n, m = to_sparse(g.graph, T; num_nodes=g.num_nodes, weighted)
-    end
+    A, n, m = to_sparse(g.graph, T; num_nodes=g.num_nodes, weighted)
     @assert size(A) == (n, n)
     return dir == :out ? A : A'
 end
@@ -157,7 +152,7 @@ function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g);
     @assert dir ∈ [:in, :out]
     A = g.graph
     if !weighted
-        A = binarize(A)
+        A = binarize(A, T)
     end
     A = T != eltype(A) ? T.(A) : A
     return dir == :out ? A : A'
@@ -232,7 +227,7 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT=nothing; dir=:out, edge_we
     end
     A = adjacency_matrix(g)
     if edge_weight === false
-        A = binarize(A)
+        A = binarize(A, T)
     end
     A = eltype(A) != T ? T.(A) : A
     return dir == :out ? vec(sum(A, dims=2)) : 
