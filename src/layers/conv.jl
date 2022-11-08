@@ -107,6 +107,7 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T}, edge_weight::EW=nothing
     else
         x = propagate(copy_xj, g, +, xj=x)
     end
+    @show x c 
     x = x .* c'
     if Dout >= Din
         x = l.weight * x

@@ -157,7 +157,7 @@ function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType=eltype(g);
     @assert dir ∈ [:in, :out]
     A = g.graph
     if !weighted
-        A = binarize(A)
+        A = binarize(A, T)
     end
     A = T != eltype(A) ? T.(A) : A
     return dir == :out ? A : A'
@@ -232,7 +232,7 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT=nothing; dir=:out, edge_we
     end
     A = adjacency_matrix(g)
     if edge_weight === false
-        A = binarize(A)
+        A = binarize(A, T)
     end
     A = eltype(A) != T ? T.(A) : A
     return dir == :out ? vec(sum(A, dims=2)) : 

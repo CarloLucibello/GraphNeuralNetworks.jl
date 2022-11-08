@@ -172,7 +172,14 @@ function edge_decoding(idx, n; directed=true)
     return s, t
 end
 
-binarize(x) = map(>(0), x)
+# binarize(x) = map(>(0), x)
+binarize(x) = binarize(x, Bool)
+binarize(x, T::Type{Bool}) = x .> 0
+binarize(x, T) = T.(x .> 0)
+
+binarize(x::GBMatrix, T::Type{Bool}) = x .> 0
+binarize(x::GBMatrix, T) = T.(binarize(x, Bool))
+
 
 @non_differentiable binarize(x...)
 @non_differentiable edge_encoding(x...)

@@ -127,7 +127,7 @@ function GNNGraph(data::D;
                         gdata = (;),
                         ) where D <: Union{COO_T, ADJMAT_T, ADJLIST_T}
 
-    @assert graph_type ∈ [:coo, :dense, :sparse] "Invalid graph_type $graph_type requested"
+    @assert graph_type ∈ [:coo, :dense, :sparse, :graphblas] "Invalid graph_type $graph_type requested"
     @assert dir ∈ [:in, :out]
     
     if graph_type == :coo
@@ -136,6 +136,8 @@ function GNNGraph(data::D;
         graph, num_nodes, num_edges = to_dense(data; num_nodes, dir)
     elseif graph_type == :sparse
         graph, num_nodes, num_edges = to_sparse(data; num_nodes, dir)
+    elseif graph_type == :graphblas
+        graph, num_nodes, num_edges = to_graphblas(data; num_nodes, dir)
     end
     
     num_graphs = !isnothing(graph_indicator) ? maximum(graph_indicator) : 1

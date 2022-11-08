@@ -15,6 +15,7 @@ using ChainRulesCore
 using LinearAlgebra, Random, Statistics
 import MLUtils
 using MLUtils: getobs, numobs
+using SuiteSparseGraphBLAS
 
 include("gnngraph.jl")
 export GNNGraph, 
