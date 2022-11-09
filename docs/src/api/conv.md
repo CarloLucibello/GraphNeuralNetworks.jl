@@ -19,6 +19,7 @@ The table below lists all graph convolutional layers implemented in the *GraphNe
 | [`CGConv`](@ref)            |          |           |             |
 | [`ChebConv`](@ref)          |          |           |             |
 | [`EdgeConv`](@ref)          |          |           |             |
+| [`EGNNConv`](@ref)          |          |           |     ✓       |
 | [`GATConv`](@ref)           |          |           |     ✓       |
 | [`GATv2Conv`](@ref)         |          |           |     ✓       |
 | [`GatedGraphConv`](@ref)    |     ✓    |           |             |
@@ -30,6 +31,7 @@ The table below lists all graph convolutional layers implemented in the *GraphNe
 | [`NNConv`](@ref)            |          |           |     ✓       |
 | [`ResGatedGraphConv`](@ref) |          |           |             |
 | [`SAGEConv`](@ref)          |     ✓    |           |             |
+| [`SGConv`](@ref)            |     ✓    |           |             |
 
 
 ## Docs
