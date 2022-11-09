@@ -25,6 +25,8 @@ propagate
 copy_xi
 copy_xj
 xi_dot_xj
+xi_sub_xj
+xj_sub_xi
 e_mul_xj
 w_mul_xj
 ```

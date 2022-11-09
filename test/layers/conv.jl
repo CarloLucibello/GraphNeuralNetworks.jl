@@ -288,4 +288,17 @@
             end
         end
     end
+
+    @testset "EGNNConv" begin
+        hin = 5
+        hout = 5
+        hidden = 5
+        l = EGNNConv(hin => hout, hidden)
+        g = rand_graph(10, 20, graph_type=GRAPH_T)
+        x = rand(T, in_channel, g.num_nodes)
+        h = randn(T, hin, g.num_nodes)
+        hnew, xnew = l(g, h, x)
+        @test size(hnew) == (hout, g.num_nodes)
+        @test size(xnew) == (in_channel, g.num_nodes)
+    end
 end

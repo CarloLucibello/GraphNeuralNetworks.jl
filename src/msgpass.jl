@@ -1,5 +1,6 @@
 """
-    propagate(f, g, aggr; xi, xj, e)  ->  m̄
+    propagate(f, g, aggr; [xi, xj, e])  ->  m̄
+    propagate(f, g, aggr, xi, xj, e=nothing) 
 
 Performs message passing on graph `g`. Takes care of materializing the node features on each edge, 
 applying the message function, and returning an aggregated message ``\\bar{\\mathbf{m}}`` 
@@ -68,7 +69,7 @@ function propagate end
 propagate(l, g::GNNGraph, aggr; xi=nothing, xj=nothing, e=nothing) = 
     propagate(l, g, aggr, xi, xj, e)
 
-function propagate(l, g::GNNGraph, aggr, xi, xj, e)
+function propagate(l, g::GNNGraph, aggr, xi, xj, e=nothing)
     m = apply_edges(l, g, xi, xj, e) 
     m̄ = aggregate_neighbors(g, aggr, m)
     return m̄
@@ -77,8 +78,8 @@ end
 ## APPLY EDGES
 
 """
-    apply_edges(f, g, xi, xj, e)
     apply_edges(f, g; [xi, xj, e])
+    apply_edges(f, g, xi, xj, e=nothing)
 
 Returns the message from node `j` to node `i` .
 In the message-passing scheme, the incoming messages 
@@ -110,7 +111,7 @@ function apply_edges end
 apply_edges(l, g::GNNGraph; xi=nothing, xj=nothing, e=nothing) = 
     apply_edges(l, g, xi, xj, e)
 
-function apply_edges(f, g::GNNGraph, xi, xj, e)
+function apply_edges(f, g::GNNGraph, xi, xj, e=nothing)
     check_num_nodes(g, xi)
     check_num_nodes(g, xj)
     check_num_edges(g, e)
@@ -157,6 +158,17 @@ copy_xi(xi, xj, e) = xi
     xi_dot_xj(xi, xj, e) = sum(xi .* xj, dims=1)
 """
 xi_dot_xj(xi, xj, e) = sum(xi .* xj, dims=1)
+
+"""
+    xi_sub_xj(xi, xj, e) = xi .- xj
+"""
+xi_sub_xj(xi, xj, e) = xi .- xj
+
+"""
+    xj_sub_xi(xi, xj, e) = xj .- xi
+"""
+xj_sub_xi(xi, xj, e) = xj .- xi
+
 
 """
     e_mul_xj(xi, xj, e) = reshape(e, (...)) .* xj
