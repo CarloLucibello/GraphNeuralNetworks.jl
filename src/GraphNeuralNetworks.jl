@@ -36,6 +36,8 @@ export
     copy_xj,
     copy_xi,
     xi_dot_xj,
+    xi_sub_xj,
+    xj_sub_xi,
     e_mul_xj,
     w_mul_xj,
 
@@ -50,17 +52,18 @@ export
     CGConv,
     ChebConv,
     EdgeConv,
+    EGNNConv,
     GATConv,
     GATv2Conv,
     GatedGraphConv,
     GCNConv,
     GINConv,
+    GMMConv,
     GraphConv,
     MEGNetConv, 
     NNConv,
     ResGatedGraphConv,
     SAGEConv,
-    GMMConv,
     SGConv,
     
     # layers/pool

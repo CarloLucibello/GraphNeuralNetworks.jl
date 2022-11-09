@@ -1083,6 +1083,7 @@ The input to the layer is a node feature array `x` of size `(num_features, num_n
 edge pseudo-coordinate array `e` of size `(num_features, num_edges)`
 The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
 as the input size.
+
 # Arguments 
 
 - `in`: Number of input node features.
@@ -1297,4 +1298,132 @@ function Base.show(io::IO, l::SGConv)
     print(io, "SGConv($in => $out")
     l.k == 1 || print(io, ", ", l.k)
     print(io, ")")
+end
+
+
+
+@doc raw"""
+    EdgeConv((in, ein) => out, hidden_size)
+    EdgeConv(in => out, hidden_size=2*in)
+
+Equivariant Graph Convolutional Layer from [E(n) Equivariant Graph
+Neural Networks](https://arxiv.org/abs/2102.09844).
+
+The layer performs the following operation:
+
+```math
+\mathbf{m}_{j\to i}=\phi_e(\mathbf{h}_i, \mathbf{h}_j, \lVert\mathbf{x}_i-\mathbf{x}_j\rVert^2, \mathbf{e}_{j\to i}),\\
+\mathbf{x}_i' = \mathbf{h}_i{x_i} + C_i\sum_{j\in\mathcal{N}(i)}(\mathbf{x}_i-\mathbf{x}_j)\phi_x(\mathbf{m}_{j\to i}),\\
+\mathbf{m}_i = C_i\sum_{j\in\mathcal{N}(i)} \mathbf{m}_{j\to i},\\
+\mathbf{h}_i' = \mathbf{h}_i + \phi_h(\mathbf{h}_i, \mathbf{m}_i)
+```
+where ``h_i``, ``x_i``, ``e_{ij}`` are invariant node features, equivariance node
+features, and edge features respectively. ``\phi_e``, ``\phi_h``, and
+``\phi_x`` are two-layer MLPs. :math:`C` is a constant for normalization,
+computed as ``1/|\mathcal{N}(i)|``.
+
+
+# Constructor Arguments
+
+- `in`: Number of input features for `h`.
+- `out`: Number of output features for `h`.
+- `ein`: Number of input edge features.
+- `hidden_size`: Hidden representation size.
+- `residual`: If `true`, add a residual connection. Only possible if `in == out`. Default `false`.
+
+# Forward Pass 
+
+    l(g, x, h, e=nothing)
+                     
+## Forward Pass Arguments:
+
+- `g` : The graph.
+- `x` : Matrix of equivariant node coordinates.
+- `h` : Matrix of invariant node features.
+- `e` : Matrix of invariant edge features. Default `nothing`.
+
+Returns updated `h` and `x`.
+
+# Examples
+
+```julia
+g = rand_graph(10, 10)
+h = randn(Float32, 5, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
+egnn = EGNNConv(5 => 6, 10)
+hnew, xnew = egnn(g, h, x)
+```
+"""
+struct EGNNConv  <: GNNLayer
+    ϕe::Chain
+    ϕx::Chain
+    ϕh::Chain
+    num_features::NamedTuple
+    residual::Bool
+end
+
+@functor EGNNConv
+        
+EGNNConv(ch::Pair{Int,Int}, hidden_size=2*ch[1]) = EGNNConv((ch[1], 0) => ch[2], hidden_size) 
+
+#Follows reference implementation at https://github.com/vgsatorras/egnn/blob/main/models/egnn_clean/egnn_clean.py
+function EGNNConv(ch::Pair{NTuple{2, Int}, Int}, hidden_size::Int, residual=false)
+    (in_size, edge_feat_size), out_size = ch
+    act_fn = swish
+
+    # +1 for the radial feature: ||x_i - x_j||^2
+    ϕe = Chain(Dense(in_size * 2 + edge_feat_size + 1 => hidden_size, act_fn),
+               Dense(hidden_size => hidden_size, act_fn))
+
+    ϕh = Chain(Dense(in_size + hidden_size, hidden_size, swish),
+               Dense(hidden_size, out_size))
+
+    ϕx = Chain(Dense(hidden_size, hidden_size, swish),
+               Dense(hidden_size, 1, bias=false))
+
+    num_features = (in=in_size, edge=edge_feat_size, out=out_size)
+    if residual 
+        @assert in_size == out_size "Residual connection only possible if in_size == out_size"
+    end
+    return EGNNConv(ϕe, ϕx, ϕh, num_features, residual)
+end
+
+function (l::EGNNConv)(g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e=nothing)
+    if l.num_features.edge > 0
+        @assert e !== nothing "Edge features must be provided."
+    end
+    @assert size(h, 1) == l.num_features.in "Input features must match layer input size."
+
+
+    @show size(x) size(h)
+    
+    function message(xi, xj, e)
+        if l.num_features.edge > 0
+            f = vcat(xi.h, xj.h, e.sqnorm_xdiff, e.e)
+        else
+            f = vcat(xi.h, xj.h, e.sqnorm_xdiff)
+        end
+
+        msg_h = l.ϕe(f)
+        msg_x = l.ϕx(msg_h) .* e.x_diff
+        return (; x=msg_x, h=msg_h)
+    end
+
+    x_diff = apply_edges(xi_sub_xj, g, x, x)
+    sqnorm_xdiff = sum(x_diff .^ 2, dims=1)
+    x_diff = x_diff ./ (sqrt.(sqnorm_xdiff) .+ 1f-6)
+
+    msg = apply_edges(message, g, xi=(; h), xj=(; h), e=(; e, x_diff, sqnorm_xdiff))
+    h_aggr = aggregate_neighbors(g, +, msg.h)
+    x_aggr = aggregate_neighbors(g, mean, msg.x)
+    
+    hnew = l.ϕh(vcat(h, h_aggr))
+    if l.residual
+        h = h .+ hnew
+    else
+        h = hnew
+    end
+    x = x .+ x_aggr
+
+    return h, x
 end
