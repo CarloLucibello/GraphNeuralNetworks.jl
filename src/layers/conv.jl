@@ -142,9 +142,11 @@ X' = \sum^{K-1}_{k=0}  W^{(k)} Z^{(k)}
 where ``Z^{(k)}`` is the ``k``-th term of Chebyshev polynomials, and can be calculated by the following recursive form:
 
 ```math
-Z^{(0)} = X \\
-Z^{(1)} = \hat{L} X \\
-Z^{(k)} = 2 \hat{L} Z^{(k-1)} - Z^{(k-2)}
+\begin{aligned}
+Z^{(0)} &= X \\
+Z^{(1)} &= \hat{L} X \\
+Z^{(k)} &= 2 \hat{L} Z^{(k-1)} - Z^{(k-2)}
+\end{aligned}
 ```
 
 with ``\hat{L}`` the [`scaled_laplacian`](@ref).
@@ -514,11 +516,13 @@ Gated graph convolution layer from [Gated Graph Sequence Neural Networks](https:
 
 Implements the recursion
 ```math
-\mathbf{h}^{(0)}_i = [\mathbf{x}_i; \mathbf{0}] \\
-\mathbf{h}^{(l)}_i = GRU(\mathbf{h}^{(l-1)}_i, \square_{j \in N(i)} W \mathbf{h}^{(l-1)}_j)
+\begin{aligned}
+\mathbf{h}^{(0)}_i &= [\mathbf{x}_i; \mathbf{0}] \\
+\mathbf{h}^{(l)}_i &= GRU(\mathbf{h}^{(l-1)}_i, \square_{j \in N(i)} W \mathbf{h}^{(l-1)}_j)
+\end{aligned}
 ```
 
- where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing through GRU. The dimension of input ``\mathbf{x}_i`` needs to be less or equal to `out`.
+where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing through GRU. The dimension of input ``\mathbf{x}_i`` needs to be less or equal to `out`.
 
 # Arguments
 
@@ -1005,8 +1009,10 @@ paper. In the forward pass, takes as inputs node features `x` and edge features 
 updated features `x'` and `e'` according to 
 
 ```math
+\begin{aligned}
 \mathbf{e}_{i\to j}'  = \phi_e([\mathbf{x}_i;\,  \mathbf{x}_j;\,  \mathbf{e}_{i\to j}]),\\
 \mathbf{x}_{i}'  = \phi_v([\mathbf{x}_i;\, \square_{j\in \mathcal{N}(i)}\,\mathbf{e}_{j\to i}']).
+\end{aligned}
 ```
 
 `aggr` defines the aggregation to be performed.
@@ -1312,14 +1318,16 @@ Neural Networks](https://arxiv.org/abs/2102.09844).
 The layer performs the following operation:
 
 ```math
-\mathbf{m}_{j\to i}=\phi_e(\mathbf{h}_i, \mathbf{h}_j, \lVert\mathbf{x}_i-\mathbf{x}_j\rVert^2, \mathbf{e}_{j\to i}),\\
-\mathbf{x}_i' = \mathbf{h}_i{x_i} + C_i\sum_{j\in\mathcal{N}(i)}(\mathbf{x}_i-\mathbf{x}_j)\phi_x(\mathbf{m}_{j\to i}),\\
-\mathbf{m}_i = C_i\sum_{j\in\mathcal{N}(i)} \mathbf{m}_{j\to i},\\
-\mathbf{h}_i' = \mathbf{h}_i + \phi_h(\mathbf{h}_i, \mathbf{m}_i)
+\begin{aligned}
+\mathbf{m}_{j\to i} &=\phi_e(\mathbf{h}_i, \mathbf{h}_j, \lVert\mathbf{x}_i-\mathbf{x}_j\rVert^2, \mathbf{e}_{j\to i}),\\
+\mathbf{x}_i' &= \mathbf{x}_i + C_i\sum_{j\in\mathcal{N}(i)}(\mathbf{x}_i-\mathbf{x}_j)\phi_x(\mathbf{m}_{j\to i}),\\
+\mathbf{m}_i &= C_i\sum_{j\in\mathcal{N}(i)} \mathbf{m}_{j\to i},\\
+\mathbf{h}_i' &= \mathbf{h}_i + \phi_h(\mathbf{h}_i, \mathbf{m}_i)
+\end{aligned}
 ```
-where ``h_i``, ``x_i``, ``e_{ij}`` are invariant node features, equivariance node
+where ``\mathbf{h}_i``, ``\mathbf{x}_i``, ``\mathbef{e}_{j\to i}`` are invariant node features, equivariance node
 features, and edge features respectively. ``\phi_e``, ``\phi_h``, and
-``\phi_x`` are two-layer MLPs. :math:`C` is a constant for normalization,
+``\phi_x`` are two-layer MLPs. `C` is a constant for normalization,
 computed as ``1/|\mathcal{N}(i)|``.
 
 
