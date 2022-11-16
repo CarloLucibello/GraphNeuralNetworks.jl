@@ -1,16 +1,19 @@
 """
-    propagate(f, g, aggr; [xi, xj, e])  ->  m̄
-    propagate(f, g, aggr, xi, xj, e=nothing) 
+    propagate(fmsg, g, aggr [layer]; [xi, xj, e])
+    propagate(fmsg, g, aggr, [layer,] xi, xj, e=nothing) 
 
 Performs message passing on graph `g`. Takes care of materializing the node features on each edge, 
-applying the message function, and returning an aggregated message ``\\bar{\\mathbf{m}}`` 
-(depending on the return value of `f`, an array or a named tuple of 
+applying the message function `fmsg`, and returning an aggregated message ``\\bar{\\mathbf{m}}`` 
+(depending on the return value of `fmsg`, an array or a named tuple of 
 arrays with last dimension's size `g.num_nodes`).
+
+If also a [GNNLayer](@ref) `layer` is provided, it will be passed to `fmsg` 
+as a first argument.
 
 It can be decomposed in two steps:
 
 ```julia
-m = apply_edges(f, g, xi, xj, e)
+m = apply_edges(fmsg, g, xi, xj, e)
 m̄ = aggregate_neighbors(g, aggr, m)
 ```
 
@@ -25,12 +28,16 @@ providing as input `f` a closure.
         target node of each edge (see also [`edge_index`](@ref)).
 - `xj`: As `xj`, but to be materialized on edges' sources. 
 - `e`: An array or a named tuple containing arrays whose last dimension's size is `g.num_edges`.
-- `f`: A generic function that will be passed over to [`apply_edges`](@ref). 
+- `fmsg`: A generic function that will be passed over to [`apply_edges`](@ref). 
       Has to take as inputs the edge-materialized `xi`, `xj`, and `e` 
       (arrays or named tuples of arrays whose last dimension' size is the size of 
       a batch of edges). Its output has to be an array or a named tuple of arrays
-      with the same batch size.
+      with the same batch size. If also `layer` is passed to propagate,
+      the signature of `fmsg` has to be `fmsg(layer, xi, xj, e)` 
+      instead of `fmsg(xi, xj, e)`.
+- `layer`: A [GNNLayer](@ref). If provided it will be passed to `fmsg` as a first argument.
 - `aggr`: Neighborhood aggregation operator. Use `+`, `mean`, `max`, or `min`. 
+
 
 # Examples
 
@@ -66,30 +73,44 @@ See also [`apply_edges`](@ref) and [`aggregate_neighbors`](@ref).
 """
 function propagate end 
 
-propagate(l, g::GNNGraph, aggr; xi=nothing, xj=nothing, e=nothing) = 
-    propagate(l, g, aggr, xi, xj, e)
+propagate(f, g::GNNGraph, aggr; xi=nothing, xj=nothing, e=nothing) = 
+    propagate(f, g, aggr, xi, xj, e)
 
-function propagate(l, g::GNNGraph, aggr, xi, xj, e=nothing)
-    m = apply_edges(l, g, xi, xj, e) 
+function propagate(f, g::GNNGraph, aggr, xi, xj, e=nothing)
+    m = apply_edges(f, g, xi, xj, e) 
     m̄ = aggregate_neighbors(g, aggr, m)
     return m̄
 end
 
+
+## convenience methods for working around performance issues
+# https://github.com/JuliaLang/julia/issues/15276
+## and zygote issues
+# https://github.com/FluxML/Zygote.jl/issues/1317
+propagate(f, g::GNNGraph,  aggr, l::GNNLayer; xi=nothing, xj=nothing, e=nothing) = 
+    propagate((xi, xj, e) -> f(l, xi, xj, e), g, aggr, xi, xj, e)
+propagate(f, g::GNNGraph, aggr, l::GNNLayer, xi, xj, e=nothing) = 
+    propagate((xi, xj, e) -> f(l, xi, xj, e), g, aggr, xi, xj, e)
+    
 ## APPLY EDGES
 
 """
-    apply_edges(f, g; [xi, xj, e])
-    apply_edges(f, g, xi, xj, e=nothing)
+    apply_edges(fmsg, g, [layer]; [xi, xj, e])
+    apply_edges(fmsg, g, [layer,] xi, xj, e=nothing)
 
-Returns the message from node `j` to node `i` .
+Returns the message from node `j` to node `i` applying
+the message function `fmsg` on the edges in graph `g`.
 In the message-passing scheme, the incoming messages 
 from the neighborhood of `i` will later be aggregated
-in order to update the features of node `i`.
+in order to update the features of node `i` (see [`aggregate_neighbors`](@ref)).
 
-The function operates on batches of edges, therefore
+The function `fmsg` operates on batches of edges, therefore
 `xi`, `xj`, and `e` are tensors whose last dimension
 is the batch size, or can be named tuples of 
 such tensors.
+
+If also a [GNNLayer](@ref) `layer` is provided, it will be passed to `fmsg` 
+as a first argument.
     
 # Arguments
 
@@ -99,17 +120,21 @@ such tensors.
         target node of each edge (see also [`edge_index`](@ref)).
 - `xj`: As `xi`, but now to be materialized on each edge's source node. 
 - `e`: An array or a named tuple containing arrays whose last dimension's size is `g.num_edges`.
-- `f`: A function that takes as inputs the edge-materialized `xi`, `xj`, and `e`.
+- `fmsg`: A function that takes as inputs the edge-materialized `xi`, `xj`, and `e`.
        These are arrays (or named tuples of arrays) whose last dimension' size is the size of
        a batch of edges. The output of `f` has to be an array (or a named tuple of arrays)
-       with the same batch size. 
+       with the same batch size. If also `layer` is passed to propagate,
+      the signature of `fmsg` has to be `fmsg(layer, xi, xj, e)` 
+      instead of `fmsg(xi, xj, e)`.
+- `layer`: A [GNNLayer](@ref). If provided it will be passed to `fmsg` as a first argument.
 
 See also [`propagate`](@ref) and [`aggregate_neighbors`](@ref).
 """
 function apply_edges end 
 
-apply_edges(l, g::GNNGraph; xi=nothing, xj=nothing, e=nothing) = 
-    apply_edges(l, g, xi, xj, e)
+apply_edges(f, g::GNNGraph; xi=nothing, xj=nothing, e=nothing) = 
+    apply_edges(f, g, xi, xj, e)
+
 
 function apply_edges(f, g::GNNGraph, xi, xj, e=nothing)
     check_num_nodes(g, xi)
@@ -121,6 +146,16 @@ function apply_edges(f, g::GNNGraph, xi, xj, e=nothing)
     m = f(xi, xj, e)
     return m
 end
+
+## convenience methods for working around performance issues
+# https://github.com/JuliaLang/julia/issues/15276
+## and zygote issues
+# https://github.com/FluxML/Zygote.jl/issues/1317
+apply_edges(f, g::GNNGraph, l::GNNLayer; xi=nothing, xj=nothing, e=nothing) = 
+    apply_edges((xi, xj, e) -> f(l, xi, xj, e), g, xi, xj, e)
+
+apply_edges(f, g::GNNGraph, l::GNNLayer, xi, xj, e=nothing) =
+    apply_edges((xi, xj, e) -> f(l, xi, xj, e), g, xi, xj, e)
 
 ##  AGGREGATE NEIGHBORS
 @doc raw"""
