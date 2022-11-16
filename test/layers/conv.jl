@@ -207,8 +207,7 @@
         l = NNConv(in_channel => out_channel, nn, tanh, bias=true, aggr=+)
         for g in test_graphs
             g = GNNGraph(g, edata=rand(T, edim, g.num_edges))
-            # FIXME issue #208  
-            # test_layer(l, g, rtol=RTOL_HIGH, outsize=(out_channel, g.num_nodes)) 
+            test_layer(l, g, rtol=RTOL_HIGH, outsize=(out_channel, g.num_nodes)) 
         end
     end
 

@@ -12,6 +12,11 @@ using NNlib: scatter, gather
 using ChainRulesCore
 using Reexport
 
+# use `@closure` in conv layers in ored to avoid issues
+# https://github.com/JuliaLang/julia/issues/15276
+# https://github.com/FluxML/Zygote.jl/issues/1317
+# using FastClosures: @closure 
+
 using SparseArrays, Graphs # not needed but if removed Documenter will complain
 
 include("GNNGraphs/GNNGraphs.jl")
