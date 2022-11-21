@@ -120,7 +120,7 @@ In the image or language domain, this procedure is typically achieved by **resca
 The length of this dimension is then equal to the number of examples grouped in a mini-batch and is typically referred to as the `batchsize`.
 
 However, for GNNs the two approaches described above are either not feasible or may result in a lot of unnecessary memory consumption.
-Therefore, GNN.jl opts for another approach to achieve parallelization across a number of examples. Here, adjacency matrices are stacked in a diagonal fashion (creating a giant graph that holds multiple isolated subgraphs), and node and target features are simply concatenated in the node dimension (the last dimension).
+Therefore, GraphNeuralNetworks.jl opts for another approach to achieve parallelization across a number of examples. Here, adjacency matrices are stacked in a diagonal fashion (creating a giant graph that holds multiple isolated subgraphs), and node and target features are simply concatenated in the node dimension (the last dimension).
 
 This procedure has some crucial advantages over other batching procedures:
 
@@ -128,7 +128,7 @@ This procedure has some crucial advantages over other batching procedures:
 
 2. There is no computational or memory overhead since adjacency matrices are saved in a sparse fashion holding only non-zero entries, *i.e.*, the edges.
 
-GNN.jl can **batch multiple graphs into a single giant graph**:
+GraphNeuralNetworks.jl can **batch multiple graphs into a single giant graph**:
 """
 
 
@@ -163,7 +163,7 @@ There exists multiple **readout layers** in literature, but the most common one 
 \mathbf{x}_{\mathcal{G}} = \frac{1}{|\mathcal{V}|} \sum_{v \in \mathcal{V}} \mathcal{x}^{(L)}_v
 ```
 
-GNN.jl provides this functionality via `GlobalPool(mean)`, which takes in the node embeddings of all nodes in the mini-batch and the assignment vector `graph_indicator` to compute a graph embedding of size `[hidden_channels, batchsize]`.
+GraphNeuralNetworks.jl provides this functionality via `GlobalPool(mean)`, which takes in the node embeddings of all nodes in the mini-batch and the assignment vector `graph_indicator` to compute a graph embedding of size `[hidden_channels, batchsize]`.
 
 The final architecture for applying GNNs to the task of graph classification then looks as follows and allows for complete end-to-end training:
 """
@@ -255,7 +255,7 @@ An alternative formulation ([Morris et al. (2018)](https://arxiv.org/abs/1810.02
 \mathbf{x}_i^{(\ell+1)} = \mathbf{W}^{(\ell + 1)}_1 \mathbf{x}_i^{(\ell)} + \mathbf{W}^{(\ell + 1)}_2 \sum_{j \in \mathcal{N}(i)} \mathbf{x}_j^{(\ell)}
 ```
 
-This layer is implemented under the name `GraphConv` in GNN.jl.
+This layer is implemented under the name `GraphConv` in GraphNeuralNetworks.jl.
 
 As an exercise, you are invited to complete the following code to the extent that it makes use of `GraphConv` rather than `GCNConv`.
 This should bring you close to **82% test accuracy**.
