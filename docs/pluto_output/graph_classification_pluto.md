@@ -141,7 +141,7 @@ end</code></pre>
 <div class="markdown">
 
 <p>Since graphs in graph classification datasets are usually small, a good idea is to <strong>batch the graphs</strong> before inputting them into a Graph Neural Network to guarantee full GPU utilization. In the image or language domain, this procedure is typically achieved by <strong>rescaling</strong> or <strong>padding</strong> each example into a set of equally-sized shapes, and examples are then grouped in an additional dimension. The length of this dimension is then equal to the number of examples grouped in a mini-batch and is typically referred to as the <code>batchsize</code>.</p>
-<p>However, for GNNs the two approaches described above are either not feasible or may result in a lot of unnecessary memory consumption. Therefore, GNN.jl opts for another approach to achieve parallelization across a number of examples. Here, adjacency matrices are stacked in a diagonal fashion &#40;creating a giant graph that holds multiple isolated subgraphs&#41;, and node and target features are simply concatenated in the node dimension &#40;the last dimension&#41;.</p>
+<p>However, for GNNs the two approaches described above are either not feasible or may result in a lot of unnecessary memory consumption. Therefore, GraphNeuralNetworks.jl opts for another approach to achieve parallelization across a number of examples. Here, adjacency matrices are stacked in a diagonal fashion &#40;creating a giant graph that holds multiple isolated subgraphs&#41;, and node and target features are simply concatenated in the node dimension &#40;the last dimension&#41;.</p>
 <p>This procedure has some crucial advantages over other batching procedures:</p>
 <ol>
 <li><p>GNN operators that rely on a message passing scheme do not need to be modified since messages are not exchanged between two nodes that belong to different graphs.</p>
@@ -149,7 +149,7 @@ end</code></pre>
 <li><p>There is no computational or memory overhead since adjacency matrices are saved in a sparse fashion holding only non-zero entries, <em>i.e.</em>, the edges.</p>
 </li>
 </ol>
-<p>GNN.jl can <strong>batch multiple graphs into a single giant graph</strong>:</p>
+<p>GraphNeuralNetworks.jl can <strong>batch multiple graphs into a single giant graph</strong>:</p>
 </div>
 
 <pre class='language-julia'><code class='language-julia'>vec_gs, _ = first(train_loader)</code></pre>
@@ -185,7 +185,7 @@ end</code></pre>
 </ol>
 <p>There exists multiple <strong>readout layers</strong> in literature, but the most common one is to simply take the average of node embeddings:</p>
 <p class="tex">$$\mathbf&#123;x&#125;_&#123;\mathcal&#123;G&#125;&#125; &#61; \frac&#123;1&#125;&#123;|\mathcal&#123;V&#125;|&#125; \sum_&#123;v \in \mathcal&#123;V&#125;&#125; \mathcal&#123;x&#125;^&#123;&#40;L&#41;&#125;_v$$</p>
-<p>GNN.jl provides this functionality via <code>GlobalPool&#40;mean&#41;</code>, which takes in the node embeddings of all nodes in the mini-batch and the assignment vector <code>graph_indicator</code> to compute a graph embedding of size <code>&#91;hidden_channels, batchsize&#93;</code>.</p>
+<p>GraphNeuralNetworks.jl provides this functionality via <code>GlobalPool&#40;mean&#41;</code>, which takes in the node embeddings of all nodes in the mini-batch and the assignment vector <code>graph_indicator</code> to compute a graph embedding of size <code>&#91;hidden_channels, batchsize&#93;</code>.</p>
 <p>The final architecture for applying GNNs to the task of graph classification then looks as follows and allows for complete end-to-end training:</p>
 </div>
 
@@ -263,7 +263,7 @@ end</code></pre>
 <h2>&#40;Optional&#41; Exercise</h2>
 <p>Can we do better than this? As multiple papers pointed out &#40;<a href="https://arxiv.org/abs/1810.00826">Xu et al. &#40;2018&#41;</a>, <a href="https://arxiv.org/abs/1810.02244">Morris et al. &#40;2018&#41;</a>&#41;, applying <strong>neighborhood normalization decreases the expressivity of GNNs in distinguishing certain graph structures</strong>. An alternative formulation &#40;<a href="https://arxiv.org/abs/1810.02244">Morris et al. &#40;2018&#41;</a>&#41; omits neighborhood normalization completely and adds a simple skip-connection to the GNN layer in order to preserve central node information:</p>
 <p class="tex">$$\mathbf&#123;x&#125;_i^&#123;&#40;\ell&#43;1&#41;&#125; &#61; \mathbf&#123;W&#125;^&#123;&#40;\ell &#43; 1&#41;&#125;_1 \mathbf&#123;x&#125;_i^&#123;&#40;\ell&#41;&#125; &#43; \mathbf&#123;W&#125;^&#123;&#40;\ell &#43; 1&#41;&#125;_2 \sum_&#123;j \in \mathcal&#123;N&#125;&#40;i&#41;&#125; \mathbf&#123;x&#125;_j^&#123;&#40;\ell&#41;&#125;$$</p>
-<p>This layer is implemented under the name <code>GraphConv</code> in GNN.jl.</p>
+<p>This layer is implemented under the name <code>GraphConv</code> in GraphNeuralNetworks.jl.</p>
 <p>As an exercise, you are invited to complete the following code to the extent that it makes use of <code>GraphConv</code> rather than <code>GCNConv</code>. This should bring you close to <strong>82&#37; test accuracy</strong>.</p>
 </div>
 

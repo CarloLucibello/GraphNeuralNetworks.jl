@@ -57,7 +57,7 @@ This is done by following a simple **neural message passing scheme**, where node
 ```
 
 This tutorial will introduce you to some fundamental concepts regarding deep learning on graphs via Graph Neural Networks based on the **[GraphNeuralNetworks.jl library](https://github.com/CarloLucibello/GraphNeuralNetworks.jl)**.
-GNN.jl is an extension library to the popular deep learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/), and consists of various methods and utilities to ease the implementation of Graph Neural Networks.
+GraphNeuralNetworks.jl is an extension library to the popular deep learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/), and consists of various methods and utilities to ease the implementation of Graph Neural Networks.
 
 Let's first import the packages we need:
 """
@@ -66,7 +66,7 @@ Let's first import the packages we need:
 md"""
 Following [Kipf et al. (2017)](https://arxiv.org/abs/1609.02907), let's dive into the world of GNNs by looking at a simple graph-structured example, the well-known [**Zachary's karate club network**](https://en.wikipedia.org/wiki/Zachary%27s_karate_club). This graph describes a social network of 34 members of a karate club and documents links between members who interacted outside the club. Here, we are interested in detecting communities that arise from the member's interaction.
 
-GNN.jl provides utilities to convert [MLDatasets.jl](https://github.com/JuliaML/MLDatasets.jl)'s datasets to its own type:
+GraphNeuralNetworks.jl provides utilities to convert [MLDatasets.jl](https://github.com/JuliaML/MLDatasets.jl)'s datasets to its own type:
 """
 
 # ╔═╡ 4ba372d4-7a6a-41e0-92a0-9547a78e2898
@@ -129,7 +129,7 @@ end
 
 # ╔═╡ 1e362709-a0d0-45d5-b2fd-a91c45fa317a
 md"""
-Each graph in GNN.jl is represented by a  `GNNGraph` object, which holds all the information to describe its graph representation.
+Each graph in GraphNeuralNetworks.jl is represented by a  `GNNGraph` object, which holds all the information to describe its graph representation.
 We can print the data object anytime via `print(g)` to receive a short summary about its attributes and their shapes.
 
 The  `g` object holds 3 attributes:
@@ -154,13 +154,13 @@ edge_index(g)
 
 # ╔═╡ 98bb86d2-a7b9-4110-8851-8829a9f9b4d0
 md"""
-By printing `edge_index(g)`, we can understand how GNN.jl represents graph connectivity internally.
+By printing `edge_index(g)`, we can understand how GraphNeuralNetworks.jl represents graph connectivity internally.
 We can see that for each edge, `edge_index` holds a tuple of two node indices, where the first value describes the node index of the source node and the second value describes the node index of the destination node of an edge.
 
 This representation is known as the **COO format (coordinate format)** commonly used for representing sparse matrices.
-Instead of holding the adjacency information in a dense representation ``\mathbf{A} \in \{ 0, 1 \}^{|\mathcal{V}| \times |\mathcal{V}|}``, GNN.jl represents graphs sparsely, which refers to only holding the coordinates/values for which entries in ``\mathbf{A}`` are non-zero.
+Instead of holding the adjacency information in a dense representation ``\mathbf{A} \in \{ 0, 1 \}^{|\mathcal{V}| \times |\mathcal{V}|}``, GraphNeuralNetworks.jl represents graphs sparsely, which refers to only holding the coordinates/values for which entries in ``\mathbf{A}`` are non-zero.
 
-Importantly, GNN.jl does not distinguish between directed and undirected graphs, and treats undirected graphs as a special case of directed graphs in which reverse edges exist for every entry in the edge_index.
+Importantly, GraphNeuralNetworks.jl does not distinguish between directed and undirected graphs, and treats undirected graphs as a special case of directed graphs in which reverse edges exist for every entry in the edge_index.
 
 Since a `GNNGraph` is an `AbstractGraph` from the `Graphs.jl` library, it supports graph algorithms and visualization tools from the wider julia graph ecosystem:
 """
@@ -173,7 +173,7 @@ md"""
 
 ## Implementing Graph Neural Networks
 
-After learning about GNN.jl's data handling, it's time to implement our first Graph Neural Network!
+After learning about GraphNeuralNetworks.jl's data handling, it's time to implement our first Graph Neural Network!
 
 For this, we will use on of the most simple GNN operators, the **GCN layer** ([Kipf et al. (2017)](https://arxiv.org/abs/1609.02907)), which is defined as
 
@@ -183,7 +183,7 @@ For this, we will use on of the most simple GNN operators, the **GCN layer** ([K
 
 where ``\mathbf{W}^{(\ell + 1)}`` denotes a trainable weight matrix of shape `[num_output_features, num_input_features]` and ``c_{w,v}`` refers to a fixed normalization coefficient for each edge.
 
-GNN.jl implements this layer via `GCNConv`, which can be executed by passing in the node feature representation `x` and the COO graph connectivity representation `edge_index`.
+GraphNeuralNetworks.jl implements this layer via `GCNConv`, which can be executed by passing in the node feature representation `x` and the COO graph connectivity representation `edge_index`.
 
 With this, we are ready to create our first Graph Neural Network by defining our network architecture:
 """
