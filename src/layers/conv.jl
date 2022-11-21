@@ -1329,7 +1329,7 @@ The layer performs the following operation:
 \mathbf{h}_i' &= \mathbf{h}_i + \phi_h(\mathbf{h}_i, \mathbf{m}_i)
 \end{aligned}
 ```
-where ``\mathbf{h}_i``, ``\mathbf{x}_i``, ``\mathbf{e}_{j\to i}`` are invariant node features, equivariance node
+where ``\mathbf{h}_i``, ``\mathbf{x}_i``, ``\mathbf{e}_{j\to i}`` are invariant node features, equivariant node
 features, and edge features respectively. ``\phi_e``, ``\phi_h``, and
 ``\phi_x`` are two-layer MLPs. `C` is a constant for normalization,
 computed as ``1/|\mathcal{N}(i)|``.
