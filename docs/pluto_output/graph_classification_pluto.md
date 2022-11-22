@@ -25,62 +25,38 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "014d3ca98646ed512ef6e432bc46762603421f0a44ceb85ada51a8c15f8f0db1"
+    input_sha = "a5e4a6292222b003f3138c076d1f0d4b2c340e5b730135690d834f42a3edb316"
     julia_version = "1.8.2"
 -->
-<pre class='language-julia'><code class='language-julia'>begin
-    using Pkg
-    Pkg.activate(; temp=true)
-    Pkg.add([
-        PackageSpec(; name="GraphNeuralNetworks", version="0.4"),
-        PackageSpec(; name="Flux", version="0.13"),
-        PackageSpec(; name="MLDatasets", version="0.7"),
-        PackageSpec(; name="MLUtils"),
-    ])
-    Pkg.develop("GraphNeuralNetworks")
-end</code></pre>
-
-
-<pre class='language-julia'><code class='language-julia'>begin
-    using Flux
-    using Flux: onecold, onehotbatch, logitcrossentropy
-    using Flux.Data: DataLoader
-    using GraphNeuralNetworks
-    using MLDatasets
-    using MLUtils
-    using LinearAlgebra, Random, Statistics
-    ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
-    Random.seed!(17) # for reproducibility
-end;</code></pre>
 
 
 
-<div class="markdown"><p><em>This Pluto notebook is a julia adaptation of the Pytorch Geometric tutorials that can be found <a href="https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html">here</a>.</em></p>
-<p>In this tutorial session we will have a closer look at how to apply <strong>Graph Neural Networks &#40;GNNs&#41; to the task of graph classification</strong>. Graph classification refers to the problem of classifying entire graphs &#40;in contrast to nodes&#41;, given a <strong>dataset of graphs</strong>, based on some structural graph properties. Here, we want to embed entire graphs, and we want to embed those graphs in such a way so that they are linearly separable given a task at hand.</p>
-<p>The most common task for graph classification is <strong>molecular property prediction</strong>, in which molecules are represented as graphs, and the task may be to infer whether a molecule inhibits HIV virus replication or not.</p>
-<p>The TU Dortmund University has collected a wide range of different graph classification datasets, known as the <a href="https://chrsmrrs.github.io/datasets/"><strong>TUDatasets</strong></a>, which are also accessible via MLDatasets.jl. Let&#39;s load and inspect one of the smaller ones, the <strong>MUTAG dataset</strong>:</p>
-</div>
+
+
+
+
+<div class="markdown"><p><em>This Pluto notebook is a julia adaptation of the Pytorch Geometric tutorials that can be found <a href="https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html">here</a>.</em></p><p>In this tutorial session we will have a closer look at how to apply <strong>Graph Neural Networks (GNNs) to the task of graph classification</strong>. Graph classification refers to the problem of classifying entire graphs (in contrast to nodes), given a <strong>dataset of graphs</strong>, based on some structural graph properties. Here, we want to embed entire graphs, and we want to embed those graphs in such a way so that they are linearly separable given a task at hand.</p><p>The most common task for graph classification is <strong>molecular property prediction</strong>, in which molecules are represented as graphs, and the task may be to infer whether a molecule inhibits HIV virus replication or not.</p><p>The TU Dortmund University has collected a wide range of different graph classification datasets, known as the <a href="https://chrsmrrs.github.io/datasets/"><strong>TUDatasets</strong></a>, which are also accessible via MLDatasets.jl. Let's load and inspect one of the smaller ones, the <strong>MUTAG dataset</strong>:</p></div>
 
 <pre class='language-julia'><code class='language-julia'>dataset = TUDataset("MUTAG")</code></pre>
-<pre id='var-dataset' class='code-output documenter-example-output'>dataset TUDataset:
-  name        =>    MUTAG
-  metadata    =>    Dict{String, Any} with 1 entry
-  graphs      =>    188-element Vector{MLDatasets.Graph}
-  graph_data  =>    (targets = "188-element Vector{Int64}",)
-  num_nodes   =>    3371
-  num_edges   =>    7442
-  num_graphs  =>    188</pre>
+<pre class="code-output documenter-example-output" id="var-dataset">dataset TUDataset:
+  name        =&gt;    MUTAG
+  metadata    =&gt;    Dict{String, Any} with 1 entry
+  graphs      =&gt;    188-element Vector{MLDatasets.Graph}
+  graph_data  =&gt;    (targets = "188-element Vector{Int64}",)
+  num_nodes   =&gt;    3371
+  num_edges   =&gt;    7442
+  num_graphs  =&gt;    188</pre>
 
 <pre class='language-julia'><code class='language-julia'>dataset.graph_data.targets |&gt; union</code></pre>
-<pre id='var-hash194771' class='code-output documenter-example-output'>2-element Vector{Int64}:
+<pre class="code-output documenter-example-output" id="var-hash194771">2-element Vector{Int64}:
   1
  -1</pre>
 
 <pre class='language-julia'><code class='language-julia'>g1, y1  = dataset[1] #get the first graph and target</code></pre>
-<pre id='var-y1' class='code-output documenter-example-output'>(graphs = Graph(17, 38), targets = 1)</pre>
+<pre class="code-output documenter-example-output" id="var-y1">(graphs = Graph(17, 38), targets = 1)</pre>
 
 <pre class='language-julia'><code class='language-julia'>reduce(vcat, g.node_data.targets for (g,_) in dataset) |&gt; union</code></pre>
-<pre id='var-hash163982' class='code-output documenter-example-output'>7-element Vector{Int64}:
+<pre class="code-output documenter-example-output" id="var-hash163982">7-element Vector{Int64}:
  0
  1
  2
@@ -90,20 +66,17 @@ end;</code></pre>
  6</pre>
 
 <pre class='language-julia'><code class='language-julia'>reduce(vcat, g.edge_data.targets for (g,_) in dataset)|&gt; union</code></pre>
-<pre id='var-hash766940' class='code-output documenter-example-output'>4-element Vector{Int64}:
+<pre class="code-output documenter-example-output" id="var-hash766940">4-element Vector{Int64}:
  0
  1
  2
  3</pre>
 
 
-<div class="markdown"><p>This dataset provides <strong>188 different graphs</strong>, and the task is to classify each graph into <strong>one out of two classes</strong>.</p>
-<p>By inspecting the first graph object of the dataset, we can see that it comes with <strong>17 nodes</strong> and <strong>38 edges</strong>. It also comes with exactly <strong>one graph label</strong>, and provides additional node labels &#40;7 classes&#41; and edge labels &#40;4 classes&#41;. However, for the sake of simplicity, we will not make use of edge labels.</p>
-</div>
+<div class="markdown"><p>This dataset provides <strong>188 different graphs</strong>, and the task is to classify each graph into <strong>one out of two classes</strong>.</p><p>By inspecting the first graph object of the dataset, we can see that it comes with <strong>17 nodes</strong> and <strong>38 edges</strong>. It also comes with exactly <strong>one graph label</strong>, and provides additional node labels (7 classes) and edge labels (4 classes). However, for the sake of simplicity, we will not make use of edge labels.</p></div>
 
 
-<div class="markdown"><p>We now convert the MLDatasets.jl graph types to our <code>GNNGraph</code>s and we also onehot encode both the node labels &#40;which will be used as input features&#41; and the graph labels &#40;what we want to predict&#41;:  </p>
-</div>
+<div class="markdown"><p>We now convert the MLDatasets.jl graph types to our <code>GNNGraph</code>s and we also onehot encode both the node labels (which will be used as input features) and the graph labels (what we want to predict):  </p></div>
 
 <pre class='language-julia'><code class='language-julia'>begin
     graphs = mldataset2gnngraph(dataset)
@@ -113,81 +86,52 @@ end;</code></pre>
               for g in graphs]
     y = onehotbatch(dataset.graph_data.targets, [-1, 1])
 end</code></pre>
-<pre id='var-y' class='code-output documenter-example-output'>2×188 OneHotMatrix(::Vector{UInt32}) with eltype Bool:
+<pre class="code-output documenter-example-output" id="var-y">2×188 OneHotMatrix(::Vector{UInt32}) with eltype Bool:
  ⋅  1  1  ⋅  1  ⋅  1  ⋅  1  ⋅  ⋅  ⋅  ⋅  1  …  ⋅  ⋅  ⋅  1  ⋅  1  1  ⋅  ⋅  1  1  ⋅  1
  1  ⋅  ⋅  1  ⋅  1  ⋅  1  ⋅  1  1  1  1  ⋅     1  1  1  ⋅  1  ⋅  ⋅  1  1  ⋅  ⋅  1  ⋅</pre>
 
 
-<div class="markdown"><p>We have some useful utilities for working with graph datasets, <em>e.g.</em>, we can shuffle the dataset and use the first 150 graphs as training graphs, while using the remaining ones for testing:</p>
-</div>
+<div class="markdown"><p>We have some useful utilities for working with graph datasets, <em>e.g.</em>, we can shuffle the dataset and use the first 150 graphs as training graphs, while using the remaining ones for testing:</p></div>
 
 <pre class='language-julia'><code class='language-julia'>train_data, test_data = splitobs((graphs, y), at=150, shuffle=true) |&gt; getobs</code></pre>
-<pre id='var-train_data' class='code-output documenter-example-output'>((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(20, 46), GNNGraph(16, 36), GNNGraph(17, 38), GNNGraph(24, 50), GNNGraph(17, 36), GNNGraph(12, 26), GNNGraph(26, 56), GNNGraph(14, 28), GNNGraph(20, 46), GNNGraph(12, 26)  …  GNNGraph(18, 38), GNNGraph(28, 66), GNNGraph(26, 60), GNNGraph(12, 26), GNNGraph(25, 56), GNNGraph(13, 28), GNNGraph(17, 38), GNNGraph(15, 34), GNNGraph(25, 56), GNNGraph(22, 50)], Bool[0 0 … 0 0; 1 1 … 1 1]), (GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(13, 26), GNNGraph(19, 42), GNNGraph(14, 30), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(23, 48), GNNGraph(17, 38), GNNGraph(15, 34), GNNGraph(17, 36), GNNGraph(19, 44)  …  GNNGraph(13, 28), GNNGraph(20, 44), GNNGraph(22, 50), GNNGraph(12, 24), GNNGraph(22, 50), GNNGraph(18, 38), GNNGraph(20, 44), GNNGraph(19, 40), GNNGraph(20, 44), GNNGraph(13, 28)], Bool[1 0 … 0 1; 0 1 … 1 0]))</pre>
+<pre class="code-output documenter-example-output" id="var-train_data">((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(25, 58), GNNGraph(16, 34), GNNGraph(23, 54), GNNGraph(20, 46), GNNGraph(18, 40), GNNGraph(13, 28), GNNGraph(12, 24), GNNGraph(16, 34), GNNGraph(19, 44), GNNGraph(22, 50)  …  GNNGraph(11, 22), GNNGraph(23, 54), GNNGraph(17, 38), GNNGraph(13, 28), GNNGraph(16, 34), GNNGraph(12, 26), GNNGraph(20, 44), GNNGraph(22, 50), GNNGraph(19, 44), GNNGraph(20, 44)], Bool[0 0 … 0 0; 1 1 … 1 1]), (GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(16, 34), GNNGraph(12, 26), GNNGraph(24, 50), GNNGraph(21, 44), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(24, 50), GNNGraph(15, 34), GNNGraph(21, 44), GNNGraph(23, 54)  …  GNNGraph(23, 50), GNNGraph(25, 56), GNNGraph(23, 54), GNNGraph(23, 50), GNNGraph(11, 22), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(24, 50), GNNGraph(20, 46), GNNGraph(13, 28)], Bool[1 1 … 0 1; 0 0 … 1 0]))</pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
     train_loader = DataLoader(train_data, batchsize=64, shuffle=true)
     test_loader = DataLoader(test_data, batchsize=64, shuffle=false)
 end</code></pre>
-<pre id='var-test_loader' class='code-output documenter-example-output'>DataLoader{Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, OneHotArrays.OneHotMatrix{UInt32, 2, Vector{UInt32}}}, Random._GLOBAL_RNG, Val{nothing}}((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(13, 26), GNNGraph(19, 42), GNNGraph(14, 30), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(23, 48), GNNGraph(17, 38), GNNGraph(15, 34), GNNGraph(17, 36), GNNGraph(19, 44)  …  GNNGraph(13, 28), GNNGraph(20, 44), GNNGraph(22, 50), GNNGraph(12, 24), GNNGraph(22, 50), GNNGraph(18, 38), GNNGraph(20, 44), GNNGraph(19, 40), GNNGraph(20, 44), GNNGraph(13, 28)], Bool[1 0 … 0 1; 0 1 … 1 0]), 64, false, true, false, false, Val{nothing}(), Random._GLOBAL_RNG())</pre>
+<pre class="code-output documenter-example-output" id="var-test_loader">DataLoader{Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, OneHotArrays.OneHotMatrix{UInt32, Vector{UInt32}}}, Random._GLOBAL_RNG, Val{nothing}}((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(16, 34), GNNGraph(12, 26), GNNGraph(24, 50), GNNGraph(21, 44), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(24, 50), GNNGraph(15, 34), GNNGraph(21, 44), GNNGraph(23, 54)  …  GNNGraph(23, 50), GNNGraph(25, 56), GNNGraph(23, 54), GNNGraph(23, 50), GNNGraph(11, 22), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(24, 50), GNNGraph(20, 46), GNNGraph(13, 28)], Bool[1 1 … 0 1; 0 0 … 1 0]), 64, false, true, false, false, Val{nothing}(), Random._GLOBAL_RNG())</pre>
 
 
-<div class="markdown"><p>Here, we opt for a <code>batch_size</code> of 64, leading to 3 &#40;randomly shuffled&#41; mini-batches, containing all <span class="tex">$2 \cdot 64&#43;22 &#61; 150$</span> graphs.</p>
-</div>
+<div class="markdown"><p>Here, we opt for a <code>batch_size</code> of 64, leading to 3 (randomly shuffled) mini-batches, containing all <span class="tex">$2 \cdot 64+22 = 150$</span> graphs.</p></div>
 
 
 ```
 ## Mini-batching of graphs
 ```@raw html
 <div class="markdown">
-
-<p>Since graphs in graph classification datasets are usually small, a good idea is to <strong>batch the graphs</strong> before inputting them into a Graph Neural Network to guarantee full GPU utilization. In the image or language domain, this procedure is typically achieved by <strong>rescaling</strong> or <strong>padding</strong> each example into a set of equally-sized shapes, and examples are then grouped in an additional dimension. The length of this dimension is then equal to the number of examples grouped in a mini-batch and is typically referred to as the <code>batchsize</code>.</p>
-<p>However, for GNNs the two approaches described above are either not feasible or may result in a lot of unnecessary memory consumption. Therefore, GraphNeuralNetworks.jl opts for another approach to achieve parallelization across a number of examples. Here, adjacency matrices are stacked in a diagonal fashion &#40;creating a giant graph that holds multiple isolated subgraphs&#41;, and node and target features are simply concatenated in the node dimension &#40;the last dimension&#41;.</p>
-<p>This procedure has some crucial advantages over other batching procedures:</p>
-<ol>
-<li><p>GNN operators that rely on a message passing scheme do not need to be modified since messages are not exchanged between two nodes that belong to different graphs.</p>
-</li>
-<li><p>There is no computational or memory overhead since adjacency matrices are saved in a sparse fashion holding only non-zero entries, <em>i.e.</em>, the edges.</p>
-</li>
-</ol>
-<p>GraphNeuralNetworks.jl can <strong>batch multiple graphs into a single giant graph</strong>:</p>
-</div>
+<p>Since graphs in graph classification datasets are usually small, a good idea is to <strong>batch the graphs</strong> before inputting them into a Graph Neural Network to guarantee full GPU utilization. In the image or language domain, this procedure is typically achieved by <strong>rescaling</strong> or <strong>padding</strong> each example into a set of equally-sized shapes, and examples are then grouped in an additional dimension. The length of this dimension is then equal to the number of examples grouped in a mini-batch and is typically referred to as the <code>batchsize</code>.</p><p>However, for GNNs the two approaches described above are either not feasible or may result in a lot of unnecessary memory consumption. Therefore, GraphNeuralNetworks.jl opts for another approach to achieve parallelization across a number of examples. Here, adjacency matrices are stacked in a diagonal fashion (creating a giant graph that holds multiple isolated subgraphs), and node and target features are simply concatenated in the node dimension (the last dimension).</p><p>This procedure has some crucial advantages over other batching procedures:</p><ol><li><p>GNN operators that rely on a message passing scheme do not need to be modified since messages are not exchanged between two nodes that belong to different graphs.</p></li><li><p>There is no computational or memory overhead since adjacency matrices are saved in a sparse fashion holding only non-zero entries, <em>i.e.</em>, the edges.</p></li></ol><p>GraphNeuralNetworks.jl can <strong>batch multiple graphs into a single giant graph</strong>:</p></div>
 
 <pre class='language-julia'><code class='language-julia'>vec_gs, _ = first(train_loader)</code></pre>
-<pre id='var-vec_gs' class='code-output documenter-example-output'>(GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(12, 26), GNNGraph(20, 46), GNNGraph(23, 54), GNNGraph(23, 54), GNNGraph(16, 36), GNNGraph(11, 22), GNNGraph(21, 48), GNNGraph(11, 22), GNNGraph(20, 44), GNNGraph(22, 50)  …  GNNGraph(11, 22), GNNGraph(23, 54), GNNGraph(17, 38), GNNGraph(16, 34), GNNGraph(15, 34), GNNGraph(23, 54), GNNGraph(13, 28), GNNGraph(24, 50), GNNGraph(12, 24), GNNGraph(25, 56)], Bool[1 0 … 0 0; 0 1 … 1 1])</pre>
+<pre class="code-output documenter-example-output" id="var-vec_gs">(GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(19, 40), GNNGraph(23, 54), GNNGraph(11, 22), GNNGraph(16, 34), GNNGraph(10, 20), GNNGraph(20, 44), GNNGraph(23, 54), GNNGraph(25, 56), GNNGraph(16, 34), GNNGraph(17, 38)  …  GNNGraph(17, 38), GNNGraph(20, 46), GNNGraph(22, 50), GNNGraph(17, 38), GNNGraph(20, 44), GNNGraph(26, 60), GNNGraph(20, 46), GNNGraph(13, 26), GNNGraph(12, 24), GNNGraph(10, 20)], Bool[0 0 … 0 1; 1 1 … 1 0])</pre>
 
 <pre class='language-julia'><code class='language-julia'>MLUtils.batch(vec_gs)</code></pre>
-<pre id='var-hash102363' class='code-output documenter-example-output'>GNNGraph:
-    num_nodes = 1250
-    num_edges = 2790
+<pre class="code-output documenter-example-output" id="var-hash102363">GNNGraph:
+    num_nodes = 1168
+    num_edges = 2578
     num_graphs = 64
     ndata:
-        x => 7×1250 Matrix{Float32}</pre>
+        x =&gt; 7×1168 Matrix{Float32}</pre>
 
 
-<div class="markdown"><p>Each batched graph object is equipped with a <strong><code>graph_indicator</code> vector</strong>, which maps each node to its respective graph in the batch:</p>
-<p class="tex">$$\textrm&#123;graph-indicator&#125; &#61; &#91;1, \ldots, 1, 2, \ldots, 2, 3, \ldots &#93;$$</p>
-</div>
+<div class="markdown"><p>Each batched graph object is equipped with a <strong><code>graph_indicator</code> vector</strong>, which maps each node to its respective graph in the batch:</p><p class="tex">$$\textrm{graph-indicator} = [1, \ldots, 1, 2, \ldots, 2, 3, \ldots ]$$</p></div>
 
 
 ```
-## Training a Graph Neural Network &#40;GNN&#41;
+## Training a Graph Neural Network (GNN)
 ```@raw html
 <div class="markdown">
-
-<p>Training a GNN for graph classification usually follows a simple recipe:</p>
-<ol>
-<li><p>Embed each node by performing multiple rounds of message passing</p>
-</li>
-<li><p>Aggregate node embeddings into a unified graph embedding &#40;<strong>readout layer</strong>&#41;</p>
-</li>
-<li><p>Train a final classifier on the graph embedding</p>
-</li>
-</ol>
-<p>There exists multiple <strong>readout layers</strong> in literature, but the most common one is to simply take the average of node embeddings:</p>
-<p class="tex">$$\mathbf&#123;x&#125;_&#123;\mathcal&#123;G&#125;&#125; &#61; \frac&#123;1&#125;&#123;|\mathcal&#123;V&#125;|&#125; \sum_&#123;v \in \mathcal&#123;V&#125;&#125; \mathcal&#123;x&#125;^&#123;&#40;L&#41;&#125;_v$$</p>
-<p>GraphNeuralNetworks.jl provides this functionality via <code>GlobalPool&#40;mean&#41;</code>, which takes in the node embeddings of all nodes in the mini-batch and the assignment vector <code>graph_indicator</code> to compute a graph embedding of size <code>&#91;hidden_channels, batchsize&#93;</code>.</p>
-<p>The final architecture for applying GNNs to the task of graph classification then looks as follows and allows for complete end-to-end training:</p>
-</div>
+<p>Training a GNN for graph classification usually follows a simple recipe:</p><ol><li><p>Embed each node by performing multiple rounds of message passing</p></li><li><p>Aggregate node embeddings into a unified graph embedding (<strong>readout layer</strong>)</p></li><li><p>Train a final classifier on the graph embedding</p></li></ol><p>There exists multiple <strong>readout layers</strong> in literature, but the most common one is to simply take the average of node embeddings:</p><p class="tex">$$\mathbf{x}_{\mathcal{G}} = \frac{1}{|\mathcal{V}|} \sum_{v \in \mathcal{V}} \mathcal{x}^{(L)}_v$$</p><p>GraphNeuralNetworks.jl provides this functionality via <code>GlobalPool(mean)</code>, which takes in the node embeddings of all nodes in the mini-batch and the assignment vector <code>graph_indicator</code> to compute a graph embedding of size <code>[hidden_channels, batchsize]</code>.</p><p>The final architecture for applying GNNs to the task of graph classification then looks as follows and allows for complete end-to-end training:</p></div>
 
 <pre class='language-julia'><code class='language-julia'>function create_model(nin, nh, nout)
     GNNChain(GCNConv(nin =&gt; nh, relu),
@@ -197,12 +141,10 @@ end</code></pre>
              Dropout(0.5),
              Dense(nh, nout))
 end</code></pre>
-<pre id='var-create_model' class='code-output documenter-example-output'>create_model (generic function with 1 method)</pre>
+<pre class="code-output documenter-example-output" id="var-create_model">create_model (generic function with 1 method)</pre>
 
 
-<div class="markdown"><p>Here, we again make use of the <code>GCNConv</code> with <span class="tex">$\mathrm&#123;ReLU&#125;&#40;x&#41; &#61; \max&#40;x, 0&#41;$</span> activation for obtaining localized node embeddings, before we apply our final classifier on top of a graph readout layer.</p>
-<p>Let&#39;s train our network for a few epochs to see how well it performs on the training as well as test set:</p>
-</div>
+<div class="markdown"><p>Here, we again make use of the <code>GCNConv</code> with <span class="tex">$\mathrm{ReLU}(x) = \max(x, 0)$</span> activation for obtaining localized node embeddings, before we apply our final classifier on top of a graph readout layer.</p><p>Let's train our network for a few epochs to see how well it performs on the training as well as test set:</p></div>
 
 <pre class='language-julia'><code class='language-julia'>function eval_loss_accuracy(model, data_loader, device)
     loss = 0.
@@ -218,7 +160,7 @@ end</code></pre>
     end 
     return (loss = round(loss/ntot, digits=4), acc = round(acc*100/ntot, digits=2))
 end</code></pre>
-<pre id='var-eval_loss_accuracy' class='code-output documenter-example-output'>eval_loss_accuracy (generic function with 1 method)</pre>
+<pre class="code-output documenter-example-output" id="var-eval_loss_accuracy">eval_loss_accuracy (generic function with 1 method)</pre>
 
 <pre class='language-julia'><code class='language-julia'>function train!(model; epochs=200, η=1e-2, infotime=10)
     # device = Flux.gpu # uncomment this for GPU training
@@ -247,7 +189,7 @@ end</code></pre>
         epoch % infotime == 0 && report(epoch)
     end
 end</code></pre>
-<pre id='var-train!' class='code-output documenter-example-output'>train! (generic function with 1 method)</pre>
+<pre class="code-output documenter-example-output" id="var-train!">train! (generic function with 1 method)</pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
     nin = 7  
@@ -259,22 +201,14 @@ end</code></pre>
 
 
 
-<div class="markdown"><p>As one can see, our model reaches around <strong>74&#37; test accuracy</strong>. Reasons for the fluctuations in accuracy can be explained by the rather small dataset &#40;only 38 test graphs&#41;, and usually disappear once one applies GNNs to larger datasets.</p>
-<h2>&#40;Optional&#41; Exercise</h2>
-<p>Can we do better than this? As multiple papers pointed out &#40;<a href="https://arxiv.org/abs/1810.00826">Xu et al. &#40;2018&#41;</a>, <a href="https://arxiv.org/abs/1810.02244">Morris et al. &#40;2018&#41;</a>&#41;, applying <strong>neighborhood normalization decreases the expressivity of GNNs in distinguishing certain graph structures</strong>. An alternative formulation &#40;<a href="https://arxiv.org/abs/1810.02244">Morris et al. &#40;2018&#41;</a>&#41; omits neighborhood normalization completely and adds a simple skip-connection to the GNN layer in order to preserve central node information:</p>
-<p class="tex">$$\mathbf&#123;x&#125;_i^&#123;&#40;\ell&#43;1&#41;&#125; &#61; \mathbf&#123;W&#125;^&#123;&#40;\ell &#43; 1&#41;&#125;_1 \mathbf&#123;x&#125;_i^&#123;&#40;\ell&#41;&#125; &#43; \mathbf&#123;W&#125;^&#123;&#40;\ell &#43; 1&#41;&#125;_2 \sum_&#123;j \in \mathcal&#123;N&#125;&#40;i&#41;&#125; \mathbf&#123;x&#125;_j^&#123;&#40;\ell&#41;&#125;$$</p>
-<p>This layer is implemented under the name <code>GraphConv</code> in GraphNeuralNetworks.jl.</p>
-<p>As an exercise, you are invited to complete the following code to the extent that it makes use of <code>GraphConv</code> rather than <code>GCNConv</code>. This should bring you close to <strong>82&#37; test accuracy</strong>.</p>
-</div>
+<div class="markdown"><p>As one can see, our model reaches around <strong>74% test accuracy</strong>. Reasons for the fluctuations in accuracy can be explained by the rather small dataset (only 38 test graphs), and usually disappear once one applies GNNs to larger datasets.</p><h2>(Optional) Exercise</h2><p>Can we do better than this? As multiple papers pointed out (<a href="https://arxiv.org/abs/1810.00826">Xu et al. (2018)</a>, <a href="https://arxiv.org/abs/1810.02244">Morris et al. (2018)</a>), applying <strong>neighborhood normalization decreases the expressivity of GNNs in distinguishing certain graph structures</strong>. An alternative formulation (<a href="https://arxiv.org/abs/1810.02244">Morris et al. (2018)</a>) omits neighborhood normalization completely and adds a simple skip-connection to the GNN layer in order to preserve central node information:</p><p class="tex">$$\mathbf{x}_i^{(\ell+1)} = \mathbf{W}^{(\ell + 1)}_1 \mathbf{x}_i^{(\ell)} + \mathbf{W}^{(\ell + 1)}_2 \sum_{j \in \mathcal{N}(i)} \mathbf{x}_j^{(\ell)}$$</p><p>This layer is implemented under the name <code>GraphConv</code> in GraphNeuralNetworks.jl.</p><p>As an exercise, you are invited to complete the following code to the extent that it makes use of <code>GraphConv</code> rather than <code>GCNConv</code>. This should bring you close to <strong>82% test accuracy</strong>.</p></div>
 
 
 ```
 ## Conclusion
 ```@raw html
 <div class="markdown">
-
-<p>In this chapter, you have learned how to apply GNNs to the task of graph classification. You have learned how graphs can be batched together for better GPU utilization, and how to apply readout layers for obtaining graph embeddings rather than node embeddings.</p>
-</div>
+<p>In this chapter, you have learned how to apply GNNs to the task of graph classification. You have learned how graphs can be batched together for better GPU utilization, and how to apply readout layers for obtaining graph embeddings rather than node embeddings.</p></div>
 
 <!-- PlutoStaticHTML.End -->
 ```
