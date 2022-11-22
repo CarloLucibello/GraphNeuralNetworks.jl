@@ -89,11 +89,11 @@ function to_dense(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted=
     if dir == :in
         A = A'
     end
+    if !weighted
+        A = binarize(A, T)
+    end
     if T != eltype(A)
         A = T.(A)
-    end
-    if !weighted
-        A = map(x -> ifelse(x > 0, T(1), T(0)), A)
     end
     return A, num_nodes, num_edges
 end
@@ -154,14 +154,14 @@ function to_sparse(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted
     if dir == :in
         A = A'
     end
+    if !weighted
+        A = binarize(A, T)
+    end
     if T != eltype(A)
         A = T.(A)
     end
     if !(A isa AbstractSparseMatrix)
         A = sparse(A)
-    end
-    if !weighted
-        A = map(x -> ifelse(x > 0, T(1), T(0)), A)
     end
     return A, num_nodes, num_edges
 end
@@ -181,6 +181,50 @@ function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=
 
     num_nodes::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
     A = sparse(s, t, eweight, num_nodes, num_nodes)
+    num_edges::Int = nnz(A)
+    if eltype(A) != T
+        A = T.(A)
+    end
+    return A, num_nodes, num_edges
+end
+
+# GBMatrix
+
+function to_graphblas(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted=true)
+    @assert dir ∈ [:out, :in]
+    num_nodes = size(A, 1)
+    @assert num_nodes == size(A, 2)
+    T = T === nothing ? eltype(A) : T
+    num_edges = A isa AbstractSparseMatrix ? nnz(A) : count(!=(0), A)
+    if dir == :in
+        A = A'
+    end
+    A = GBMatrix(A, fill=T(0))
+    if !weighted
+        A = binarize(A, T)
+    end
+    if T != eltype(A)
+        A = T.(A)
+    end
+
+    return A, num_nodes, num_edges
+end
+
+function to_graphblas(adj_list::ADJLIST_T, T=nothing; dir=:out, num_nodes=nothing, weighted=true)
+    coo, num_nodes, num_edges = to_coo(adj_list; dir, num_nodes)
+    return to_graphblas(coo; num_nodes)
+end
+
+function to_graphblas(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=true)
+    s, t, eweight  = coo
+    T = T === nothing ? (eweight === nothing ? eltype(s) : eltype(eweight)) : T
+    
+    if eweight === nothing || !weighted
+        eweight = fill!(similar(s, T), 1)
+    end
+
+    num_nodes::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
+    A = GBMatrix(s, t, eweight, num_nodes, num_nodes, fill=T(0))
     num_edges::Int = nnz(A)
     if eltype(A) != T
         A = T.(A)
