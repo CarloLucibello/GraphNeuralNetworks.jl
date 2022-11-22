@@ -6,6 +6,8 @@ version = "0.5.2"
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+CUDNN = "02a925ec-e4fe-4b08-9a7e-0d78e3d38ccd"
+CUDNN_jll = "62b44479-cb7b-5706-934f-f13b2eb2e645"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
@@ -26,7 +28,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 Adapt = "3"
-CUDA = "3.3"
+CUDA = "3, 4"
 ChainRulesCore = "1"
 DataStructures = "0.18"
 Flux = "0.13.4"
