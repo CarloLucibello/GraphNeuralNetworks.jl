@@ -46,20 +46,23 @@ julia&gt; has_self_loops(g)
 false
 
 julia&gt; has_multi_edges(g)      
-false</code></pre><h2 id="Data-Features"><a class="docs-heading-anchor" href="#Data-Features">Data Features</a><a id="Data-Features-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Features" title="Permalink"></a></h2><p>One or more arrays can be associated to nodes, edges, and (sub)graphs of a <code>GNNGraph</code>. They will be stored in the fields <code>g.ndata</code>, <code>g.edata</code>, and <code>g.gdata</code> respectivaly. The data fields are <code>NamedTuple</code>s. The array they contain must have last dimension equal to <code>num_nodes</code> (in <code>ndata</code>), <code>num_edges</code> (in <code>edata</code>), or <code>num_graphs</code> (in <code>gdata</code>).</p><pre><code class="language-julia hljs"># Create a graph with a single feature array `x` associated to nodes
-g = GNNGraph(erdos_renyi(10,  30), ndata = (; x = rand(Float32, 32, 10)))
+false</code></pre><h2 id="Data-Features"><a class="docs-heading-anchor" href="#Data-Features">Data Features</a><a id="Data-Features-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Features" title="Permalink"></a></h2><p>One or more arrays can be associated to nodes, edges, and (sub)graphs of a <code>GNNGraph</code>. They will be stored in the fields <code>g.ndata</code>, <code>g.edata</code>, and <code>g.gdata</code> respectivaly. The data fields are <code>NamedTuple</code>s. The arrays they contain have last dimension equal to <code>num_nodes</code> (in <code>ndata</code>), <code>num_edges</code> (in <code>edata</code>), or <code>num_graphs</code> (in <code>gdata</code>) respectively.</p><pre><code class="language-julia hljs"># Create a graph with a single feature array `x` associated to nodes
+g = rand_graph(10,  60, ndata = (; x = rand(Float32, 32, 10)))
 
 g.ndata.x  # access the features
 
 # Equivalent definition passing directly the array
-g = GNNGraph(erdos_renyi(10,  30), ndata = rand(Float32, 32, 10))
+g = rand_graph(10,  60, ndata = rand(Float32, 32, 10))
 
 g.ndata.x  # `:x` is the default name for node features
 
-# You can have multiple feature arrays
-g = GNNGraph(erdos_renyi(10,  30), ndata = (; x=rand(Float32, 32, 10), y=rand(Float32, 10)))
+# For convinience, we can access the features through the shortcut
+g.x 
 
-g.ndata.y, g.ndata.x
+# You can have multiple feature arrays
+g = rand_graph(10,  60, ndata = (; x=rand(Float32, 32, 10), y=rand(Float32, 10)))
+
+g.ndata.y, g.ndata.x   # or g.x, g.y
 
 # Attach an array with edge features.
 # Since `GNNGraph`s are directed, the number of edges
@@ -67,7 +70,7 @@ g.ndata.y, g.ndata.x
 g = GNNGraph(erdos_renyi(10,  30), edata = rand(Float32, 60))
 @assert g.num_edges == 60
 
-g.edata.e
+g.edata.e  # or g.e
 
 # If we pass only half of the edge features, they will be copied
 # on the reversed edges.
@@ -78,8 +81,8 @@ g = GNNGraph(erdos_renyi(10,  30), edata = rand(Float32, 30))
 # but replacing node data
 g′ = GNNGraph(g, ndata =(; z = ones(Float32, 16, 10)))
 
-g.ndata.z
-g.edata.e</code></pre><h2 id="Edge-weights"><a class="docs-heading-anchor" href="#Edge-weights">Edge weights</a><a id="Edge-weights-1"></a><a class="docs-heading-anchor-permalink" href="#Edge-weights" title="Permalink"></a></h2><p>It is common to denote scalar edge features as edge weights. The <code>GNNGraph</code> has specific support for edge weights: they can be stored as part of internal representations of the graph (COO or adjacency matrix). Some graph convolutional layers, most notably the <a href="../api/conv/#GraphNeuralNetworks.GCNConv"><code>GCNConv</code></a>, can use the edge weights to perform weighted sums over the nodes&#39; neighborhoods.</p><pre><code class="language-julia hljs">julia&gt; source = [1, 1, 2, 2, 3, 3];
+g′.z
+g′.e</code></pre><h2 id="Edge-weights"><a class="docs-heading-anchor" href="#Edge-weights">Edge weights</a><a id="Edge-weights-1"></a><a class="docs-heading-anchor-permalink" href="#Edge-weights" title="Permalink"></a></h2><p>It is common to denote scalar edge features as edge weights. The <code>GNNGraph</code> has specific support for edge weights: they can be stored as part of internal representations of the graph (COO or adjacency matrix). Some graph convolutional layers, most notably the <a href="../api/conv/#GraphNeuralNetworks.GCNConv"><code>GCNConv</code></a>, can use the edge weights to perform weighted sums over the nodes&#39; neighborhoods.</p><pre><code class="language-julia hljs">julia&gt; source = [1, 1, 2, 2, 3, 3];
 
 julia&gt; target = [2, 3, 1, 3, 1, 2];
 
@@ -162,4 +165,4 @@ julia&gt; gd = Graphs.erdos_renyi(10, 20, is_directed=true)
 julia&gt; GNNGraph(gd)
 GNNGraph:
     num_nodes = 10
-    num_edges = 20</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../messagepassing/">Message Passing »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Tuesday 22 November 2022 09:10">Tuesday 22 November 2022</span>. Using Julia version 1.8.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+    num_edges = 20</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../messagepassing/">Message Passing »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Friday 25 November 2022 12:12">Friday 25 November 2022</span>. Using Julia version 1.8.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

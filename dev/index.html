@@ -5,7 +5,7 @@ using Flux.Data: DataLoader
 all_graphs = GNNGraph[]
 
 for _ in 1:1000
-    g = GNNGraph(random_regular_graph(10, 4),  
+    g = rand_graph(10, 40,  
             ndata=(; x = randn(Float32, 16,10)),  # input node features
             gdata=(; y = randn(Float32)))         # regression target   
     push!(all_graphs, g)
@@ -19,14 +19,14 @@ model = GNNChain(GCNConv(16 =&gt; 64),
                 Dense(64, 1)) |&gt; device
 
 ps = Flux.params(model)
-opt = Adam(1f-4)</code></pre><h3 id="Training"><a class="docs-heading-anchor" href="#Training">Training</a><a id="Training-1"></a><a class="docs-heading-anchor-permalink" href="#Training" title="Permalink"></a></h3><p>Finally, we use a standard Flux training pipeline to fit our dataset. We use Flux&#39;s <code>DataLoader</code> to iterate over mini-batches of graphs  that are glued together into a single <code>GNNGraph</code> using the <a href="@ref"><code>MLUtils.batch</code></a> method. This is what happens under the hood when creating a <code>DataLoader</code> with the <code>collate=true</code> option. </p><pre><code class="language-julia hljs">train_graphs, test_graphs = MLUtils.split(all_graphs, at=0.8)
+opt = Adam(1f-4)</code></pre><h3 id="Training"><a class="docs-heading-anchor" href="#Training">Training</a><a id="Training-1"></a><a class="docs-heading-anchor-permalink" href="#Training" title="Permalink"></a></h3><p>Finally, we use a standard Flux training pipeline to fit our dataset. We use Flux&#39;s <code>DataLoader</code> to iterate over mini-batches of graphs  that are glued together into a single <code>GNNGraph</code> using the <a href="@ref"><code>MLUtils.batch</code></a> method. This is what happens under the hood when creating a <code>DataLoader</code> with the <code>collate=true</code> option. </p><pre><code class="language-julia hljs">train_graphs, test_graphs = MLUtils.splitobs(all_graphs, at=0.8)
 
 train_loader = DataLoader(train_graphs, 
                 batchsize=32, shuffle=true, collate=true)
 test_loader = DataLoader(test_graphs, 
                 batchsize=32, shuffle=false, collate=true)
 
-loss(g::GNNGraph) = mean((vec(model(g, g.ndata.x)) - g.gdata.y).^2)
+loss(g::GNNGraph) = mean((vec(model(g, g.x)) - g.y).^2)
 
 loss(loader) = mean(loss(g |&gt; device) for g in loader)
 
@@ -38,4 +38,4 @@ for epoch in 1:100
     end
 
     @info (; epoch, train_loss=loss(train_loader), test_loss=loss(test_loader))
-end</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="gnngraph/">Graphs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Tuesday 22 November 2022 09:10">Tuesday 22 November 2022</span>. Using Julia version 1.8.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="gnngraph/">Graphs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Friday 25 November 2022 12:12">Friday 25 November 2022</span>. Using Julia version 1.8.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
