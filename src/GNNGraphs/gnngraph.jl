@@ -273,3 +273,17 @@ function Base.hash(g::T, h::UInt) where T<:GNNGraph
     fs = (getfield(g, k) for k in fieldnames(typeof(g)) if k !== :graph_indicator)
     return foldl((h, f) -> hash(f, h),  fs, init=hash(T, h))
 end
+
+function Base.getproperty(g::GNNGraph, s::Symbol)
+    if s in fieldnames(GNNGraph)
+        return getfield(g, s)
+    elseif s in keys(g.ndata)
+        return g.ndata[s]
+    elseif s in keys(g.edata)
+        return g.edata[s]
+    elseif s in keys(g.gdata)
+        return g.gdata[s]
+    else
+        throw(ArgumentError("$(s) is not a field of GNNGraph"))
+    end
+end
