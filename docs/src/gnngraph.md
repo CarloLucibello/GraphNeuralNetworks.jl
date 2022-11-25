@@ -74,24 +74,27 @@ false
 
 One or more arrays can be associated to nodes, edges, and (sub)graphs of a `GNNGraph`.
 They will be stored in the fields `g.ndata`, `g.edata`, and `g.gdata` respectivaly.
-The data fields are `NamedTuple`s. The array they contain must have last dimension
-equal to `num_nodes` (in `ndata`), `num_edges` (in `edata`), or `num_graphs` (in `gdata`).
+The data fields are `NamedTuple`s. The arrays they contain have last dimension
+equal to `num_nodes` (in `ndata`), `num_edges` (in `edata`), or `num_graphs` (in `gdata`) respectively.
 
 ```julia
 # Create a graph with a single feature array `x` associated to nodes
-g = GNNGraph(erdos_renyi(10,  30), ndata = (; x = rand(Float32, 32, 10)))
+g = rand_graph(10,  60, ndata = (; x = rand(Float32, 32, 10)))
 
 g.ndata.x  # access the features
 
 # Equivalent definition passing directly the array
-g = GNNGraph(erdos_renyi(10,  30), ndata = rand(Float32, 32, 10))
+g = rand_graph(10,  60, ndata = rand(Float32, 32, 10))
 
 g.ndata.x  # `:x` is the default name for node features
 
-# You can have multiple feature arrays
-g = GNNGraph(erdos_renyi(10,  30), ndata = (; x=rand(Float32, 32, 10), y=rand(Float32, 10)))
+# For convinience, we can access the features through the shortcut
+g.x 
 
-g.ndata.y, g.ndata.x
+# You can have multiple feature arrays
+g = rand_graph(10,  60, ndata = (; x=rand(Float32, 32, 10), y=rand(Float32, 10)))
+
+g.ndata.y, g.ndata.x   # or g.x, g.y
 
 # Attach an array with edge features.
 # Since `GNNGraph`s are directed, the number of edges
@@ -99,7 +102,7 @@ g.ndata.y, g.ndata.x
 g = GNNGraph(erdos_renyi(10,  30), edata = rand(Float32, 60))
 @assert g.num_edges == 60
 
-g.edata.e
+g.edata.e  # or g.e
 
 # If we pass only half of the edge features, they will be copied
 # on the reversed edges.
@@ -110,8 +113,8 @@ g = GNNGraph(erdos_renyi(10,  30), edata = rand(Float32, 30))
 # but replacing node data
 g′ = GNNGraph(g, ndata =(; z = ones(Float32, 16, 10)))
 
-g.ndata.z
-g.edata.e
+g′.z
+g′.e
 ```
 
 ## Edge weights

@@ -93,8 +93,8 @@ g = GNNGraph(g, ndata = (x=rand(100, g.num_nodes), y=rand(g.num_nodes)))
 # Add node features and edge features with default names `x` and `e` 
 g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_edges))
 
-g.ndata.x
-g.ndata.e
+g.ndata.x # or just g.x
+g.ndata.e # or just g.e
 
 # Send to gpu
 g = g |> gpu
@@ -272,4 +272,22 @@ end
 function Base.hash(g::T, h::UInt) where T<:GNNGraph
     fs = (getfield(g, k) for k in fieldnames(typeof(g)) if k !== :graph_indicator)
     return foldl((h, f) -> hash(f, h),  fs, init=hash(T, h))
+end
+
+function Base.getproperty(g::GNNGraph, s::Symbol)
+    if s in fieldnames(GNNGraph)
+        return getfield(g, s)
+    end
+    if (s in keys(g.ndata)) + (s in keys(g.edata)) + (s in keys(g.gdata)) > 1 
+        throw(ArgumentError("Ambiguous property name $s"))
+    end
+    if s in keys(g.ndata)
+        return g.ndata[s]
+    elseif s in keys(g.edata)
+        return g.edata[s]
+    elseif s in keys(g.gdata)
+        return g.gdata[s]
+    else
+        throw(ArgumentError("$(s) is not a field of GNNGraph"))
+    end
 end

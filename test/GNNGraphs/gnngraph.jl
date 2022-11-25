@@ -204,6 +204,9 @@
         @test g.ndata.x === X
         @test g.edata.e === E
         @test g.gdata.u === U
+        @test g.x === g.ndata.x
+        @test g.e === g.edata.e
+        @test g.u === g.gdata.u
 
         # Check no args
         g = GNNGraph(g)
@@ -220,6 +223,12 @@
         @test g.ndata.x2 ≈ 2X
         @test g.edata.e2 ≈ 2E
         @test g.gdata.u2 ≈ 2U
+        @test g.x === g.ndata.x
+        @test g.e === g.edata.e
+        @test g.u === g.gdata.u
+        @test g.x2 === g.ndata.x2
+        @test g.e2 === g.edata.e2
+        @test g.u2 === g.gdata.u2
 
         # Dimension checks
         @test_throws AssertionError GNNGraph(erdos_renyi(10, 30), edata=rand(29), graph_type=GRAPH_T)
@@ -249,6 +258,12 @@
         # Error for non-array ndata
         @test_throws AssertionError rand_graph(10,  30, ndata="ciao", graph_type=GRAPH_T)
         @test_throws AssertionError rand_graph(10,  30, ndata=1, graph_type=GRAPH_T)
+
+        # Error for Ambiguous getproperty
+        g = rand_graph(10, 20, ndata=rand(2,10), edata=(; x = rand(3,20)), graph_type=GRAPH_T)
+        @test size(g.ndata.x) == (2,10)
+        @test size(g.edata.x) == (3,20)
+        @test_throws ArgumentError g.x
     end
 
     @testset "MLUtils and DataLoader compat" begin
