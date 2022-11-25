@@ -9,4 +9,6 @@ using Test
     @test hg.num_nodes == Dict("movie" => 193609, "user" => 193609)
     @test hg.num_edges == Dict(("user", "tag", "movie")  => 7366, ("user", "rating", "movie") => 201672)    
     @test hg.graph_indicator === nothing
+
+    # @test hg["user", "tag", "movie"] == (graph = hg.graph[("user", "tag", "movie")], edata = hg.edata[("user", "tag", "movie")])
 end
