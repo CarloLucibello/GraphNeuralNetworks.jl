@@ -30,6 +30,7 @@ tests = [
     "GNNGraphs/generate",
     "GNNGraphs/query",
     "GNNGraphs/sampling",
+    "GNNGraphs/heterognngraph",
     "utils",
     "msgpass",
     "layers/basic",

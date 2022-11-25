@@ -22,6 +22,9 @@ export GNNGraph,
        edge_features, 
        graph_features
     
+include("heterognngraph.jl")
+export HeteroGNNGraph
+
 include("query.jl")
 export adjacency_list,
        edge_index,
@@ -74,5 +77,7 @@ include("utils.jl")
 
 include("gatherscatter.jl")
 # _gather, _scatter
+
+
 
 end #module

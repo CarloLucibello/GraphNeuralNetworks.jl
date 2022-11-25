@@ -1,13 +1,42 @@
 ### CONVERT_TO_COO REPRESENTATION ########
 
-function to_coo(coo::COO_T; dir=:out, num_nodes=nothing, weighted=true)
+function to_coo(data::EDict; kws...)
+    graph = EDict{Any}()
+    num_nodes = NDict{Int}()
+    num_edges = EDict{Int}()
+    for k in keys(data)
+        g, nnodes, nedges = to_coo((data[k]..., nothing); hetero=true, kws...)
+        graph[k] = g
+        num_edges[k] = nedges
+        num_nodes[k[1]] = max(get(num_nodes, k[1], 0), nnodes[1])
+        num_nodes[k[3]] = max(get(num_nodes, k[3], 0), nnodes[2])
+    end
+    return graph, num_nodes, num_edges
+end
+
+function to_coo(coo::COO_T; dir=:out, num_nodes=nothing, weighted=true, hetero=false)
     s, t, val = coo   
-    num_nodes::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
+    
+    if isnothing(num_nodes)
+        ns = maximum(s)
+        nt = maximum(t)
+        num_nodes = hetero ? (ns, nt) : max(ns, nt)
+    elseif num_nodes isa Integer
+        ns = num_nodes
+        nt = num_nodes
+    elseif num_nodes isa Tuple
+        ns, nt = num_nodes
+    else
+        error("Invalid num_nodes $num_nodes")
+    end
+
     @assert isnothing(val) || length(val) == length(s)
     @assert length(s) == length(t)
     if !isempty(s)
-        @assert min(minimum(s), minimum(t)) >= 1 
-        @assert max(maximum(s), maximum(t)) <= num_nodes 
+        @assert minimum(s) >= 1
+        @assert minimum(t) >= 1
+        @assert maximum(s) <= ns
+        @assert maximum(t) <= nt
     end
     num_edges = length(s)
     if !weighted
