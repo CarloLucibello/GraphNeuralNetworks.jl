@@ -93,8 +93,8 @@ g = GNNGraph(g, ndata = (x=rand(100, g.num_nodes), y=rand(g.num_nodes)))
 # Add node features and edge features with default names `x` and `e` 
 g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_edges))
 
-g.ndata.x
-g.ndata.e
+g.ndata.x # or just g.x
+g.ndata.e # or just g.e
 
 # Send to gpu
 g = g |> gpu
