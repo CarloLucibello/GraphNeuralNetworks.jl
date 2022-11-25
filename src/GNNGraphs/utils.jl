@@ -172,6 +172,15 @@ function edge_decoding(idx, n; directed=true)
     return s, t
 end
 
+# each edge is represented by a number in
+# 1:n1*n2
+function edge_decoding(idx, n1, n2)
+    @assert all(1 .<= idx .<= n1*n2)
+    s =  (idx .- 1) .÷ n2 .+ 1
+    t =  (idx .- 1) .% n2 .+ 1
+    return s, t
+end
+
 binarize(x) = map(>(0), x)
 
 @non_differentiable binarize(x...)

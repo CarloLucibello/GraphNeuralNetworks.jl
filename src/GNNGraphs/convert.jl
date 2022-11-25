@@ -1,11 +1,20 @@
 ### CONVERT_TO_COO REPRESENTATION ########
 
-function to_coo(data::EDict; kws...)
+function to_coo(data::EDict; num_nodes = nothing, kws...)
     graph = EDict{Any}()
-    num_nodes = NDict{Int}()
+    if num_nodes === nothing
+        num_nodes = NDict{Int}()
+    end
+    @assert num_nodes isa NDict{Int}
     num_edges = EDict{Int}()
     for k in keys(data)
-        g, nnodes, nedges = to_coo((data[k]..., nothing); hetero=true, kws...)
+        d = data[k]
+        if d isa Tuple && length(d) == 2
+            d = (d..., nothing)
+        end
+        n1 = get(num_nodes, k[1], nothing)
+        n2 = get(num_nodes, k[3], nothing)   
+        g, nnodes, nedges = to_coo(d; hetero=true, num_nodes=(n1,n2), kws...)
         graph[k] = g
         num_edges[k] = nedges
         num_nodes[k[1]] = max(get(num_nodes, k[1], 0), nnodes[1])
@@ -25,11 +34,12 @@ function to_coo(coo::COO_T; dir=:out, num_nodes=nothing, weighted=true, hetero=f
         ns = num_nodes
         nt = num_nodes
     elseif num_nodes isa Tuple
-        ns, nt = num_nodes
+        ns = isnothing(num_nodes[1]) ? maximum(s) : num_nodes[1]
+        nt = isnothing(num_nodes[2]) ? maximum(t) : num_nodes[2]
+        num_nodes = (ns, nt)
     else
         error("Invalid num_nodes $num_nodes")
     end
-
     @assert isnothing(val) || length(val) == length(s)
     @assert length(s) == length(t)
     if !isempty(s)

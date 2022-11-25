@@ -34,7 +34,6 @@ function HeteroGNNGraph(data::EDict;
 
     ntypes = union([[k[1] for k in keys(data)]; [k[3] for k in keys(data)]])
     etypes = [k[2] for k in keys(data)]
-    @assert length(union(etypes)) == length(etypes)
 
     if graph_type == :coo
         graph, num_nodes, num_edges = to_coo(data; num_nodes, dir)
@@ -56,3 +55,41 @@ function HeteroGNNGraph(data::EDict;
             ndata, edata, gdata,
             ntypes, etypes)
 end
+
+
+function Base.show(io::IO, g::HeteroGNNGraph)
+    print(io, "HeteroGNNGraph($(g.num_nodes), $(g.num_edges))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", g::HeteroGNNGraph)
+    if get(io, :compact, false)
+        print(io, "HeteroGNNGraph($(g.num_nodes), $(g.num_edges))")
+    else # if the following block is indented the printing is ruined
+    print(io, "HeteroGNNGraph:
+    num_nodes = $(g.num_nodes)
+    num_edges = $(g.num_edges)")
+    g.num_graphs > 1 && print(io, "\n    num_graphs = $(g.num_graphs)")
+    if !isempty(g.ndata)
+        print(io, "\n    ndata:")
+        for k in keys(g.ndata)
+            print(io, "\n        $k => $(summary(g.ndata[k]))")
+        end
+    end
+    if !isempty(g.edata)
+        print(io, "\n    edata:")
+        for k in keys(g.edata)
+            print(io, "\n        $k => $(summary(g.edata[k]))")
+        end
+    end
+    if !isempty(g.gdata)
+        print(io, "\n    gdata:")
+        for k in keys(g.gdata)
+            print(io, "\n        $k => $(summary(g.gdata[k]))")
+        end
+    end
+    end #else
+end
+
+MLUtils.numobs(g::HeteroGNNGraph) = g.num_graphs 
+MLUtils.getobs(g::HeteroGNNGraph, i) = getgraph(g, i)
+

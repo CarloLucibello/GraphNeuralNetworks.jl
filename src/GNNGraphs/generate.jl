@@ -45,6 +45,24 @@ function rand_graph(n::Integer, m::Integer; bidirected=true, seed=-1, kws...)
     return GNNGraph(Graphs.erdos_renyi(n, m2; is_directed=!bidirected, seed); kws...)    
 end
 
+"""
+    rand_heterograph(n, m; bidirected=false, seed=-1, kws...)
+
+
+"""
+function rand_heterograph(n::NDict, m::EDict; bidirected=false, seed=-1, kws...)
+    @assert !bidirected "Bidirected graphs not supported yet."
+    rng = seed > 0 ? MersenneTwister(seed) : Random.GLOBAL_RNG
+    graphs = Dict(k => _rand_edges(rng, (n[k[1]], n[k[3]]), m[k]) for k in keys(m))
+    return HeteroGNNGraph(graphs; num_nodes=n, kws...)    
+end
+
+function _rand_edges(rng, (n1, n2), m)
+    idx = StatsBase.sample(rng, 1:n1*n2, m, replace=false)
+    s, t = edge_decoding(idx, n1, n2)
+    val = nothing
+    return s, t, val
+end
 
 """
     knn_graph(points::AbstractMatrix, 
