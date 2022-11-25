@@ -277,7 +277,11 @@ end
 function Base.getproperty(g::GNNGraph, s::Symbol)
     if s in fieldnames(GNNGraph)
         return getfield(g, s)
-    elseif s in keys(g.ndata)
+    end
+    if (s in keys(g.ndata)) + (s in keys(g.edata)) + (s in keys(g.gdata)) > 1 
+        throw(ArgumentError("Ambiguous property name $s"))
+    end
+    if s in keys(g.ndata)
         return g.ndata[s]
     elseif s in keys(g.edata)
         return g.edata[s]

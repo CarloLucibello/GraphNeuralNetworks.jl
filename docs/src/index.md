@@ -32,7 +32,7 @@ using Flux.Data: DataLoader
 all_graphs = GNNGraph[]
 
 for _ in 1:1000
-    g = GNNGraph(random_regular_graph(10, 4),  
+    g = rand_graph(10, 40,  
             ndata=(; x = randn(Float32, 16,10)),  # input node features
             gdata=(; y = randn(Float32)))         # regression target   
     push!(all_graphs, g)
@@ -65,14 +65,14 @@ that are glued together into a single `GNNGraph` using the [`MLUtils.batch`](@re
 `collate=true` option. 
 
 ```julia
-train_graphs, test_graphs = MLUtils.split(all_graphs, at=0.8)
+train_graphs, test_graphs = MLUtils.splitobs(all_graphs, at=0.8)
 
 train_loader = DataLoader(train_graphs, 
                 batchsize=32, shuffle=true, collate=true)
 test_loader = DataLoader(test_graphs, 
                 batchsize=32, shuffle=false, collate=true)
 
-loss(g::GNNGraph) = mean((vec(model(g, g.ndata.x)) - g.gdata.y).^2)
+loss(g::GNNGraph) = mean((vec(model(g, g.x)) - g.y).^2)
 
 loss(loader) = mean(loss(g |> device) for g in loader)
 
