@@ -46,21 +46,25 @@ function rand_graph(n::Integer, m::Integer; bidirected=true, seed=-1, kws...)
 end
 
 """
-    rand_heterograph(n, m; bidirected=false, seed=-1, kws...)
+    rand_heterograph(n, m; seed=-1, kws...)
 
-Construct an `HeteroGNNGraph` with number of nodes and edges 
-specified by `n` and `m` respecively.
+Construct an [`HeteroGNNGraph`](@ref) with number of nodes and edges 
+specified by `n` and `m` respectively.
 `n` and `m` can be any iterable of pairs.
 
+Use a `seed > 0` for reproducibility.
+
+Additional keyword arguments will be passed to the [`GNNGraph`](@ref) constructor.
+    
 # Examples
 
 ```juliarepl
-julia> g = rand_heterograph((:user => 10, :movie => 20), (:user,:rate,:movie) => 30)
+julia> g = rand_heterograph((:user => 10, :movie => 20),
+                            (:user, :rate, :movie) => 30))
 HeteroGNNGraph:
-    num_nodes = Dict(:user => 10, :movie => 20)
-    num_edges = Dict((:user, :rate, :movie) => 30)   
+    num_nodes = (:user => 10, :movie => 20)
+    num_edges = ((:user, :rate, :movie) => 30,)   
 ```
-
 """
 rand_heteropraph
 
