@@ -66,29 +66,50 @@ function Base.show(io::IO, ::MIME"text/plain", g::HeteroGNNGraph)
         print(io, "HeteroGNNGraph($(g.num_nodes), $(g.num_edges))")
     else # if the following block is indented the printing is ruined
     print(io, "HeteroGNNGraph:
-    num_nodes = $((g.num_nodes...,))         
-    num_edges = $((g.num_edges...,))")
-    g.num_graphs > 1 && print(io, "\n    num_graphs = $(g.num_graphs)")
-    if !isempty(g.ndata)
-        print(io, "\n    ndata:")
-        for k in keys(g.ndata)
-            print(io, "\n        $k => $(summary(g.ndata[k]))")
-        end
-    end
-    if !isempty(g.edata)
-        print(io, "\n    edata:")
-        for k in keys(g.edata)
-            print(io, "\n        $k => $(summary(g.edata[k]))")
-        end
-    end
-    if !isempty(g.gdata)
-        print(io, "\n    gdata:")
-        for k in keys(g.gdata)
-            print(io, "\n        $k => $(summary(g.gdata[k]))")
-        end
-    end
-    end #else
+  num_nodes: $((g.num_nodes...,))         
+  num_edges: $((g.num_edges...,))")
+  g.num_graphs > 1 && print(io, "\n    num_graphs = $(g.num_graphs)")
+  if !isempty(g.ndata)
+      print(io, "\n  ndata:")
+      for k in keys(g.ndata)
+          print(io, "\n    ", _str(k), "  =>  $(shortsummary(g.ndata[k]))")
+      end
+  end
+  if !isempty(g.edata)
+      print(io, "\n  edata:")
+      for k in keys(g.edata)
+          print(io, "\n    $k  =>  $(shortsummary(g.edata[k]))")
+      end
+  end
+  if !isempty(g.gdata)
+      print(io, "\n  gdata:")
+      print(io, "\n    ")
+      shortsummary(io, g.gdata)
+  end #else
+  end
 end
+
+function shortsummary(io::IO, x)
+    s = shortsummary(x)
+    s === nothing && return
+    print(io, s)
+end
+
+shortsummary(x) = summary(x)
+shortsummary(x::Number) = "$x"
+
+function shortsummary(x::NamedTuple) 
+    if length(x) == 0
+        return nothing
+    elseif length(x) === 1
+        return "$(keys(x)[1]) = $(shortsummary(x[1]))"
+    else
+        "(" * join(("$k = $(shortsummary(x[k]))" for k in keys(x)), ", ") * ")"
+    end
+end
+
+_str(s::Symbol) = ":$s"
+_str(s) = "$s"
 
 MLUtils.numobs(g::HeteroGNNGraph) = g.num_graphs 
 MLUtils.getobs(g::HeteroGNNGraph, i) = getgraph(g, i)
