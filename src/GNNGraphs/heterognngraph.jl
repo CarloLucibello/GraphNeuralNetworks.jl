@@ -8,8 +8,8 @@ struct HeteroGNNGraph
     num_edges::EDict{Int}
     num_graphs::Int
     graph_indicator::Union{Nothing, NDict}
-    ndata::NDict{NamedTuple}
-    edata::EDict{NamedTuple}
+    ndata::NDict{<:NamedTuple}
+    edata::EDict{<:NamedTuple}
     gdata::NamedTuple
     ntypes::Vector{String}
     etypes::Vector{String}
@@ -45,9 +45,9 @@ function HeteroGNNGraph(data::EDict;
     
     num_graphs = !isnothing(graph_indicator) ? maximum([maximum(gi) for gi in values(graph_indicator)]) : 1
     
-    # ndata = normalize_graphdata(ndata, default_name=:x, n=num_nodes)
-    # edata = normalize_graphdata(edata, default_name=:e, n=num_edges, duplicate_if_needed=true)
-    # gdata = normalize_graphdata(gdata, default_name=:u, n=num_graphs)
+    ndata = normalize_graphdata(ndata, default_name=:x, n=num_nodes)
+    edata = normalize_graphdata(edata, default_name=:e, n=num_edges, duplicate_if_needed=true)
+    gdata = normalize_graphdata(gdata, default_name=:u, n=num_graphs)
     
     HeteroGNNGraph(graph, 
             num_nodes, num_edges, num_graphs, 

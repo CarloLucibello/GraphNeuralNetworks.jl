@@ -9,7 +9,8 @@ function to_coo(data::EDict; num_nodes = nothing, kws...)
     num_edges = EDict{Int}()
     for k in keys(data)
         d = data[k]
-        if d isa Tuple && length(d) == 2
+        @assert d isa Tuple
+        if length(d) == 2
             d = (d..., nothing)
         end
         n1 = get(num_nodes, k[1], nothing)

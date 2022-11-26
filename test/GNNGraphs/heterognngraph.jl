@@ -18,4 +18,22 @@ using Test
 
     @test hg.num_nodes == Dict("A" => 10, "B" => 20)
     @test hg.num_edges == Dict(("A", "rel1", "B") => 30, ("B", "rel2", "A") => 10)
+    @test hg.graph_indicator === nothing
+    @test hg.num_graphs == 1
+    @test hg.ndata == Dict()
+    @test hg.edata == Dict()
+    @test hg.gdata == (;)
+
+
+    hg = rand_heterograph(Dict("A" => 10, "B" => 20), 
+                          Dict(("A", "rel1", "B") => 30, ("B", "rel2", "A") => 10),
+                          ndata= Dict("A" => rand(2,10), "B" => (x=rand(3,20), y=rand(4,20))),
+                          edata= Dict(("A", "rel1", "B") => rand(5,30)),
+                          gdata = 1) 
+
+    @test size(hg.ndata["A"].x) == (2, 10)
+    @test size(hg.ndata["B"].x) == (3, 20)
+    @test size(hg.ndata["B"].y) == (4, 20)
+    @test size(hg.edata[("A", "rel1", "B")].e) == (5, 30)
+    @test hg.gdata == (; u = 1)
 end

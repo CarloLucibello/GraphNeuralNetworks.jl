@@ -72,7 +72,7 @@ end
 normalize_graphdata(data::Nothing; kws...) = NamedTuple()
 
 normalize_graphdata(data; default_name::Symbol, kws...) = 
-normalize_graphdata(NamedTuple{(default_name,)}((data,)); default_name, kws...) 
+    normalize_graphdata(NamedTuple{(default_name,)}((data,)); default_name, kws...) 
 
 function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_needed=false)
     # This had to workaround two Zygote bugs with NamedTuples
@@ -108,9 +108,19 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
         data = map(duplicate, data)
     end
     
-    @assert all(x -> x isa AbstractArray ? size(x)[end] == n : true, data)  "Wrong size in last dimension for feature array."
-    
+    for x in data
+        if x isa AbstractArray
+            @assert size(x)[end] == n "Wrong size in last dimension for feature array, expected $n but got $(size(x)[end])."
+        end
+    end    
     return data
+end
+
+# For heterogeneous graphs
+function normalize_graphdata(data::Dict; default_name::Symbol, n::Dict, kws...)
+    isempty(data) && return data
+    Dict(k => normalize_graphdata(v; default_name=default_name, n=n[k], kws...)
+            for (k,v) in data)
 end
 
 ones_like(x::AbstractArray, T::Type, sz=size(x)) = fill!(similar(x, T, sz), 1)
