@@ -24,8 +24,8 @@ using Test
         @test hg.ndata == Dict()
         @test hg.edata == Dict()
         @test hg.gdata == (;)
-        @test hg.ntypes == [:A, :B]
-        @test hg.etypes == [:rel1, :rel2]
+        @test sort(hg.ntypes) == [:A, :B]
+        @test sort(hg.etypes) == [:rel1, :rel2]
     end
 
     @testset "features" begin
