@@ -48,7 +48,7 @@ end
 """
     rand_heterograph(n, m; seed=-1, kws...)
 
-Construct an [`HeteroGNNGraph`](@ref) with number of nodes and edges 
+Construct an [`GNNHeteroGraph`](@ref) with number of nodes and edges 
 specified by `n` and `m` respectively.
 `n` and `m` can be any iterable of pairs.
 
@@ -61,7 +61,7 @@ Additional keyword arguments will be passed to the [`GNNGraph`](@ref) constructo
 ```juliarepl
 julia> g = rand_heterograph((:user => 10, :movie => 20),
                             (:user, :rate, :movie) => 30))
-HeteroGNNGraph:
+GNNHeteroGraph:
     num_nodes = (:user => 10, :movie => 20)
     num_edges = ((:user, :rate, :movie) => 30,)   
 ```
@@ -75,7 +75,7 @@ function rand_heterograph(n::NDict, m::EDict; bidirected=false, seed=-1, kws...)
     @assert !bidirected "Bidirected graphs not supported yet."
     rng = seed > 0 ? MersenneTwister(seed) : Random.GLOBAL_RNG
     graphs = Dict(k => _rand_edges(rng, (n[k[1]], n[k[3]]), m[k]) for k in keys(m))
-    return HeteroGNNGraph(graphs; num_nodes=n, kws...)    
+    return GNNHeteroGraph(graphs; num_nodes=n, kws...)    
 end
 
 function _rand_edges(rng, (n1, n2), m)

@@ -22,8 +22,8 @@ export GNNGraph,
        edge_features, 
        graph_features
     
-include("heterognngraph.jl")
-export HeteroGNNGraph
+include("gnnheterograph.jl")
+export GNNHeteroGraph
 
 include("query.jl")
 export adjacency_list,
