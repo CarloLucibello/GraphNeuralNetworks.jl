@@ -1,6 +1,6 @@
 
-const EDict{T} = Dict{Tuple{String, String, String}, T}
-const NDict{T} = Dict{String, T}
+const EDict{T} = Dict{Tuple{Symbol, Symbol, Symbol}, T}
+const NDict{T} = Dict{Symbol, T}
 
 struct HeteroGNNGraph
     graph::EDict
@@ -11,8 +11,8 @@ struct HeteroGNNGraph
     ndata::NDict{<:NamedTuple}
     edata::EDict{<:NamedTuple}
     gdata::NamedTuple
-    ntypes::Vector{String}
-    etypes::Vector{String}
+    ntypes::Vector{Symbol}
+    etypes::Vector{Symbol}
 end
 
 @functor HeteroGNNGraph
@@ -45,15 +45,15 @@ function HeteroGNNGraph(data::EDict;
     
     num_graphs = !isnothing(graph_indicator) ? maximum([maximum(gi) for gi in values(graph_indicator)]) : 1
     
-    ndata = normalize_graphdata(ndata, default_name=:x, n=num_nodes)
-    edata = normalize_graphdata(edata, default_name=:e, n=num_edges, duplicate_if_needed=true)
+    ndata = normalize_heterographdata(ndata, default_name=:x, n=num_nodes)
+    edata = normalize_heterographdata(edata, default_name=:e, n=num_edges, duplicate_if_needed=true)
     gdata = normalize_graphdata(gdata, default_name=:u, n=num_graphs)
     
-    HeteroGNNGraph(graph, 
-            num_nodes, num_edges, num_graphs, 
-            graph_indicator,
-            ndata, edata, gdata,
-            ntypes, etypes)
+    return HeteroGNNGraph(graph, 
+                num_nodes, num_edges, num_graphs, 
+                graph_indicator,
+                ndata, edata, gdata,
+                ntypes, etypes)
 end
 
 
@@ -66,8 +66,8 @@ function Base.show(io::IO, ::MIME"text/plain", g::HeteroGNNGraph)
         print(io, "HeteroGNNGraph($(g.num_nodes), $(g.num_edges))")
     else # if the following block is indented the printing is ruined
     print(io, "HeteroGNNGraph:
-    num_nodes = $(g.num_nodes)
-    num_edges = $(g.num_edges)")
+    num_nodes = $((g.num_nodes...,))         
+    num_edges = $((g.num_edges...,))")
     g.num_graphs > 1 && print(io, "\n    num_graphs = $(g.num_graphs)")
     if !isempty(g.ndata)
         print(io, "\n    ndata:")

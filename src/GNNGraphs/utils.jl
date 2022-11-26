@@ -117,7 +117,10 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
 end
 
 # For heterogeneous graphs
-function normalize_graphdata(data::Dict; default_name::Symbol, n::Dict, kws...)
+normalize_heterographdata(data; kws...) =
+    normalize_heterographdata(Dict(data); kws...)
+
+function normalize_heterographdata(data::Dict; default_name::Symbol, n::Dict, kws...)
     isempty(data) && return data
     Dict(k => normalize_graphdata(v; default_name=default_name, n=n[k], kws...)
             for (k,v) in data)
