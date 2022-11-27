@@ -44,10 +44,9 @@ function train(; kws...)
     dataset = Cora()
     classes = dataset.metadata["classes"]
     g = mldataset2gnngraph(dataset) |> device
-    X = g.ndata.features
-    y = onehotbatch(g.ndata.targets |> cpu, classes) |> device # remove when https://github.com/FluxML/Flux.jl/pull/1959 tagged
-    (; train_mask, val_mask, test_mask) = g.ndata
-    ytrain = y[:,train_mask]
+    X = g.features
+    y = onehotbatch(g.targets |> cpu, classes) |> device # remove when https://github.com/FluxML/Flux.jl/pull/1959 tagged
+    ytrain = y[:, g.train_mask]
 
     nin, nhidden, nout = size(X,1), args.nhidden, length(classes)
     
@@ -63,8 +62,8 @@ function train(; kws...)
     
     ## LOGGING FUNCTION
     function report(epoch)
-        train = eval_loss_accuracy(X, y, train_mask, model, g)
-        test = eval_loss_accuracy(X, y, test_mask, model, g)        
+        train = eval_loss_accuracy(X, y, g.train_mask, model, g)
+        test = eval_loss_accuracy(X, y, g.test_mask, model, g)        
         println("Epoch: $epoch   Train: $(train)   Test: $(test)")
     end
     
@@ -73,7 +72,7 @@ function train(; kws...)
     for epoch in 1:args.epochs
         gs = Flux.gradient(ps) do
             ŷ = model(g, X)
-            logitcrossentropy(ŷ[:,train_mask], ytrain)
+            logitcrossentropy(ŷ[:, g.train_mask], ytrain)
         end
 
         Flux.Optimise.update!(opt, ps, gs)

@@ -45,6 +45,47 @@ function rand_graph(n::Integer, m::Integer; bidirected=true, seed=-1, kws...)
     return GNNGraph(Graphs.erdos_renyi(n, m2; is_directed=!bidirected, seed); kws...)    
 end
 
+"""
+    rand_heterograph(n, m; seed=-1, kws...)
+
+Construct an [`GNNHeteroGraph`](@ref) with number of nodes and edges 
+specified by `n` and `m` respectively.
+`n` and `m` can be any iterable of pairs.
+
+Use a `seed > 0` for reproducibility.
+
+Additional keyword arguments will be passed to the [`GNNHeteroGraph`](@ref) constructor.
+
+# Examples
+
+```juliarepl
+
+
+julia> g = rand_heterograph((:user => 10, :movie => 20),
+                            (:user, :rate, :movie) => 30)
+GNNHeteroGraph:
+  num_nodes: (:user => 10, :movie => 20)         
+  num_edges: ((:user, :rate, :movie) => 30,)
+```
+"""
+rand_heteropraph
+
+# for generic iterators of pairs
+rand_heterograph(n, m; kws...) = rand_heterograph(Dict(n), Dict(m); kws...)
+
+function rand_heterograph(n::NDict, m::EDict; bidirected=false, seed=-1, kws...)
+    @assert !bidirected "Bidirected graphs not supported yet."
+    rng = seed > 0 ? MersenneTwister(seed) : Random.GLOBAL_RNG
+    graphs = Dict(k => _rand_edges(rng, (n[k[1]], n[k[3]]), m[k]) for k in keys(m))
+    return GNNHeteroGraph(graphs; num_nodes=n, kws...)    
+end
+
+function _rand_edges(rng, (n1, n2), m)
+    idx = StatsBase.sample(rng, 1:n1*n2, m, replace=false)
+    s, t = edge_decoding(idx, n1, n2)
+    val = nothing
+    return s, t, val
+end
 
 """
     knn_graph(points::AbstractMatrix, 

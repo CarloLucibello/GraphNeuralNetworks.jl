@@ -24,6 +24,7 @@ makedocs(;
              "Message Passing" => "messagepassing.md",
              "Model Building" => "models.md",
              "Datasets" => "datasets.md",
+             "HeteroGraphs" => "gnnheterograph.md",
              "Tutorials" => tutorials,
              "API Reference" =>
                [

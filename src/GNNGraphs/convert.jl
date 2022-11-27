@@ -1,13 +1,55 @@
 ### CONVERT_TO_COO REPRESENTATION ########
 
-function to_coo(coo::COO_T; dir=:out, num_nodes=nothing, weighted=true)
+function to_coo(data::EDict; num_nodes = nothing, kws...)
+    graph = EDict{Any}()
+    _num_nodes = NDict{Int}()
+    num_edges = EDict{Int}()
+    for k in keys(data)
+        d = data[k]
+        @assert d isa Tuple
+        if length(d) == 2
+            d = (d..., nothing)
+        end
+        if num_nodes !== nothing
+            n1 = get(num_nodes, k[1], nothing)
+            n2 = get(num_nodes, k[3], nothing)   
+        else
+            n1 = nothing
+            n2 = nothing
+        end
+        g, nnodes, nedges = to_coo(d; hetero=true, num_nodes=(n1,n2), kws...)
+        graph[k] = g
+        num_edges[k] = nedges
+        _num_nodes[k[1]] = max(get(_num_nodes, k[1], 0), nnodes[1])
+        _num_nodes[k[3]] = max(get(_num_nodes, k[3], 0), nnodes[2])
+    end
+    return graph, _num_nodes, num_edges
+end
+
+function to_coo(coo::COO_T; dir=:out, num_nodes=nothing, weighted=true, hetero=false)
     s, t, val = coo   
-    num_nodes::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
+    
+    if isnothing(num_nodes)
+        ns = maximum(s)
+        nt = maximum(t)
+        num_nodes = hetero ? (ns, nt) : max(ns, nt)
+    elseif num_nodes isa Integer
+        ns = num_nodes
+        nt = num_nodes
+    elseif num_nodes isa Tuple
+        ns = isnothing(num_nodes[1]) ? maximum(s) : num_nodes[1]
+        nt = isnothing(num_nodes[2]) ? maximum(t) : num_nodes[2]
+        num_nodes = (ns, nt)
+    else
+        error("Invalid num_nodes $num_nodes")
+    end
     @assert isnothing(val) || length(val) == length(s)
     @assert length(s) == length(t)
     if !isempty(s)
-        @assert min(minimum(s), minimum(t)) >= 1 
-        @assert max(maximum(s), maximum(t)) <= num_nodes 
+        @assert minimum(s) >= 1
+        @assert minimum(t) >= 1
+        @assert maximum(s) <= ns
+        @assert maximum(t) <= nt
     end
     num_edges = length(s)
     if !weighted

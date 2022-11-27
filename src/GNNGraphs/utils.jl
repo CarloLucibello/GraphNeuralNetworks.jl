@@ -72,7 +72,7 @@ end
 normalize_graphdata(data::Nothing; kws...) = NamedTuple()
 
 normalize_graphdata(data; default_name::Symbol, kws...) = 
-normalize_graphdata(NamedTuple{(default_name,)}((data,)); default_name, kws...) 
+    normalize_graphdata(NamedTuple{(default_name,)}((data,)); default_name, kws...) 
 
 function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_needed=false)
     # This had to workaround two Zygote bugs with NamedTuples
@@ -108,9 +108,22 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
         data = map(duplicate, data)
     end
     
-    @assert all(x -> x isa AbstractArray ? size(x)[end] == n : true, data)  "Wrong size in last dimension for feature array."
-    
+    for x in data
+        if x isa AbstractArray
+            @assert size(x)[end] == n "Wrong size in last dimension for feature array, expected $n but got $(size(x)[end])."
+        end
+    end    
     return data
+end
+
+# For heterogeneous graphs
+normalize_heterographdata(data; kws...) =
+    normalize_heterographdata(Dict(data); kws...)
+
+function normalize_heterographdata(data::Dict; default_name::Symbol, n::Dict, kws...)
+    isempty(data) && return data
+    Dict(k => normalize_graphdata(v; default_name=default_name, n=n[k], kws...)
+            for (k,v) in data)
 end
 
 ones_like(x::AbstractArray, T::Type, sz=size(x)) = fill!(similar(x, T, sz), 1)
@@ -172,8 +185,41 @@ function edge_decoding(idx, n; directed=true)
     return s, t
 end
 
+# each edge is represented by a number in
+# 1:n1*n2
+function edge_decoding(idx, n1, n2)
+    @assert all(1 .<= idx .<= n1*n2)
+    s =  (idx .- 1) .÷ n2 .+ 1
+    t =  (idx .- 1) .% n2 .+ 1
+    return s, t
+end
+
 binarize(x) = map(>(0), x)
 
 @non_differentiable binarize(x...)
 @non_differentiable edge_encoding(x...)
 @non_differentiable edge_decoding(x...)
+
+
+### PRINTING #####
+
+
+function shortsummary(io::IO, x)
+    s = shortsummary(x)
+    s === nothing && return
+    print(io, s)
+end
+
+shortsummary(x) = summary(x)
+shortsummary(x::Number) = "$x"
+
+function shortsummary(x::NamedTuple) 
+    if length(x) == 0
+        return nothing
+    elseif length(x) === 1
+        return "$(keys(x)[1]) = $(shortsummary(x[1]))"
+    else
+        "(" * join(("$k = $(shortsummary(x[k]))" for k in keys(x)), ", ") * ")"
+    end
+end
+

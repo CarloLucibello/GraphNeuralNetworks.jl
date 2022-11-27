@@ -230,27 +230,27 @@ function Base.show(io::IO, ::MIME"text/plain", g::GNNGraph)
         print(io, "GNNGraph($(g.num_nodes), $(g.num_edges))")
     else # if the following block is indented the printing is ruined
     print(io, "GNNGraph:
-    num_nodes = $(g.num_nodes)
-    num_edges = $(g.num_edges)")
-    g.num_graphs > 1 && print(io, "\n    num_graphs = $(g.num_graphs)")
-    if !isempty(g.ndata)
-        print(io, "\n    ndata:")
-        for k in keys(g.ndata)
-            print(io, "\n        $k => $(summary(g.ndata[k]))")
-        end
-    end
-    if !isempty(g.edata)
-        print(io, "\n    edata:")
-        for k in keys(g.edata)
-            print(io, "\n        $k => $(summary(g.edata[k]))")
-        end
-    end
-    if !isempty(g.gdata)
-        print(io, "\n    gdata:")
-        for k in keys(g.gdata)
-            print(io, "\n        $k => $(summary(g.gdata[k]))")
-        end
-    end
+  num_nodes: $(g.num_nodes)
+  num_edges: $(g.num_edges)")
+  g.num_graphs > 1 && print(io, "\n    num_graphs = $(g.num_graphs)")
+  if !isempty(g.ndata)
+      print(io, "\n  ndata:")
+      for k in keys(g.ndata)
+        print(io, "\n    $k = $(shortsummary(g.ndata[k]))")
+      end
+  end
+  if !isempty(g.edata)
+      print(io, "\n  edata:")
+      for k in keys(g.edata)
+        print(io, "\n    $k = $(shortsummary(g.edata[k]))")
+      end
+  end
+  if !isempty(g.gdata)
+      print(io, "\n  gdata:")
+      for k in keys(g.gdata)
+        print(io, "\n    $k = $(shortsummary(g.gdata[k]))")
+      end
+  end
     end #else
 end
 
