@@ -65,6 +65,13 @@ using Test
         edges1 = rand(1:nA, 20), rand(1:nB, 20)
         edges2 = rand(1:nB, 30), rand(1:nA, 30)
         hg = GNNHeteroGraph(((:A, :rel1, :B) => edges1, (:B, :rel2, :A) => edges2))
+        @test hg.num_edges == Dict((:A, :rel1, :B) => 20, (:B, :rel2, :A) => 30)
+
+        nA, nB = 10, 20
+        edges1 = rand(1:nA, 20), rand(1:nB, 20)
+        edges2 = rand(1:nB, 30), rand(1:nA, 30)
+        hg = GNNHeteroGraph(((:A, :rel1, :B) => edges1, (:B, :rel2, :A) => edges2);
+           num_nodes = (:A => nA, :B => nB))
         @test hg.num_nodes == Dict(:A => 10, :B => 20)         
         @test hg.num_edges == Dict((:A, :rel1, :B) => 20, (:B, :rel2, :A) => 30)
     end

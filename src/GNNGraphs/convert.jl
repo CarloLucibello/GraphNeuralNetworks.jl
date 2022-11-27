@@ -2,10 +2,7 @@
 
 function to_coo(data::EDict; num_nodes = nothing, kws...)
     graph = EDict{Any}()
-    if num_nodes === nothing
-        num_nodes = NDict{Int}()
-    end
-    @assert num_nodes isa NDict{Int}
+    _num_nodes = NDict{Int}()
     num_edges = EDict{Int}()
     for k in keys(data)
         d = data[k]
@@ -13,15 +10,20 @@ function to_coo(data::EDict; num_nodes = nothing, kws...)
         if length(d) == 2
             d = (d..., nothing)
         end
-        n1 = get(num_nodes, k[1], nothing)
-        n2 = get(num_nodes, k[3], nothing)   
+        if num_nodes !== nothing
+            n1 = get(num_nodes, k[1], nothing)
+            n2 = get(num_nodes, k[3], nothing)   
+        else
+            n1 = nothing
+            n2 = nothing
+        end
         g, nnodes, nedges = to_coo(d; hetero=true, num_nodes=(n1,n2), kws...)
         graph[k] = g
         num_edges[k] = nedges
-        num_nodes[k[1]] = max(get(num_nodes, k[1], 0), nnodes[1])
-        num_nodes[k[3]] = max(get(num_nodes, k[3], 0), nnodes[2])
+        _num_nodes[k[1]] = max(get(_num_nodes, k[1], 0), nnodes[1])
+        _num_nodes[k[3]] = max(get(_num_nodes, k[3], 0), nnodes[2])
     end
-    return graph, num_nodes, num_edges
+    return graph, _num_nodes, num_edges
 end
 
 function to_coo(coo::COO_T; dir=:out, num_nodes=nothing, weighted=true, hetero=false)
