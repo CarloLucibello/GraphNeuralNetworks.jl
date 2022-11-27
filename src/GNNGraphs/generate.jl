@@ -54,16 +54,18 @@ specified by `n` and `m` respectively.
 
 Use a `seed > 0` for reproducibility.
 
-Additional keyword arguments will be passed to the [`GNNGraph`](@ref) constructor.
-    
+Additional keyword arguments will be passed to the [`GNNHeteroGraph`](@ref) constructor.
+
 # Examples
 
 ```juliarepl
+
+
 julia> g = rand_heterograph((:user => 10, :movie => 20),
-                            (:user, :rate, :movie) => 30))
+                            (:user, :rate, :movie) => 30)
 GNNHeteroGraph:
-    num_nodes = (:user => 10, :movie => 20)
-    num_edges = ((:user, :rate, :movie) => 30,)   
+  num_nodes: (:user => 10, :movie => 20)         
+  num_edges: ((:user, :rate, :movie) => 30,)
 ```
 """
 rand_heteropraph

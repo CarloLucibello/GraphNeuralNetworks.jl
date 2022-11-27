@@ -199,3 +199,27 @@ binarize(x) = map(>(0), x)
 @non_differentiable binarize(x...)
 @non_differentiable edge_encoding(x...)
 @non_differentiable edge_decoding(x...)
+
+
+### PRINTING #####
+
+
+function shortsummary(io::IO, x)
+    s = shortsummary(x)
+    s === nothing && return
+    print(io, s)
+end
+
+shortsummary(x) = summary(x)
+shortsummary(x::Number) = "$x"
+
+function shortsummary(x::NamedTuple) 
+    if length(x) == 0
+        return nothing
+    elseif length(x) === 1
+        return "$(keys(x)[1]) = $(shortsummary(x[1]))"
+    else
+        "(" * join(("$k = $(shortsummary(x[k]))" for k in keys(x)), ", ") * ")"
+    end
+end
+

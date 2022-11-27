@@ -47,8 +47,8 @@ julia> target = [2,3,1,3,1,2,4,3];
 
 julia> g = GNNGraph(source, target)
 GNNGraph:
-    num_nodes = 4
-    num_edges = 8
+  num_nodes: 4
+  num_edges: 8
 
 
 julia> @assert g.num_nodes == 4   # number of nodes
@@ -88,7 +88,7 @@ g = rand_graph(10,  60, ndata = rand(Float32, 32, 10))
 
 g.ndata.x  # `:x` is the default name for node features
 
-# For convinience, we can access the features through the shortcut
+# For convenience, we can access the features through the shortcut
 g.x 
 
 # You can have multiple feature arrays
@@ -131,8 +131,8 @@ julia> weight = [1.0, 0.5, 2.1, 2.3, 4, 4.1];
 
 julia> g = GNNGraph(source, target, weight)
 GNNGraph:
-    num_nodes = 3
-    num_edges = 6
+  num_nodes: 3
+  num_edges: 6
 
 julia> get_edge_weight(g)
 6-element Vector{Float64}:
@@ -221,10 +221,10 @@ using Flux: gpu
 g_gpu = g |> gpu
 ```
 
-## JuliaGraphs/Graphs.jl integration
+## Integraton with Graphs.jl integration
 
-Since `GNNGraph <: Graphs.AbstractGraph`, we can use any functionality from Graphs.jl. 
-Moreover, `GNNGraph`s can be constructed from `Graphs.Graph` and `Graphs.DiGraph`.
+Since `GNNGraph <: Graphs.AbstractGraph`, we can use any functionality from [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl) for querying and analyzing the graph structure. 
+Moreover, a `GNNGraph` can be easily constructed from a `Graphs.Graph` or a `Graphs.DiGraph`:
 
 ```julia
 julia> import Graphs
@@ -237,10 +237,10 @@ julia> gu = Graphs.erdos_renyi(10, 20)
 
 # Since GNNGraphs are undirected, the edges are doubled when converting 
 # to GNNGraph
-julia> GNNGraph(gu)  # Since GNNGraphs are 
+julia> GNNGraph(gu)
 GNNGraph:
-    num_nodes = 10
-    num_edges = 40
+  num_nodes: 10
+  num_edges: 40
 
 # A Graphs.jl directed graph
 julia> gd = Graphs.erdos_renyi(10, 20, is_directed=true)
@@ -248,6 +248,6 @@ julia> gd = Graphs.erdos_renyi(10, 20, is_directed=true)
 
 julia> GNNGraph(gd)
 GNNGraph:
-    num_nodes = 10
-    num_edges = 20
+  num_nodes: 10
+  num_edges: 20
 ```

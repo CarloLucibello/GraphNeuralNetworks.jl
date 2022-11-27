@@ -60,7 +60,7 @@ using Test
         @test size(hg.edata[(:A, :rel1, :B)].e) == (5, 30)
         @test hg.gdata == (; u = 1)
 
-        
+    
         nA, nB = 10, 20
         edges1 = rand(1:nA, 20), rand(1:nB, 20)
         edges2 = rand(1:nB, 30), rand(1:nA, 30)

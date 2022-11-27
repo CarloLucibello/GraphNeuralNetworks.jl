@@ -235,18 +235,21 @@ function Base.show(io::IO, ::MIME"text/plain", g::GNNGraph)
   g.num_graphs > 1 && print(io, "\n    num_graphs = $(g.num_graphs)")
   if !isempty(g.ndata)
       print(io, "\n  ndata:")
-      print(io, "\n    ")
-      shortsummary(io, g.ndata)
+      for k in keys(g.ndata)
+        print(io, "\n    $k = $(shortsummary(g.ndata[k]))")
+      end
   end
   if !isempty(g.edata)
       print(io, "\n  edata:")
-      print(io, "\n    ")
-      shortsummary(io, g.edata)
+      for k in keys(g.edata)
+        print(io, "\n    $k = $(shortsummary(g.edata[k]))")
+      end
   end
   if !isempty(g.gdata)
       print(io, "\n  gdata:")
-      print(io, "\n    ")
-      shortsummary(io, g.gdata)
+      for k in keys(g.gdata)
+        print(io, "\n    $k = $(shortsummary(g.gdata[k]))")
+      end
   end
     end #else
 end
