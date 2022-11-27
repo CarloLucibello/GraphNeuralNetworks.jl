@@ -40,14 +40,23 @@ cat_features(x1::Union{Number, AbstractVector}, x2::Union{Number, AbstractVector
     cat(x1, x2, dims=1)
 
 # workaround for issue #98 #104
+# See https://github.com/JuliaStrings/InlineStrings.jl/issues/21
+# Remove when minimum supported version is julia v1.8
 cat_features(x1::NamedTuple{(), Tuple{}}, x2::NamedTuple{(), Tuple{}}) = (;)
 cat_features(xs::AbstractVector{NamedTuple{(), Tuple{}}}) = (;)
 
 function cat_features(x1::NamedTuple, x2::NamedTuple)
     sort(collect(keys(x1))) == sort(collect(keys(x2))) || @error "cannot concatenate feature data with different keys"
 
-    NamedTuple(k => cat_features(getfield(x1,k), getfield(x2,k)) for k in keys(x1))
+    return NamedTuple(k => cat_features(x1[k], x2[k]) for k in keys(x1))
 end
+
+function cat_features(x1::Dict{Symbol,T}, x2::Dict{Symbol,T}) where T
+    sort(collect(keys(x1))) == sort(collect(keys(x2))) || @error "cannot concatenate feature data with different keys"
+    
+    return Dict{Symbol,T}(k => cat_features(x1[k], x2[k]) for k in keys(x1))
+end
+
 
 function cat_features(xs::AbstractVector{<:AbstractArray{T,N}}) where {T<:Number, N}
    cat(xs...; dims=N)
@@ -63,13 +72,23 @@ function cat_features(xs::AbstractVector{<:NamedTuple})
 
     # concatenate
     syms = symbols[1]
-    NamedTuple(
-        k => cat_features([x[k] for x in xs]) for (ii,k) in enumerate(syms)
+    NamedTuple(k => cat_features([x[k] for x in xs]) for k in syms)
+end
+
+function cat_features(xs::AbstractVector{Dict{Symbol,T}}) where T
+    symbols = [sort(collect(keys(x))) for x in xs]
+    all(y -> y==symbols[1], symbols) || @error "cannot concatenate feature data with different keys"
+    length(xs) == 1 && return xs[1] 
+
+    # concatenate 
+    syms = symbols[1]
+    Dict{Symbol,T}(
+        k => cat_features([x[k] for x in xs]) for k in syms
     )
 end
 
 # Turns generic type into named tuple
-normalize_graphdata(data::Nothing; kws...) = NamedTuple()
+normalize_graphdata(data::Nothing; n, kws...) = DataStore(n)
 
 normalize_graphdata(data; default_name::Symbol, kws...) =
     normalize_graphdata(NamedTuple{(default_name,)}((data,)); default_name, kws...)
@@ -79,11 +98,11 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
     # https://github.com/FluxML/Zygote.jl/issues/1071
     # https://github.com/FluxML/Zygote.jl/issues/1072
 
-    if n != 1
+    if n > 1
         @assert all(x -> x isa AbstractArray, data) "Non-array features provided."
     end
 
-    if n == 1
+    if n <= 1
         # If last array dimension is not 1, add a new dimension.
         # This is mostly useful to reshape global feature vectors
         # of size D to Dx1 matrices.
@@ -93,27 +112,25 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
         data = map(unsqz_last, data)
     end
 
-    ## Turn vectors in 1 x n matrices.
-    # unsqz_first(v::AbstractVector) = reshape(v, 1, length(v))
-    # unsqz_first(v) = v
-    # data = map(unsqz_first, data)
-
-    if duplicate_if_needed
-        function duplicate(v)
-            if v isa AbstractArray && size(v)[end] == n÷2
-                v = cat(v, v, dims=ndims(v))
+    if n > 0
+        if duplicate_if_needed 
+            function duplicate(v)
+                if v isa AbstractArray && size(v)[end] == n÷2
+                    v = cat(v, v, dims=ndims(v))
+                end
+                return v
             end
-            v
+            data = map(duplicate, data)
         end
-        data = map(duplicate, data)
+        
+        for x in data
+            if x isa AbstractArray
+                @assert size(x)[end] == n "Wrong size in last dimension for feature array, expected $n but got $(size(x)[end])."
+            end
+        end
     end
 
-    for x in data
-        if x isa AbstractArray
-            @assert size(x)[end] == n "Wrong size in last dimension for feature array, expected $n but got $(size(x)[end])."
-        end
-    end
-    return data
+    return DataStore(data, n)
 end
 
 # For heterogeneous graphs

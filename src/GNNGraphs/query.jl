@@ -345,7 +345,7 @@ function node_features(g::GNNGraph)
     elseif length(g.ndata) > 1
         @error "Multiple feature arrays, access directly through `g.ndata`"
     else
-        return g.ndata[1]
+        return first(values(g.ndata))
     end
 end
 
@@ -355,7 +355,7 @@ function edge_features(g::GNNGraph)
     elseif length(g.edata) > 1
         @error "Multiple feature arrays, access directly through `g.edata`"
     else
-        return g.edata[1]
+        return first(values(g.edata))
     end
 end
 
@@ -365,7 +365,7 @@ function graph_features(g::GNNGraph)
     elseif length(g.gdata) > 1
         @error "Multiple feature arrays, access directly through `g.gdata`"
     else
-        return g.gdata[1]
+        return first(values(g.gdata))
     end
 end
 

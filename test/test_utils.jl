@@ -1,8 +1,10 @@
 using ChainRulesTestUtils, FiniteDifferences, Zygote, Adapt, CUDA
 CUDA.allowscalar(false)
 
-# global GRAPH_T = :coo
-# global TEST_GPU = true
+function ngradient(f, x)
+    fdm = central_fdm(5, 1)
+    return FiniteDifferences.grad(fdm, f, x)
+end
 
 const rule_config = Zygote.ZygoteRuleConfig()
 
@@ -21,7 +23,6 @@ end
 # Test also gradient with repspect to `e`. 
 function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,
                                  exclude_grad_fields = [],
-                                 broken_grad_fields =[],
                                  verbose = false,
                                  test_gpu = TEST_GPU,
                                  outsize = nothing,
@@ -161,57 +162,47 @@ function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,
     # TEST LAYER GRADIENT - l(g, x, e) 
     l̄ = gradient(l -> loss(l, g, x, e), l)[1]
     l̄_fd = FiniteDifferences.grad(fdm, l64 -> loss(l64, g64, x64, e64), l64)[1]
-    test_approx_structs(l, l̄, l̄_fd; atol, rtol, broken_grad_fields, exclude_grad_fields, verbose)
+    test_approx_structs(l, l̄, l̄_fd; atol, rtol, exclude_grad_fields, verbose)
 
     if test_gpu
         l̄gpu = gradient(lgpu -> loss(lgpu, ggpu, xgpu, egpu), lgpu)[1]
-        test_approx_structs(lgpu, l̄gpu, l̄; atol, rtol, broken_grad_fields, exclude_grad_fields, verbose)
+        test_approx_structs(lgpu, l̄gpu, l̄; atol, rtol, exclude_grad_fields, verbose)
     end
 
     # TEST LAYER GRADIENT - l(g)
     l̄ = gradient(l -> loss(l, g), l)[1]
-    test_approx_structs(l, l̄, l̄_fd; atol, rtol, broken_grad_fields, exclude_grad_fields, verbose)
+    test_approx_structs(l, l̄, l̄_fd; atol, rtol, exclude_grad_fields, verbose)
 
     return true
 end
 
-function test_approx_structs(l, l̄, l̄2; atol=1e-5, rtol=1e-5, 
-            broken_grad_fields=[],
+function test_approx_structs(l, l̄, l̄fd; atol=1e-5, rtol=1e-5, 
             exclude_grad_fields=[],
             verbose=false)
 
     l̄ = l̄ isa Base.RefValue ? l̄[] : l̄           # Zygote wraps gradient of mutables in RefValue 
-    l̄2 = l̄2 isa Base.RefValue ? l̄2[] : l̄2           # Zygote wraps gradient of mutables in RefValue 
+    l̄fd = l̄fd isa Base.RefValue ? l̄fd[] : l̄fd           # Zygote wraps gradient of mutables in RefValue 
 
     for f in fieldnames(typeof(l))
         f ∈ exclude_grad_fields && continue
-        f̄, f̄2 = getfield(l̄, f), getfield(l̄2, f)
-        x = getfield(l, f)
-        if verbose
-            println()
-            @show f x f̄ f̄2
-        end
-        if isnothing(f̄)
-            verbose && println("A")
-            @test !(f̄2 isa AbstractArray) || isapprox(f̄2, fill!(similar(f̄2), 0); atol=atol, rtol=rtol)
-        elseif f̄ isa Union{AbstractArray, Number}
-            verbose && println("B")
-            @test eltype(f̄) == eltype(x)
-            if x isa CuArray
-                @test f̄ isa CuArray
-                f̄ = Array(f̄)
-            end
-            if f ∈ broken_grad_fields
-                @test_broken f̄ ≈ f̄2   atol=atol rtol=rtol
-            else
-                @test f̄ ≈ f̄2   atol=atol rtol=rtol
-            end
-        else
-            verbose && println("C")
-            test_approx_structs(x, f̄, f̄2; atol, rtol, exclude_grad_fields, broken_grad_fields, verbose)
-        end
+        x, g, gfd = getfield(l, f), getfield(l̄, f), getfield(l̄fd, f)
+        test_approx_structs(x, g, gfd; atol, rtol, exclude_grad_fields, verbose)
     end
     return true
+end
+
+function test_approx_structs(x, g::Nothing, gfd; atol, rtol, kws...)
+    # finite diff gradients has to be zero if present
+    @test !(gfd isa AbstractArray) || isapprox(gfd, fill!(similar(gfd), 0); atol, rtol)
+end
+
+function test_approx_structs(x::Union{AbstractArray, Number}, g::Union{AbstractArray, Number}, gfd; atol, rtol, kws...)
+    @test eltype(g) == eltype(x)
+    if x isa CuArray
+        @test g isa CuArray
+        g = Array(g)
+    end
+    @test g ≈ gfd   atol=atol rtol=rtol
 end
 
 

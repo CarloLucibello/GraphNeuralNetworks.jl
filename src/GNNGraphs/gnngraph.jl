@@ -110,9 +110,9 @@ struct GNNGraph{T<:Union{COO_T,ADJMAT_T}} <: AbstractGraph{Int}
     num_edges::Int
     num_graphs::Int
     graph_indicator       # vector of ints or nothing
-    ndata::NamedTuple
-    edata::NamedTuple
-    gdata::NamedTuple
+    ndata::DataStore
+    edata::DataStore
+    gdata::DataStore
 end
 
 @functor GNNGraph
@@ -142,12 +142,14 @@ function GNNGraph(data::D;
 
     ndata = normalize_graphdata(ndata, default_name=:x, n=num_nodes)
     edata = normalize_graphdata(edata, default_name=:e, n=num_edges, duplicate_if_needed=true)
-    gdata = normalize_graphdata(gdata, default_name=:u, n=num_graphs)
+    
+    # don't force the shape of the data when there is only one graph
+    gdata = normalize_graphdata(gdata, default_name=:u, n = num_graphs > 1 ? num_graphs : -1)
 
     GNNGraph(graph,
-        num_nodes, num_edges, num_graphs,
-        graph_indicator,
-        ndata, edata, gdata)
+            num_nodes, num_edges, num_graphs,
+            graph_indicator,
+            ndata, edata, gdata)
 end
 
 function (::Type{<:GNNGraph})(num_nodes::T; kws...) where {T<:Integer}
@@ -310,8 +312,8 @@ function Base.:(==)(g1::GNNGraph, g2::GNNGraph)
 end
 
 function Base.hash(g::T, h::UInt) where {T<:GNNGraph}
-    fs = (getfield(g, k) for k in fieldnames(typeof(g)) if k !== :graph_indicator)
-    return foldl((h, f) -> hash(f, h), fs, init=hash(T, h))
+    fs = (getfield(g, k) for k in fieldnames(T) if k !== :graph_indicator)
+    return foldl((h, f) -> hash(f, h),  fs, init=hash(T, h))
 end
 
 function Base.getproperty(g::GNNGraph, s::Symbol)

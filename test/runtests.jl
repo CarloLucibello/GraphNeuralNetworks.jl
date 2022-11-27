@@ -23,6 +23,7 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
+    "GNNGraphs/datastore",
     "GNNGraphs/gnngraph",
     "GNNGraphs/convert",
     "GNNGraphs/transform",
@@ -30,7 +31,7 @@ tests = [
     "GNNGraphs/generate",
     "GNNGraphs/query",
     "GNNGraphs/sampling",
-    "GNNGraphs/gnnheterograph",
+    # # "GNNGraphs/gnnheterograph",
     "utils",
     "msgpass",
     "layers/basic",
