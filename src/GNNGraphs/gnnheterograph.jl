@@ -6,7 +6,7 @@ const NDict{T} = Dict{Symbol, T}
 """
     GNNHeteroGraph(data; ndata, edata, gdata, num_nodes, graph_indicator, dir])
     
-A type representing a heterogeneus graph structure.
+A type representing a heterogeneous graph structure.
 it is similar [`GNNGraph`](@ref) but node and edges are of different types.
 
 # Arguments
@@ -14,7 +14,7 @@ it is similar [`GNNGraph`](@ref) but node and edges are of different types.
 - `data`: A dictionary or an iterable object that maps (source_type, edge_type, target_type) 
     triples to (source, target) index vectors.
 - `num_nodes`: The number of nodes for each type. If not specified, inferred from `g`. Default `nothing`.
-- `graph_indicator`: For batched graphs, a dictionary of vectors containing the graph assigment of each node. Default `nothing`.  
+- `graph_indicator`: For batched graphs, a dictionary of vectors containing the graph assignment of each node. Default `nothing`.  
 - `ndata`: Node features. A dictionary of arrays or named tuple of arrays. 
            The size of the last dimension of each array must be given by `g.num_nodes`.
 - `edata`: Edge features. A dictionary of arrays or named tuple of arrays.

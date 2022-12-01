@@ -49,8 +49,8 @@ end
         layers = [GCNConv, GraphConv, GATConv]
         )
 
-Benchmark GNN layers on Erdos-Renyi ranomd graphs 
-with average degree `c`. Benchmarks are perfomed for each graph size in the list `Ns`.
+Benchmark GNN layers on Erdos-Renyi random graphs 
+with average degree `c`. Benchmarks are performed for each graph size in the list `Ns`.
 `D` is the number of node features.
 """
 function run_benchmarks(; 

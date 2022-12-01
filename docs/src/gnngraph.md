@@ -221,7 +221,7 @@ using Flux: gpu
 g_gpu = g |> gpu
 ```
 
-## Integraton with Graphs.jl integration
+## Integration with Graphs.jl
 
 Since `GNNGraph <: Graphs.AbstractGraph`, we can use any functionality from [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl) for querying and analyzing the graph structure. 
 Moreover, a `GNNGraph` can be easily constructed from a `Graphs.Graph` or a `Graphs.DiGraph`:
