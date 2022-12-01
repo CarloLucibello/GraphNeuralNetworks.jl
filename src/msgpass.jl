@@ -277,7 +277,7 @@ end
 
 
 # function propagate(::typeof(copy_xj), g::GNNGraph, ::typeof(mean), xi, xj::AbstractMatrix, e)
-#     A = adjacency_matrix(g, weigthed=false)
+#     A = adjacency_matrix(g, weighted=false)
 #     D = compute_degree(A)
 #     return xj * A * D
 # end

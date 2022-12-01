@@ -140,7 +140,7 @@ If `dir=:in` instead, `A[i,j] > 0` denotes the presence of an edge from node `j`
 
 User may specify the eltype `T` of the returned matrix. 
 
-If `weighted=true`, the `A` will contain the edge weigths if any, otherwise the elements of `A` will be either 0 or 1.
+If `weighted=true`, the `A` will contain the edge weights if any, otherwise the elements of `A` will be either 0 or 1.
 """
 function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType=eltype(g); dir=:out, weighted=true)
     if g.graph[1] isa CuVector

@@ -102,7 +102,7 @@ to its `k` closest `points`.
 
 - `points`: A num_features × num_nodes matrix storing the Euclidean positions of the nodes.
 - `k`: The number of neighbors considered in the kNN algorithm.
-- `graph_indicator`: Either nothing or a vector containing the graph assigment of each node, 
+- `graph_indicator`: Either nothing or a vector containing the graph assignment of each node, 
                      in which case the returned graph will be a batch of graphs. 
 - `self_loops`: If `true`, consider the node itself among its `k` nearest neighbors, in which
                 case the graph will contain self-loops. 
@@ -184,7 +184,7 @@ to its neighbors within a given distance `r`.
 
 - `points`: A num_features × num_nodes matrix storing the Euclidean positions of the nodes.
 - `r`: The radius.
-- `graph_indicator`: Either nothing or a vector containing the graph assigment of each node, 
+- `graph_indicator`: Either nothing or a vector containing the graph assignment of each node, 
                      in which case the returned graph will be a batch of graphs. 
 - `self_loops`: If `true`, consider the node itself among its neighbors, in which
                 case the graph will contain self-loops. 
