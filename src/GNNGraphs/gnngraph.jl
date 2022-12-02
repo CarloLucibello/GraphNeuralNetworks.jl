@@ -224,13 +224,13 @@ end
 function print_feature(io::IO, feature)
     if !isempty(feature)
         if length(keys(feature)) == 1
-            print(io, "$(keys(feature)[1]): $(size(feature[1])[1])×$(size(feature[1])[2])")
+            print(io, "$(keys(feature)[1]): $(dims2string(size(feature[1])))")
         else
-            print(io, "($(keys(feature)[1]): $(size(feature[1])[1])×$(size(feature[1])[2]), ")
+            print(io, "($(keys(feature)[1]): $(dims2string(size(feature[1]))), ")
             for k in keys(feature)[2:end-1]
-                print(io, "$k: $(size(feature[k])[1])×$(size(feature[k])[2]), ")
+                print(io, "$k: $(dims2string(size(feature[k]))), ")
             end
-            print(io, "$(keys(feature)[end]): $(size(feature[end])[1])×$(size(feature[end])[2]))")
+            print(io, "$(keys(feature)[end]): $(dims2string(size(feature[end]))))")
         end
     end
 end
