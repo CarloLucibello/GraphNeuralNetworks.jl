@@ -223,3 +223,7 @@ function shortsummary(x::NamedTuple)
     end
 end
 
+dims2string(d) = isempty(d) ? "0-dimensional" :
+                 length(d) == 1 ? "$(d[1])-element" :
+                 join(map(string,d), '×')
+
