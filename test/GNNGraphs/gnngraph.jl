@@ -361,5 +361,6 @@
         @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=rand(5, 10), gdata=rand(1, 1)); context=:compact => true) == "GNNGraph(10, 20) with x: 5×10, u: 1×1 data"
         @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=rand(5, 10), edata=(e=rand(2, 20), f=rand(2, 20), h=rand(3, 20)), gdata=rand(1, 1)); context=:compact => true) == "GNNGraph(10, 20) with x: 5×10, (e: 2×20, f: 2×20, h: 3×20), u: 1×1 data"
         @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5, 10), b=rand(3, 10)), edata=rand(2, 20)); context=:compact => true) == "GNNGraph(10, 20) with (a: 5×10, b: 3×10), e: 2×20 data"
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5,5, 10), b=rand(3,2, 10)), edata=rand(2, 20)); context=:compact => true) == "GNNGraph(10, 20) with (a: 5×5×10, b: 3×2×10), e: 2×20 data"
     end
 end
