@@ -343,7 +343,7 @@
     @testset "show" begin
         @test sprint(show, rand_graph(10, 20)) == "GNNGraph(10, 20) with no data"
         @test sprint(show, rand_graph(10, 20, ndata=rand(5, 10))) == "GNNGraph(10, 20) with x: 5×10 data"
-        @test sprint(show, rand_graph(10, 20, ndata=(a=rand(5, 10), b=rand(3, 10)), edata=rand(2, 20), gdata=(q=rand(1, 1), p=rand(3, 3)))) == "GNNGraph(10, 20) with (a: 5×10, b: 3×10), e: 2×20, (q: 1×1, p: 3×3) data"
+        @test sprint(show, rand_graph(10, 20, ndata=(a=rand(5, 10), b=rand(3, 10)), edata=rand(2, 20), gdata=(q=rand(1, 1), p=rand(3, 1)))) == "GNNGraph(10, 20) with (a: 5×10, b: 3×10), e: 2×20, (q: 1×1, p: 3×1) data"
         @test sprint(show, rand_graph(10, 20, ndata=(a=rand(5, 10),))) == "GNNGraph(10, 20) with a: 5×10 data"
         @test sprint(show, rand_graph(10, 20, ndata=rand(5, 10), edata=rand(2, 20))) == "GNNGraph(10, 20) with x: 5×10, e: 2×20 data"
         @test sprint(show, rand_graph(10, 20, ndata=rand(5, 10), gdata=rand(1, 1))) == "GNNGraph(10, 20) with x: 5×10, u: 1×1 data"
@@ -354,7 +354,7 @@
     @testset "show plain/text compact true" begin
         @test sprint(show, MIME("text/plain"), rand_graph(10, 20); context=:compact => true) == "GNNGraph(10, 20) with no data"
         @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=rand(5, 10)); context=:compact => true) == "GNNGraph(10, 20) with x: 5×10 data"
-        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5, 10), b=rand(3, 10)), edata=rand(2, 20), gdata=(q=rand(1, 1), p=rand(3, 3))); context=:compact => true) == "GNNGraph(10, 20) with (a: 5×10, b: 3×10), e: 2×20, (q: 1×1, p: 3×3) data"
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5, 10), b=rand(3, 10)), edata=rand(2, 20), gdata=(q=rand(1, 1), p=rand(3, 1))); context=:compact => true) == "GNNGraph(10, 20) with (a: 5×10, b: 3×10), e: 2×20, (q: 1×1, p: 3×1) data"
         @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5, 10),)); context=:compact => true) == "GNNGraph(10, 20) with a: 5×10 data"
         @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=rand(5, 10), edata=rand(2, 20)); context=:compact => true) == "GNNGraph(10, 20) with x: 5×10, e: 2×20 data"
         @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=rand(5, 10), gdata=rand(1, 1)); context=:compact => true) == "GNNGraph(10, 20) with x: 5×10, u: 1×1 data"
