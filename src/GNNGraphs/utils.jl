@@ -223,6 +223,7 @@ function shortsummary(x::NamedTuple)
     end
 end
 
+# from (2,2,3) output of size function to a string "2×2×3"
 dims2string(d) = isempty(d) ? "0-dimensional" :
                  length(d) == 1 ? "$(d[1])-element" :
                  join(map(string,d), '×')
