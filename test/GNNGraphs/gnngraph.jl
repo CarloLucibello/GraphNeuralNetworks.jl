@@ -363,4 +363,16 @@
         @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5, 10), b=rand(3, 10)), edata=rand(2, 20)); context=:compact => true) == "GNNGraph(10, 20) with (a: 5×10, b: 3×10), e: 2×20 data"
         @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5,5, 10), b=rand(3,2, 10)), edata=rand(2, 20)); context=:compact => true) == "GNNGraph(10, 20) with (a: 5×5×10, b: 3×2×10), e: 2×20 data"
     end
+
+    @testset "show plain/text compact false" begin
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20); context=:compact => false) == "GNNGraph:\n  num_nodes: 10\n  num_edges: 20"
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=rand(5, 10)); context=:compact => false) == "GNNGraph:\n  num_nodes: 10\n  num_edges: 20\n  ndata:\n\tx = 5×10 Matrix{Float64}"
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5, 10), b=rand(3, 10)), edata=rand(2, 20), gdata=(q=rand(1, 1), p=rand(3, 1))); context=:compact => false) == "GNNGraph:\n  num_nodes: 10\n  num_edges: 20\n  ndata:\n\ta = 5×10 Matrix{Float64}\n\tb = 3×10 Matrix{Float64}\n  edata:\n\te = 2×20 Matrix{Float64}\n  gdata:\n\tq = 1×1 Matrix{Float64}\n\tp = 3×1 Matrix{Float64}"
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5, 10),)); context=:compact => false) == "GNNGraph:\n  num_nodes: 10\n  num_edges: 20\n  ndata:\n\ta = 5×10 Matrix{Float64}"
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=rand(5, 10), edata=rand(2, 20)); context=:compact => false) == "GNNGraph:\n  num_nodes: 10\n  num_edges: 20\n  ndata:\n\tx = 5×10 Matrix{Float64}\n  edata:\n\te = 2×20 Matrix{Float64}"
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=rand(5, 10), gdata=rand(1, 1)); context=:compact => false) == "GNNGraph:\n  num_nodes: 10\n  num_edges: 20\n  ndata:\n\tx = 5×10 Matrix{Float64}\n  gdata:\n\tu = 1×1 Matrix{Float64}"
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=rand(5, 10), edata=(e=rand(2, 20), f=rand(2, 20), h=rand(3, 20)), gdata=rand(1, 1)); context=:compact => false) == "GNNGraph:\n  num_nodes: 10\n  num_edges: 20\n  ndata:\n\tx = 5×10 Matrix{Float64}\n  edata:\n\te = 2×20 Matrix{Float64}\n\tf = 2×20 Matrix{Float64}\n\th = 3×20 Matrix{Float64}\n  gdata:\n\tu = 1×1 Matrix{Float64}"
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5, 10), b=rand(3, 10)), edata=rand(2, 20)); context=:compact => false) == "GNNGraph:\n  num_nodes: 10\n  num_edges: 20\n  ndata:\n\ta = 5×10 Matrix{Float64}\n\tb = 3×10 Matrix{Float64}\n  edata:\n\te = 2×20 Matrix{Float64}"
+        @test sprint(show, MIME("text/plain"), rand_graph(10, 20, ndata=(a=rand(5, 5, 10), b=rand(3, 2, 10)), edata=rand(2, 20)); context=:compact => false) == "GNNGraph:\n  num_nodes: 10\n  num_edges: 20\n  ndata:\n\ta = 5×5×10 Array{Float64, 3}\n\tb = 3×2×10 Array{Float64, 3}\n  edata:\n\te = 2×20 Matrix{Float64}"
+    end
 end
