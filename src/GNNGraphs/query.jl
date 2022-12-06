@@ -404,6 +404,16 @@ function has_multi_edges(g::GNNGraph)
     length(union(idxs)) < length(idxs)
 end
 
+"""
+    khop_adj(g::GNNGraph,k::Int)
+
+Return ``A^k`` where ``A`` is the adjacency matrix of the graph 'g'.
+
+"""
+function khop_adj(g::GNNGraph,k::Int)
+    return Matrix(Float32.(adjacency_matrix(g)^k))
+end
+
 @non_differentiable edge_index(x...)
 @non_differentiable adjacency_list(x...)
 @non_differentiable graph_indicator(x...)
