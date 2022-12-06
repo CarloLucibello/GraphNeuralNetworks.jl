@@ -164,5 +164,15 @@
 
             @test gw == [1,1,1]
         end
+
+        @testset "khop_adj" begin
+            s = [1,2,3]
+            t = [2,3,1]
+            w = [0.1,0.1,0.2]
+            g = GNNGraph(s, t, w)
+            @test khop_adj(g,2) == Float32.([0.0 0.0 0.01;0.02 0.0 0.0;0.0 0.02 0.0])
+            @test khop_adj(g,1) == Float32.(Matrix(adjacency_matrix(g)))
+            @test eltype(khop_adj(g,4)) == Float32    
+        end
     end
 end
