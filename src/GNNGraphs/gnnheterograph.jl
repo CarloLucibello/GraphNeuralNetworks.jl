@@ -143,13 +143,13 @@ function Base.show(io::IO, ::MIME"text/plain", g::GNNHeteroGraph)
         g.num_graphs > 1 && print(io, "\n num_graphs: $(g.num_graphs)")
         if !isempty(g.ndata)
             print(io, "\n ndata:")
-            for k in keys(g.ndata)
+            for k in sort!(collect(keys(g.ndata)))
                 print(io, "\n\t", _str(k), "  =>  $(shortsummary(g.ndata[k]))")
             end
         end
         if !isempty(g.edata)
             print(io, "\n edata:")
-            for k in keys(g.edata)
+            for k in sort!(collect(keys(g.edata)))
                 print(io, "\n\t$k  =>  $(shortsummary(g.edata[k]))")
             end
         end
