@@ -405,14 +405,15 @@ function has_multi_edges(g::GNNGraph)
 end
 
 """
-    khop_adj(g::GNNGraph,k::Int)
+    khop_adj(g::GNNGraph,k::Int,T::DataType=eltype(g); dir=:out, weighted=true)
 
 Return ``A^k`` where ``A`` is the adjacency matrix of the graph 'g'.
 
 """
-function khop_adj(g::GNNGraph,k::Int)
-    return Matrix(Float32.(adjacency_matrix(g)^k))
+function khop_adj(g::GNNGraph,k::Int,T::DataType=eltype(g); dir=:out, weighted=true)
+    return (adjacency_matrix(g,T;dir=dir, weighted=weighted))^k
 end
+
 
 @non_differentiable edge_index(x...)
 @non_differentiable adjacency_list(x...)
