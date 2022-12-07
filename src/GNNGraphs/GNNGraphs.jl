@@ -41,7 +41,8 @@ export adjacency_list,
        has_self_loops,
        has_isolated_nodes,
        inneighbors,
-       outneighbors 
+       outneighbors,
+       khop_adj 
 
 include("transform.jl")
 export add_nodes,
