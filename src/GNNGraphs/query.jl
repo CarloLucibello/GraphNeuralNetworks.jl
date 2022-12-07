@@ -415,7 +415,7 @@ function khop_adj(g::GNNGraph,k::Int, T::DataType=eltype(g); dir=:out, weighted=
 end
 
 """
-    laplacian_lambda_max(g::GNNGraph,T::DataType=Float32; add_self_loops::Bool=false, dir::Symbol=:out)
+    laplacian_lambda_max(g::GNNGraph, T=Float32; add_self_loops=false, dir=:out)
 
 Return the largest eigenvalue of the normalized symmetric Laplacian of the graph `g`.
 
