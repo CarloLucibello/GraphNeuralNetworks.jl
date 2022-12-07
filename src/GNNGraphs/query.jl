@@ -422,7 +422,7 @@ Return the largest eigenvalue of the normalized symmetric Laplacian of the graph
 If the graph is batched from multiple graphs, return the list of the largest eigenvalue for each graph.
 """
 function laplacian_lambda_max(g::GNNGraph,T::DataType=Float32; 
-    add_self_loops::Bool=false, dir::Symbol=:out)
+                             add_self_loops::Bool=false, dir::Symbol=:out)
     if g.num_graphs==1
         return _eigmax(normalized_laplacian(g,T;add_self_loops,dir))
     else
