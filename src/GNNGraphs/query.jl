@@ -410,8 +410,8 @@ end
 Return ``A^k`` where ``A`` is the adjacency matrix of the graph 'g'.
 
 """
-function khop_adj(g::GNNGraph,k::Int,T::DataType=eltype(g); dir=:out, weighted=true)
-    return (adjacency_matrix(g,T;dir=dir, weighted=weighted))^k
+function khop_adj(g::GNNGraph,k::Int, T::DataType=eltype(g); dir=:out, weighted=true)
+    return (adjacency_matrix(g, T; dir, weighted))^k
 end
 
 
