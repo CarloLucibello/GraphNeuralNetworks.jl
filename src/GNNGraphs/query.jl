@@ -414,6 +414,25 @@ function khop_adj(g::GNNGraph,k::Int, T::DataType=eltype(g); dir=:out, weighted=
     return (adjacency_matrix(g, T; dir, weighted))^k
 end
 
+"""
+    laplacian_lambda_max(g::GNNGraph, T=Float32; add_self_loops=false, dir=:out)
+
+Return the largest eigenvalue of the normalized symmetric Laplacian of the graph `g`.
+
+If the graph is batched from multiple graphs, return the list of the largest eigenvalue for each graph.
+"""
+function laplacian_lambda_max(g::GNNGraph,T::DataType=Float32; 
+                             add_self_loops::Bool=false, dir::Symbol=:out)
+    if g.num_graphs==1
+        return _eigmax(normalized_laplacian(g, T; add_self_loops, dir))
+    else
+        eigenvalues=zeros(g.num_graphs)
+        for i in 1:g.num_graphs
+            eigenvalues[i] = _eigmax(normalized_laplacian(getgraph(g, i), T; add_self_loops, dir))
+        end
+        return eigenvalues
+    end
+end
 
 @non_differentiable edge_index(x...)
 @non_differentiable adjacency_list(x...)

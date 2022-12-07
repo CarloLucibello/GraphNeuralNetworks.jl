@@ -35,6 +35,7 @@ export adjacency_list,
        is_bidirected,
        normalized_laplacian, 
        scaled_laplacian,
+       laplacian_lambda_max,
        # from Graphs
        adjacency_matrix, 
        degree, 
