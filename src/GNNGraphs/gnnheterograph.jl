@@ -130,7 +130,7 @@ function GNNHeteroGraph(data::EDict;
         ntypes, etypes)
 end
 
-function show_sorted_Dict(io::IO, d::Dict,compact::Bool)
+function show_sorted_Dict(io::IO, d::Dict, compact::Bool)
     if compact
         print(io,"Dict")
     end
