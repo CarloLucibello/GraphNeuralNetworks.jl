@@ -136,7 +136,7 @@ function show_sorted_Dict(io::IO, d::Dict, compact::Bool)
     end
     print(io,"(")
     if !isempty(d)
-        if length(keys(d))==1
+        if length(keys(d)) == 1
             show(io,keys[1])
             print(io," => $(d[keys[1]])")
         else
