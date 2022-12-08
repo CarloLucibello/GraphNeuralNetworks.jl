@@ -132,46 +132,46 @@ end
 
 function show_sorted_Dict(io::IO, d::Dict, compact::Bool)
     if compact
-        print(io,"Dict")
+        print(io, "Dict")
     end
-    print(io,"(")
+    print(io, "(")
     if !isempty(d)
         if length(keys(d)) == 1
-            show(io,keys[1])
-            print(io," => $(d[keys[1]])")
+            show(io, keys[1])
+            print(io, " => $(d[keys[1]])")
         else
-            sorted_keys=sort!(collect(keys(d)))
+            sorted_keys = sort!(collect(keys(d)))
             for key in sorted_keys[1:end-1]
-                show(io,key)
-                print(io," => $(d[key]), ")
+                show(io, key)
+                print(io, " => $(d[key]), ")
             end
-            show(io,sorted_keys[end]) 
+            show(io, sorted_keys[end])
             print(io, " => $(d[sorted_keys[end]])")
         end
     end
-    print(io,")")
+    print(io, ")")
 end
 
 function Base.show(io::IO, g::GNNHeteroGraph)
-    print(io,"GNNHeteroGraph(")
-    show_sorted_Dict(io,g.num_nodes,true)
-    print(io,", ")
-    show_sorted_Dict(io,g.num_edges,true)
-    print(io,")")
+    print(io, "GNNHeteroGraph(")
+    show_sorted_Dict(io, g.num_nodes, true)
+    print(io, ", ")
+    show_sorted_Dict(io, g.num_edges, true)
+    print(io, ")")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", g::GNNHeteroGraph)
     if get(io, :compact, false)
-        print(io,"GNNHeteroGraph(")
-        show_sorted_Dict(io,g.num_nodes,true)
-        print(io,", ")
-        show_sorted_Dict(io,g.num_edges,true)
-        print(io,")")
+        print(io, "GNNHeteroGraph(")
+        show_sorted_Dict(io, g.num_nodes, true)
+        print(io, ", ")
+        show_sorted_Dict(io, g.num_edges, true)
+        print(io, ")")
     else
         print(io, "GNNHeteroGraph:\n num_nodes: ")
-        show_sorted_Dict(io,g.num_nodes,false)
-        print(io,"\n num_edges: ")
-        show_sorted_Dict(io,g.num_edges,false)
+        show_sorted_Dict(io, g.num_nodes, false)
+        print(io, "\n num_edges: ")
+        show_sorted_Dict(io, g.num_edges, false)
         g.num_graphs > 1 && print(io, "\n num_graphs: $(g.num_graphs)")
         if !isempty(g.ndata)
             print(io, "\n ndata:")
