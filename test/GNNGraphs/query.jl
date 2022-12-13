@@ -135,12 +135,14 @@
     @testset "laplacian_lambda_max" begin
         s = [1, 2, 3, 4, 5, 1, 2, 3, 4, 5]
         t = [2, 3, 4, 5, 1, 5, 1, 2, 3, 4]
-        g = GNNGraph(s,t)
+        g = GNNGraph(s, t)
         @test laplacian_lambda_max(g) ≈ Float32(1.809017)
-        data = [g for i in 1:5]
-        gall = Flux.batch(data)
-        @test laplacian_lambda_max(gall) ≈ [Float32(1.809017) for i in 1:5]
-        @test length(laplacian_lambda_max(gall)) == 5
+        data1 = [g for i in 1:5]
+        gall1 = Flux.batch(data1)
+        @test laplacian_lambda_max(gall1) ≈ [Float32(1.809017) for i in 1:5]
+        data2 = [rand_graph(10, 20; seed=i) for i in 1:3]
+        gall2 = Flux.batch(data2)
+        @test length(laplacian_lambda_max(gall2)) == 3
     end
 
     @testset "adjacency_matrix" begin
