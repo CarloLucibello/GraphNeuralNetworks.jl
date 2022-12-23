@@ -58,7 +58,7 @@ using Test
         @test size(hg.ndata[:B].x) == (3, 20)
         @test size(hg.ndata[:B].y) == (4, 20)
         @test size(hg.edata[(:A, :rel1, :B)].e) == (5, 30)
-        @test hg.gdata == (; u = 1)
+        @test hg.gdata == DataStore(u = 1)
 
     
         nA, nB = 10, 20
