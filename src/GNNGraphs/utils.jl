@@ -82,9 +82,7 @@ function cat_features(xs::AbstractVector{Dict{Symbol,T}}) where T
 
     # concatenate 
     syms = symbols[1]
-    Dict{Symbol,T}(
-        k => cat_features([x[k] for x in xs]) for k in syms
-    )
+    return Dict{Symbol,T}(k => cat_features([x[k] for x in xs]) for k in syms)
 end
 
 # Turns generic type into named tuple

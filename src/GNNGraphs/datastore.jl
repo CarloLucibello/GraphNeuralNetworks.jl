@@ -10,7 +10,7 @@ of symbols and arrays or as keyword arguments:
 
 ```julia-repl
 julia> ds = DataStore(3, x = rand(2, 3), y = rand(3))
-DataStore with 2 elements:
+DataStore(3) with 2 elements:
   y = 3-element Vector{Float64}
   x = 2×3 Matrix{Float64}
 
@@ -27,7 +27,7 @@ Stacktrace:
    @ REPL[13]:1
 
 julia> ds = DataStore(x = rand(2, 3), y = rand(30)) # no checks
-DataStore with 2 elements:
+DataStore() with 2 elements:
   y = 30-element Vector{Float64}
   x = 2×3 Matrix{Float64}
 ```
@@ -37,7 +37,7 @@ Data can be accessed and added using either the indexing or the property syntax:
 
 ```julia-repl
 julia> ds = DataStore(x = ones(2, 3), y = zeros(3))
-DataStore with 2 elements:
+DataStore() with 2 elements:
   y = 3-element Vector{Float64}
   x = 2×3 Matrix{Float64}
 
@@ -54,13 +54,13 @@ julia> ds.z = zeros(3)  # Add new feature array `z`. Same as `ds[:z] = rand(3)`
 ```
 
 The `DataStore` can be iterated over, and the keys and values can be accessed
-using `keys(ds)` and `values(ds)`. `map` on a `DataStore` applies the function
+using `keys(ds)` and `values(ds)`. `map(f, ds)` applies the function `f`
 to each feature array:
 
 ```julia-repl
 julia> ds = DataStore(a=zeros(2), b=zeros(2));
 
-julia> ds2  = map(x -> x .+ 1, ds)
+julia> ds2 = map(x -> x .+ 1, ds)
 
 julia> ds2.a
 2-element Vector{Float64}:
@@ -89,7 +89,7 @@ DataStore(n::Int, data::NamedTuple) = DataStore(n, Dict{Symbol,Any}(pairs(data))
 DataStore(n::Int, data) = DataStore(n, Dict{Symbol,Any}(data))
 
 DataStore(; kws...) = DataStore(-1; kws...)
-DataStore(n; kws...) = DataStore(n, Dict{Symbol,Any}(kws...))
+DataStore(n::Int; kws...) = DataStore(n, Dict{Symbol,Any}(kws...))
 
 getdata(ds::DataStore) = getfield(ds, :_data)
 getn(ds::DataStore) = getfield(ds, :_n)
@@ -118,11 +118,20 @@ Base.getindex(ds::DataStore, s::Symbol) = getproperty(ds, s)
 Base.setindex!(ds::DataStore, s::Symbol, x) = setproperty!(ds, s, x)
 
 function Base.show(io::IO, ds::DataStore)
-    print(io, "DataStore with $(length(getdata(ds))) element")
-    length(ds) != 1 && print(io, "s")
-    println(io, ":")
-    for (k, v) in getdata(ds)
-        println(io, "  $(k) = $(summary(v))")
+    len = length(ds)
+    n = getn(ds)
+    if n < 0
+        print(io, "DataStore()")
+    else
+        print(io, "DataStore($(getn(ds)))")
+    end
+    if len > 0    
+        print(io, " with $(length(getdata(ds))) element")
+        len > 1 && print(io, "s")
+        print(io, ":")
+        for (k, v) in getdata(ds)
+            print(io, "\n  $(k) = $(summary(v))")
+        end
     end
 end
 
