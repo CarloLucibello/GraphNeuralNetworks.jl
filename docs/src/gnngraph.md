@@ -193,7 +193,7 @@ an option for mini-batch iteration, the recommended way is
 to pass an array of graphs directly:
 
 ```julia
-using Flux.Data: DataLoader
+using Flux: DataLoader
 
 data = [rand_graph(10, 30, ndata=rand(Float32, 3, 10)) for _ in 1:320]
 
