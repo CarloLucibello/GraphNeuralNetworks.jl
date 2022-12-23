@@ -226,13 +226,19 @@ end
 function print_feature(io::IO, feature)
     if !isempty(feature)
         if length(keys(feature)) == 1
-            print(io, "$(keys(feature)[1]): $(dims2string(size(feature[1])))")
+            k = first(keys(feature))
+            v = first(values(feature))
+            print(io, "$(k): $(dims2string(size(v)))")
         else
-            print(io, "($(keys(feature)[1]): $(dims2string(size(feature[1]))), ")
-            for k in keys(feature)[2:end-1]
-                print(io, "$k: $(dims2string(size(feature[k]))), ")
+            print(io, "(")
+            for (i, (k, v)) in enumerate(pairs(feature))
+                print(io, "$k: $(dims2string(size(v)))")
+                if i == length(feature)
+                    print(io, ")")
+                else
+                    print(io, ", ")
+                end
             end
-            print(io, "$(keys(feature)[end]): $(dims2string(size(feature[end]))))")
         end
     end
 end

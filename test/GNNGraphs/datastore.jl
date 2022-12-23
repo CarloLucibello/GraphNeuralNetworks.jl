@@ -24,7 +24,6 @@ end
     @test_throws AssertionError ds2 = map(x -> [x; x], ds)
 end
 
-
 @testset """getdata / getn""" begin
     ds = DataStore((:x => rand(10), :y => rand(2, 10)), 10)
     @test getdata(ds) == getfield(ds, :_data)
@@ -32,7 +31,6 @@ end
     @test getn(ds) == getfield(ds, :_n)
     @test_throws KeyError ds.n
 end
-
 
 @testset "gradient" begin
     ds = DataStore((:x => rand(10), :y => rand(2, 10)), 10)
@@ -59,5 +57,3 @@ end
     @test ds isa DataStore
     @test ds2.x == ds.x .+ 1
 end
-
-
