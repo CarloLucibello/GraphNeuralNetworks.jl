@@ -344,7 +344,7 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing,AbstractM
     Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
 
     m = propagate(message, g, +, l; xi=Wx, xj=Wx, e)                 ## chout × nheads × nnodes
-    x = m.β ./ m.α
+    x = m.β ./ (m.α .+ eps(eltype(x))) #
 
     if !l.concat
         x = mean(x, dims=2)
