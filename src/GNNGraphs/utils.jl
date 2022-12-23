@@ -130,7 +130,7 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
         end
     end
 
-    return DataStore(data, n)
+    return DataStore(n, data)
 end
 
 # For heterogeneous graphs
