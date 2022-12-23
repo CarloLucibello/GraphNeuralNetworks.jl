@@ -27,7 +27,7 @@ We create a dataset consisting in multiple random graphs and associated data fea
 
 ```julia
 using GraphNeuralNetworks, Graphs, Flux, CUDA, Statistics, MLUtils
-using Flux.Data: DataLoader
+using Flux: DataLoader
 
 all_graphs = GNNGraph[]
 
