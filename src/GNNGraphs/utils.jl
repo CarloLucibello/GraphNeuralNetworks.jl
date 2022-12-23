@@ -249,3 +249,6 @@ dims2string(d) = isempty(d) ? "0-dimensional" :
                  length(d) == 1 ? "$(d[1])-element" :
                  join(map(string,d), '×')
 
+
+@non_differentiable normalize_graphdata(::NamedTuple{(), Tuple{}})
+@non_differentiable normalize_graphdata(::Nothing)
