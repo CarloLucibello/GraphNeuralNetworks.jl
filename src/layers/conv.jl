@@ -343,8 +343,11 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing,AbstractM
     Wx = l.dense_x(x)
     Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
 
-    m = propagate(message, g, +, l; xi=Wx, xj=Wx, e)                 ## chout × nheads × nnodes
-    x = m.β ./ (m.α .+ eps(eltype(x))) #
+    # a hand-writtent message passing
+    m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wx, Wx, e)
+    α = softmax_edge_neighbors(g, m.logα)
+    β = α .* m.Wxj
+    x = aggregate_neighbors(g, +, β)
 
     if !l.concat
         x = mean(x, dims=2)
@@ -368,9 +371,7 @@ function message(l::GATConv, Wxi, Wxj, e)
     end
     aWW = sum(l.a .* Wxx, dims=1)   # 1 × nheads × nedges
     logα = leakyrelu.(aWW, l.negative_slope)
-    maxα = maximum(logα)
-    α = exp.(logα .- maxα)       
-    return (α = α, β = α .* Wxj)
+    return(logα = logα, Wxj = Wxj)
 end
 
 function Base.show(io::IO, l::GATConv)

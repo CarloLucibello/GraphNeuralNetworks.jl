@@ -54,7 +54,7 @@ function softmax_edges(g::GNNGraph, e)
     num = exp.(e .- max_)
     den = reduce_edges(+, g, num)
     den = gather(den, gi)
-    return num ./ den
+    return num ./ (den .+ eps(eltype(e)))
 end
 
 @doc raw"""
