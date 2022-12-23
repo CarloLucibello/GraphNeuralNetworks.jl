@@ -280,7 +280,7 @@
             @test MLUtils.getobs(g, 3:5) == getgraph(g, 3:5)
             @test MLUtils.numobs(g) == g.num_graphs
 
-            d = Flux.Data.DataLoader(g, batchsize=2, shuffle=false)
+            d = Flux.DataLoader(g, batchsize=2, shuffle=false)
             @test first(d) == getgraph(g, 1:2)
         end
 
@@ -290,7 +290,7 @@
             @test MLUtils.getobs(data, 3:5) == [data[3], data[4], data[5]]
             @test MLUtils.numobs(data) == g.num_graphs
 
-            d = Flux.Data.DataLoader(data, batchsize=2, shuffle=false)
+            d = Flux.DataLoader(data, batchsize=2, shuffle=false)
             @test first(d) == [data[1], data[2]]
         end
     end

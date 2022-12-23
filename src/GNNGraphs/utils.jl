@@ -238,6 +238,12 @@ function shortsummary(x::NamedTuple)
     end
 end
 
+function shortsummary(x::DataStore)
+    length(x) == 0 && return nothing
+    return "DataStore(" * join(("$k = [$(shortsummary(x[k]))]" for k in keys(x)), ", ") * ")"
+end
+
+
 # from (2,2,3) output of size function to a string "2×2×3"
 dims2string(d) = isempty(d) ? "0-dimensional" :
                  length(d) == 1 ? "$(d[1])-element" :

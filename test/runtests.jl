@@ -33,7 +33,7 @@ tests = [
     "GNNGraphs/generate",
     "GNNGraphs/query",
     "GNNGraphs/sampling",
-    # # "GNNGraphs/gnnheterograph",
+    "GNNGraphs/gnnheterograph",
     "utils",
     "msgpass",
     "layers/basic",

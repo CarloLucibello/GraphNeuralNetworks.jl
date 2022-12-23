@@ -11,6 +11,7 @@ const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
 const CUMAT_T = Union{CUDA.AnyCuMatrix,CUDA.CUSPARSE.CuSparseMatrix}
 
+const AVecI = AbstractVector{<:Integer}
 
 """
     GNNGraph(data; [graph_type, ndata, edata, gdata, num_nodes, graph_indicator, dir])
@@ -109,7 +110,7 @@ struct GNNGraph{T<:Union{COO_T,ADJMAT_T}} <: AbstractGraph{Int}
     num_nodes::Int
     num_edges::Int
     num_graphs::Int
-    graph_indicator       # vector of ints or nothing
+    graph_indicator::Union{Nothing, AVecI}       # vector of ints or nothing
     ndata::DataStore
     edata::DataStore
     gdata::DataStore

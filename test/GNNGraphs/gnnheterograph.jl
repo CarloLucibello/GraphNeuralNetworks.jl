@@ -23,7 +23,7 @@ using Test
         @test hg.num_graphs == 1
         @test hg.ndata == Dict()
         @test hg.edata == Dict()
-        @test hg.gdata == (;)
+        @test isempty(hg.gdata)
         @test sort(hg.ntypes) == [:A, :B]
         @test sort(hg.etypes) == [:rel1, :rel2]
     end
@@ -39,7 +39,7 @@ using Test
         @test size(hg.ndata[:B].x) == (3, 20)
         @test size(hg.ndata[:B].y) == (4, 20)
         @test size(hg.edata[(:A, :rel1, :B)].e) == (5, 30)
-        @test hg.gdata == (; u = 1)
+        @test hg.gdata == DataStore(u = 1)
     end
 
     @testset "simplified constructor" begin
