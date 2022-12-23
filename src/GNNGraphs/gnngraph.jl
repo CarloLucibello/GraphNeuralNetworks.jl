@@ -127,14 +127,14 @@ end
 @functor GNNGraph
 
 function GNNGraph(data::D;
-    num_nodes=nothing,
-    graph_indicator=nothing,
-    graph_type=:coo,
-    dir=:out,
-    ndata=(;),
-    edata=(;),
-    gdata=(;)
-) where {D<:Union{COO_T,ADJMAT_T,ADJLIST_T}}
+        num_nodes = nothing,
+        graph_indicator = nothing,
+        graph_type = :coo,
+        dir = :out,
+        ndata = nothing,
+        edata = nothing,
+        gdata = nothing
+    ) where {D<:Union{COO_T,ADJMAT_T,ADJLIST_T}}
 
     @assert graph_type ∈ [:coo, :dense, :sparse] "Invalid graph_type $graph_type requested"
     @assert dir ∈ [:in, :out]
