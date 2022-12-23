@@ -1,9 +1,9 @@
 # An example of graph classification
 
 using Flux
-using Flux:onecold, onehotbatch
+using Flux: onecold, onehotbatch
 using Flux.Losses: logitbinarycrossentropy
-using Flux.Data: DataLoader
+using Flux: DataLoader
 using GraphNeuralNetworks
 using MLDatasets: TUDataset
 using Statistics, Random

@@ -30,7 +30,7 @@ end
 begin
 	using Flux
 	using Flux: onecold, onehotbatch, logitcrossentropy
-	using Flux.Data: DataLoader
+	using Flux: DataLoader
 	using GraphNeuralNetworks
 	using MLDatasets
 	using MLUtils

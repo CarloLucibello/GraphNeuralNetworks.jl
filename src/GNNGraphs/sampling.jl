@@ -85,7 +85,7 @@ function sample_neighbors(g::GNNGraph{<:COO_T}, nodes, K=-1;
     w = isnothing(w) ? nothing : w[eids]
 
     edata = getobs(g.edata, eids)
-    edata = (edata..., EID = eids)
+    edata.EID = eids
 
     num_edges = length(eids)
 
@@ -106,7 +106,7 @@ function sample_neighbors(g::GNNGraph{<:COO_T}, nodes, K=-1;
         graph_indicator = g.graph_indicator !== nothing ? g.graph_indicator[nodes_all] : nothing
         num_nodes = length(nodes_all)
         ndata = getobs(g.ndata, nodes_all)
-        ndata = (ndata..., NID = nodes_all)        
+        ndata.NID = nodes_all        
 
         gnew = GNNGraph(graph, 
                     num_nodes, num_edges, g.num_graphs,

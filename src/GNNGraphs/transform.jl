@@ -11,7 +11,7 @@ If the graphs has edge weights, the new edges will have weight 1.
 """
 function add_self_loops(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
-    @assert g.edata === (;)
+    @assert isempty(g.edata)
     ew = get_edge_weight(g)
     n = g.num_nodes
     nodes = convert(typeof(s), [1:n;])
@@ -29,7 +29,7 @@ end
 
 function add_self_loops(g::GNNGraph{<:ADJMAT_T})
     A = g.graph
-    @assert g.edata === (;)
+    @assert isempty(g.edata)
     num_edges = g.num_edges + g.num_nodes
     A = A + I
     GNNGraph(A, 
@@ -65,7 +65,7 @@ end
 
 
 function remove_self_loops(g::GNNGraph{<:ADJMAT_T})
-    @assert g.edata === (;)
+    @assert isempty(g.edata)
     A = g.graph
     A[diagind(A)] .= 0
     if A isa AbstractSparseMatrix
@@ -93,7 +93,6 @@ function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr=+)
     w = get_edge_weight(g)
     edata = g.edata
     num_edges = g.num_edges
-    
     idxs, idxmax = edge_encoding(s, t, g.num_nodes)
     
     perm = sortperm(idxs)

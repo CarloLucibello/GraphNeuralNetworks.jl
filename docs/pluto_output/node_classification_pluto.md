@@ -206,7 +206,7 @@ end</code></pre>
 <pre class='language-julia'><code class='language-julia'>begin
     mlp = MLP(num_features, num_classes, hidden_channels)
     ps_mlp = Flux.params(mlp)
-    opt_mlp = ADAM(1e-3)
+    opt_mlp = Adam(1e-3)
     epochs = 2000
     train(mlp, g.ndata.features, epochs, opt_mlp, ps_mlp)
 end</code></pre>
@@ -294,7 +294,7 @@ end</code></pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
     ps_gcn = Flux.params(gcn)
-    opt_gcn = ADAM(1e-2)
+    opt_gcn = Adam(1e-2)
     train(gcn, g, x, epochs, ps_gcn, opt_gcn)
 end</code></pre>
 

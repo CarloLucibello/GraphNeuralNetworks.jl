@@ -11,6 +11,7 @@ const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
 const CUMAT_T = Union{CUDA.AnyCuMatrix,CUDA.CUSPARSE.CuSparseMatrix}
 
+const AVecI = AbstractVector{<:Integer}
 
 """
     GNNGraph(data; [graph_type, ndata, edata, gdata, num_nodes, graph_indicator, dir])
@@ -18,6 +19,11 @@ const CUMAT_T = Union{CUDA.AnyCuMatrix,CUDA.CUSPARSE.CuSparseMatrix}
 
 A type representing a graph structure that also stores
 feature arrays associated to nodes, edges, and the graph itself.
+
+The feature arrays are stored in the fields `ndata`, `edata`, and `gdata`
+as  [`DataStore`](@ref) objects offering a convenient dictionary-like 
+and named tuple like interface. The features can be passed at construction
+time or added later.
 
 A `GNNGraph` can be constructed out of different `data` objects
 expressing the connections inside the graph. The internal representation type
@@ -87,8 +93,11 @@ g = GNNGraph(s, t)
 # From a Graphs' graph
 g = GNNGraph(erdos_renyi(100, 20))
 
-# Add 2 node feature arrays
+# Add 2 node feature arrays at creation time
 g = GNNGraph(g, ndata = (x=rand(100, g.num_nodes), y=rand(g.num_nodes)))
+
+# Add 1 edge feature array, after the graph creation
+g.edata.z = rand(16, g.num_edges)
 
 # Add node features and edge features with default names `x` and `e`
 g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_edges))
@@ -109,23 +118,23 @@ struct GNNGraph{T<:Union{COO_T,ADJMAT_T}} <: AbstractGraph{Int}
     num_nodes::Int
     num_edges::Int
     num_graphs::Int
-    graph_indicator       # vector of ints or nothing
-    ndata::NamedTuple
-    edata::NamedTuple
-    gdata::NamedTuple
+    graph_indicator::Union{Nothing, AVecI}       # vector of ints or nothing
+    ndata::DataStore
+    edata::DataStore
+    gdata::DataStore
 end
 
 @functor GNNGraph
 
 function GNNGraph(data::D;
-    num_nodes=nothing,
-    graph_indicator=nothing,
-    graph_type=:coo,
-    dir=:out,
-    ndata=(;),
-    edata=(;),
-    gdata=(;)
-) where {D<:Union{COO_T,ADJMAT_T,ADJLIST_T}}
+        num_nodes = nothing,
+        graph_indicator = nothing,
+        graph_type = :coo,
+        dir = :out,
+        ndata = nothing,
+        edata = nothing,
+        gdata = nothing
+    ) where {D<:Union{COO_T,ADJMAT_T,ADJLIST_T}}
 
     @assert graph_type ∈ [:coo, :dense, :sparse] "Invalid graph_type $graph_type requested"
     @assert dir ∈ [:in, :out]
@@ -142,12 +151,14 @@ function GNNGraph(data::D;
 
     ndata = normalize_graphdata(ndata, default_name=:x, n=num_nodes)
     edata = normalize_graphdata(edata, default_name=:e, n=num_edges, duplicate_if_needed=true)
-    gdata = normalize_graphdata(gdata, default_name=:u, n=num_graphs)
+    
+    # don't force the shape of the data when there is only one graph
+    gdata = normalize_graphdata(gdata, default_name=:u, n = num_graphs > 1 ? num_graphs : -1)
 
     GNNGraph(graph,
-        num_nodes, num_edges, num_graphs,
-        graph_indicator,
-        ndata, edata, gdata)
+            num_nodes, num_edges, num_graphs,
+            graph_indicator,
+            ndata, edata, gdata)
 end
 
 function (::Type{<:GNNGraph})(num_nodes::T; kws...) where {T<:Integer}
@@ -224,13 +235,19 @@ end
 function print_feature(io::IO, feature)
     if !isempty(feature)
         if length(keys(feature)) == 1
-            print(io, "$(keys(feature)[1]): $(dims2string(size(feature[1])))")
+            k = first(keys(feature))
+            v = first(values(feature))
+            print(io, "$(k): $(dims2string(size(v)))")
         else
-            print(io, "($(keys(feature)[1]): $(dims2string(size(feature[1]))), ")
-            for k in keys(feature)[2:end-1]
-                print(io, "$k: $(dims2string(size(feature[k]))), ")
+            print(io, "(")
+            for (i, (k, v)) in enumerate(pairs(feature))
+                print(io, "$k: $(dims2string(size(v)))")
+                if i == length(feature)
+                    print(io, ")")
+                else
+                    print(io, ", ")
+                end
             end
-            print(io, "$(keys(feature)[end]): $(dims2string(size(feature[end]))))")
         end
     end
 end
@@ -310,8 +327,8 @@ function Base.:(==)(g1::GNNGraph, g2::GNNGraph)
 end
 
 function Base.hash(g::T, h::UInt) where {T<:GNNGraph}
-    fs = (getfield(g, k) for k in fieldnames(typeof(g)) if k !== :graph_indicator)
-    return foldl((h, f) -> hash(f, h), fs, init=hash(T, h))
+    fs = (getfield(g, k) for k in fieldnames(T) if k !== :graph_indicator)
+    return foldl((h, f) -> hash(f, h),  fs, init=hash(T, h))
 end
 
 function Base.getproperty(g::GNNGraph, s::Symbol)

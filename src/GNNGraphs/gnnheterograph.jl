@@ -79,9 +79,9 @@ struct GNNHeteroGraph
     num_edges::EDict{Int}
     num_graphs::Int
     graph_indicator::Union{Nothing, NDict}
-    ndata::NDict{<:NamedTuple}
-    edata::EDict{<:NamedTuple}
-    gdata::NamedTuple
+    ndata::NDict{DataStore}
+    edata::EDict{DataStore}
+    gdata::DataStore
     ntypes::Vector{Symbol}
     etypes::Vector{Symbol}
 end

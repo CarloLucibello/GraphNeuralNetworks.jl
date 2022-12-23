@@ -15,6 +15,10 @@ using ChainRulesCore
 using LinearAlgebra, Random, Statistics
 import MLUtils
 using MLUtils: getobs, numobs
+import Functors
+
+include("datastore.jl")
+export DataStore
 
 include("gnngraph.jl")
 export GNNGraph, 
