@@ -21,8 +21,8 @@ A type representing a graph structure that also stores
 feature arrays associated to nodes, edges, and the graph itself.
 
 The feature arrays are stored in the fields `ndata`, `edata`, and `gdata`
-as  [`DataStore`](@ref) objects offering a convenient dictionary-like 
-and named tuple like interface. The features can be passed at construction
+as [`DataStore`](@ref) objects offering a convenient dictionary-like 
+and namedtuple-like interface. The features can be passed at construction
 time or added later.
 
 A `GNNGraph` can be constructed out of different `data` objects

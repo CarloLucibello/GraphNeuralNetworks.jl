@@ -1,11 +1,11 @@
-""""
+"""
     DataStore([n, data])
     DataStore([n,] k1 = x1, k2 = x2, ...)
 
-A container for data, with optional metadata `n` enforcing
-`numobs(x) == n` for each feature array contained in the data store.
+A container for feature arrays. The optional argument `n` enforces that
+`numobs(x) == n` for each array contained in the datastore.
 
-At construction time, the data can be provided as any iterables of pairs
+At construction time, the `data` can be provided as any iterables of pairs
 of symbols and arrays or as keyword arguments:
 
 ```julia-repl
@@ -32,8 +32,8 @@ DataStore() with 2 elements:
   x = 2×3 Matrix{Float64}
 ```
 
-The `DataStore` as an interface similar to both dictionaries and named tuples.
-Data can be accessed and added using either the indexing or the property syntax:
+The `DataStore` has an interface similar to both dictionaries and named tuples.
+Arrays can be accessed and added using either the indexing or the property syntax:
 
 ```julia-repl
 julia> ds = DataStore(x = ones(2, 3), y = zeros(3))
@@ -58,7 +58,7 @@ using `keys(ds)` and `values(ds)`. `map(f, ds)` applies the function `f`
 to each feature array:
 
 ```julia-repl
-julia> ds = DataStore(a=zeros(2), b=zeros(2));
+julia> ds = DataStore(a = zeros(2), b = zeros(2));
 
 julia> ds2 = map(x -> x .+ 1, ds)
 

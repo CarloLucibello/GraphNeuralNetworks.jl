@@ -73,11 +73,9 @@ false
 ## Data Features
 
 One or more arrays can be associated to nodes, edges, and (sub)graphs of a `GNNGraph`.
-They will be stored in the fields `g.ndata`, `g.edata`, and `g.gdata` respectivaly.
+They will be stored in the fields `g.ndata`, `g.edata`, and `g.gdata` respectively.
 
-The data fields are [`DataStore`](@ref) objects, and conveniently
-offer an interface similar to both dictionaries and named tuples. 
-Datastores support addition of new features after creation time.
+The data fields are [`DataStore`](@ref) objects. [`DataStore`](@ref)s conveniently offer an interface similar to both dictionaries and named tuples. Similarly to dictionaries, DataStores support addition of new features after creation time.
 
 The array contained in the datastores have last dimension equal to `num_nodes` (in `ndata`), `num_edges` (in `edata`), or `num_graphs` (in `gdata`) respectively.
 
@@ -158,7 +156,7 @@ and where the original graphs are disjoint subgraphs.
 
 ```julia
 using Flux
-using Flux.Data: DataLoader
+using Flux: DataLoader
 
 data = [rand_graph(10, 30, ndata=rand(Float32, 3, 10)) for _ in 1:160]
 gall = Flux.batch(data)
