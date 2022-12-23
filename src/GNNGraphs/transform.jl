@@ -65,7 +65,7 @@ end
 
 
 function remove_self_loops(g::GNNGraph{<:ADJMAT_T})
-    @assert g.edata === (;)
+    @assert isempty(g.edata)
     A = g.graph
     A[diagind(A)] .= 0
     if A isa AbstractSparseMatrix
