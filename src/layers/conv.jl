@@ -367,7 +367,9 @@ function message(l::GATConv, Wxi, Wxj, e)
         Wxx = vcat(Wxi, Wxj, We)
     end
     aWW = sum(l.a .* Wxx, dims=1)   # 1 × nheads × nedges
-    α = exp.(leakyrelu.(aWW, l.negative_slope))       
+    logα = leakyrelu.(aWW, l.negative_slope)
+    maxα = maximum(logα)
+    α = exp.(logα .- maxα)       
     return (α = α, β = α .* Wxj)
 end
 
