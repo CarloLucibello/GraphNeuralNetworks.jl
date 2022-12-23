@@ -43,8 +43,13 @@ end
     ds = DataStore(10, (:x => rand(10), :y => rand(2, 10)))
     
     f1(ds) = sum(ds.x)
-    g = gradient(f1, ds)[1]
-    @test g._data[:x] ≈ ngradient(f1, ds)[1][:x]
+    grad = gradient(f1, ds)[1]
+    @test grad._data[:x] ≈ ngradient(f1, ds)[1][:x]
+
+    g = rand_graph(5, 2)
+    x = rand(2, 5)
+    grad = gradient(x -> sum(exp, GNNGraph(g, ndata=x).ndata.x), x)[1]
+    @test grad == exp.(x)
 end
 
 @testset "functor" begin 
