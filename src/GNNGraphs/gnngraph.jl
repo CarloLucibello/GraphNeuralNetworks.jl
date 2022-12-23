@@ -20,6 +20,11 @@ const AVecI = AbstractVector{<:Integer}
 A type representing a graph structure that also stores
 feature arrays associated to nodes, edges, and the graph itself.
 
+The feature arrays are stored in the fields `ndata`, `edata`, and `gdata`
+as  [`DataStore`](@ref) objects offering a convenient dictionary-like 
+and named tuple like interface. The features can be passed at construction
+time or added later.
+
 A `GNNGraph` can be constructed out of different `data` objects
 expressing the connections inside the graph. The internal representation type
 is determined by `graph_type`.
@@ -88,8 +93,11 @@ g = GNNGraph(s, t)
 # From a Graphs' graph
 g = GNNGraph(erdos_renyi(100, 20))
 
-# Add 2 node feature arrays
+# Add 2 node feature arrays at creation time
 g = GNNGraph(g, ndata = (x=rand(100, g.num_nodes), y=rand(g.num_nodes)))
+
+# Add 1 edge feature array, after the graph creation
+g.edata.z = rand(16, g.num_edges)
 
 # Add node features and edge features with default names `x` and `e`
 g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_edges))

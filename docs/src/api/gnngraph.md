@@ -25,6 +25,14 @@ Pages   = ["gnngraph.jl"]
 Private = false
 ```
 
+## DataStore
+
+```@autodocs
+Modules = [GraphNeuralNetworks.GNNGraphs]
+Pages   = ["datastore.jl"]
+Private = false
+```
+
 ## Query
 
 ```@autodocs
