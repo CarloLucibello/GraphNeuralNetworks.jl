@@ -1,9 +1,16 @@
 
-using GraphNeuralNetworks.GNNGraphs: getn, getdata
-using Functors, Optimisers, Test, FiniteDifferences
-
 @testset "constructor" begin
     @test_throws AssertionError DataStore(10, (:x => rand(10), :y => rand(2, 4)))
+
+    @testset "keyword args" begin
+        ds = DataStore(10, x = rand(10), y = rand(2, 10))
+        @test size(ds.x) == (10, )
+        @test size(ds.y) == (2, 10)
+
+        ds = DataStore(x = rand(10), y = rand(2, 10))
+        @test size(ds.x) == (10, )
+        @test size(ds.y) == (2, 10)
+    end
 end
 
 @testset "getproperty / setproperty!" begin
