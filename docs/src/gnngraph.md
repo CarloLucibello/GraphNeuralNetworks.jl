@@ -74,8 +74,12 @@ false
 
 One or more arrays can be associated to nodes, edges, and (sub)graphs of a `GNNGraph`.
 They will be stored in the fields `g.ndata`, `g.edata`, and `g.gdata` respectivaly.
-The data fields are `NamedTuple`s. The arrays they contain have last dimension
-equal to `num_nodes` (in `ndata`), `num_edges` (in `edata`), or `num_graphs` (in `gdata`) respectively.
+
+The data fields are [`DataStore`](@ref) objects, and conveniently
+offer an interface similar to both dictionaries and named tuples. 
+Datastores support addition of new features after creation time.
+
+The array contained in the datastores have last dimension equal to `num_nodes` (in `ndata`), `num_edges` (in `edata`), or `num_graphs` (in `gdata`) respectively.
 
 ```julia
 # Create a graph with a single feature array `x` associated to nodes
@@ -87,6 +91,8 @@ g.ndata.x  # access the features
 g = rand_graph(10,  60, ndata = rand(Float32, 32, 10))
 
 g.ndata.x  # `:x` is the default name for node features
+
+g.ndata.z = rand(Float32, 3, 10)  # add new feature array `z`
 
 # For convenience, we can access the features through the shortcut
 g.x 
