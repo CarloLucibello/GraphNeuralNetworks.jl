@@ -1545,8 +1545,7 @@ function TransformerConv(ch::Pair{NTuple{2, Int}, Int};
     (in, ein), out = ch
 
     if add_self_loops
-        @assert iszero(ein) "Using edge features and setting add_self_loops=true at the \
-            same time is not yet supported."
+        @assert iszero(ein) "Using edge features and setting add_self_loops=true at the same time is not yet supported."
     end
 
     W1 = root_weight ? Dense(in, out * (concat ? heads : 1); bias=bias_root, init=init) : nothing
@@ -1605,8 +1604,7 @@ function (l::TransformerConv)(g::GNNGraph, x::AbstractMatrix,
     end
 
     if l.skip_connection
-        @assert size(h, 1) == size(x, 1) "In-channels must correspond to \
-            out-channels * heads if skip_connection is used"
+        @assert size(h, 1) == size(x, 1) "In-channels must correspond to out-channels * heads if skip_connection is used"
         h += x
     end
     if !isnothing(l.BN1)
