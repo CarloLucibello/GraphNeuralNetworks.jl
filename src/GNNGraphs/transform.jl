@@ -466,9 +466,69 @@ julia> Flux.unbatch(gbatched)
     num_edges = 2
 ```
 """
-function Flux.unbatch(g::GNNGraph) 
-    [getgraph(g, i) for i in 1:g.num_graphs]
+function Flux.unbatch(g::GNNGraph{T}) where T<:COO_T
+    g.num_graphs == 1 && return [g]
+
+    @assert issorted(g.graph_indicator) "The graph_indicator vector must be sorted."
+    idxslast = [searchsortedlast(g.graph_indicator, i) for i in 1:g.num_graphs]
+    
+    nodemasks = [1:idxslast[1]]
+    for i in 2:g.num_graphs
+        push!(nodemasks, idxslast[i-1]+1:idxslast[i])
+    end
+    num_nodes = length.(nodemasks)
+    cumnum_nodes = [0; cumsum(num_nodes)]
+    
+    s, t = edge_index(g)
+    w = get_edge_weight(g)
+
+    edgemasks = []
+    for i in 1:g.num_graphs-1
+        lastedgeid = findfirst(s) do x
+            x > cumnum_nodes[i+1] && x <= cumnum_nodes[i+2]
+        end
+        firstedgeid = last(edgemasks[i-1]) + 1
+        # if nothing make empty range
+        lastedgeid = lastedgeid === nothing ? firstedgeid - 1 : lastedgeid - 1
+        
+        if i == 1            
+            push!(edgemasks, 1:lastedgeid)
+        else
+            push!(edgemasks, firstedgeid:lastedgeid)
+        end
+    end
+    push!(edgemasks, (last(edgemasks[end])+1):length(s))
+    num_edges = length.(edgemasks)
+
+    gs = GNNGraph[]
+    for i in 1:g.num_graphs
+        node_mask = nodemasks[i]
+        edge_mask = edgemasks[i]
+        snew = s[edge_mask] .- cumnum_nodes[i] .+ 1
+        tnew = t[edge_mask] .- cumnum_nodes[i] .+ 1
+        wnew = w === nothing ? nothing : w[edge_mask]
+        graph = (snew, tnew, wnew)
+        graph_indicator = nothing
+        ndata = getobs(g.ndata, node_mask)
+        edata = getobs(g.edata, edge_mask)
+        gdata = getobs(g.gdata, i)
+
+        nedges = num_edges[i]
+        nnodes = num_nodes[i]
+        ngraphs = 1
+
+        gnew = GNNGraph(graph, 
+                    nnodes, nedges, ngraphs,
+                    graph_indicator,
+                    ndata, edata, gdata)
+        push!(gs, gnew)
+    end
+    return gs
 end
+
+# function Flux.unbatch(g::GNNGraph{T}) where T<:COO_T
+#     return [getgraph(g, i) for i in 1:g.num_graphs]
+# end
 
 
 """
