@@ -18,7 +18,7 @@ end
 # Tests also gradient on cpu and gpu comparing with
 # finite difference methods.
 # Test gradients with respects to layer weights and to input. 
-# If `g` has edge features, it is assumed that the layer can be 
+# If `g` has edge features, it is assumed that the layer can 
 # use them in the forward pass as `l(g, x, e)`.
 # Test also gradient with repspect to `e`. 
 function test_layer(l, g::GNNGraph; atol = 1e-6, rtol = 1e-5,

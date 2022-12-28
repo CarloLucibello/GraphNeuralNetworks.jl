@@ -266,7 +266,7 @@
     @testset "GMMConv" begin
         ein_channel = 10
         K = 5
-        l = GMMConv((in_channel, ein_channel )=> out_channel, K=K)
+        l = GMMConv((in_channel, ein_channel ) => out_channel, K=K)
         for g in test_graphs
             g = GNNGraph(g, edata=rand(Float32, ein_channel, g.num_edges))
             test_layer(l, g, rtol=RTOL_HIGH, outsize = (out_channel, g.num_nodes))
@@ -300,4 +300,37 @@
         @test size(hnew) == (hout, g.num_nodes)
         @test size(xnew) == (in_channel, g.num_nodes)
     end
+
+    @testset "TransformerConv" begin
+        ein = 2
+        heads = 3
+        # used like in Kool et al., 2019
+        l = TransformerConv(in_channel * heads => in_channel; heads, add_self_loops=true, 
+            root_weight=false, ff_channels=10, skip_connection=true, batch_norm=false)
+            # batch_norm=false here for tests to pass; true in paper
+        for adj in [adj1, adj_single_vertex]
+            g = GNNGraph(adj, ndata=rand(T, in_channel * heads, size(adj, 1)), graph_type=GRAPH_T)
+            test_layer(l, g, rtol=RTOL_LOW, 
+                exclude_grad_fields = [:negative_slope],
+                outsize=(in_channel * heads, g.num_nodes))
+        end
+        # used like in Shi et al., 2021 
+        l = TransformerConv((in_channel, ein) => in_channel; heads, beta=true, bias_qkv=true)
+        for g in test_graphs
+            g = GNNGraph(g, edata=rand(T, ein, g.num_edges))
+            test_layer(l, g, rtol=RTOL_LOW, 
+                exclude_grad_fields = [:negative_slope],
+                outsize=(in_channel * heads, g.num_nodes))
+        end
+        # test averaging heads
+        l = TransformerConv(in_channel => in_channel; heads, concat=false, bias_root=false, 
+            root_weight=false)
+        for g in test_graphs
+            test_layer(l, g, rtol=RTOL_LOW, 
+                exclude_grad_fields = [:negative_slope],
+                outsize=(in_channel, g.num_nodes))
+        end
+    end
 end
+
+

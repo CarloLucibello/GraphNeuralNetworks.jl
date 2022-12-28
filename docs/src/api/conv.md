@@ -32,6 +32,7 @@ The table below lists all graph convolutional layers implemented in the *GraphNe
 | [`ResGatedGraphConv`](@ref) |          |           |             |
 | [`SAGEConv`](@ref)          |     ✓    |           |             |
 | [`SGConv`](@ref)            |     ✓    |           |             |
+| [`TransformerConv`](@ref)   |          |           |     ✓       |
 
 
 ## Docs
