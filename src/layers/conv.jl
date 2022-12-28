@@ -343,7 +343,7 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing,AbstractM
     Wx = l.dense_x(x)
     Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
 
-    # a hand-writtent message passing
+    # a hand-written message passing
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wx, Wx, e)
     α = softmax_edge_neighbors(g, m.logα)
     β = α .* m.Wxj
@@ -371,7 +371,7 @@ function message(l::GATConv, Wxi, Wxj, e)
     end
     aWW = sum(l.a .* Wxx, dims=1)   # 1 × nheads × nedges
     logα = leakyrelu.(aWW, l.negative_slope)
-    return(logα = logα, Wxj = Wxj)
+    return (; logα, Wxj)
 end
 
 function Base.show(io::IO, l::GATConv)
@@ -480,11 +480,13 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, Abstra
     _, out = l.channel
     heads = l.heads
 
-    Wix = reshape(l.dense_i(x), out, heads, :)                                  # out × heads × nnodes
-    Wjx = reshape(l.dense_j(x), out, heads, :)                                  # out × heads × nnodes
+    Wxi = reshape(l.dense_i(x), out, heads, :)                                  # out × heads × nnodes
+    Wxj = reshape(l.dense_j(x), out, heads, :)                                  # out × heads × nnodes
 
-    m = propagate(message, g, +, l; xi=Wix, xj=Wjx, e)                            # out × heads × nnodes
-    x = m.β ./ m.α
+    m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
+    α = softmax_edge_neighbors(g, m.logα)
+    β = α .* m.Wxj
+    x = aggregate_neighbors(g, +, β)
 
     if !l.concat
         x = mean(x, dims=2)
@@ -494,17 +496,16 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, Abstra
     return x  
 end
 
-function message(l::GATv2Conv, Wix, Wjx, e)
+function message(l::GATv2Conv, Wxi, Wxj, e)
     _, out = l.channel
     heads = l.heads
 
-    Wx = Wix + Wjx  # Note: this is equivalent to W * vcat(x_i, x_j) as in "How Attentive are Graph Attention Networks?"
+    Wx = Wxi + Wxj  # Note: this is equivalent to W * vcat(x_i, x_j) as in "How Attentive are Graph Attention Networks?"
     if e !== nothing
         Wx += reshape(l.dense_e(e), out, heads, :)
     end 
-    eij = sum(l.a .* leakyrelu.(Wx, l.negative_slope), dims=1)   # 1 × heads × nedges
-    α = exp.(eij)
-    return (α = α, β = α .* Wjx)
+    logα = sum(l.a .* leakyrelu.(Wx, l.negative_slope), dims=1)   # 1 × heads × nedges
+    return (; logα, Wxj)
 end
 
 function Base.show(io::IO, l::GATv2Conv)
