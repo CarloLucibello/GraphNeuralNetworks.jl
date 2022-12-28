@@ -1462,12 +1462,11 @@ The transformer-like multi head attention convolutional operator from the
 [Masked Label Prediction: Unified Message Passing Model for Semi-Supervised 
 Classification](https://arxiv.org/abs/2009.03509) paper, which also considers 
 edge features.
-It further contains options to also be configured as the transformer-like multi head 
-attention convolutional operator from the 
+It further contains options to also be configured as the transformer-like convolutional operator from the 
 [Attention, Learn to Solve Routing Problems!](https://arxiv.org/abs/1706.03762) paper,
 including a successive feed-forward network as well as skip layers and batch normalization.
 
-The layer's forward pass is given by
+The layer's basic forward pass is given by
 ```math
 x_i' = W_1x_i + \sum_{j\in N(i)} \alpha_{ij} (W_2 x_j + W_6e_{ij})
 ```
