@@ -1465,7 +1465,7 @@ edge features.
 It further contains options to also be configured as the transformer-like multi head 
 attention convolutional operator from the 
 [Attention, Learn to Solve Routing Problems!](https://arxiv.org/abs/1706.03762) paper,
-including a successiv feed-forward network as well as skip layers and batch normalization.
+including a successive feed-forward network as well as skip layers and batch normalization.
 
 The layer's forward pass is given by
 ```math
