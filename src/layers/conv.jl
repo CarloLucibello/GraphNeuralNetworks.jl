@@ -1596,7 +1596,7 @@ function (l::TransformerConv)(g::GNNGraph, x::AbstractMatrix,
 
     if !isnothing(W1x)  # root_weight
         if !isnothing(l.W5)  # beta
-            beta = l.W5(vcat(h, W1x, h - W1x))
+            beta = l.W5(vcat(h, W1x, h .- W1x))
             h = beta .* W1x + (1f0 .- beta) .* h
         else
             h += W1x
