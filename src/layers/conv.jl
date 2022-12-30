@@ -1538,9 +1538,17 @@ Flux.trainable(l::TransformerConv) = (l.W1, l.W2, l.W3, l.W4, l.W5, l.W6, l.FF, 
 TransformerConv(ch::Pair{Int,Int}, args...; kws...) = TransformerConv((ch[1], 0) => ch[2], args...; kws...)
 
 function TransformerConv(ch::Pair{NTuple{2, Int}, Int}; 
-    heads::Int=1, concat::Bool=true, init=glorot_uniform, add_self_loops::Bool=false, 
-    bias_qkv=true, bias_root::Bool=true, root_weight::Bool=true, beta::Bool=false, 
-    skip_connection::Bool=false, batch_norm::Bool=false, ff_channels::Int=0)
+        heads::Int = 1, 
+        concat::Bool = true, 
+        init = glorot_uniform, 
+        add_self_loops::Bool = false, 
+        bias_qkv = true, 
+        bias_root::Bool = true, 
+        root_weight::Bool = true, 
+        beta::Bool = false, 
+        skip_connection::Bool = false, 
+        batch_norm::Bool = false, 
+        ff_channels::Int = 0)
 
     (in, ein), out = ch
 
