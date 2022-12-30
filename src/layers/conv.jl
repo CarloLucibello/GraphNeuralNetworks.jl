@@ -1455,8 +1455,8 @@ end
 
 
 @doc raw"""
-    TransformerConv((in, ein) => out; heads=1, concat=true, init=glorot_uniform,
-        add_self_loops=false, bias_qkv=false, bias_root=true, root_weight=true, beta=false)
+    TransformerConv((in, ein) => out; [heads, concat, init, add_self_loops, bias_qkv,
+        bias_root, root_weight, gating, skip_connection, batch_norm, ff_channels]))
 
 The transformer-like multi head attention convolutional operator from the 
 [Masked Label Prediction: Unified Message Passing Model for Semi-Supervised 
@@ -1493,25 +1493,26 @@ can be performed.
 - `in`: Dimension of input features, which also corresponds to the dimension of 
     the output features.
 - `ein`: Dimension of the edge features; if 0, no edge features will be used.
-- `heads`: Number of heads in output.
+- `out`: Dimension of the output.
+- `heads`: Number of heads in output. Default `1`.
 - `concat`: Concatenate layer output or not. If not, layer output is averaged
-    over the heads.
-- `init`: Weight matrices' initializing function.
-- `add_self_loops`: Add self loops to the input graph.
-- `bias_qkv`: If set, bias is used in the key, query and value transformations for nodes.  
+    over the heads. Default `true`.
+- `init`: Weight matrices' initializing function. Default `glorot_uniform`.
+- `add_self_loops`: Add self loops to the input graph. Default `false`.
+- `bias_qkv`: If set, bias is used in the key, query and value transformations for nodes.
+    Default `true`.
 - `bias_root`: If set, the layer will also learn an additive bias for the root when root 
-    weight is used.
+    weight is used. Default `true`.
 - `root_weight`: If set, the layer will add the transformed root node features
-    to the output.
-- `beta`: If set, will combine aggregation and transformed root node features by
-    gating mechanism.
+    to the output. Default `true`.
+- `gating`: If set, will combine aggregation and transformed root node features by a
+    gating mechanism. Default `false`.
 - `skip_connection`: If set, a skip connection will be made from the input and 
-    added to the output.
-- `batch_norm`: If set, a batch normalization will be applied to the output.
+    added to the output. Default `false`.
+- `batch_norm`: If set, a batch normalization will be applied to the output. Default `false`.
 - `ff_channels`: If positive, a feed-forward NN is appended, with the first having the given
     number of hidden nodes; this NN also gets a skip connection and batch normalization 
-    if the respective parameters are set.
-
+    if the respective parameters are set. Default: `0`.
 """
 struct TransformerConv{TW1, TW2, TW3, TW4, TW5, TW6, TFF, TBN1, TBN2} <: GNNLayer
     W1::TW1
@@ -1545,7 +1546,7 @@ function TransformerConv(ch::Pair{NTuple{2, Int}, Int};
         bias_qkv = true, 
         bias_root::Bool = true, 
         root_weight::Bool = true, 
-        beta::Bool = false, 
+        gating::Bool = false, 
         skip_connection::Bool = false, 
         batch_norm::Bool = false, 
         ff_channels::Int = 0)
@@ -1561,7 +1562,7 @@ function TransformerConv(ch::Pair{NTuple{2, Int}, Int};
     W3 = Dense(in => out*heads; bias=bias_qkv, init=init)
     W4 = Dense(in => out*heads; bias=bias_qkv, init=init)
     out_mha = out * (concat ? heads : 1)
-    W5 = beta ? Dense(3 * out_mha => 1, sigmoid; bias=false, init=init) : nothing
+    W5 = gating ? Dense(3 * out_mha => 1, sigmoid; bias=false, init=init) : nothing
     W6 = ein > 0 ? Dense(ein => out*heads; bias=bias_qkv, init=init) : nothing
     FF = ff_channels > 0 ? Chain(
             Dense(out_mha => ff_channels, relu), 
@@ -1603,9 +1604,9 @@ function (l::TransformerConv)(g::GNNGraph, x::AbstractMatrix,
     end
 
     if !isnothing(W1x)  # root_weight
-        if !isnothing(l.W5)  # beta
-            beta = l.W5(vcat(h, W1x, h .- W1x))
-            h = beta .* W1x + (1f0 .- beta) .* h
+        if !isnothing(l.W5)  # gating
+            β = l.W5(vcat(h, W1x, h .- W1x))
+            h = β .* W1x + (1f0 .- β) .* h
         else
             h += W1x
         end
