@@ -315,7 +315,7 @@
                 outsize=(in_channel * heads, g.num_nodes))
         end
         # used like in Shi et al., 2021 
-        l = TransformerConv((in_channel, ein) => in_channel; heads, beta=true, bias_qkv=true)
+        l = TransformerConv((in_channel, ein) => in_channel; heads, gating=true, bias_qkv=true)
         for g in test_graphs
             g = GNNGraph(g, edata=rand(T, ein, g.num_edges))
             test_layer(l, g, rtol=RTOL_LOW, 
