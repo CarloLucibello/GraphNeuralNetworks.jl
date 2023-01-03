@@ -25,13 +25,21 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "a5e4a6292222b003f3138c076d1f0d4b2c340e5b730135690d834f42a3edb316"
+    input_sha = "1bb7ba1abfd868b62a25393944efff368141d2e85e62bef7228c91f540463b54"
     julia_version = "1.8.2"
 -->
-
-
-
-
+<pre class='language-julia'><code class='language-julia'>begin
+    using Flux
+    using Flux: onecold, onehotbatch, logitcrossentropy
+    using Flux: DataLoader
+    using GraphNeuralNetworks
+    using MLDatasets
+    using MLUtils
+    using LinearAlgebra, Random, Statistics
+    
+    ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
+    Random.seed!(17) # for reproducibility
+end;</code></pre>
 
 
 
@@ -94,13 +102,15 @@ end</code></pre>
 <div class="markdown"><p>We have some useful utilities for working with graph datasets, <em>e.g.</em>, we can shuffle the dataset and use the first 150 graphs as training graphs, while using the remaining ones for testing:</p></div>
 
 <pre class='language-julia'><code class='language-julia'>train_data, test_data = splitobs((graphs, y), at=150, shuffle=true) |&gt; getobs</code></pre>
-<pre class="code-output documenter-example-output" id="var-train_data">((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(25, 58), GNNGraph(16, 34), GNNGraph(23, 54), GNNGraph(20, 46), GNNGraph(18, 40), GNNGraph(13, 28), GNNGraph(12, 24), GNNGraph(16, 34), GNNGraph(19, 44), GNNGraph(22, 50)  …  GNNGraph(11, 22), GNNGraph(23, 54), GNNGraph(17, 38), GNNGraph(13, 28), GNNGraph(16, 34), GNNGraph(12, 26), GNNGraph(20, 44), GNNGraph(22, 50), GNNGraph(19, 44), GNNGraph(20, 44)], Bool[0 0 … 0 0; 1 1 … 1 1]), (GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(16, 34), GNNGraph(12, 26), GNNGraph(24, 50), GNNGraph(21, 44), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(24, 50), GNNGraph(15, 34), GNNGraph(21, 44), GNNGraph(23, 54)  …  GNNGraph(23, 50), GNNGraph(25, 56), GNNGraph(23, 54), GNNGraph(23, 50), GNNGraph(11, 22), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(24, 50), GNNGraph(20, 46), GNNGraph(13, 28)], Bool[1 1 … 0 1; 0 0 … 1 0]))</pre>
+<pre class="code-output documenter-example-output" id="var-train_data">((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(16, 34), GNNGraph(19, 44), GNNGraph(13, 28), GNNGraph(11, 22), GNNGraph(15, 32), GNNGraph(12, 26), GNNGraph(11, 22), GNNGraph(16, 34), GNNGraph(23, 52), GNNGraph(16, 34)  …  GNNGraph(19, 44), GNNGraph(13, 28), GNNGraph(15, 34), GNNGraph(17, 38), GNNGraph(19, 44), GNNGraph(13, 26), GNNGraph(11, 22), GNNGraph(21, 44), GNNGraph(22, 50), GNNGraph(23, 54)], Bool[1 0 … 0 0; 0 1 … 1 1]), (GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(16, 34), GNNGraph(16, 34), GNNGraph(21, 44), GNNGraph(16, 34), GNNGraph(20, 44), GNNGraph(13, 26), GNNGraph(21, 44), GNNGraph(15, 34), GNNGraph(20, 44), GNNGraph(26, 60)  …  GNNGraph(17, 38), GNNGraph(22, 50), GNNGraph(22, 50), GNNGraph(17, 38), GNNGraph(18, 40), GNNGraph(17, 38), GNNGraph(23, 54), GNNGraph(14, 28), GNNGraph(17, 38), GNNGraph(11, 22)], Bool[1 1 … 0 1; 0 0 … 1 0]))</pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
     train_loader = DataLoader(train_data, batchsize=64, shuffle=true)
     test_loader = DataLoader(test_data, batchsize=64, shuffle=false)
 end</code></pre>
-<pre class="code-output documenter-example-output" id="var-test_loader">DataLoader{Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, OneHotArrays.OneHotMatrix{UInt32, Vector{UInt32}}}, Random._GLOBAL_RNG, Val{nothing}}((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(16, 34), GNNGraph(12, 26), GNNGraph(24, 50), GNNGraph(21, 44), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(24, 50), GNNGraph(15, 34), GNNGraph(21, 44), GNNGraph(23, 54)  …  GNNGraph(23, 50), GNNGraph(25, 56), GNNGraph(23, 54), GNNGraph(23, 50), GNNGraph(11, 22), GNNGraph(22, 50), GNNGraph(23, 54), GNNGraph(24, 50), GNNGraph(20, 46), GNNGraph(13, 28)], Bool[1 1 … 0 1; 0 0 … 1 0]), 64, false, true, false, false, Val{nothing}(), Random._GLOBAL_RNG())</pre>
+<pre class="code-output documenter-example-output" id="var-test_loader">1-element DataLoader(::Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, OneHotArrays.OneHotMatrix{UInt32, Vector{UInt32}}}, batchsize=64)
+  with first element:
+  (38-element Vector{GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, 2×38 OneHotMatrix(::Vector{UInt32}) with eltype Bool,)</pre>
 
 
 <div class="markdown"><p>Here, we opt for a <code>batch_size</code> of 64, leading to 3 (randomly shuffled) mini-batches, containing all <span class="tex">$2 \cdot 64+22 = 150$</span> graphs.</p></div>
@@ -113,15 +123,15 @@ end</code></pre>
 <p>Since graphs in graph classification datasets are usually small, a good idea is to <strong>batch the graphs</strong> before inputting them into a Graph Neural Network to guarantee full GPU utilization. In the image or language domain, this procedure is typically achieved by <strong>rescaling</strong> or <strong>padding</strong> each example into a set of equally-sized shapes, and examples are then grouped in an additional dimension. The length of this dimension is then equal to the number of examples grouped in a mini-batch and is typically referred to as the <code>batchsize</code>.</p><p>However, for GNNs the two approaches described above are either not feasible or may result in a lot of unnecessary memory consumption. Therefore, GraphNeuralNetworks.jl opts for another approach to achieve parallelization across a number of examples. Here, adjacency matrices are stacked in a diagonal fashion (creating a giant graph that holds multiple isolated subgraphs), and node and target features are simply concatenated in the node dimension (the last dimension).</p><p>This procedure has some crucial advantages over other batching procedures:</p><ol><li><p>GNN operators that rely on a message passing scheme do not need to be modified since messages are not exchanged between two nodes that belong to different graphs.</p></li><li><p>There is no computational or memory overhead since adjacency matrices are saved in a sparse fashion holding only non-zero entries, <em>i.e.</em>, the edges.</p></li></ol><p>GraphNeuralNetworks.jl can <strong>batch multiple graphs into a single giant graph</strong>:</p></div>
 
 <pre class='language-julia'><code class='language-julia'>vec_gs, _ = first(train_loader)</code></pre>
-<pre class="code-output documenter-example-output" id="var-vec_gs">(GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(19, 40), GNNGraph(23, 54), GNNGraph(11, 22), GNNGraph(16, 34), GNNGraph(10, 20), GNNGraph(20, 44), GNNGraph(23, 54), GNNGraph(25, 56), GNNGraph(16, 34), GNNGraph(17, 38)  …  GNNGraph(17, 38), GNNGraph(20, 46), GNNGraph(22, 50), GNNGraph(17, 38), GNNGraph(20, 44), GNNGraph(26, 60), GNNGraph(20, 46), GNNGraph(13, 26), GNNGraph(12, 24), GNNGraph(10, 20)], Bool[0 0 … 0 1; 1 1 … 1 0])</pre>
+<pre class="code-output documenter-example-output" id="var-vec_gs">(GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(15, 34), GNNGraph(14, 30), GNNGraph(23, 54), GNNGraph(22, 50), GNNGraph(14, 28), GNNGraph(23, 52), GNNGraph(20, 44), GNNGraph(23, 50), GNNGraph(12, 26), GNNGraph(21, 48)  …  GNNGraph(11, 22), GNNGraph(12, 26), GNNGraph(18, 38), GNNGraph(20, 46), GNNGraph(17, 36), GNNGraph(21, 44), GNNGraph(24, 50), GNNGraph(21, 44), GNNGraph(16, 34), GNNGraph(17, 38)], Bool[0 1 … 1 0; 1 0 … 0 1])</pre>
 
 <pre class='language-julia'><code class='language-julia'>MLUtils.batch(vec_gs)</code></pre>
 <pre class="code-output documenter-example-output" id="var-hash102363">GNNGraph:
-    num_nodes = 1168
-    num_edges = 2578
+    num_nodes = 1136
+    num_edges = 2496
     num_graphs = 64
     ndata:
-        x =&gt; 7×1168 Matrix{Float32}</pre>
+        x =&gt; 7×1136 Matrix{Float32}</pre>
 
 
 <div class="markdown"><p>Each batched graph object is equipped with a <strong><code>graph_indicator</code> vector</strong>, which maps each node to its respective graph in the batch:</p><p class="tex">$$\textrm{graph-indicator} = [1, \ldots, 1, 2, \ldots, 2, 3, \ldots ]$$</p></div>
