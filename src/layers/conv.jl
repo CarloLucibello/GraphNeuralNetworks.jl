@@ -1452,3 +1452,209 @@ function Base.show(io::IO, l::EGNNConv)
     end
     print(io, ")")
 end
+
+
+@doc raw"""
+    TransformerConv((in, ein) => out; [heads, concat, init, add_self_loops, bias_qkv,
+        bias_root, root_weight, gating, skip_connection, batch_norm, ff_channels]))
+
+The transformer-like multi head attention convolutional operator from the 
+[Masked Label Prediction: Unified Message Passing Model for Semi-Supervised 
+Classification](https://arxiv.org/abs/2009.03509) paper, which also considers 
+edge features.
+It further contains options to also be configured as the transformer-like convolutional operator from the 
+[Attention, Learn to Solve Routing Problems!](https://arxiv.org/abs/1706.03762) paper,
+including a successive feed-forward network as well as skip layers and batch normalization.
+
+The layer's basic forward pass is given by
+```math
+x_i' = W_1x_i + \sum_{j\in N(i)} \alpha_{ij} (W_2 x_j + W_6e_{ij})
+```
+where the attention scores are
+```math
+\alpha_{ij} = \mathrm{softmax}\left(\frac{(W_3x_i)^T(W_4x_j+
+W_6e_{ij})}{\sqrt{d}}\right).
+```
+
+Optionally, a combination of the aggregated value with transformed root node features 
+by a gating mechanism via
+```math
+x'_i = \beta_i W_1 x_i + (1 - \beta_i) \underbrace{\left(\sum_{j \in \mathcal{N}(i)}
+\alpha_{i,j} W_2 x_j \right)}_{=m_i}
+```
+with
+```math
+\beta_i = \textrm{sigmoid}(W_5^{\top} [ W_1 x_i, m_i, W_1 x_i - m_i ]).
+```
+can be performed.
+
+# Arguments 
+
+- `in`: Dimension of input features, which also corresponds to the dimension of 
+    the output features.
+- `ein`: Dimension of the edge features; if 0, no edge features will be used.
+- `out`: Dimension of the output.
+- `heads`: Number of heads in output. Default `1`.
+- `concat`: Concatenate layer output or not. If not, layer output is averaged
+    over the heads. Default `true`.
+- `init`: Weight matrices' initializing function. Default `glorot_uniform`.
+- `add_self_loops`: Add self loops to the input graph. Default `false`.
+- `bias_qkv`: If set, bias is used in the key, query and value transformations for nodes.
+    Default `true`.
+- `bias_root`: If set, the layer will also learn an additive bias for the root when root 
+    weight is used. Default `true`.
+- `root_weight`: If set, the layer will add the transformed root node features
+    to the output. Default `true`.
+- `gating`: If set, will combine aggregation and transformed root node features by a
+    gating mechanism. Default `false`.
+- `skip_connection`: If set, a skip connection will be made from the input and 
+    added to the output. Default `false`.
+- `batch_norm`: If set, a batch normalization will be applied to the output. Default `false`.
+- `ff_channels`: If positive, a feed-forward NN is appended, with the first having the given
+    number of hidden nodes; this NN also gets a skip connection and batch normalization 
+    if the respective parameters are set. Default: `0`.
+"""
+struct TransformerConv{TW1, TW2, TW3, TW4, TW5, TW6, TFF, TBN1, TBN2} <: GNNLayer
+    W1::TW1
+    W2::TW2
+    W3::TW3
+    W4::TW4
+    W5::TW5
+    W6::TW6
+    FF::TFF
+    BN1::TBN1
+    BN2::TBN2
+    channels::Pair{NTuple{2,Int},Int}
+    heads::Int
+    add_self_loops::Bool
+    concat::Bool
+    skip_connection::Bool
+    sqrt_out::Float32
+end
+
+@functor TransformerConv
+
+Flux.trainable(l::TransformerConv) = (l.W1, l.W2, l.W3, l.W4, l.W5, l.W6, l.FF, l.BN1, l.BN2)
+
+TransformerConv(ch::Pair{Int,Int}, args...; kws...) = TransformerConv((ch[1], 0) => ch[2], args...; kws...)
+
+function TransformerConv(ch::Pair{NTuple{2, Int}, Int}; 
+        heads::Int = 1, 
+        concat::Bool = true, 
+        init = glorot_uniform, 
+        add_self_loops::Bool = false, 
+        bias_qkv = true, 
+        bias_root::Bool = true, 
+        root_weight::Bool = true, 
+        gating::Bool = false, 
+        skip_connection::Bool = false, 
+        batch_norm::Bool = false, 
+        ff_channels::Int = 0)
+
+    (in, ein), out = ch
+
+    if add_self_loops
+        @assert iszero(ein) "Using edge features and setting add_self_loops=true at the same time is not yet supported."
+    end
+
+    W1 = root_weight ? Dense(in, out * (concat ? heads : 1); bias=bias_root, init=init) : nothing
+    W2 = Dense(in => out*heads; bias=bias_qkv, init=init)
+    W3 = Dense(in => out*heads; bias=bias_qkv, init=init)
+    W4 = Dense(in => out*heads; bias=bias_qkv, init=init)
+    out_mha = out * (concat ? heads : 1)
+    W5 = gating ? Dense(3 * out_mha => 1, sigmoid; bias=false, init=init) : nothing
+    W6 = ein > 0 ? Dense(ein => out*heads; bias=bias_qkv, init=init) : nothing
+    FF = ff_channels > 0 ? Chain(
+            Dense(out_mha => ff_channels, relu), 
+            Dense(ff_channels => out_mha)
+        ) : nothing
+    BN1 = batch_norm ? BatchNorm(out_mha) : nothing
+    BN2 = (batch_norm && ff_channels > 0) ? BatchNorm(out_mha) : nothing
+
+    return TransformerConv(W1, W2, W3, W4, W5, W6, FF, BN1, BN2,
+        ch, heads, add_self_loops, concat, skip_connection, Float32(√out))
+end
+
+function (l::TransformerConv)(g::GNNGraph, x::AbstractMatrix, 
+        e::Union{AbstractMatrix, Nothing}=nothing)
+    check_num_nodes(g, x)
+
+    if l.add_self_loops
+        g = add_self_loops(g)
+    end
+
+    out = l.channels[2]
+    heads = l.heads
+    W1x = !isnothing(l.W1) ? l.W1(x) : nothing
+    W2x = reshape(l.W2(x), out, heads, :)
+    W3x = reshape(l.W3(x), out, heads, :)
+    W4x = reshape(l.W4(x), out, heads, :)
+    W6e = !isnothing(l.W6) ? reshape(l.W6(e), out, heads, :) : nothing
+
+    m = apply_edges(message_uij, g, l; xi=(; W3x), xj=(; W4x), e=(; W6e))
+    α = softmax_edge_neighbors(g, m)
+    α_val = propagate(message_main, g, +, l; xi=(; W3x), xj=(; W2x), e=(; W6e, α))
+
+    h = α_val
+    if l.concat
+        h = reshape(h, out * heads, :)  # concatenate heads
+    else
+        h = mean(h, dims=2)  # average heads
+        h = reshape(h, out, :)
+    end
+
+    if !isnothing(W1x)  # root_weight
+        if !isnothing(l.W5)  # gating
+            β = l.W5(vcat(h, W1x, h .- W1x))
+            h = β .* W1x + (1f0 .- β) .* h
+        else
+            h += W1x
+        end
+    end
+
+    if l.skip_connection
+        @assert size(h, 1) == size(x, 1) "In-channels must correspond to out-channels * heads if skip_connection is used"
+        h += x
+    end
+    if !isnothing(l.BN1)
+        h = l.BN1(h)
+    end
+
+    if !isnothing(l.FF)
+        h1 = h
+        h = l.FF(h) 
+        if l.skip_connection
+            h += h1
+        end
+        if !isnothing(l.BN2)
+            h = l.BN2(h)
+        end
+    end
+
+    return h
+end
+
+(l::TransformerConv)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g), edge_features(g)))
+
+function message_uij(l::TransformerConv, xi, xj, e) 
+    key = xj.W4x
+    if !isnothing(e.W6e)
+        key += e.W6e
+    end
+    uij = sum(xi.W3x .* key, dims=1) ./ l.sqrt_out
+    return uij
+end
+
+function message_main(l::TransformerConv, xi, xj, e) 
+    val = xj.W2x
+    if !isnothing(e.W6e)
+        val += e.W6e
+    end
+    return e.α .* val
+end
+
+function Base.show(io::IO, l::TransformerConv)
+    (in, ein), out = l.channels
+    print(io, "TransformerConv(($in, $ein) => $out, heads=$(l.heads))")
+end
+
