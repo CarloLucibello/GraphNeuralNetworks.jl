@@ -466,10 +466,78 @@ julia> Flux.unbatch(gbatched)
     num_edges = 2
 ```
 """
-function Flux.unbatch(g::GNNGraph) 
-    [getgraph(g, i) for i in 1:g.num_graphs]
+function Flux.unbatch(g::GNNGraph{T}) where T<:COO_T
+    g.num_graphs == 1 && return [g]
+
+    nodemasks = _unbatch_nodemasks(g.graph_indicator, g.num_graphs)
+    num_nodes = length.(nodemasks)
+    cumnum_nodes = [0; cumsum(num_nodes)]
+    
+    s, t = edge_index(g)
+    w = get_edge_weight(g)
+
+    edgemasks = _unbatch_edgemasks(s, t, g.num_graphs, cumnum_nodes)
+    num_edges = length.(edgemasks)
+    @assert sum(num_edges) == g.num_edges "Error in unbatching, likely the edges are not sorted (first edges belong to the first graphs, then edges in the second graph and so on)"
+
+    function build_graph(i)
+        node_mask = nodemasks[i]
+        edge_mask = edgemasks[i]
+        snew = s[edge_mask] .- cumnum_nodes[i]
+        tnew = t[edge_mask] .- cumnum_nodes[i]
+        wnew = w === nothing ? nothing : w[edge_mask]
+        graph = (snew, tnew, wnew)
+        graph_indicator = nothing
+        ndata = getobs(g.ndata, node_mask)
+        edata = getobs(g.edata, edge_mask)
+        gdata = getobs(g.gdata, i)
+
+        nedges = num_edges[i]
+        nnodes = num_nodes[i]
+        ngraphs = 1
+
+        return GNNGraph(graph, 
+                    nnodes, nedges, ngraphs,
+                    graph_indicator,
+                    ndata, edata, gdata)
+    end
+
+    return [build_graph(i) for i in 1:g.num_graphs]
 end
 
+function Flux.unbatch(g::GNNGraph)
+    return [getgraph(g, i) for i in 1:g.num_graphs]
+end
+
+function _unbatch_nodemasks(graph_indicator, num_graphs)
+    @assert issorted(graph_indicator) "The graph_indicator vector must be sorted."
+    idxslast = [searchsortedlast(graph_indicator, i) for i in 1:num_graphs]
+    
+    nodemasks = [1:idxslast[1]]
+    for i in 2:num_graphs
+        push!(nodemasks, idxslast[i-1]+1:idxslast[i])
+    end
+    return nodemasks
+end
+
+function _unbatch_edgemasks(s, t, num_graphs, cumnum_nodes)
+    edgemasks = []
+    for i in 1:num_graphs-1
+        lastedgeid = findfirst(s) do x
+            x > cumnum_nodes[i+1] && x <= cumnum_nodes[i+2]
+        end
+        firstedgeid = i == 1 ? 1 : last(edgemasks[i-1]) + 1
+        # if nothing make empty range
+        lastedgeid = lastedgeid === nothing ? firstedgeid - 1 : lastedgeid - 1
+        
+        push!(edgemasks, firstedgeid:lastedgeid)
+    end
+    push!(edgemasks, (last(edgemasks[end])+1):length(s))
+    return edgemasks
+end
+
+@non_differentiable _unbatch_nodemasks(::Any...)
+@non_differentiable _unbatch_edgemasks(::Any...)
 
 """
     getgraph(g::GNNGraph, i; nmap=false)
