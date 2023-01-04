@@ -1,4 +1,4 @@
-<img align="right" width="200px" src="https://github.com/FluxML/NNlib.jl/raw/master/docs/assets/logo.svg">
+<img align="right" width="200px" src="https://raw.githubusercontent.com/CarloLucibello/GraphNeuralNetworks.jl/master/docs/assets/logo.svg">
 
 
 # GraphNeuralNetworks.jl
