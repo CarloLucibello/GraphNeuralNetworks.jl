@@ -1,4 +1,4 @@
-<img align="left" width="150px" src="https://raw.githubusercontent.com/CarloLucibello/GraphNeuralNetworks.jl/master/docs/assets/logo.svg">
+<img align="right" width="400px" src="https://raw.githubusercontent.com/CarloLucibello/GraphNeuralNetworks.jl/master/docs/assets/logo.svg">
 
 
 # GraphNeuralNetworks.jl
@@ -7,6 +7,8 @@
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://CarloLucibello.github.io/GraphNeuralNetworks.jl/dev)
 ![](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/CarloLucibello/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/CarloLucibello/GraphNeuralNetworks.jl)
+
+
 
 GraphNeuralNetworks.jl is a graph neural network library written in Julia and based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
 
