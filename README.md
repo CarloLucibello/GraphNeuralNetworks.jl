@@ -1,4 +1,4 @@
-<img align="right" width="400px" src="https://raw.githubusercontent.com/CarloLucibello/GraphNeuralNetworks.jl/master/docs/assets/logo.svg">
+<img align="right" width="300px" src="https://raw.githubusercontent.com/CarloLucibello/GraphNeuralNetworks.jl/master/docs/assets/logo.svg">
 
 
 # GraphNeuralNetworks.jl
