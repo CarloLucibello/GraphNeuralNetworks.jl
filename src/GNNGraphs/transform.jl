@@ -487,25 +487,22 @@ function Flux.unbatch(g::GNNGraph{T}) where T<:COO_T
         lastedgeid = findfirst(s) do x
             x > cumnum_nodes[i+1] && x <= cumnum_nodes[i+2]
         end
-        firstedgeid = last(edgemasks[i-1]) + 1
+        firstedgeid = i == 1 ? 1 : last(edgemasks[i-1]) + 1
         # if nothing make empty range
         lastedgeid = lastedgeid === nothing ? firstedgeid - 1 : lastedgeid - 1
         
-        if i == 1            
-            push!(edgemasks, 1:lastedgeid)
-        else
-            push!(edgemasks, firstedgeid:lastedgeid)
-        end
+        push!(edgemasks, firstedgeid:lastedgeid)
     end
     push!(edgemasks, (last(edgemasks[end])+1):length(s))
     num_edges = length.(edgemasks)
+    @assert sum(num_edges) == g.num_edges "Error in unbatching, likely the edges are not sorted (first edges belong to the first graphs, then edges in the second graph and so on)"
 
     gs = GNNGraph[]
     for i in 1:g.num_graphs
         node_mask = nodemasks[i]
         edge_mask = edgemasks[i]
-        snew = s[edge_mask] .- cumnum_nodes[i] .+ 1
-        tnew = t[edge_mask] .- cumnum_nodes[i] .+ 1
+        snew = s[edge_mask] .- cumnum_nodes[i]
+        tnew = t[edge_mask] .- cumnum_nodes[i]
         wnew = w === nothing ? nothing : w[edge_mask]
         graph = (snew, tnew, wnew)
         graph_indicator = nothing
@@ -526,10 +523,9 @@ function Flux.unbatch(g::GNNGraph{T}) where T<:COO_T
     return gs
 end
 
-# function Flux.unbatch(g::GNNGraph{T}) where T<:COO_T
-#     return [getgraph(g, i) for i in 1:g.num_graphs]
-# end
-
+function Flux.unbatch(g::GNNGraph)
+    return [getgraph(g, i) for i in 1:g.num_graphs]
+end
 
 """
     getgraph(g::GNNGraph, i; nmap=false)

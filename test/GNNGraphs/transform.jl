@@ -61,6 +61,18 @@
         @test gs[2].num_graphs == 1
     end
 
+    @testset "batch/unbatch roundtrip" begin
+        n = 20
+        c = 3
+        ngraphs = 10
+        gs = [rand_graph(n, c*n, ndata=rand(2, n), edata=rand(3, c*n), graph_type=GRAPH_T) 
+              for _ in 1:ngraphs]
+        gall = Flux.batch(gs)
+        gs2 = Flux.unbatch(gall)
+        @test gs2[1] == gs[1]
+        @test gs2[end] == gs[end]        
+    end 
+
     @testset "getgraph"  begin
         g1 = GNNGraph(random_regular_graph(10,2), ndata=rand(16,10), graph_type=GRAPH_T)
         g2 = GNNGraph(random_regular_graph(4,2), ndata=rand(16,4), graph_type=GRAPH_T)
