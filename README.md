@@ -1,3 +1,6 @@
+<img align="right" width="200px" src="https://github.com/FluxML/NNlib.jl/raw/master/docs/src/assets/logo.svg">
+
+
 # GraphNeuralNetworks.jl
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://CarloLucibello.github.io/GraphNeuralNetworks.jl/stable)
