@@ -65,12 +65,12 @@ GNNGraph:
         EID => (10,)
 ```
 """
-function sample_neighbors(g::GNNGraph{<:COO_T}, nodes, K=-1; 
-        dir=:in, replace=false, dropnodes=false)
+function sample_neighbors(g::GNNGraph{<:COO_T}, nodes, K = -1;
+                          dir = :in, replace = false, dropnodes = false)
     @assert dir ∈ (:in, :out)
-    _, eidlist = adjacency_list(g, nodes; dir, with_eid=true)
+    _, eidlist = adjacency_list(g, nodes; dir, with_eid = true)
     for i in 1:length(eidlist)
-        if replace 
+        if replace
             k = K > 0 ? K : length(eidlist[i])
         else
             k = K > 0 ? min(length(eidlist[i]), K) : length(eidlist[i])
@@ -91,27 +91,28 @@ function sample_neighbors(g::GNNGraph{<:COO_T}, nodes, K=-1;
 
     if !dropnodes
         graph = (s, t, w)
-    
-        gnew = GNNGraph(graph, 
-                    g.num_nodes, num_edges, g.num_graphs,
-                    g.graph_indicator,
-                    g.ndata, edata, g.gdata)
-    else    
+
+        gnew = GNNGraph(graph,
+                        g.num_nodes, num_edges, g.num_graphs,
+                        g.graph_indicator,
+                        g.ndata, edata, g.gdata)
+    else
         nodes_other = dir == :in ? setdiff(s, nodes) : setdiff(t, nodes)
         nodes_all = [nodes; nodes_other]
         nodemap = Dict(n => i for (i, n) in enumerate(nodes_all))
         s = [nodemap[s] for s in s]
         t = [nodemap[t] for t in t]
         graph = (s, t, w)
-        graph_indicator = g.graph_indicator !== nothing ? g.graph_indicator[nodes_all] : nothing
+        graph_indicator = g.graph_indicator !== nothing ? g.graph_indicator[nodes_all] :
+                          nothing
         num_nodes = length(nodes_all)
         ndata = getobs(g.ndata, nodes_all)
-        ndata.NID = nodes_all        
+        ndata.NID = nodes_all
 
-        gnew = GNNGraph(graph, 
-                    num_nodes, num_edges, g.num_graphs,
-                    graph_indicator,
-                    ndata, edata, g.gdata)
+        gnew = GNNGraph(graph,
+                        num_nodes, num_edges, g.num_graphs,
+                        graph_indicator,
+                        ndata, edata, g.gdata)
     end
     return gnew
 end

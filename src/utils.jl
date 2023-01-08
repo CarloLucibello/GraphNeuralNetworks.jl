@@ -49,7 +49,7 @@ Graph-wise softmax of the edge features `e`.
 """
 function softmax_edges(g::GNNGraph, e)
     @assert size(e)[end] == g.num_edges
-    gi = graph_indicator(g, edges=true)
+    gi = graph_indicator(g, edges = true)
     max_ = gather(scatter(max, e, gi), gi)
     num = exp.(e .- max_)
     den = reduce_edges(+, g, num)
@@ -96,6 +96,6 @@ to size `(*, g.num_edges)`.
 """
 function broadcast_edges(g::GNNGraph, x)
     @assert size(x)[end] == g.num_graphs
-    gi = graph_indicator(g, edges=true)
+    gi = graph_indicator(g, edges = true)
     return gather(x, gi)
 end

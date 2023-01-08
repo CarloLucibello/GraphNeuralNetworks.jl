@@ -13,12 +13,12 @@ CUDA.allowscalar(false)
 
 # arguments for the `train` function 
 Base.@kwdef mutable struct Args
-    η = 1f-3             # learning rate
+    η = 1.0f-3             # learning rate
     epochs = 200          # number of epochs
     seed = 17             # set seed > 0 for reproducibility
     usecuda = true      # if true use cuda (if available)
     nhidden = 64        # dimension of hidden features
-    infotime = 10 	     # report every `infotime` epochs
+    infotime = 10      # report every `infotime` epochs
 end
 
 # We define our own edge prediction layer but could also 
@@ -26,16 +26,16 @@ end
 struct DotPredictor end
 
 function (::DotPredictor)(g, x)
-    z = apply_edges((xi, xj, e) -> sum(xi .* xj, dims=1), g, xi=x, xj=x)
+    z = apply_edges((xi, xj, e) -> sum(xi .* xj, dims = 1), g, xi = x, xj = x)
     # z = apply_edges(xi_dot_xj, g, xi=x, xj=x) # Same with built-in method
     return vec(z)
 end
 
 function train(; kws...)
     args = Args(; kws...)
-    
+
     args.seed > 0 && Random.seed!(args.seed)
-    
+
     if args.usecuda && CUDA.functional()
         device = gpu
         args.seed > 0 && CUDA.seed!(args.seed)
@@ -47,28 +47,29 @@ function train(; kws...)
 
     ### LOAD DATA
     g = mldataset2gnngraph(PubMed())
-    
+
     # Print some info
     display(g)
     @show is_bidirected(g)
     @show has_self_loops(g)
     @show has_multi_edges(g)
     @show mean(degree(g))
-    isbidir = is_bidirected(g)  
+    isbidir = is_bidirected(g)
 
     # Move to device
     g = g |> device
     X = g.ndata.features
-    
+
     #### TRAIN/TEST splits
     # With bidirected graph, we make sure that an edge and its reverse
     # are in the same split 
-    train_pos_g, test_pos_g = rand_edge_split(g, 0.9, bidirected=isbidir)
-    test_neg_g = negative_sample(g, num_neg_edges=test_pos_g.num_edges, bidirected=isbidir)
+    train_pos_g, test_pos_g = rand_edge_split(g, 0.9, bidirected = isbidir)
+    test_neg_g = negative_sample(g, num_neg_edges = test_pos_g.num_edges,
+                                 bidirected = isbidir)
 
     ### DEFINE MODEL #########
-    nin, nhidden = size(X,1), args.nhidden
-    
+    nin, nhidden = size(X, 1), args.nhidden
+
     # We embed the graph with positive training edges in the model 
     model = WithGraph(GNNChain(GCNConv(nin => nhidden, relu),
                                GCNConv(nhidden => nhidden)),
@@ -81,11 +82,11 @@ function train(; kws...)
 
     ### LOSS FUNCTION ############
 
-    function loss(pos_g, neg_g = nothing; with_accuracy=false)
+    function loss(pos_g, neg_g = nothing; with_accuracy = false)
         h = model(X)
         if neg_g === nothing
             # We sample a negative graph at each training step
-            neg_g = negative_sample(pos_g, bidirected=isbidir)
+            neg_g = negative_sample(pos_g, bidirected = isbidir)
         end
         pos_score = pred(pos_g, h)
         neg_score = pred(neg_g, h)
@@ -99,17 +100,17 @@ function train(; kws...)
             return l
         end
     end
-    
+
     ### LOGGING FUNCTION
     function report(epoch)
-        train_loss, train_acc = loss(train_pos_g, with_accuracy=true)
-        test_loss, test_acc = loss(test_pos_g, test_neg_g, with_accuracy=true)
+        train_loss, train_acc = loss(train_pos_g, with_accuracy = true)
+        test_loss, test_acc = loss(test_pos_g, test_neg_g, with_accuracy = true)
         println("Epoch: $epoch  $((; train_loss, train_acc))  $((; test_loss, test_acc))")
     end
-    
+
     ### TRAINING
     report(0)
-    for epoch in 1:args.epochs
+    for epoch in 1:(args.epochs)
         gs = Flux.gradient(() -> loss(train_pos_g), ps)
         Flux.Optimise.update!(opt, ps, gs)
         epoch % args.infotime == 0 && report(epoch)

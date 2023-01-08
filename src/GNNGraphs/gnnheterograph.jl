@@ -2,7 +2,6 @@
 const EDict{T} = Dict{Tuple{Symbol, Symbol, Symbol}, T}
 const NDict{T} = Dict{Symbol, T}
 
-
 """
     GNNHeteroGraph(data; ndata, edata, gdata, num_nodes, graph_indicator, dir])
 
@@ -89,18 +88,16 @@ end
 @functor GNNHeteroGraph
 
 function GNNHeteroGraph(data::EDict;
-    num_nodes = nothing,
-    graph_indicator = nothing,
-    graph_type = :coo,
-    dir = :out,
-    ndata = NDict{NamedTuple}(),
-    edata = EDict{NamedTuple}(),
-    gdata = (;))
-
-
+                        num_nodes = nothing,
+                        graph_indicator = nothing,
+                        graph_type = :coo,
+                        dir = :out,
+                        ndata = NDict{NamedTuple}(),
+                        edata = EDict{NamedTuple}(),
+                        gdata = (;))
     @assert graph_type ∈ [:coo, :dense, :sparse] "Invalid graph_type $graph_type requested"
     @assert dir ∈ [:in, :out]
-    @assert graph_type == :coo "only :coo graph_type is supported for now"
+    @assert graph_type==:coo "only :coo graph_type is supported for now"
 
     if num_nodes !== nothing
         num_nodes = Dict(num_nodes)
@@ -117,17 +114,19 @@ function GNNHeteroGraph(data::EDict;
         graph, num_nodes, num_edges = to_sparse(data; num_nodes, dir)
     end
 
-    num_graphs = !isnothing(graph_indicator) ? maximum([maximum(gi) for gi in values(graph_indicator)]) : 1
+    num_graphs = !isnothing(graph_indicator) ?
+                 maximum([maximum(gi) for gi in values(graph_indicator)]) : 1
 
-    ndata = normalize_heterographdata(ndata, default_name=:x, n=num_nodes)
-    edata = normalize_heterographdata(edata, default_name=:e, n=num_edges, duplicate_if_needed=true)
-    gdata = normalize_graphdata(gdata, default_name=:u, n=num_graphs)
+    ndata = normalize_heterographdata(ndata, default_name = :x, n = num_nodes)
+    edata = normalize_heterographdata(edata, default_name = :e, n = num_edges,
+                                      duplicate_if_needed = true)
+    gdata = normalize_graphdata(gdata, default_name = :u, n = num_graphs)
 
     return GNNHeteroGraph(graph,
-        num_nodes, num_edges, num_graphs,
-        graph_indicator,
-        ndata, edata, gdata,
-        ntypes, etypes)
+                          num_nodes, num_edges, num_graphs,
+                          graph_indicator,
+                          ndata, edata, gdata,
+                          ntypes, etypes)
 end
 
 function show_sorted_Dict(io::IO, d::Dict, compact::Bool)
@@ -141,7 +140,7 @@ function show_sorted_Dict(io::IO, d::Dict, compact::Bool)
             print(io, " => $(d[keys[1]])")
         else
             sorted_keys = sort!(collect(keys(d)))
-            for key in sorted_keys[1:end-1]
+            for key in sorted_keys[1:(end - 1)]
                 show(io, key)
                 print(io, " => $(d[key]), ")
             end
@@ -199,4 +198,3 @@ _str(s) = "$s"
 
 MLUtils.numobs(g::GNNHeteroGraph) = g.num_graphs
 # MLUtils.getobs(g::GNNHeteroGraph, i) = getgraph(g, i)
-

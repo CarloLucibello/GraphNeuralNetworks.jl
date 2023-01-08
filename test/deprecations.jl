@@ -1,3 +1,1 @@
-@testset "deprecations" begin
-
-end
+@testset "deprecations" begin end

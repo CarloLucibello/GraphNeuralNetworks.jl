@@ -42,8 +42,7 @@ function (l::GlobalPool)(g::GNNGraph, x::AbstractArray)
     return reduce_nodes(l.aggr, g, x)
 end
 
-(l::GlobalPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
-
+(l::GlobalPool)(g::GNNGraph) = GNNGraph(g, gdata = l(g, node_features(g)))
 
 @doc raw"""
     GlobalAttentionPool(fgate, ffeat=identity)
@@ -90,7 +89,7 @@ u = pool(g, g.ndata.x)
 @assert size(u) == (chout, g.num_graphs)
 ```
 """
-struct GlobalAttentionPool{G,F}
+struct GlobalAttentionPool{G, F}
     fgate::G
     ffeat::F
 end
@@ -103,11 +102,10 @@ function (l::GlobalAttentionPool)(g::GNNGraph, x::AbstractArray)
     α = softmax_nodes(g, l.fgate(x))
     feats = α .* l.ffeat(x)
     u = reduce_nodes(+, g, feats)
-    return u   
+    return u
 end
 
-(l::GlobalAttentionPool)(g::GNNGraph) = GNNGraph(g, gdata=l(g, node_features(g)))
-
+(l::GlobalAttentionPool)(g::GNNGraph) = GNNGraph(g, gdata = l(g, node_features(g)))
 
 """
     TopKPool(adj, k, in_channel)
@@ -120,14 +118,14 @@ Top-k pooling layer.
 - `k`: Top-k nodes are selected to pool together.
 - `in_channel`: The dimension of input channel.
 """
-struct TopKPool{T,S}
+struct TopKPool{T, S}
     A::AbstractMatrix{T}
     k::Int
     p::AbstractVector{S}
     Ã::AbstractMatrix{T}
 end
 
-function TopKPool(adj::AbstractMatrix, k::Int, in_channel::Int; init=glorot_uniform)
+function TopKPool(adj::AbstractMatrix, k::Int, in_channel::Int; init = glorot_uniform)
     TopKPool(adj, k, init(in_channel), similar(adj, k, k))
 end
 

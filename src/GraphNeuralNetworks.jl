@@ -19,62 +19,61 @@ using .GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
                   check_num_nodes, check_num_edges
 
 export
-    # utils
-    reduce_nodes, 
-    reduce_edges,
-    softmax_nodes, 
-    softmax_edges,
-    broadcast_nodes,
-    broadcast_edges,
-    softmax_edge_neighbors,
-    
-    # msgpass
-    apply_edges,
-    aggregate_neighbors,
-    propagate,
-    copy_xj,
-    copy_xi,
-    xi_dot_xj,
-    xi_sub_xj,
-    xj_sub_xi,
-    e_mul_xj,
-    w_mul_xj,
+# utils
+      reduce_nodes,
+      reduce_edges,
+      softmax_nodes,
+      softmax_edges,
+      broadcast_nodes,
+      broadcast_edges,
+      softmax_edge_neighbors,
 
-    # layers/basic
-    GNNLayer,
-    GNNChain,
-    WithGraph,
-    DotDecoder,
+# msgpass
+      apply_edges,
+      aggregate_neighbors,
+      propagate,
+      copy_xj,
+      copy_xi,
+      xi_dot_xj,
+      xi_sub_xj,
+      xj_sub_xi,
+      e_mul_xj,
+      w_mul_xj,
 
-    # layers/conv
-    AGNNConv,
-    CGConv,
-    ChebConv,
-    EdgeConv,
-    EGNNConv,
-    GATConv,
-    GATv2Conv,
-    GatedGraphConv,
-    GCNConv,
-    GINConv,
-    GMMConv,
-    GraphConv,
-    MEGNetConv, 
-    NNConv,
-    ResGatedGraphConv,
-    SAGEConv,
-    SGConv,
-    TransformerConv,
-    
-    # layers/pool
-    GlobalPool,
-    GlobalAttentionPool,
-    TopKPool,
-    topk_index,
-    
-    # mldatasets
-    mldataset2gnngraph
+# layers/basic
+      GNNLayer,
+      GNNChain,
+      WithGraph,
+      DotDecoder,
 
+# layers/conv
+      AGNNConv,
+      CGConv,
+      ChebConv,
+      EdgeConv,
+      EGNNConv,
+      GATConv,
+      GATv2Conv,
+      GatedGraphConv,
+      GCNConv,
+      GINConv,
+      GMMConv,
+      GraphConv,
+      MEGNetConv,
+      NNConv,
+      ResGatedGraphConv,
+      SAGEConv,
+      SGConv,
+      TransformerConv,
+
+# layers/pool
+      GlobalPool,
+      GlobalAttentionPool,
+      TopKPool,
+      topk_index,
+
+# mldatasets
+      mldataset2gnngraph
 
 include("utils.jl")
 include("layers/basic.jl")

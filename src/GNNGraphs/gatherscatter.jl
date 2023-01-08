@@ -9,18 +9,15 @@ _scatter(aggr, src::NamedTuple, idx, n) = map(s -> _scatter(aggr, s, idx, n), sr
 _scatter(aggr, src::Tuple, idx, n) = map(s -> _scatter(aggr, s, idx, n), src)
 _scatter(aggr, src::Dict, idx, n) = Dict(k => _scatter(aggr, v, idx, n) for (k, v) in src)
 
-function _scatter(aggr, 
-                 src::AbstractArray, 
-                 idx::AbstractVector{<:Integer}, 
-                 n::Integer)
-
-    dstsize =  (size(src)[1:end-1]..., n)
+function _scatter(aggr,
+                  src::AbstractArray,
+                  idx::AbstractVector{<:Integer},
+                  n::Integer)
+    dstsize = (size(src)[1:(end - 1)]..., n)
     return NNlib.scatter(aggr, src, idx; dstsize)
 end
 
-
 ## TO MOVE TO NNlib ######################################################
-
 
 ### Considers the src a zero dimensional object.
 ### Useful for implementing `StatsBase.counts`, `degree`, etc...
@@ -68,7 +65,7 @@ end
 # function NNlib.scatter!(op, dst::AnyCuArray, src::Number, idx::AnyCuArray)
 #     max_idx = length(idx)
 #     args = op, dst, src, idx
-    
+
 #     kernel = @cuda launch=false scatter_scalar_kernel!(args...)
 #     config = launch_configuration(kernel.fun; max_threads=256)
 #     threads = min(max_idx, config.threads)

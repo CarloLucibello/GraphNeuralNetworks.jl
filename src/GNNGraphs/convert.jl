@@ -12,12 +12,12 @@ function to_coo(data::EDict; num_nodes = nothing, kws...)
         end
         if num_nodes !== nothing
             n1 = get(num_nodes, k[1], nothing)
-            n2 = get(num_nodes, k[3], nothing)   
+            n2 = get(num_nodes, k[3], nothing)
         else
             n1 = nothing
             n2 = nothing
         end
-        g, nnodes, nedges = to_coo(d; hetero=true, num_nodes=(n1,n2), kws...)
+        g, nnodes, nedges = to_coo(d; hetero = true, num_nodes = (n1, n2), kws...)
         graph[k] = g
         num_edges[k] = nedges
         _num_nodes[k[1]] = max(get(_num_nodes, k[1], 0), nnodes[1])
@@ -26,9 +26,10 @@ function to_coo(data::EDict; num_nodes = nothing, kws...)
     return graph, _num_nodes, num_edges
 end
 
-function to_coo(coo::COO_T; dir=:out, num_nodes=nothing, weighted=true, hetero=false)
-    s, t, val = coo   
-    
+function to_coo(coo::COO_T; dir = :out, num_nodes = nothing, weighted = true,
+                hetero = false)
+    s, t, val = coo
+
     if isnothing(num_nodes)
         ns = maximum(s)
         nt = maximum(t)
@@ -58,12 +59,12 @@ function to_coo(coo::COO_T; dir=:out, num_nodes=nothing, weighted=true, hetero=f
     return coo, num_nodes, num_edges
 end
 
-function to_coo(A::SPARSE_T; dir=:out, num_nodes=nothing, weighted=true)
+function to_coo(A::SPARSE_T; dir = :out, num_nodes = nothing, weighted = true)
     s, t, v = findnz(A)
     if dir == :in
         s, t = t, s
     end
-    num_nodes = isnothing(num_nodes) ? size(A, 1) : num_nodes 
+    num_nodes = isnothing(num_nodes) ? size(A, 1) : num_nodes
     num_edges = length(s)
     if !weighted
         v = nothing
@@ -73,19 +74,19 @@ end
 
 function _findnz_idx(A)
     nz = findall(!=(0), A) # vec of cartesian indexes
-    s, t = ntuple(i -> map(t->t[i], nz), 2)
+    s, t = ntuple(i -> map(t -> t[i], nz), 2)
     return s, t, nz
 end
 
 @non_differentiable _findnz_idx(A)
 
-function to_coo(A::ADJMAT_T; dir=:out, num_nodes=nothing, weighted=true)
+function to_coo(A::ADJMAT_T; dir = :out, num_nodes = nothing, weighted = true)
     s, t, nz = _findnz_idx(A)
-    v = A[nz] 
+    v = A[nz]
     if dir == :in
         s, t = t, s
     end
-    num_nodes = isnothing(num_nodes) ? size(A, 1) : num_nodes 
+    num_nodes = isnothing(num_nodes) ? size(A, 1) : num_nodes
     num_edges = length(s)
     if !weighted
         v = nothing
@@ -93,7 +94,7 @@ function to_coo(A::ADJMAT_T; dir=:out, num_nodes=nothing, weighted=true)
     return (s, t, v), num_nodes, num_edges
 end
 
-function to_coo(adj_list::ADJLIST_T; dir=:out, num_nodes=nothing, weighted=true)
+function to_coo(adj_list::ADJLIST_T; dir = :out, num_nodes = nothing, weighted = true)
     @assert dir ∈ [:out, :in]
     num_nodes = length(adj_list)
     num_edges = sum(length.(adj_list))
@@ -105,7 +106,7 @@ function to_coo(adj_list::ADJLIST_T; dir=:out, num_nodes=nothing, weighted=true)
         for j in adj_list[i]
             e += 1
             s[e] = i
-            t[e] = j 
+            t[e] = j
         end
     end
     @assert e == num_edges
@@ -121,7 +122,8 @@ end
 
 to_dense(A::AbstractSparseMatrix, x...; kws...) = to_dense(collect(A), x...; kws...)
 
-function to_dense(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted=true)
+function to_dense(A::ADJMAT_T, T = nothing; dir = :out, num_nodes = nothing,
+                  weighted = true)
     @assert dir ∈ [:out, :in]
     T = T === nothing ? eltype(A) : T
     num_nodes = size(A, 1)
@@ -140,7 +142,8 @@ function to_dense(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted=
     return A, num_nodes, num_edges
 end
 
-function to_dense(adj_list::ADJLIST_T, T=nothing; dir=:out, num_nodes=nothing, weighted=true)
+function to_dense(adj_list::ADJLIST_T, T = nothing; dir = :out, num_nodes = nothing,
+                  weighted = true)
     @assert dir ∈ [:out, :in]
     num_nodes = length(adj_list)
     num_edges = sum(length.(adj_list))
@@ -151,7 +154,7 @@ function to_dense(adj_list::ADJLIST_T, T=nothing; dir=:out, num_nodes=nothing, w
         for (i, neigs) in enumerate(adj_list)
             A[i, neigs] .= 1
         end
-    else 
+    else
         for (i, neigs) in enumerate(adj_list)
             A[neigs, i] .= 1
         end
@@ -159,35 +162,36 @@ function to_dense(adj_list::ADJLIST_T, T=nothing; dir=:out, num_nodes=nothing, w
     A, num_nodes, num_edges
 end
 
-function to_dense(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=true)
+function to_dense(coo::COO_T, T = nothing; dir = :out, num_nodes = nothing, weighted = true)
     # `dir` will be ignored since the input `coo` is always in source -> target format.
     # The output will always be a adjmat in :out format (e.g. A[i,j] denotes from i to j)
     s, t, val = coo
     n::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes
     if T === nothing
-        T = isnothing(val) ? eltype(s) : eltype(val) 
+        T = isnothing(val) ? eltype(s) : eltype(val)
     end
-    if val === nothing || !weighted  
-        val = ones_like(s, T)            
+    if val === nothing || !weighted
+        val = ones_like(s, T)
     end
     if eltype(val) != T
         val = T.(val)
     end
-    
-    idxs = s .+ n .* (t .- 1) 
-    
+
+    idxs = s .+ n .* (t .- 1)
+
     ## using scatter instead of indexing since there could be multiple edges
     # A = fill!(similar(s, T, (n, n)), 0)
     # v = vec(A) # vec view of A
     # A[idxs] .= val # exploiting linear indexing
-    v = NNlib.scatter(+, val, idxs, dstsize=n^2) 
+    v = NNlib.scatter(+, val, idxs, dstsize = n^2)
     A = reshape(v, (n, n))
     return A, n, length(s)
 end
 
 ### SPARSE #############
 
-function to_sparse(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted=true)
+function to_sparse(A::ADJMAT_T, T = nothing; dir = :out, num_nodes = nothing,
+                   weighted = true)
     @assert dir ∈ [:out, :in]
     num_nodes = size(A, 1)
     @assert num_nodes == size(A, 2)
@@ -208,20 +212,22 @@ function to_sparse(A::ADJMAT_T, T=nothing; dir=:out, num_nodes=nothing, weighted
     return A, num_nodes, num_edges
 end
 
-function to_sparse(adj_list::ADJLIST_T, T=nothing; dir=:out, num_nodes=nothing, weighted=true)
+function to_sparse(adj_list::ADJLIST_T, T = nothing; dir = :out, num_nodes = nothing,
+                   weighted = true)
     coo, num_nodes, num_edges = to_coo(adj_list; dir, num_nodes)
     return to_sparse(coo; num_nodes)
 end
 
-function to_sparse(coo::COO_T, T=nothing; dir=:out, num_nodes=nothing, weighted=true)
-    s, t, eweight  = coo
+function to_sparse(coo::COO_T, T = nothing; dir = :out, num_nodes = nothing,
+                   weighted = true)
+    s, t, eweight = coo
     T = T === nothing ? (eweight === nothing ? eltype(s) : eltype(eweight)) : T
-    
+
     if eweight === nothing || !weighted
         eweight = fill!(similar(s, T), 1)
     end
 
-    num_nodes::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes 
+    num_nodes::Int = isnothing(num_nodes) ? max(maximum(s), maximum(t)) : num_nodes
     A = sparse(s, t, eweight, num_nodes, num_nodes)
     num_edges::Int = nnz(A)
     if eltype(A) != T

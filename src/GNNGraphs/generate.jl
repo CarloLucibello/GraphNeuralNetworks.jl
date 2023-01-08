@@ -37,12 +37,12 @@ julia> edge_index(g)
 
 ```
 """
-function rand_graph(n::Integer, m::Integer; bidirected=true, seed=-1, kws...)
+function rand_graph(n::Integer, m::Integer; bidirected = true, seed = -1, kws...)
     if bidirected
         @assert iseven(m) "Need even number of edges for bidirected graphs, given m=$m."
     end
-    m2 = bidirected ? m÷2 : m
-    return GNNGraph(Graphs.erdos_renyi(n, m2; is_directed=!bidirected, seed); kws...)    
+    m2 = bidirected ? m ÷ 2 : m
+    return GNNGraph(Graphs.erdos_renyi(n, m2; is_directed = !bidirected, seed); kws...)
 end
 
 """
@@ -73,15 +73,15 @@ rand_heteropraph
 # for generic iterators of pairs
 rand_heterograph(n, m; kws...) = rand_heterograph(Dict(n), Dict(m); kws...)
 
-function rand_heterograph(n::NDict, m::EDict; bidirected=false, seed=-1, kws...)
+function rand_heterograph(n::NDict, m::EDict; bidirected = false, seed = -1, kws...)
     @assert !bidirected "Bidirected graphs not supported yet."
     rng = seed > 0 ? MersenneTwister(seed) : Random.GLOBAL_RNG
     graphs = Dict(k => _rand_edges(rng, (n[k[1]], n[k[3]]), m[k]) for k in keys(m))
-    return GNNHeteroGraph(graphs; num_nodes=n, kws...)    
+    return GNNHeteroGraph(graphs; num_nodes = n, kws...)
 end
 
 function _rand_edges(rng, (n1, n2), m)
-    idx = StatsBase.sample(rng, 1:n1*n2, m, replace=false)
+    idx = StatsBase.sample(rng, 1:(n1 * n2), m, replace = false)
     s, t = edge_decoding(idx, n1, n2)
     val = nothing
     return s, t, val
@@ -133,12 +133,11 @@ GNNGraph:
 
 ```
 """
-function knn_graph(points::AbstractMatrix, k::Int; 
-        graph_indicator = nothing,
-        self_loops = false, 
-        dir = :in, 
-        kws...)
-
+function knn_graph(points::AbstractMatrix, k::Int;
+                   graph_indicator = nothing,
+                   self_loops = false,
+                   dir = :in,
+                   kws...)
     if graph_indicator !== nothing
         d, n = size(points)
         @assert graph_indicator isa AbstractVector{<:Integer}
@@ -146,7 +145,7 @@ function knn_graph(points::AbstractMatrix, k::Int;
         # All graphs in the batch must have at least k nodes. 
         cm = StatsBase.countmap(graph_indicator)
         @assert all(values(cm) .>= k)
-        
+
         # Make sure that the distance between points in different graphs
         # is always larger than any distance within the same graph.
         points = points .- minimum(points)
@@ -154,14 +153,14 @@ function knn_graph(points::AbstractMatrix, k::Int;
         dummy_feature = 2d .* reshape(graph_indicator, 1, n)
         points = vcat(points, dummy_feature)
     end
-    
+
     kdtree = NearestNeighbors.KDTree(points)
     if !self_loops
         k += 1
     end
     sortres = false
     idxs, dists = NearestNeighbors.knn(kdtree, points, k, sortres)
-    
+
     g = GNNGraph(idxs; dir, graph_indicator, kws...)
     if !self_loops
         g = remove_self_loops(g)
@@ -215,17 +214,16 @@ GNNGraph:
 
 ```
 """
-function radius_graph(points::AbstractMatrix, r::AbstractFloat; 
-        graph_indicator = nothing,
-        self_loops = false, 
-        dir = :in, 
-        kws...)
-
+function radius_graph(points::AbstractMatrix, r::AbstractFloat;
+                      graph_indicator = nothing,
+                      self_loops = false,
+                      dir = :in,
+                      kws...)
     if graph_indicator !== nothing
         d, n = size(points)
         @assert graph_indicator isa AbstractVector{<:Integer}
         @assert length(graph_indicator) == n
-        
+
         # Make sure that the distance between points in different graphs
         # is always larger than r.
         dummy_feature = 2r .* reshape(graph_indicator, 1, n)
@@ -236,7 +234,7 @@ function radius_graph(points::AbstractMatrix, r::AbstractFloat;
 
     sortres = false
     idxs = NearestNeighbors.inrange(balltree, points, r, sortres)
-    
+
     g = GNNGraph(idxs; dir, graph_indicator, kws...)
     if !self_loops
         g = remove_self_loops(g)

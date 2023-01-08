@@ -1,17 +1,16 @@
 @testset "GNNGraph" begin
-
     @testset "Constructor: adjacency matrix" begin
         A = sprand(10, 10, 0.5)
         sA, tA, vA = findnz(A)
 
-        g = GNNGraph(A, graph_type=GRAPH_T)
+        g = GNNGraph(A, graph_type = GRAPH_T)
         s, t = edge_index(g)
         v = get_edge_weight(g)
         @test s == sA
         @test t == tA
         @test v == vA
 
-        g = GNNGraph(Matrix(A), graph_type=GRAPH_T)
+        g = GNNGraph(Matrix(A), graph_type = GRAPH_T)
         s, t = edge_index(g)
         v = get_edge_weight(g)
         @test s == sA
@@ -19,24 +18,24 @@
         @test v == vA
 
         g = GNNGraph([0 0 0
-                0 0 1
-                0 1 0], graph_type=GRAPH_T)
+                      0 0 1
+                      0 1 0], graph_type = GRAPH_T)
         @test g.num_nodes == 3
         @test g.num_edges == 2
 
         g = GNNGraph([0 1 0
-                1 0 0
-                0 0 0], graph_type=GRAPH_T)
+                      1 0 0
+                      0 0 0], graph_type = GRAPH_T)
         @test g.num_nodes == 3
         @test g.num_edges == 2
     end
 
     @testset "Constructor: integer" begin
-        g = GNNGraph(10, graph_type=GRAPH_T)
+        g = GNNGraph(10, graph_type = GRAPH_T)
         @test g.num_nodes == 10
         @test g.num_edges == 0
 
-        g2 = rand_graph(10, 30, graph_type=GRAPH_T)
+        g2 = rand_graph(10, 30, graph_type = GRAPH_T)
         G = typeof(g2)
         g = G(10)
         @test g.num_nodes == 10
@@ -47,14 +46,14 @@
         s = [1, 1, 2, 2, 3, 3, 4, 4]
         t = [2, 4, 1, 3, 2, 4, 1, 3]
         adj_mat = [0 1 0 1
-            1 0 1 0
-            0 1 0 1
-            1 0 1 0]
+                   1 0 1 0
+                   0 1 0 1
+                   1 0 1 0]
         adj_list_out = [[2, 4], [1, 3], [2, 4], [1, 3]]
         adj_list_in = [[2, 4], [1, 3], [2, 4], [1, 3]]
 
         # core functionality
-        g = GNNGraph(s, t; graph_type=GRAPH_T)
+        g = GNNGraph(s, t; graph_type = GRAPH_T)
         if TEST_GPU
             g_gpu = g |> gpu
         end
@@ -70,15 +69,15 @@
         s1, t1 = sort_edge_index(edge_index(g))
         @test s1 == s
         @test t1 == t
-        @test vertices(g) == 1:g.num_nodes
+        @test vertices(g) == 1:(g.num_nodes)
 
-        @test sort.(adjacency_list(g; dir=:in)) == adj_list_in
-        @test sort.(adjacency_list(g; dir=:out)) == adj_list_out
+        @test sort.(adjacency_list(g; dir = :in)) == adj_list_in
+        @test sort.(adjacency_list(g; dir = :out)) == adj_list_out
 
         @testset "adjacency_matrix" begin
             @test adjacency_matrix(g) == adj_mat
-            @test adjacency_matrix(g; dir=:in) == adj_mat
-            @test adjacency_matrix(g; dir=:out) == adj_mat
+            @test adjacency_matrix(g; dir = :in) == adj_mat
+            @test adjacency_matrix(g; dir = :out) == adj_mat
 
             if TEST_GPU
                 # See https://github.com/JuliaGPU/CUDA.jl/pull/1093
@@ -97,21 +96,18 @@
             end
         end
 
-
-        @testset "scaled_laplacian" begin
-            if TEST_GPU
-                @test_broken begin
-                    mat = scaled_laplacian(g)
-                    mat_gpu = scaled_laplacian(g_gpu)
-                    @test mat_gpu isa ACUMatrix{Float32}
-                    @test Array(mat_gpu) == mat
-                end
+        @testset "scaled_laplacian" begin if TEST_GPU
+            @test_broken begin
+                mat = scaled_laplacian(g)
+                mat_gpu = scaled_laplacian(g_gpu)
+                @test mat_gpu isa ACUMatrix{Float32}
+                @test Array(mat_gpu) == mat
             end
-        end
+        end end
 
         @testset "constructors" begin
-            adjacency_matrix(g; dir=:out) == adj_mat
-            adjacency_matrix(g; dir=:in) == adj_mat
+            adjacency_matrix(g; dir = :out) == adj_mat
+            adjacency_matrix(g; dir = :in) == adj_mat
         end
 
         if TEST_GPU
@@ -130,20 +126,19 @@
         s = [1, 2, 3, 4]
         t = [2, 3, 4, 1]
         adj_mat_out = [0 1 0 0
-            0 0 1 0
-            0 0 0 1
-            1 0 0 0]
+                       0 0 1 0
+                       0 0 0 1
+                       1 0 0 0]
         adj_list_out = [[2], [3], [4], [1]]
 
-
         adj_mat_in = [0 0 0 1
-            1 0 0 0
-            0 1 0 0
-            0 0 1 0]
+                      1 0 0 0
+                      0 1 0 0
+                      0 0 1 0]
         adj_list_in = [[4], [1], [2], [3]]
 
         # core functionality
-        g = GNNGraph(s, t; graph_type=GRAPH_T)
+        g = GNNGraph(s, t; graph_type = GRAPH_T)
         if TEST_GPU
             g_gpu = g |> gpu
         end
@@ -162,14 +157,14 @@
         # adjacency
         @test adjacency_matrix(g) == adj_mat_out
         @test adjacency_list(g) == adj_list_out
-        @test adjacency_matrix(g, dir=:out) == adj_mat_out
-        @test adjacency_list(g, dir=:out) == adj_list_out
-        @test adjacency_matrix(g, dir=:in) == adj_mat_in
-        @test adjacency_list(g, dir=:in) == adj_list_in
+        @test adjacency_matrix(g, dir = :out) == adj_mat_out
+        @test adjacency_list(g, dir = :out) == adj_list_out
+        @test adjacency_matrix(g, dir = :in) == adj_mat_in
+        @test adjacency_list(g, dir = :in) == adj_list_in
     end
 
     @testset "zero" begin
-        g = rand_graph(4, 6, graph_type=GRAPH_T)
+        g = rand_graph(4, 6, graph_type = GRAPH_T)
         G = typeof(g)
         @test zero(G) == G(0)
     end
@@ -187,20 +182,20 @@
         end
 
         @testset "SimpleGraph{Int32}" begin
-            g = GNNGraph(SimpleGraph{Int32}(6), graph_type=GRAPH_T)
+            g = GNNGraph(SimpleGraph{Int32}(6), graph_type = GRAPH_T)
             @test g.num_nodes == 6
         end
     end
 
     @testset "Features" begin
-        g = GNNGraph(sprand(10, 10, 0.3), graph_type=GRAPH_T)
+        g = GNNGraph(sprand(10, 10, 0.3), graph_type = GRAPH_T)
 
         # default names
         X = rand(10, g.num_nodes)
         E = rand(10, g.num_edges)
         U = rand(10, g.num_graphs)
 
-        g = GNNGraph(g, ndata=X, edata=E, gdata=U)
+        g = GNNGraph(g, ndata = X, edata = E, gdata = U)
         @test g.ndata.x === X
         @test g.edata.e === E
         @test g.gdata.u === U
@@ -214,9 +209,9 @@
         @test g.edata.e === E
         @test g.gdata.u === U
 
-
         # multiple features names
-        g = GNNGraph(g, ndata=(x2=2X, g.ndata...), edata=(e2=2E, g.edata...), gdata=(u2=2U, g.gdata...))
+        g = GNNGraph(g, ndata = (x2 = 2X, g.ndata...), edata = (e2 = 2E, g.edata...),
+                     gdata = (u2 = 2U, g.gdata...))
         @test g.ndata.x === X
         @test g.edata.e === E
         @test g.gdata.u === U
@@ -231,24 +226,28 @@
         @test g.u2 === g.gdata.u2
 
         # Dimension checks
-        @test_throws AssertionError GNNGraph(erdos_renyi(10, 30), edata=rand(29), graph_type=GRAPH_T)
-        @test_throws AssertionError GNNGraph(erdos_renyi(10, 30), edata=rand(2, 29), graph_type=GRAPH_T)
-        @test_throws AssertionError GNNGraph(erdos_renyi(10, 30), edata=(; x=rand(30), y=rand(29)), graph_type=GRAPH_T)
+        @test_throws AssertionError GNNGraph(erdos_renyi(10, 30), edata = rand(29),
+                                             graph_type = GRAPH_T)
+        @test_throws AssertionError GNNGraph(erdos_renyi(10, 30), edata = rand(2, 29),
+                                             graph_type = GRAPH_T)
+        @test_throws AssertionError GNNGraph(erdos_renyi(10, 30),
+                                             edata = (; x = rand(30), y = rand(29)),
+                                             graph_type = GRAPH_T)
 
         # Copy features on reverse edge
         e = rand(30)
-        g = GNNGraph(erdos_renyi(10, 30), edata=e, graph_type=GRAPH_T)
+        g = GNNGraph(erdos_renyi(10, 30), edata = e, graph_type = GRAPH_T)
         @test g.edata.e == [e; e]
 
         # non-array global
-        g = rand_graph(10, 30, gdata="ciao", graph_type=GRAPH_T)
+        g = rand_graph(10, 30, gdata = "ciao", graph_type = GRAPH_T)
         @test g.gdata.u == "ciao"
 
         # vectors stays vectors
-        g = rand_graph(10, 30, ndata=rand(10),
-            edata=rand(30),
-            gdata=(u=rand(2), z=rand(1), q=1),
-            graph_type=GRAPH_T)
+        g = rand_graph(10, 30, ndata = rand(10),
+                       edata = rand(30),
+                       gdata = (u = rand(2), z = rand(1), q = 1),
+                       graph_type = GRAPH_T)
         @test size(g.ndata.x) == (10,)
         @test size(g.edata.e) == (30,)
         @test size(g.gdata.u) == (2, 1)
@@ -256,13 +255,14 @@
         @test g.gdata.q === 1
 
         # Error for non-array ndata
-        @test_throws AssertionError rand_graph(10,  30, ndata="ciao", graph_type=GRAPH_T)
-        @test_throws AssertionError rand_graph(10,  30, ndata=1, graph_type=GRAPH_T)
+        @test_throws AssertionError rand_graph(10, 30, ndata = "ciao", graph_type = GRAPH_T)
+        @test_throws AssertionError rand_graph(10, 30, ndata = 1, graph_type = GRAPH_T)
 
         # Error for Ambiguous getproperty
-        g = rand_graph(10, 20, ndata=rand(2,10), edata=(; x = rand(3,20)), graph_type=GRAPH_T)
-        @test size(g.ndata.x) == (2,10)
-        @test size(g.edata.x) == (3,20)
+        g = rand_graph(10, 20, ndata = rand(2, 10), edata = (; x = rand(3, 20)),
+                       graph_type = GRAPH_T)
+        @test size(g.ndata.x) == (2, 10)
+        @test size(g.edata.x) == (3, 20)
         @test_throws ArgumentError g.x
     end
 
@@ -271,7 +271,7 @@
         X = rand(10, n)
         E = rand(10, m)
         U = rand(10, 1)
-        data = [rand_graph(n, m, ndata=X, edata=E, gdata=U, graph_type=GRAPH_T)
+        data = [rand_graph(n, m, ndata = X, edata = E, gdata = U, graph_type = GRAPH_T)
                 for _ in 1:num_graphs]
         g = Flux.batch(data)
 
@@ -280,7 +280,7 @@
             @test MLUtils.getobs(g, 3:5) == getgraph(g, 3:5)
             @test MLUtils.numobs(g) == g.num_graphs
 
-            d = Flux.DataLoader(g, batchsize=2, shuffle=false)
+            d = Flux.DataLoader(g, batchsize = 2, shuffle = false)
             @test first(d) == getgraph(g, 1:2)
         end
 
@@ -290,52 +290,51 @@
             @test MLUtils.getobs(data, 3:5) == [data[3], data[4], data[5]]
             @test MLUtils.numobs(data) == g.num_graphs
 
-            d = Flux.DataLoader(data, batchsize=2, shuffle=false)
+            d = Flux.DataLoader(data, batchsize = 2, shuffle = false)
             @test first(d) == [data[1], data[2]]
         end
     end
 
     @testset "Graphs.jl integration" begin
-        g = GNNGraph(erdos_renyi(10, 20), graph_type=GRAPH_T)
+        g = GNNGraph(erdos_renyi(10, 20), graph_type = GRAPH_T)
         @test g isa Graphs.AbstractGraph
     end
 
     @testset "==" begin
-        g1 = rand_graph(5, 6, ndata=rand(5), edata=rand(6), graph_type=GRAPH_T)
+        g1 = rand_graph(5, 6, ndata = rand(5), edata = rand(6), graph_type = GRAPH_T)
         @test g1 == g1
         @test g1 == deepcopy(g1)
         @test g1 !== deepcopy(g1)
 
-        g2 = GNNGraph(g1, graph_type=GRAPH_T)
+        g2 = GNNGraph(g1, graph_type = GRAPH_T)
         @test g1 == g2
         @test g1 === g2 # this is true since GNNGraph is immutable
 
-        g2 = GNNGraph(g1, ndata=rand(5), graph_type=GRAPH_T)
+        g2 = GNNGraph(g1, ndata = rand(5), graph_type = GRAPH_T)
         @test g1 != g2
         @test g1 !== g2
 
-        g2 = GNNGraph(g1, edata=rand(6), graph_type=GRAPH_T)
+        g2 = GNNGraph(g1, edata = rand(6), graph_type = GRAPH_T)
         @test g1 != g2
         @test g1 !== g2
     end
 
     @testset "hash" begin
-        g1 = rand_graph(5, 6, ndata=rand(5), edata=rand(6), graph_type=GRAPH_T)
+        g1 = rand_graph(5, 6, ndata = rand(5), edata = rand(6), graph_type = GRAPH_T)
         @test hash(g1) == hash(g1)
         @test hash(g1) == hash(deepcopy(g1))
-        @test hash(g1) == hash(GNNGraph(g1, ndata=g1.ndata, graph_type=GRAPH_T))
-        @test hash(g1) == hash(GNNGraph(g1, ndata=g1.ndata, graph_type=GRAPH_T))
-        @test hash(g1) != hash(GNNGraph(g1, ndata=rand(5), graph_type=GRAPH_T))
-        @test hash(g1) != hash(GNNGraph(g1, edata=rand(6), graph_type=GRAPH_T))
+        @test hash(g1) == hash(GNNGraph(g1, ndata = g1.ndata, graph_type = GRAPH_T))
+        @test hash(g1) == hash(GNNGraph(g1, ndata = g1.ndata, graph_type = GRAPH_T))
+        @test hash(g1) != hash(GNNGraph(g1, ndata = rand(5), graph_type = GRAPH_T))
+        @test hash(g1) != hash(GNNGraph(g1, edata = rand(6), graph_type = GRAPH_T))
     end
 
-
     @testset "copy" begin
-        g1 = rand_graph(10, 4, ndata=rand(2, 10), graph_type=GRAPH_T)
+        g1 = rand_graph(10, 4, ndata = rand(2, 10), graph_type = GRAPH_T)
         g2 = copy(g1)
         @test g1 === g2 # shallow copies are identical for immutable objects
 
-        g2 = copy(g1, deep=true)
+        g2 = copy(g1, deep = true)
         @test g1 == g2
         @test g1 !== g2
     end

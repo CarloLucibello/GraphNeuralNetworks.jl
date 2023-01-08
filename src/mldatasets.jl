@@ -22,7 +22,7 @@ GNNGraph:
         test_mask => 2708-element BitVector
 ```
 """
-function mldataset2gnngraph(dataset::D) where D
+function mldataset2gnngraph(dataset::D) where {D}
     @assert hasproperty(dataset, :graphs)
     graphs = mlgraph2gnngraph.(dataset.graphs)
     if length(graphs) == 1
@@ -32,10 +32,10 @@ function mldataset2gnngraph(dataset::D) where D
     end
 end
 
-function mlgraph2gnngraph(g::G) where G
+function mlgraph2gnngraph(g::G) where {G}
     @assert hasproperty(g, :num_nodes)
     @assert hasproperty(g, :edge_index)
     @assert hasproperty(g, :node_data)
     @assert hasproperty(g, :edge_data)
-    return GNNGraph(g.edge_index; ndata=g.node_data, edata=g.edge_data, g.num_nodes)
+    return GNNGraph(g.edge_index; ndata = g.node_data, edata = g.edge_data, g.num_nodes)
 end

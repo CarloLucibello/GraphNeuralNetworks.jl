@@ -5,11 +5,11 @@ https://juliagraphs.org/Graphs.jl/latest/types/#AbstractGraph-Type
 https://juliagraphs.org/Graphs.jl/latest/developing/#Developing-Alternate-Graph-Types
 =============================================#
 
-const COO_T = Tuple{T,T,V} where {T<:AbstractVector{<:Integer},V}
-const ADJLIST_T = AbstractVector{T} where {T<:AbstractVector{<:Integer}}
+const COO_T = Tuple{T, T, V} where {T <: AbstractVector{<:Integer}, V}
+const ADJLIST_T = AbstractVector{T} where {T <: AbstractVector{<:Integer}}
 const ADJMAT_T = AbstractMatrix
 const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
-const CUMAT_T = Union{CUDA.AnyCuMatrix,CUDA.CUSPARSE.CuSparseMatrix}
+const CUMAT_T = Union{CUDA.AnyCuMatrix, CUDA.CUSPARSE.CuSparseMatrix}
 
 const AVecI = AbstractVector{<:Integer}
 
@@ -113,7 +113,7 @@ g = g |> gpu
 source, target = edge_index(g)
 ```
 """
-struct GNNGraph{T<:Union{COO_T,ADJMAT_T}} <: AbstractGraph{Int}
+struct GNNGraph{T <: Union{COO_T, ADJMAT_T}} <: AbstractGraph{Int}
     graph::T
     num_nodes::Int
     num_edges::Int
@@ -127,15 +127,13 @@ end
 @functor GNNGraph
 
 function GNNGraph(data::D;
-        num_nodes = nothing,
-        graph_indicator = nothing,
-        graph_type = :coo,
-        dir = :out,
-        ndata = nothing,
-        edata = nothing,
-        gdata = nothing
-    ) where {D<:Union{COO_T,ADJMAT_T,ADJLIST_T}}
-
+                  num_nodes = nothing,
+                  graph_indicator = nothing,
+                  graph_type = :coo,
+                  dir = :out,
+                  ndata = nothing,
+                  edata = nothing,
+                  gdata = nothing) where {D <: Union{COO_T, ADJMAT_T, ADJLIST_T}}
     @assert graph_type ∈ [:coo, :dense, :sparse] "Invalid graph_type $graph_type requested"
     @assert dir ∈ [:in, :out]
 
@@ -149,27 +147,31 @@ function GNNGraph(data::D;
 
     num_graphs = !isnothing(graph_indicator) ? maximum(graph_indicator) : 1
 
-    ndata = normalize_graphdata(ndata, default_name=:x, n=num_nodes)
-    edata = normalize_graphdata(edata, default_name=:e, n=num_edges, duplicate_if_needed=true)
-    
+    ndata = normalize_graphdata(ndata, default_name = :x, n = num_nodes)
+    edata = normalize_graphdata(edata, default_name = :e, n = num_edges,
+                                duplicate_if_needed = true)
+
     # don't force the shape of the data when there is only one graph
-    gdata = normalize_graphdata(gdata, default_name=:u, n = num_graphs > 1 ? num_graphs : -1)
+    gdata = normalize_graphdata(gdata, default_name = :u,
+                                n = num_graphs > 1 ? num_graphs : -1)
 
     GNNGraph(graph,
-            num_nodes, num_edges, num_graphs,
-            graph_indicator,
-            ndata, edata, gdata)
+             num_nodes, num_edges, num_graphs,
+             graph_indicator,
+             ndata, edata, gdata)
 end
 
-function (::Type{<:GNNGraph})(num_nodes::T; kws...) where {T<:Integer}
+function (::Type{<:GNNGraph})(num_nodes::T; kws...) where {T <: Integer}
     s, t = T[], T[]
     return GNNGraph(s, t; num_nodes, kws...)
 end
 
-Base.zero(::Type{G}) where {G<:GNNGraph} = G(0)
+Base.zero(::Type{G}) where {G <: GNNGraph} = G(0)
 
 # COO convenience constructors
-GNNGraph(s::AbstractVector, t::AbstractVector, v=nothing; kws...) = GNNGraph((s, t, v); kws...)
+function GNNGraph(s::AbstractVector, t::AbstractVector, v = nothing; kws...)
+    GNNGraph((s, t, v); kws...)
+end
 GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
 
 # GNNGraph(g::AbstractGraph; kws...) = GNNGraph(adjacency_matrix(g, dir=:out); kws...)
@@ -182,15 +184,15 @@ function GNNGraph(g::AbstractGraph; kws...)
         s, t = [s; t], [t; s]
     end
     num_nodes::Int = Graphs.nv(g)
-    GNNGraph((s, t); num_nodes=num_nodes, kws...)
+    GNNGraph((s, t); num_nodes = num_nodes, kws...)
 end
 
-
-function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata, graph_type=nothing)
-
-    ndata = normalize_graphdata(ndata, default_name=:x, n=g.num_nodes)
-    edata = normalize_graphdata(edata, default_name=:e, n=g.num_edges, duplicate_if_needed=true)
-    gdata = normalize_graphdata(gdata, default_name=:u, n=g.num_graphs)
+function GNNGraph(g::GNNGraph; ndata = g.ndata, edata = g.edata, gdata = g.gdata,
+                  graph_type = nothing)
+    ndata = normalize_graphdata(ndata, default_name = :x, n = g.num_nodes)
+    edata = normalize_graphdata(edata, default_name = :e, n = g.num_edges,
+                                duplicate_if_needed = true)
+    gdata = normalize_graphdata(gdata, default_name = :u, n = g.num_graphs)
 
     if !isnothing(graph_type)
         if graph_type == :coo
@@ -206,11 +208,10 @@ function GNNGraph(g::GNNGraph; ndata=g.ndata, edata=g.edata, gdata=g.gdata, grap
         graph = g.graph
     end
     GNNGraph(graph,
-        g.num_nodes, g.num_edges, g.num_graphs,
-        g.graph_indicator,
-        ndata, edata, gdata)
+             g.num_nodes, g.num_edges, g.num_graphs,
+             g.graph_indicator,
+             ndata, edata, gdata)
 end
-
 
 """
     copy(g::GNNGraph; deep=false)
@@ -218,17 +219,17 @@ end
 Create a copy of `g`. If `deep` is `true`, then copy will be a deep copy (equivalent to `deepcopy(g)`),
 otherwise it will be a shallow copy with the same underlying graph data.
 """
-function Base.copy(g::GNNGraph; deep=false)
+function Base.copy(g::GNNGraph; deep = false)
     if deep
         GNNGraph(deepcopy(g.graph),
-            g.num_nodes, g.num_edges, g.num_graphs,
-            deepcopy(g.graph_indicator),
-            deepcopy(g.ndata), deepcopy(g.edata), deepcopy(g.gdata))
+                 g.num_nodes, g.num_edges, g.num_graphs,
+                 deepcopy(g.graph_indicator),
+                 deepcopy(g.ndata), deepcopy(g.edata), deepcopy(g.gdata))
     else
         GNNGraph(g.graph,
-            g.num_nodes, g.num_edges, g.num_graphs,
-            g.graph_indicator,
-            g.ndata, g.edata, g.gdata)
+                 g.num_nodes, g.num_edges, g.num_graphs,
+                 g.graph_indicator,
+                 g.ndata, g.edata, g.gdata)
     end
 end
 
@@ -285,10 +286,8 @@ function Base.show(io::IO, ::MIME"text/plain", g::GNNGraph)
         print_all_features(io, g.ndata, g.edata, g.gdata)
         print(io, " data")
     else
-        print(
-            io,
-            "GNNGraph:\n  num_nodes: $(g.num_nodes)\n  num_edges: $(g.num_edges)"
-        )
+        print(io,
+              "GNNGraph:\n  num_nodes: $(g.num_nodes)\n  num_edges: $(g.num_edges)")
         g.num_graphs > 1 && print(io, "\n  num_graphs: $(g.num_graphs)")
         if !isempty(g.ndata)
             print(io, "\n  ndata:")
@@ -314,7 +313,6 @@ end
 MLUtils.numobs(g::GNNGraph) = g.num_graphs
 MLUtils.getobs(g::GNNGraph, i) = getgraph(g, i)
 
-
 #########################
 
 function Base.:(==)(g1::GNNGraph, g2::GNNGraph)
@@ -326,9 +324,9 @@ function Base.:(==)(g1::GNNGraph, g2::GNNGraph)
     return true
 end
 
-function Base.hash(g::T, h::UInt) where {T<:GNNGraph}
+function Base.hash(g::T, h::UInt) where {T <: GNNGraph}
     fs = (getfield(g, k) for k in fieldnames(T) if k !== :graph_indicator)
-    return foldl((h, f) -> hash(f, h),  fs, init=hash(T, h))
+    return foldl((h, f) -> hash(f, h), fs, init = hash(T, h))
 end
 
 function Base.getproperty(g::GNNGraph, s::Symbol)

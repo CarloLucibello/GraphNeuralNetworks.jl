@@ -21,10 +21,10 @@ function add_self_loops(g::GNNGraph{<:COO_T})
         ew = [ew; fill!(similar(ew, n), 1)]
     end
 
-    GNNGraph((s, t, ew), 
-        g.num_nodes, length(s), g.num_graphs, 
-        g.graph_indicator,
-        g.ndata, g.edata, g.gdata)
+    GNNGraph((s, t, ew),
+             g.num_nodes, length(s), g.num_graphs,
+             g.graph_indicator,
+             g.ndata, g.edata, g.gdata)
 end
 
 function add_self_loops(g::GNNGraph{<:ADJMAT_T})
@@ -32,10 +32,10 @@ function add_self_loops(g::GNNGraph{<:ADJMAT_T})
     @assert isempty(g.edata)
     num_edges = g.num_edges + g.num_nodes
     A = A + I
-    GNNGraph(A, 
-            g.num_nodes, num_edges, g.num_graphs, 
-            g.graph_indicator,
-            g.ndata, g.edata, g.gdata)
+    GNNGraph(A,
+             g.num_nodes, num_edges, g.num_graphs,
+             g.graph_indicator,
+             g.ndata, g.edata, g.gdata)
 end
 
 """
@@ -50,19 +50,18 @@ function remove_self_loops(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
     w = get_edge_weight(g)
     edata = g.edata
-    
+
     mask_old_loops = s .!= t
     s = s[mask_old_loops]
     t = t[mask_old_loops]
     edata = getobs(edata, mask_old_loops)
     w = isnothing(w) ? nothing : getobs(w, mask_old_loops)
-    
-    GNNGraph((s, t, w), 
-            g.num_nodes, length(s), g.num_graphs, 
-            g.graph_indicator,
-            g.ndata, edata, g.gdata)
-end
 
+    GNNGraph((s, t, w),
+             g.num_nodes, length(s), g.num_graphs,
+             g.graph_indicator,
+             g.ndata, edata, g.gdata)
+end
 
 function remove_self_loops(g::GNNGraph{<:ADJMAT_T})
     @assert isempty(g.edata)
@@ -72,12 +71,11 @@ function remove_self_loops(g::GNNGraph{<:ADJMAT_T})
         dropzeros!(A)
     end
     num_edges = numnonzeros(A)
-    GNNGraph(A, 
-            g.num_nodes, num_edges, g.num_graphs, 
-            g.graph_indicator,
-            g.ndata, g.edata, g.gdata)
+    GNNGraph(A,
+             g.num_nodes, num_edges, g.num_graphs,
+             g.graph_indicator,
+             g.ndata, g.edata, g.gdata)
 end
-
 
 """
     remove_multi_edges(g::GNNGraph; aggr=+)
@@ -88,20 +86,20 @@ Possible edge features are aggregated according to `aggr`, that can take value
 
 See also [`remove_self_loops`](@ref), [`has_multi_edges`](@ref), and [`to_bidirected`](@ref).
 """
-function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr=+)
+function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr = +)
     s, t = edge_index(g)
     w = get_edge_weight(g)
     edata = g.edata
     num_edges = g.num_edges
     idxs, idxmax = edge_encoding(s, t, g.num_nodes)
-    
+
     perm = sortperm(idxs)
     idxs = idxs[perm]
     s, t = s[perm], t[perm]
     edata = getobs(edata, perm)
     w = isnothing(w) ? nothing : getobs(w, perm)
     idxs = [-1; idxs]
-    mask = idxs[2:end] .> idxs[1:end-1]
+    mask = idxs[2:end] .> idxs[1:(end - 1)]
     if !all(mask)
         s, t = s[mask], t[mask]
         idxs = similar(s, num_edges)
@@ -113,9 +111,9 @@ function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr=+)
     end
 
     GNNGraph((s, t, w),
-            g.num_nodes, num_edges, g.num_graphs,
-            g.graph_indicator,
-            g.ndata, edata, g.gdata)
+             g.num_nodes, num_edges, g.num_graphs,
+             g.graph_indicator,
+             g.ndata, edata, g.gdata)
 end
 
 """
@@ -124,26 +122,25 @@ end
 Add to graph `g` the edges with source nodes `s` and target nodes `t`.
 Optionally, pass the features  `edata` for the new edges. 
 """
-function add_edges(g::GNNGraph{<:COO_T}, 
-                snew::AbstractVector{<:Integer}, 
-                tnew::AbstractVector{<:Integer};
-                edata=nothing)
-
+function add_edges(g::GNNGraph{<:COO_T},
+                   snew::AbstractVector{<:Integer},
+                   tnew::AbstractVector{<:Integer};
+                   edata = nothing)
     @assert length(snew) == length(tnew)
     # TODO remove this constraint
     @assert get_edge_weight(g) === nothing
 
-    edata = normalize_graphdata(edata, default_name=:e, n=length(snew))
+    edata = normalize_graphdata(edata, default_name = :e, n = length(snew))
     edata = cat_features(g.edata, edata)
-    
+
     s, t = edge_index(g)
     s = [s; snew]
     t = [t; tnew]
 
-    GNNGraph((s, t, nothing), 
-            g.num_nodes, length(s), g.num_graphs, 
-            g.graph_indicator,
-            g.ndata, edata, g.gdata)
+    GNNGraph((s, t, nothing),
+             g.num_nodes, length(s), g.num_graphs,
+             g.graph_indicator,
+             g.ndata, edata, g.gdata)
 end
 
 ### TODO Cannot implement this since GNNGraph is immutable (cannot change num_edges)
@@ -152,10 +149,10 @@ end
 #     @assert length(snew) == length(tnew)
 #     # TODO remove this constraint
 #     @assert get_edge_weight(g) === nothing
-    
+
 #     edata = normalize_graphdata(edata, default_name=:e, n=length(snew))
 #     edata = cat_features(g.edata, edata)
-    
+
 #     s, t = edge_index(g)
 #     append!(s, snew)
 #     append!(t, tnew)
@@ -222,16 +219,16 @@ function to_bidirected(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
     w = get_edge_weight(g)
     snew = [s; t]
-    tnew = [t; s] 
+    tnew = [t; s]
     w = cat_features(w, w)
-    edata = cat_features(g.edata, g.edata)   
+    edata = cat_features(g.edata, g.edata)
 
     g = GNNGraph((snew, tnew, w),
-                g.num_nodes, length(snew), g.num_graphs,
-                g.graph_indicator,
-                g.ndata, edata, g.gdata)
+                 g.num_nodes, length(snew), g.num_graphs,
+                 g.graph_indicator,
+                 g.ndata, edata, g.gdata)
 
-    return remove_multi_edges(g; aggr=mean)
+    return remove_multi_edges(g; aggr = mean)
 end
 
 """
@@ -243,15 +240,15 @@ keeps only an edge in one direction.
 function to_unidirected(g::GNNGraph{<:COO_T})
     s, t = edge_index(g)
     w = get_edge_weight(g)
-    idxs, _ = edge_encoding(s, t, g.num_nodes, directed=false)
-    snew, tnew = edge_decoding(idxs, g.num_nodes, directed=false)
+    idxs, _ = edge_encoding(s, t, g.num_nodes, directed = false)
+    snew, tnew = edge_decoding(idxs, g.num_nodes, directed = false)
 
     g = GNNGraph((snew, tnew, w),
-                g.num_nodes, g.num_edges, g.num_graphs,
-                g.graph_indicator,
-                g.ndata, g.edata, g.gdata)
+                 g.num_nodes, g.num_edges, g.num_graphs,
+                 g.graph_indicator,
+                 g.ndata, g.edata, g.gdata)
 
-    return remove_multi_edges(g; aggr=mean)
+    return remove_multi_edges(g; aggr = mean)
 end
 
 function Graphs.SimpleGraph(g::GNNGraph)
@@ -269,7 +266,6 @@ function Graphs.SimpleDiGraph(g::GNNGraph)
     return G
 end
 
-
 """
     add_nodes(g::GNNGraph, n; [ndata])
 
@@ -277,14 +273,14 @@ Add `n` new nodes to graph `g`. In the
 new graph, these nodes will have indexes from `g.num_nodes + 1`
 to `g.num_nodes + n`.
 """
-function add_nodes(g::GNNGraph{<:COO_T}, n::Integer; ndata=(;))
-    ndata = normalize_graphdata(ndata, default_name=:x, n=n)
+function add_nodes(g::GNNGraph{<:COO_T}, n::Integer; ndata = (;))
+    ndata = normalize_graphdata(ndata, default_name = :x, n = n)
     ndata = cat_features(g.ndata, ndata)
 
-    GNNGraph(g.graph, 
-            g.num_nodes + n, g.num_edges, g.num_graphs, 
-            g.graph_indicator,
-            ndata, g.edata, g.gdata)
+    GNNGraph(g.graph,
+             g.num_nodes + n, g.num_edges, g.num_graphs,
+             g.graph_indicator,
+             ndata, g.edata, g.gdata)
 end
 
 """
@@ -296,8 +292,8 @@ function set_edge_weight(g::GNNGraph, w::AbstractVector)
     s, t = edge_index(g)
     @assert length(w) == length(s)
 
-    return GNNGraph((s, t, w), 
-                    g.num_nodes, g.num_edges, g.num_graphs, 
+    return GNNGraph((s, t, w),
+                    g.num_nodes, g.num_edges, g.num_graphs,
                     g.graph_indicator,
                     g.ndata, g.edata, g.gdata)
 end
@@ -311,21 +307,21 @@ function SparseArrays.blockdiag(g1::GNNGraph, g2::GNNGraph)
         t = vcat(t1, nv1 .+ t2)
         w = cat_features(get_edge_weight(g1), get_edge_weight(g2))
         graph = (s, t, w)
-        ind1 = isnothing(g1.graph_indicator) ? ones_like(s1, nv1) : g1.graph_indicator 
-        ind2 = isnothing(g2.graph_indicator) ? ones_like(s2, nv2) : g2.graph_indicator     
-    elseif g1.graph isa ADJMAT_T        
+        ind1 = isnothing(g1.graph_indicator) ? ones_like(s1, nv1) : g1.graph_indicator
+        ind2 = isnothing(g2.graph_indicator) ? ones_like(s2, nv2) : g2.graph_indicator
+    elseif g1.graph isa ADJMAT_T
         graph = blockdiag(g1.graph, g2.graph)
-        ind1 = isnothing(g1.graph_indicator) ? ones_like(graph, nv1) : g1.graph_indicator 
-        ind2 = isnothing(g2.graph_indicator) ? ones_like(graph, nv2) : g2.graph_indicator     
+        ind1 = isnothing(g1.graph_indicator) ? ones_like(graph, nv1) : g1.graph_indicator
+        ind2 = isnothing(g2.graph_indicator) ? ones_like(graph, nv2) : g2.graph_indicator
     end
     graph_indicator = vcat(ind1, g1.num_graphs .+ ind2)
-    
+
     GNNGraph(graph,
-            nv1 + nv2, g1.num_edges + g2.num_edges, g1.num_graphs + g2.num_graphs, 
-            graph_indicator,
-            cat_features(g1.ndata, g2.ndata),
-            cat_features(g1.edata, g2.edata),
-            cat_features(g1.gdata, g2.gdata))
+             nv1 + nv2, g1.num_edges + g2.num_edges, g1.num_graphs + g2.num_graphs,
+             graph_indicator,
+             cat_features(g1.ndata, g2.ndata),
+             cat_features(g1.edata, g2.edata),
+             cat_features(g1.gdata, g2.gdata))
 end
 
 # PIRACY
@@ -401,10 +397,10 @@ julia> g12.ndata.x
 """
 Flux.batch(gs::AbstractVector{<:GNNGraph}) = blockdiag(gs...)
 
-function Flux.batch(gs::AbstractVector{<:GNNGraph{T}}) where T<:COO_T
+function Flux.batch(gs::AbstractVector{<:GNNGraph{T}}) where {T <: COO_T}
     v_num_nodes = [g.num_nodes for g in gs]
     edge_indices = [edge_index(g) for g in gs]
-    nodesum = cumsum([0; v_num_nodes])[1:end-1]
+    nodesum = cumsum([0; v_num_nodes])[1:(end - 1)]
     s = cat_features([ei[1] .+ nodesum[ii] for (ii, ei) in enumerate(edge_indices)])
     t = cat_features([ei[2] .+ nodesum[ii] for (ii, ei) in enumerate(edge_indices)])
     w = cat_features([get_edge_weight(g) for g in gs])
@@ -416,23 +412,23 @@ function Flux.batch(gs::AbstractVector{<:GNNGraph{T}}) where T<:COO_T
 
     v_gi = materialize_graph_indicator.(gs)
     v_num_graphs = [g.num_graphs for g in gs]
-    graphsum = cumsum([0; v_num_graphs])[1:end-1]
-    v_gi = [ng .+ gi  for (ng, gi) in zip(graphsum, v_gi)]
+    graphsum = cumsum([0; v_num_graphs])[1:(end - 1)]
+    v_gi = [ng .+ gi for (ng, gi) in zip(graphsum, v_gi)]
     graph_indicator = cat_features(v_gi)
-    
+
     GNNGraph(graph,
-        sum(v_num_nodes), 
-        sum([g.num_edges for g in gs]),
-        sum(v_num_graphs),
-        graph_indicator,
-        cat_features([g.ndata for g in gs]),
-        cat_features([g.edata for g in gs]),
-        cat_features([g.gdata for g in gs]),
-    )
+             sum(v_num_nodes),
+             sum([g.num_edges for g in gs]),
+             sum(v_num_graphs),
+             graph_indicator,
+             cat_features([g.ndata for g in gs]),
+             cat_features([g.edata for g in gs]),
+             cat_features([g.gdata for g in gs]))
 end
 
-Flux.batch(g::GNNGraph) = 
+function Flux.batch(g::GNNGraph)
     throw(ArgumentError("Cannot batch a `GNNGraph` (containing $(g.num_graphs) graphs). Pass a vector of `GNNGraph`s instead."))
+end
 
 """
     unbatch(g::GNNGraph)
@@ -466,19 +462,19 @@ julia> Flux.unbatch(gbatched)
     num_edges = 2
 ```
 """
-function Flux.unbatch(g::GNNGraph{T}) where T<:COO_T
+function Flux.unbatch(g::GNNGraph{T}) where {T <: COO_T}
     g.num_graphs == 1 && return [g]
 
     nodemasks = _unbatch_nodemasks(g.graph_indicator, g.num_graphs)
     num_nodes = length.(nodemasks)
     cumnum_nodes = [0; cumsum(num_nodes)]
-    
+
     s, t = edge_index(g)
     w = get_edge_weight(g)
 
     edgemasks = _unbatch_edgemasks(s, t, g.num_graphs, cumnum_nodes)
     num_edges = length.(edgemasks)
-    @assert sum(num_edges) == g.num_edges "Error in unbatching, likely the edges are not sorted (first edges belong to the first graphs, then edges in the second graph and so on)"
+    @assert sum(num_edges)==g.num_edges "Error in unbatching, likely the edges are not sorted (first edges belong to the first graphs, then edges in the second graph and so on)"
 
     function build_graph(i)
         node_mask = nodemasks[i]
@@ -496,43 +492,43 @@ function Flux.unbatch(g::GNNGraph{T}) where T<:COO_T
         nnodes = num_nodes[i]
         ngraphs = 1
 
-        return GNNGraph(graph, 
-                    nnodes, nedges, ngraphs,
-                    graph_indicator,
-                    ndata, edata, gdata)
+        return GNNGraph(graph,
+                        nnodes, nedges, ngraphs,
+                        graph_indicator,
+                        ndata, edata, gdata)
     end
 
-    return [build_graph(i) for i in 1:g.num_graphs]
+    return [build_graph(i) for i in 1:(g.num_graphs)]
 end
 
 function Flux.unbatch(g::GNNGraph)
-    return [getgraph(g, i) for i in 1:g.num_graphs]
+    return [getgraph(g, i) for i in 1:(g.num_graphs)]
 end
 
 function _unbatch_nodemasks(graph_indicator, num_graphs)
     @assert issorted(graph_indicator) "The graph_indicator vector must be sorted."
     idxslast = [searchsortedlast(graph_indicator, i) for i in 1:num_graphs]
-    
+
     nodemasks = [1:idxslast[1]]
     for i in 2:num_graphs
-        push!(nodemasks, idxslast[i-1]+1:idxslast[i])
+        push!(nodemasks, (idxslast[i - 1] + 1):idxslast[i])
     end
     return nodemasks
 end
 
 function _unbatch_edgemasks(s, t, num_graphs, cumnum_nodes)
     edgemasks = []
-    for i in 1:num_graphs-1
+    for i in 1:(num_graphs - 1)
         lastedgeid = findfirst(s) do x
-            x > cumnum_nodes[i+1] && x <= cumnum_nodes[i+2]
+            x > cumnum_nodes[i + 1] && x <= cumnum_nodes[i + 2]
         end
-        firstedgeid = i == 1 ? 1 : last(edgemasks[i-1]) + 1
+        firstedgeid = i == 1 ? 1 : last(edgemasks[i - 1]) + 1
         # if nothing make empty range
         lastedgeid = lastedgeid === nothing ? firstedgeid - 1 : lastedgeid - 1
-        
+
         push!(edgemasks, firstedgeid:lastedgeid)
     end
-    push!(edgemasks, (last(edgemasks[end])+1):length(s))
+    push!(edgemasks, (last(edgemasks[end]) + 1):length(s))
     return edgemasks
 end
 
@@ -552,29 +548,29 @@ The node `i` in the subgraph will correspond to the node `v[i]` in `g`.
 """
 getgraph(g::GNNGraph, i::Int; kws...) = getgraph(g, [i]; kws...)
 
-function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap=false)
+function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap = false)
     if g.graph_indicator === nothing
         @assert i == [1]
         if nmap
-            return g, 1:g.num_nodes
+            return g, 1:(g.num_nodes)
         else
             return g
         end
     end
 
     node_mask = g.graph_indicator .∈ Ref(i)
-    
-    nodes = (1:g.num_nodes)[node_mask]
+
+    nodes = (1:(g.num_nodes))[node_mask]
     nodemap = Dict(v => vnew for (vnew, v) in enumerate(nodes))
 
     graphmap = Dict(i => inew for (inew, i) in enumerate(i))
     graph_indicator = [graphmap[i] for i in g.graph_indicator[node_mask]]
-    
+
     s, t = edge_index(g)
     w = get_edge_weight(g)
-    edge_mask = s .∈ Ref(nodes) 
-    
-    if g.graph isa COO_T 
+    edge_mask = s .∈ Ref(nodes)
+
+    if g.graph isa COO_T
         s = [nodemap[i] for i in s[edge_mask]]
         t = [nodemap[i] for i in t[edge_mask]]
         w = isnothing(w) ? nothing : w[edge_mask]
@@ -586,15 +582,15 @@ function getgraph(g::GNNGraph, i::AbstractVector{Int}; nmap=false)
     ndata = getobs(g.ndata, node_mask)
     edata = getobs(g.edata, edge_mask)
     gdata = getobs(g.gdata, i)
-    
+
     num_edges = sum(edge_mask)
     num_nodes = length(graph_indicator)
     num_graphs = length(i)
 
-    gnew = GNNGraph(graph, 
-                num_nodes, num_edges, num_graphs,
-                graph_indicator,
-                ndata, edata, gdata)
+    gnew = GNNGraph(graph,
+                    num_nodes, num_edges, num_graphs,
+                    graph_indicator,
+                    ndata, edata, gdata)
 
     if nmap
         return gnew, nodes
@@ -615,32 +611,31 @@ leakage from the origin graph.
 
 See also [`is_bidirected`](@ref).
 """
-function negative_sample(g::GNNGraph; 
-        max_trials=3, 
-        num_neg_edges=g.num_edges, 
-        bidirected = is_bidirected(g))
-
+function negative_sample(g::GNNGraph;
+                         max_trials = 3,
+                         num_neg_edges = g.num_edges,
+                         bidirected = is_bidirected(g))
     @assert g.num_graphs == 1
     # Consider self-loops as positive edges
     # Construct new graph dropping features
-    g = add_self_loops(GNNGraph(edge_index(g), num_nodes=g.num_nodes)) 
-    
+    g = add_self_loops(GNNGraph(edge_index(g), num_nodes = g.num_nodes))
+
     s, t = edge_index(g)
     n = g.num_nodes
     if s isa CuArray
         # Convert to gpu since set operations and sampling are not supported by CUDA.jl
-        device = Flux.gpu 
-        s, t = Flux.cpu(s), Flux.cpu(t) 
-    else 
+        device = Flux.gpu
+        s, t = Flux.cpu(s), Flux.cpu(t)
+    else
         device = Flux.cpu
     end
     idx_pos, maxid = edge_encoding(s, t, n)
     if bidirected
         num_neg_edges = num_neg_edges ÷ 2
         pneg = 1 - g.num_edges / 2maxid # prob of selecting negative edge 
-    else 
+    else
         pneg = 1 - g.num_edges / 2maxid # prob of selecting negative edge 
-    end    
+    end
     # pneg * sample_prob * maxid == num_neg_edges  
     sample_prob = min(1, num_neg_edges / (pneg * maxid) * 1.1)
     idx_neg = Int[]
@@ -655,9 +650,9 @@ function negative_sample(g::GNNGraph;
     end
     s_neg, t_neg = edge_decoding(idx_neg, n)
     if bidirected
-        s_neg, t_neg = [s_neg; t_neg], [t_neg; s_neg] 
+        s_neg, t_neg = [s_neg; t_neg], [t_neg; s_neg]
     end
-    return GNNGraph(s_neg, t_neg, num_nodes=n) |> device
+    return GNNGraph(s_neg, t_neg, num_nodes = n) |> device
 end
 
 """
@@ -674,15 +669,15 @@ and multi-edges.
 
 `rand_edge_split` is tipically used to create train/test splits in link prediction tasks.
 """
-function rand_edge_split(g::GNNGraph, frac; bidirected=is_bidirected(g))
+function rand_edge_split(g::GNNGraph, frac; bidirected = is_bidirected(g))
     s, t = edge_index(g)
     ne = bidirected ? g.num_edges ÷ 2 : g.num_edges
     eids = randperm(ne)
     size1 = round(Int, ne * frac)
-    
+
     if !bidirected
         s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
-        s2, t2 = s[eids[size1+1:end]], t[eids[size1+1:end]]
+        s2, t2 = s[eids[(size1 + 1):end]], t[eids[(size1 + 1):end]]
     else
         # @assert is_bidirected(g)
         # @assert !has_self_loops(g)
@@ -691,14 +686,13 @@ function rand_edge_split(g::GNNGraph, frac; bidirected=is_bidirected(g))
         s, t = s[mask], t[mask]
         s1, t1 = s[eids[1:size1]], t[eids[1:size1]]
         s1, t1 = [s1; t1], [t1; s1]
-        s2, t2 = s[eids[size1+1:end]], t[eids[size1+1:end]]
+        s2, t2 = s[eids[(size1 + 1):end]], t[eids[(size1 + 1):end]]
         s2, t2 = [s2; t2], [t2; s2]
     end
-    g1 = GNNGraph(s1, t1, num_nodes=g.num_nodes)
-    g2 = GNNGraph(s2, t2, num_nodes=g.num_nodes)
+    g1 = GNNGraph(s1, t1, num_nodes = g.num_nodes)
+    g2 = GNNGraph(s2, t2, num_nodes = g.num_nodes)
     return g1, g2
 end
-
 
 # """
 # Transform vector of cartesian indexes into a tuple of vectors containing integers.

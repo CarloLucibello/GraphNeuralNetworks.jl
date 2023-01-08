@@ -18,8 +18,7 @@ g = mldataset2gnngraph(dataset) |> device
 X = g.ndata.features
 y = onehotbatch(g.ndata.targets |> cpu, classes) |> device # remove when https://github.com/FluxML/Flux.jl/pull/1959 tagged
 (; train_mask, val_mask, test_mask) = g.ndata
-ytrain = y[:,train_mask]
-
+ytrain = y[:, train_mask]
 
 # Model and Data Configuration
 nin = size(X, 1)
@@ -34,14 +33,13 @@ node_chain = GNNChain(GCNConv(nhidden => nhidden, relu),
                       GCNConv(nhidden => nhidden, relu)) |> device
 
 node = NeuralODE(WithGraph(node_chain, g),
-                (0.f0, 1.f0), Tsit5(), save_everystep = false,
-                reltol = 1e-3, abstol = 1e-3, save_start = false) |> device
+                 (0.0f0, 1.0f0), Tsit5(), save_everystep = false,
+                 reltol = 1e-3, abstol = 1e-3, save_start = false) |> device
 
 model = GNNChain(GCNConv(nin => nhidden, relu),
                  node,
                  diffeqsol_to_array,
                  Dense(nhidden, nout)) |> device
-
 
 # # Training
 # ## Model Parameters
@@ -50,19 +48,18 @@ ps = Flux.params(model);
 # ## Optimizer
 opt = Adam(0.01)
 
-
 function eval_loss_accuracy(X, y, mask)
     ŷ = model(g, X)
-    l = logitcrossentropy(ŷ[:,mask], y[:,mask])
-    acc = mean(onecold(ŷ[:,mask]) .== onecold(y[:,mask]))
-    return (loss = round(l, digits=4), acc = round(acc*100, digits=2))
+    l = logitcrossentropy(ŷ[:, mask], y[:, mask])
+    acc = mean(onecold(ŷ[:, mask]) .== onecold(y[:, mask]))
+    return (loss = round(l, digits = 4), acc = round(acc * 100, digits = 2))
 end
 
 # ## Training Loop
 for epoch in 1:epochs
     gs = gradient(ps) do
         ŷ = model(g, X)
-        logitcrossentropy(ŷ[:,train_mask], ytrain)    
+        logitcrossentropy(ŷ[:, train_mask], ytrain)
     end
     Flux.Optimise.update!(opt, ps, gs)
     @show eval_loss_accuracy(X, y, train_mask)
