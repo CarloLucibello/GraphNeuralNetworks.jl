@@ -67,6 +67,7 @@ export
     TransformerConv,
     
     # layers/pool
+    ConcatPool,
     GlobalPool,
     GlobalAttentionPool,
     TopKPool,
