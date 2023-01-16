@@ -25,8 +25,8 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "1bb7ba1abfd868b62a25393944efff368141d2e85e62bef7228c91f540463b54"
-    julia_version = "1.8.2"
+    input_sha = "465a4590b716e99f2d70eaaa9ca2e5de5f8549d401b4fa432fab439ab30aa172"
+    julia_version = "1.8.0"
 -->
 <pre class='language-julia'><code class='language-julia'>begin
     using Flux
@@ -36,7 +36,7 @@
     using MLDatasets
     using MLUtils
     using LinearAlgebra, Random, Statistics
-    
+
     ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
     Random.seed!(17) # for reproducibility
 end;</code></pre>
@@ -60,11 +60,11 @@ end;</code></pre>
   1
  -1</pre>
 
-<pre class='language-julia'><code class='language-julia'>g1, y1  = dataset[1] #get the first graph and target</code></pre>
+<pre class='language-julia'><code class='language-julia'>g1, y1 = dataset[1] #get the first graph and target</code></pre>
 <pre class="code-output documenter-example-output" id="var-y1">(graphs = Graph(17, 38), targets = 1)</pre>
 
-<pre class='language-julia'><code class='language-julia'>reduce(vcat, g.node_data.targets for (g,_) in dataset) |&gt; union</code></pre>
-<pre class="code-output documenter-example-output" id="var-hash163982">7-element Vector{Int64}:
+<pre class='language-julia'><code class='language-julia'>reduce(vcat, g.node_data.targets for (g, _) in dataset) |&gt; union</code></pre>
+<pre class="code-output documenter-example-output" id="var-hash256211">7-element Vector{Int64}:
  0
  1
  2
@@ -73,8 +73,8 @@ end;</code></pre>
  5
  6</pre>
 
-<pre class='language-julia'><code class='language-julia'>reduce(vcat, g.edge_data.targets for (g,_) in dataset)|&gt; union</code></pre>
-<pre class="code-output documenter-example-output" id="var-hash766940">4-element Vector{Int64}:
+<pre class='language-julia'><code class='language-julia'>reduce(vcat, g.edge_data.targets for (g, _) in dataset) |&gt; union</code></pre>
+<pre class="code-output documenter-example-output" id="var-hash262486">4-element Vector{Int64}:
  0
  1
  2
@@ -88,9 +88,9 @@ end;</code></pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
     graphs = mldataset2gnngraph(dataset)
-    graphs = [GNNGraph(g, 
-                       ndata=Float32.(onehotbatch(g.ndata.targets, 0:6)),
-                       edata=nothing) 
+    graphs = [GNNGraph(g,
+                       ndata = Float32.(onehotbatch(g.ndata.targets, 0:6)),
+                       edata = nothing)
               for g in graphs]
     y = onehotbatch(dataset.graph_data.targets, [-1, 1])
 end</code></pre>
@@ -101,12 +101,12 @@ end</code></pre>
 
 <div class="markdown"><p>We have some useful utilities for working with graph datasets, <em>e.g.</em>, we can shuffle the dataset and use the first 150 graphs as training graphs, while using the remaining ones for testing:</p></div>
 
-<pre class='language-julia'><code class='language-julia'>train_data, test_data = splitobs((graphs, y), at=150, shuffle=true) |&gt; getobs</code></pre>
-<pre class="code-output documenter-example-output" id="var-train_data">((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(16, 34), GNNGraph(19, 44), GNNGraph(13, 28), GNNGraph(11, 22), GNNGraph(15, 32), GNNGraph(12, 26), GNNGraph(11, 22), GNNGraph(16, 34), GNNGraph(23, 52), GNNGraph(16, 34)  …  GNNGraph(19, 44), GNNGraph(13, 28), GNNGraph(15, 34), GNNGraph(17, 38), GNNGraph(19, 44), GNNGraph(13, 26), GNNGraph(11, 22), GNNGraph(21, 44), GNNGraph(22, 50), GNNGraph(23, 54)], Bool[1 0 … 0 0; 0 1 … 1 1]), (GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(16, 34), GNNGraph(16, 34), GNNGraph(21, 44), GNNGraph(16, 34), GNNGraph(20, 44), GNNGraph(13, 26), GNNGraph(21, 44), GNNGraph(15, 34), GNNGraph(20, 44), GNNGraph(26, 60)  …  GNNGraph(17, 38), GNNGraph(22, 50), GNNGraph(22, 50), GNNGraph(17, 38), GNNGraph(18, 40), GNNGraph(17, 38), GNNGraph(23, 54), GNNGraph(14, 28), GNNGraph(17, 38), GNNGraph(11, 22)], Bool[1 1 … 0 1; 0 0 … 1 0]))</pre>
+<pre class='language-julia'><code class='language-julia'>train_data, test_data = splitobs((graphs, y), at = 150, shuffle = true) |&gt; getobs</code></pre>
+<pre class="code-output documenter-example-output" id="var-train_data">((GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(15, 34), GNNGraph(11, 22), GNNGraph(23, 50), GNNGraph(12, 26), GNNGraph(13, 28), GNNGraph(19, 44), GNNGraph(22, 50), GNNGraph(16, 34), GNNGraph(11, 22), GNNGraph(19, 44)  …  GNNGraph(20, 44), GNNGraph(17, 38), GNNGraph(10, 20), GNNGraph(26, 60), GNNGraph(13, 28), GNNGraph(17, 36), GNNGraph(21, 44), GNNGraph(12, 26), GNNGraph(12, 26), GNNGraph(16, 34)], Bool[0 1 … 0 1; 1 0 … 1 0]), (GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(14, 30), GNNGraph(12, 24), GNNGraph(14, 30), GNNGraph(23, 54), GNNGraph(13, 28), GNNGraph(16, 34), GNNGraph(13, 28), GNNGraph(13, 28), GNNGraph(20, 44), GNNGraph(11, 22)  …  GNNGraph(16, 36), GNNGraph(22, 50), GNNGraph(20, 46), GNNGraph(17, 38), GNNGraph(22, 50), GNNGraph(13, 26), GNNGraph(12, 26), GNNGraph(12, 24), GNNGraph(20, 44), GNNGraph(17, 38)], Bool[1 1 … 0 0; 0 0 … 1 1]))</pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
-    train_loader = DataLoader(train_data, batchsize=64, shuffle=true)
-    test_loader = DataLoader(test_data, batchsize=64, shuffle=false)
+    train_loader = DataLoader(train_data, batchsize = 64, shuffle = true)
+    test_loader = DataLoader(test_data, batchsize = 64, shuffle = false)
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-test_loader">1-element DataLoader(::Tuple{Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}, OneHotArrays.OneHotMatrix{UInt32, Vector{UInt32}}}, batchsize=64)
   with first element:
@@ -123,15 +123,15 @@ end</code></pre>
 <p>Since graphs in graph classification datasets are usually small, a good idea is to <strong>batch the graphs</strong> before inputting them into a Graph Neural Network to guarantee full GPU utilization. In the image or language domain, this procedure is typically achieved by <strong>rescaling</strong> or <strong>padding</strong> each example into a set of equally-sized shapes, and examples are then grouped in an additional dimension. The length of this dimension is then equal to the number of examples grouped in a mini-batch and is typically referred to as the <code>batchsize</code>.</p><p>However, for GNNs the two approaches described above are either not feasible or may result in a lot of unnecessary memory consumption. Therefore, GraphNeuralNetworks.jl opts for another approach to achieve parallelization across a number of examples. Here, adjacency matrices are stacked in a diagonal fashion (creating a giant graph that holds multiple isolated subgraphs), and node and target features are simply concatenated in the node dimension (the last dimension).</p><p>This procedure has some crucial advantages over other batching procedures:</p><ol><li><p>GNN operators that rely on a message passing scheme do not need to be modified since messages are not exchanged between two nodes that belong to different graphs.</p></li><li><p>There is no computational or memory overhead since adjacency matrices are saved in a sparse fashion holding only non-zero entries, <em>i.e.</em>, the edges.</p></li></ol><p>GraphNeuralNetworks.jl can <strong>batch multiple graphs into a single giant graph</strong>:</p></div>
 
 <pre class='language-julia'><code class='language-julia'>vec_gs, _ = first(train_loader)</code></pre>
-<pre class="code-output documenter-example-output" id="var-vec_gs">(GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(15, 34), GNNGraph(14, 30), GNNGraph(23, 54), GNNGraph(22, 50), GNNGraph(14, 28), GNNGraph(23, 52), GNNGraph(20, 44), GNNGraph(23, 50), GNNGraph(12, 26), GNNGraph(21, 48)  …  GNNGraph(11, 22), GNNGraph(12, 26), GNNGraph(18, 38), GNNGraph(20, 46), GNNGraph(17, 36), GNNGraph(21, 44), GNNGraph(24, 50), GNNGraph(21, 44), GNNGraph(16, 34), GNNGraph(17, 38)], Bool[0 1 … 1 0; 1 0 … 0 1])</pre>
+<pre class="code-output documenter-example-output" id="var-vec_gs">(GraphNeuralNetworks.GNNGraphs.GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}[GNNGraph(12, 24), GNNGraph(13, 28), GNNGraph(12, 24), GNNGraph(13, 28), GNNGraph(23, 54), GNNGraph(17, 38), GNNGraph(11, 22), GNNGraph(18, 40), GNNGraph(24, 50), GNNGraph(19, 42)  …  GNNGraph(11, 22), GNNGraph(19, 44), GNNGraph(25, 58), GNNGraph(11, 22), GNNGraph(20, 46), GNNGraph(11, 22), GNNGraph(12, 26), GNNGraph(23, 54), GNNGraph(25, 56), GNNGraph(21, 48)], Bool[1 1 … 0 0; 0 0 … 1 1])</pre>
 
 <pre class='language-julia'><code class='language-julia'>MLUtils.batch(vec_gs)</code></pre>
 <pre class="code-output documenter-example-output" id="var-hash102363">GNNGraph:
-    num_nodes = 1136
-    num_edges = 2496
+    num_nodes = 1095
+    num_edges = 2404
     num_graphs = 64
     ndata:
-        x =&gt; 7×1136 Matrix{Float32}</pre>
+        x =&gt; 7×1095 Matrix{Float32}</pre>
 
 
 <div class="markdown"><p>Each batched graph object is equipped with a <strong><code>graph_indicator</code> vector</strong>, which maps each node to its respective graph in the batch:</p><p class="tex">$$\textrm{graph-indicator} = [1, \ldots, 1, 2, \ldots, 2, 3, \ldots ]$$</p></div>
@@ -157,35 +157,35 @@ end</code></pre>
 <div class="markdown"><p>Here, we again make use of the <code>GCNConv</code> with <span class="tex">$\mathrm{ReLU}(x) = \max(x, 0)$</span> activation for obtaining localized node embeddings, before we apply our final classifier on top of a graph readout layer.</p><p>Let's train our network for a few epochs to see how well it performs on the training as well as test set:</p></div>
 
 <pre class='language-julia'><code class='language-julia'>function eval_loss_accuracy(model, data_loader, device)
-    loss = 0.
-    acc = 0.
+    loss = 0.0
+    acc = 0.0
     ntot = 0
     for (g, y) in data_loader
         g, y = MLUtils.batch(g) |&gt; device, y |&gt; device
         n = length(y)
         ŷ = model(g, g.ndata.x)
-        loss += logitcrossentropy(ŷ, y) * n 
+        loss += logitcrossentropy(ŷ, y) * n
         acc += mean((ŷ .&gt; 0) .== y) * n
         ntot += n
-    end 
-    return (loss = round(loss/ntot, digits=4), acc = round(acc*100/ntot, digits=2))
+    end
+    return (loss = round(loss / ntot, digits = 4),
+            acc = round(acc * 100 / ntot, digits = 2))
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-eval_loss_accuracy">eval_loss_accuracy (generic function with 1 method)</pre>
 
-<pre class='language-julia'><code class='language-julia'>function train!(model; epochs=200, η=1e-2, infotime=10)
+<pre class='language-julia'><code class='language-julia'>function train!(model; epochs = 200, η = 1e-2, infotime = 10)
     # device = Flux.gpu # uncomment this for GPU training
     device = Flux.cpu
     model = model |&gt; device
     ps = Flux.params(model)
     opt = Adam(1e-3)
-    
 
     function report(epoch)
         train = eval_loss_accuracy(model, train_loader, device)
         test = eval_loss_accuracy(model, test_loader, device)
         @info (; epoch, train, test)
     end
-    
+
     report(0)
     for epoch in 1:epochs
         for (g, y) in train_loader
@@ -202,7 +202,7 @@ end</code></pre>
 <pre class="code-output documenter-example-output" id="var-train!">train! (generic function with 1 method)</pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
-    nin = 7  
+    nin = 7
     nh = 64
     nout = 2
     model = create_model(nin, nh, nout)
