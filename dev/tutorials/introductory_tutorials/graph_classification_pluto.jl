@@ -14,16 +14,16 @@ using InteractiveUtils
 # ╔═╡ 361e0948-d91a-11ec-2d95-2db77435a0c1
 # ╠═╡ show_logs = false
 begin
-	using Flux
-	using Flux: onecold, onehotbatch, logitcrossentropy
-	using Flux: DataLoader
-	using GraphNeuralNetworks
-	using MLDatasets
-	using MLUtils
-	using LinearAlgebra, Random, Statistics
-	
-	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
-	Random.seed!(17) # for reproducibility
+    using Flux
+    using Flux: onecold, onehotbatch, logitcrossentropy
+    using Flux: DataLoader
+    using GraphNeuralNetworks
+    using MLDatasets
+    using MLUtils
+    using LinearAlgebra, Random, Statistics
+
+    ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
+    Random.seed!(17) # for reproducibility
 end;
 
 # ╔═╡ 15136fd8-f9b2-4841-9a95-9de7b8969687
@@ -48,13 +48,13 @@ dataset = TUDataset("MUTAG")
 dataset.graph_data.targets |> union
 
 # ╔═╡ 5d5e5152-c860-4158-8bc7-67ee1022f9f8
-g1, y1  = dataset[1] #get the first graph and target
+g1, y1 = dataset[1] #get the first graph and target
 
 # ╔═╡ 33163dd2-cb35-45c7-ae5b-d4854d141773
-reduce(vcat, g.node_data.targets for (g,_) in dataset) |> union
+reduce(vcat, g.node_data.targets for (g, _) in dataset) |> union
 
 # ╔═╡ a8d6a133-a828-4d51-83c4-fb44f9d5ede1
-reduce(vcat, g.edge_data.targets for (g,_) in dataset)|> union
+reduce(vcat, g.edge_data.targets for (g, _) in dataset) |> union
 
 # ╔═╡ 3b3e0a79-264b-47d7-8bda-2a6db7290828
 md"""
@@ -72,12 +72,12 @@ We now convert the MLDatasets.jl graph types to our `GNNGraph`s and we also oneh
 
 # ╔═╡ 936c09f6-ee62-4bc2-a0c6-749a66080fd2
 begin
-	graphs = mldataset2gnngraph(dataset)
-	graphs = [GNNGraph(g, 
-		               ndata=Float32.(onehotbatch(g.ndata.targets, 0:6)),
-	                   edata=nothing) 
-		      for g in graphs]
-	y = onehotbatch(dataset.graph_data.targets, [-1, 1])
+    graphs = mldataset2gnngraph(dataset)
+    graphs = [GNNGraph(g,
+                       ndata = Float32.(onehotbatch(g.ndata.targets, 0:6)),
+                       edata = nothing)
+              for g in graphs]
+    y = onehotbatch(dataset.graph_data.targets, [-1, 1])
 end
 
 # ╔═╡ 2c6ccfdd-cf11-415b-b398-95e5b0b2bbd4
@@ -85,12 +85,12 @@ md"""We have some useful utilities for working with graph datasets, *e.g.*, we c
 """
 
 # ╔═╡ 519477b2-8323-4ece-a7eb-141e9841117c
-train_data, test_data = splitobs((graphs, y), at=150, shuffle=true) |> getobs
+train_data, test_data = splitobs((graphs, y), at = 150, shuffle = true) |> getobs
 
 # ╔═╡ 3c3d5038-0ef6-47d7-a1b7-50880c5f3a0b
 begin
-	train_loader = DataLoader(train_data, batchsize=64, shuffle=true)
-	test_loader = DataLoader(test_data, batchsize=64, shuffle=false)
+    train_loader = DataLoader(train_data, batchsize = 64, shuffle = true)
+    test_loader = DataLoader(test_data, batchsize = 64, shuffle = false)
 end
 
 # ╔═╡ f7778e2d-2e2a-4fc8-83b0-5242e4ec5eb4
@@ -117,7 +117,6 @@ This procedure has some crucial advantages over other batching procedures:
 
 GraphNeuralNetworks.jl can **batch multiple graphs into a single giant graph**:
 """
-
 
 # ╔═╡ a142610a-d862-42a9-88af-c8d8b6825650
 vec_gs, _ = first(train_loader)
@@ -155,15 +154,14 @@ GraphNeuralNetworks.jl provides this functionality via `GlobalPool(mean)`, which
 The final architecture for applying GNNs to the task of graph classification then looks as follows and allows for complete end-to-end training:
 """
 
-
 # ╔═╡ 04402032-18a4-42b5-ad04-19b286bd29b7
 function create_model(nin, nh, nout)
-	GNNChain(GCNConv(nin => nh, relu),
-			 GCNConv(nh => nh, relu),
-			 GCNConv(nh => nh),
-			 GlobalPool(mean),
-			 Dropout(0.5),
-			 Dense(nh, nout))
+    GNNChain(GCNConv(nin => nh, relu),
+             GCNConv(nh => nh, relu),
+             GCNConv(nh => nh),
+             GlobalPool(mean),
+             Dropout(0.5),
+             Dense(nh, nout))
 end
 
 # ╔═╡ 2313fd8d-6e84-4bde-bacc-fb697dc33cbb
@@ -175,35 +173,35 @@ Let's train our network for a few epochs to see how well it performs on the trai
 
 # ╔═╡ c956ed97-fa5c-45c6-84dd-39f3e37d8070
 function eval_loss_accuracy(model, data_loader, device)
-    loss = 0.
-    acc = 0.
+    loss = 0.0
+    acc = 0.0
     ntot = 0
     for (g, y) in data_loader
         g, y = MLUtils.batch(g) |> device, y |> device
         n = length(y)
         ŷ = model(g, g.ndata.x)
-        loss += logitcrossentropy(ŷ, y) * n 
+        loss += logitcrossentropy(ŷ, y) * n
         acc += mean((ŷ .> 0) .== y) * n
         ntot += n
-    end 
-    return (loss = round(loss/ntot, digits=4), acc = round(acc*100/ntot, digits=2))
+    end
+    return (loss = round(loss / ntot, digits = 4),
+            acc = round(acc * 100 / ntot, digits = 2))
 end
 
 # ╔═╡ 968c7087-7637-4844-9509-dd838cf99a8c
-function train!(model; epochs=200, η=1e-2, infotime=10)
-	# device = Flux.gpu # uncomment this for GPU training
-	device = Flux.cpu
-	model = model |> device
-	ps = Flux.params(model)
+function train!(model; epochs = 200, η = 1e-2, infotime = 10)
+    # device = Flux.gpu # uncomment this for GPU training
+    device = Flux.cpu
+    model = model |> device
+    ps = Flux.params(model)
     opt = Adam(1e-3)
-	
 
     function report(epoch)
         train = eval_loss_accuracy(model, train_loader, device)
         test = eval_loss_accuracy(model, test_loader, device)
         @info (; epoch, train, test)
     end
-    
+
     report(0)
     for epoch in 1:epochs
         for (g, y) in train_loader
@@ -214,17 +212,17 @@ function train!(model; epochs=200, η=1e-2, infotime=10)
             end
             Flux.Optimise.update!(opt, ps, gs)
         end
-		epoch % infotime == 0 && report(epoch)
+        epoch % infotime == 0 && report(epoch)
     end
 end
 
 # ╔═╡ dedf18d8-4281-49fa-adaf-bd57fc15095d
 begin
-	nin = 7  
-	nh = 64
-	nout = 2
-	model = create_model(nin, nh, nout)
-	train!(model)
+    nin = 7
+    nh = 64
+    nout = 2
+    model = create_model(nin, nh, nout)
+    train!(model)
 end
 
 # ╔═╡ 3454b311-9545-411d-b47a-b43724b84c36
@@ -247,8 +245,6 @@ This layer is implemented under the name `GraphConv` in GraphNeuralNetworks.jl.
 As an exercise, you are invited to complete the following code to the extent that it makes use of `GraphConv` rather than `GCNConv`.
 This should bring you close to **82% test accuracy**.
 """
-
-
 
 # ╔═╡ 93e08871-2929-4279-9f8a-587168617365
 md"""
