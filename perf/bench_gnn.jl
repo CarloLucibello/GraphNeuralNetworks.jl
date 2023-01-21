@@ -10,31 +10,23 @@ A = sprand(n, n, 0.01)
 b = rand(1, n)
 B = rand(100, n)
 
-g = GNNGraph(
-    A,
-    ndata=(; b=b, B=B),
-    edata=(; A=reshape(A.nzval, 1, :)),
-    graph_type=:coo  # changing to :sparse has little effect on performance
-)
+g = GNNGraph(A,
+             ndata = (; b = b, B = B),
+             edata = (; A = reshape(A.nzval, 1, :)),
+             graph_type = :coo)
 
 function spmv(g)
-    propagate(
-        (xi, xj, e) -> e .* xj ,  # same as e_mul_xj
-        g, +; xj=g.ndata.b, e=g.edata.A
-        )
+    propagate((xi, xj, e) -> e .* xj,  # same as e_mul_xj
+              g, +; xj = g.ndata.b, e = g.edata.A)
 end
 
 function spmm1(g)
-    propagate(
-        (xi, xj, e) -> e .* xj ,  # same as e_mul_xj
-        g, +; xj=g.ndata.B, e=g.edata.A
-        )
+    propagate((xi, xj, e) -> e .* xj,  # same as e_mul_xj
+              g, +; xj = g.ndata.B, e = g.edata.A)
 end
 function spmm2(g)
-    propagate(
-        e_mul_xj,
-        g, +; xj=g.ndata.B, e=vec(g.edata.A)
-        )
+    propagate(e_mul_xj,
+              g, +; xj = g.ndata.B, e = vec(g.edata.A))
 end
 
 # @assert isequal(spmv(g),  b * A)  # true
@@ -47,19 +39,14 @@ end
 @btime spmm2(g)  # ~9 ms
 @btime B * A  # ~400 us
 
-
 function spmm_copyxj_fused(g)
-    propagate(
-        copy_xj,
-        g, +; xj=g.ndata.B
-        )
+    propagate(copy_xj,
+              g, +; xj = g.ndata.B)
 end
 
 function spmm_copyxj_unfused(g)
-    propagate(
-        (xi, xj, e) -> xj,
-        g, +; xj=g.ndata.B
-        )
+    propagate((xi, xj, e) -> xj,
+              g, +; xj = g.ndata.B)
 end
 
 Adj = map(x -> x > 0 ? 1 : 0, A)

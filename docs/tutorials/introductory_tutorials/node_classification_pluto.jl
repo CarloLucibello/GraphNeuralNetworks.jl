@@ -23,7 +23,7 @@ begin
     using TSne
     using Random
     using Statistics
-	
+
     ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
     Random.seed!(17) # for reproducibility
 end
@@ -50,7 +50,7 @@ We want to visualize the the outputs of the resutls using t-distributed stochast
 # ╔═╡ 997b5387-3811-4998-a9d1-7981b58b9e09
 function visualize_tsne(out, targets)
     z = tsne(out, 2)
-    scatter(z[:, 1], z[:, 2], color=Int.(targets[1:size(z,1)]), leg = false)
+    scatter(z[:, 1], z[:, 2], color = Int.(targets[1:size(z, 1)]), leg = false)
 end
 
 # ╔═╡ 4b6fa18d-7ccd-4c07-8dc3-ded4d7da8562
@@ -141,11 +141,11 @@ begin
     end
 
     Flux.@functor MLP
-    
-    function MLP(num_features, num_classes, hidden_channels; drop_rate=0.5)
+
+    function MLP(num_features, num_classes, hidden_channels; drop_rate = 0.5)
         layers = (hidden = Dense(num_features => hidden_channels),
-                    drop = Dropout(drop_rate),
-                    classifier = Dense(hidden_channels => num_classes))
+                  drop = Dropout(drop_rate),
+                  classifier = Dense(hidden_channels => num_classes))
         return MLP(layers)
     end
 
@@ -180,7 +180,7 @@ function train(model::MLP, data::AbstractMatrix, epochs::Int, opt, ps)
             ŷ = model(data)
             logitcrossentropy(ŷ[:, train_mask], y[:, train_mask])
         end
-    
+
         Flux.Optimise.update!(opt, ps, gs)
         if epoch % 200 == 0
             @show epoch, loss
@@ -234,19 +234,17 @@ which does not make use of neighboring node information.
 """
 
 # ╔═╡ eb36a46c-f139-425e-8a93-207bc4a16f89
-begin 
+begin
     struct GCN
         layers::NamedTuple
     end
-    
+
     Flux.@functor GCN # provides parameter collection, gpu movement and more
 
-
-
-    function GCN(num_features, num_classes, hidden_channels; drop_rate=0.5)
+    function GCN(num_features, num_classes, hidden_channels; drop_rate = 0.5)
         layers = (conv1 = GCNConv(num_features => hidden_channels),
-                    drop = Dropout(drop_rate), 
-                    conv2 = GCNConv(hidden_channels => num_classes))
+                  drop = Dropout(drop_rate),
+                  conv2 = GCNConv(hidden_channels => num_classes))
         return GCN(layers)
     end
 
@@ -286,16 +284,15 @@ function train(model::GCN, g::GNNGraph, x::AbstractMatrix, epochs::Int, ps, opt)
     for epoch in 1:epochs
         loss, gs = Flux.withgradient(ps) do
             ŷ = model(g, x)
-            logitcrossentropy(ŷ[:,train_mask], y[:,train_mask])
+            logitcrossentropy(ŷ[:, train_mask], y[:, train_mask])
         end
-    
+
         Flux.Optimise.update!(opt, ps, gs)
         if epoch % 200 == 0
             @show epoch, loss
         end
     end
 end
-
 
 # ╔═╡ 026911dd-6a27-49ce-9d41-21e01646c10a
 # ╠═╡ show_logs = false
@@ -308,7 +305,8 @@ begin
 end
 
 # ╔═╡ 65d9fd3d-1649-4b95-a106-f26fa4ab9bce
-function accuracy(model::GCN, g::GNNGraph, x::AbstractMatrix, y::Flux.OneHotArray, mask::BitVector)
+function accuracy(model::GCN, g::GNNGraph, x::AbstractMatrix, y::Flux.OneHotArray,
+                  mask::BitVector)
     Flux.testmode!(model)
     mean(onecold(model(g, x))[mask] .== onecold(y)[mask])
 end
@@ -332,8 +330,8 @@ Now let's evaluate the loss of our trained GCN.
 # ╔═╡ 2163d0d8-0661-4d11-a09e-708769011d35
 with_terminal() do
     train_accuracy = accuracy(gcn, g, g.ndata.features, y, train_mask)
-    test_accuracy = accuracy(gcn, g, g.ndata.features, y,  .!train_mask)
-    
+    test_accuracy = accuracy(gcn, g, g.ndata.features, y, .!train_mask)
+
     println("Train accuracy: $(train_accuracy)")
     println("Test accuracy: $(test_accuracy)")
 end

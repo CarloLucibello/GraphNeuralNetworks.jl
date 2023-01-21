@@ -9,14 +9,13 @@ abstract type GNNLayer end
 
 # Forward pass with graph-only input.
 # To be specialized by layers also needing edge features as input (e.g. NNConv). 
-(l::GNNLayer)(g::GNNGraph) = GNNGraph(g, ndata=l(g, node_features(g)))
+(l::GNNLayer)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
 
 function (l::GNNLayer)(g::AbstractVector{<:GNNGraph}, args...; kws...)
     @warn "Passing an array of graphs to a `GNNLayer` is discouraged. 
            Explicitely call `MLUtils.batch(graphs)` first instead." maxlog=1
     return l(batch(g), args...; kws...)
 end
-
 
 """
     WithGraph(model, g::GNNGraph; traingraph=false) 
@@ -44,20 +43,19 @@ x2 = rand(Float32, 2, 4)
 @assert wg(g2, x2) == model(g2, x2)
 ```
 """
-struct WithGraph{M, G<:GNNGraph}
+struct WithGraph{M, G <: GNNGraph}
     model::M
     g::G
     traingraph::Bool
 end
 
-WithGraph(model, g::GNNGraph; traingraph=false) = WithGraph(model, g, traingraph)
+WithGraph(model, g::GNNGraph; traingraph = false) = WithGraph(model, g, traingraph)
 
 @functor WithGraph
-Flux.trainable(l::WithGraph) = l.traingraph ? (; l.model, l.g) : (; l.model,)
+Flux.trainable(l::WithGraph) = l.traingraph ? (; l.model, l.g) : (; l.model)
 
 (l::WithGraph)(g::GNNGraph, x...; kws...) = l.model(g, x...; kws...)
 (l::WithGraph)(x...; kws...) = l.model(l.g, x...; kws...)
-
 
 """
     GNNChain(layers...)
@@ -111,7 +109,7 @@ julia> m2[:enc](g, x) == m(g, x)
 true
 ```
 """
-struct GNNChain{T<:Union{Tuple, NamedTuple, AbstractVector}} <: GNNLayer
+struct GNNChain{T <: Union{Tuple, NamedTuple, AbstractVector}} <: GNNLayer
     layers::T
 end
 
@@ -120,13 +118,14 @@ end
 GNNChain(xs...) = GNNChain(xs)
 
 function GNNChain(; kw...)
-    :layers in Base.keys(kw) && throw(ArgumentError("a GNNChain cannot have a named layer called `layers`"))
+    :layers in Base.keys(kw) &&
+        throw(ArgumentError("a GNNChain cannot have a named layer called `layers`"))
     isempty(kw) && return GNNChain(())
     GNNChain(values(kw))
 end
 
 @forward GNNChain.layers Base.getindex, Base.length, Base.first, Base.last,
-    Base.iterate, Base.lastindex, Base.keys, Base.firstindex
+                         Base.iterate, Base.lastindex, Base.keys, Base.firstindex
 
 (c::GNNChain)(g::GNNGraph, x) = _applychain(c.layers, g, x)
 (c::GNNChain)(g::GNNGraph) = _applychain(c.layers, g)
@@ -159,11 +158,13 @@ _applylayer(l, g::GNNGraph, x) = l(x)
 _applylayer(l::GNNLayer, g::GNNGraph, x) = l(g, x)
 
 # input from graph
-_applylayer(l, g::GNNGraph) = GNNGraph(g, ndata=l(node_features(g)))
+_applylayer(l, g::GNNGraph) = GNNGraph(g, ndata = l(node_features(g)))
 _applylayer(l::GNNLayer, g::GNNGraph) = l(g)
 
 # # Handle Flux.Parallel
-_applylayer(l::Parallel, g::GNNGraph) = GNNGraph(g, ndata=_applylayer(l, g, node_features(g)))
+function _applylayer(l::Parallel, g::GNNGraph)
+    GNNGraph(g, ndata = _applylayer(l, g, node_features(g)))
+end
 
 function _applylayer(l::Parallel, g::GNNGraph, x::AbstractArray)
     closures = map(f -> (x -> _applylayer(f, g, x)), l.layers)
@@ -171,8 +172,9 @@ function _applylayer(l::Parallel, g::GNNGraph, x::AbstractArray)
 end
 
 Base.getindex(c::GNNChain, i::AbstractArray) = GNNChain(c.layers[i])
-Base.getindex(c::GNNChain{<:NamedTuple}, i::AbstractArray) =
+function Base.getindex(c::GNNChain{<:NamedTuple}, i::AbstractArray)
     GNNChain(NamedTuple{keys(c)[i]}(Tuple(c.layers)[i]))
+end
 
 function Base.show(io::IO, c::GNNChain)
     print(io, "GNNChain(")
@@ -181,8 +183,12 @@ function Base.show(io::IO, c::GNNChain)
 end
 
 _show_layers(io, layers::Tuple) = join(io, layers, ", ")
-_show_layers(io, layers::NamedTuple) = join(io, ["$k = $v" for (k, v) in pairs(layers)], ", ")
-_show_layers(io, layers::AbstractVector) = (print(io, "["); join(io, layers, ", "); print(io, "]"))
+function _show_layers(io, layers::NamedTuple)
+    join(io, ["$k = $v" for (k, v) in pairs(layers)], ", ")
+end
+function _show_layers(io, layers::AbstractVector)
+    (print(io, "["); join(io, layers, ", "); print(io, "]"))
+end
 
 """
     DotDecoder()
@@ -207,9 +213,9 @@ julia> dotdec(g, rand(2, 5))
  0.345098  0.458305  0.106353  0.345098  0.458305  0.106353
 ```
 """
-struct DotDecoder <: GNNLayer end 
+struct DotDecoder <: GNNLayer end
 
 function (::DotDecoder)(g, x)
     check_num_nodes(g, x)
-    return apply_edges(xi_dot_xj, g, xi=x, xj=x)
+    return apply_edges(xi_dot_xj, g, xi = x, xj = x)
 end

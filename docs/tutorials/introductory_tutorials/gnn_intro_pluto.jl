@@ -13,15 +13,15 @@ using InteractiveUtils
 
 # ╔═╡ 42c84361-222a-46c4-b81f-d33eb41635c9
 begin
-	using Flux
-	using Flux: onecold, onehotbatch, logitcrossentropy
-	using MLDatasets
-	using LinearAlgebra, Random, Statistics
-	import GraphMakie
-	import CairoMakie as Makie
-	using Graphs
-	using PlutoUI
-	using GraphNeuralNetworks
+    using Flux
+    using Flux: onecold, onehotbatch, logitcrossentropy
+    using MLDatasets
+    using LinearAlgebra, Random, Statistics
+    import GraphMakie
+    import CairoMakie as Makie
+    using Graphs
+    using PlutoUI
+    using GraphNeuralNetworks
 end
 
 # ╔═╡ 03a9e023-e682-4ea3-a10b-14c4d101b291
@@ -45,8 +45,8 @@ Let's first import the packages we need:
 
 # ╔═╡ 361e0948-d91a-11ec-2d95-2db77435a0c1
 begin
-	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
-	Random.seed!(17) # for reproducibility
+    ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"  # don't ask for dataset download confirmation
+    Random.seed!(17) # for reproducibility
 end;
 
 # ╔═╡ ef96f5ae-724d-4b8e-b7d7-c116ad1c3279
@@ -78,22 +78,22 @@ Now we convert the single-graph dataset to a `GNNGraph`. Moreover, we add a an a
 """
 
 # ╔═╡ 8d41a9fa-eefe-40c9-8cc3-cd503cf7434d
-begin 
-	# convert a MLDataset.jl's dataset to a GNNGraphs (or a collection of graphs)
-	g = mldataset2gnngraph(dataset)
-	
-	x = zeros(Float32, g.num_nodes, g.num_nodes)
-	x[diagind(x)] .= 1
-	
-	train_mask = [ true, false, false, false,  true, false, false, false,  true,
-		false, false, false, false, false, false, false, false, false, false, false,
-        false, false, false, false,  true, false, false, false, false, false,
+begin
+    # convert a MLDataset.jl's dataset to a GNNGraphs (or a collection of graphs)
+    g = mldataset2gnngraph(dataset)
+
+    x = zeros(Float32, g.num_nodes, g.num_nodes)
+    x[diagind(x)] .= 1
+
+    train_mask = [true, false, false, false, true, false, false, false, true,
+        false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, true, false, false, false, false, false,
         false, false, false, false]
 
-	labels = g.ndata.labels_comm
-	y = onehotbatch(labels, 0:3)
-	
-	g = GNNGraph(g, ndata=(; x, y, train_mask))
+    labels = g.ndata.labels_comm
+    y = onehotbatch(labels, 0:3)
+
+    g = GNNGraph(g, ndata = (; x, y, train_mask))
 end
 
 # ╔═╡ c42c7f73-f84e-4e72-9af4-a6421af57f0d
@@ -103,15 +103,15 @@ Let's now look at the underlying graph in more detail:
 
 # ╔═╡ a7ad9de3-3e18-4aff-b118-a4d798a2f4ec
 with_terminal() do
-	# Gather some statistics about the graph.
-	println("Number of nodes: $(g.num_nodes)")
-	println("Number of edges: $(g.num_edges)")
-	println("Average node degree: $(g.num_edges / g.num_nodes)")
-	println("Number of training nodes: $(sum(g.ndata.train_mask))")
-	println("Training node label rate: $(mean(g.ndata.train_mask))")
-	# println("Has isolated nodes: $(has_isolated_nodes(g))")
-	println("Has self-loops: $(has_self_loops(g))")
-	println("Is undirected: $(is_bidirected(g))")
+    # Gather some statistics about the graph.
+    println("Number of nodes: $(g.num_nodes)")
+    println("Number of edges: $(g.num_edges)")
+    println("Average node degree: $(g.num_edges / g.num_nodes)")
+    println("Number of training nodes: $(sum(g.ndata.train_mask))")
+    println("Training node label rate: $(mean(g.ndata.train_mask))")
+    # println("Has isolated nodes: $(has_isolated_nodes(g))")
+    println("Has self-loops: $(has_self_loops(g))")
+    println("Is undirected: $(is_bidirected(g))")
 end
 
 # ╔═╡ 1e362709-a0d0-45d5-b2fd-a91c45fa317a
@@ -153,7 +153,8 @@ Since a `GNNGraph` is an `AbstractGraph` from the `Graphs.jl` library, it suppor
 """
 
 # ╔═╡ 9820cc77-ae0a-454a-86b6-a23dbc56b6fd
-GraphMakie.graphplot(g |> to_unidirected, node_size=20, node_color=labels, arrow_show=false) 
+GraphMakie.graphplot(g |> to_unidirected, node_size = 20, node_color = labels,
+                     arrow_show = false)
 
 # ╔═╡ 86135c51-950c-4c08-b9e0-6c892234ff87
 md"""
@@ -176,24 +177,24 @@ With this, we are ready to create our first Graph Neural Network by defining our
 """
 
 # ╔═╡ 88d1e59f-73d6-46ee-87e8-35beb7bc7674
-begin 
-	struct GCN
-		layers::NamedTuple
-	end
-	
-	Flux.@functor GCN # provides parameter collection, gpu movement and more
+begin
+    struct GCN
+        layers::NamedTuple
+    end
 
-	function GCN(num_features, num_classes)
-		layers = (conv1 = GCNConv(num_features => 4),
-		          conv2 = GCNConv(4 => 4),
-		          conv3 = GCNConv(4 => 2),
-		          classifier = Dense(2, num_classes))
-		return GCN(layers)
-	end
+    Flux.@functor GCN # provides parameter collection, gpu movement and more
 
-	function (gcn::GCN)(g::GNNGraph, x::AbstractMatrix)
-	    l = gcn.layers
-		x = l.conv1(g, x)
+    function GCN(num_features, num_classes)
+        layers = (conv1 = GCNConv(num_features => 4),
+                  conv2 = GCNConv(4 => 4),
+                  conv3 = GCNConv(4 => 2),
+                  classifier = Dense(2, num_classes))
+        return GCN(layers)
+    end
+
+    function (gcn::GCN)(g::GNNGraph, x::AbstractMatrix)
+        l = gcn.layers
+        x = l.conv1(g, x)
         x = tanh.(x)
         x = l.conv2(g, x)
         x = tanh.(x)
@@ -202,7 +203,7 @@ begin
         out = l.classifier(x)
         # Apply a final (linear) classifier.
         return out, x
-	end
+    end
 end
 
 # ╔═╡ 9838189c-5cf6-4f21-b58e-3bb905408ad3
@@ -223,26 +224,25 @@ Let's take a look at the node embeddings produced by our GNN.
 Here, we pass in the initial node features `x` and the graph  information `g` to the model, and visualize its 2-dimensional embedding.
 """
 
-
 # ╔═╡ ad2c2e51-08ec-4ddc-9b5c-668a3688db12
-begin 
-	num_features = 34
-	num_classes = 4
-	gcn = GCN(num_features, num_classes)
+begin
+    num_features = 34
+    num_classes = 4
+    gcn = GCN(num_features, num_classes)
 end
 
 # ╔═╡ ce26c963-0438-4ab2-b5c6-520272beef2b
 _, h = gcn(g, g.ndata.x)
 
 # ╔═╡ e545e74f-0a3c-4d18-9cc7-557ca60be567
-function visualize_embeddings(h; colors=nothing)
-	xs = h[1,:] |> vec
-	ys = h[2,:] |> vec
-	Makie.scatter(xs, ys, color=labels, markersize= 20)
+function visualize_embeddings(h; colors = nothing)
+    xs = h[1, :] |> vec
+    ys = h[2, :] |> vec
+    Makie.scatter(xs, ys, color = labels, markersize = 20)
 end
 
 # ╔═╡ 26138606-2e8d-435b-aa1a-b6159a0d2739
-visualize_embeddings(h, colors=labels)
+visualize_embeddings(h, colors = labels)
 
 # ╔═╡ b9359c7d-b7fe-412d-8f5e-55ba6bccb4e9
 md"""
@@ -272,32 +272,31 @@ Here, this is implemented by filtering the output of the classifier `out` and gr
 Let us now start training and see how our node embeddings evolve over time (best experienced by explicitly running the code):
 """
 
-
 # ╔═╡ 912560a1-9c72-47bd-9fce-9702b346b603
 begin
-	model = GCN(num_features, num_classes)
+    model = GCN(num_features, num_classes)
     ps = Flux.params(model)
     opt = Adam(1e-2)
-	epochs = 2000
+    epochs = 2000
 
-	emb = h
-	function report(epoch, loss, h)
-		# p = visualize_embeddings(h)
-		@info (; epoch, loss)
-	end
-	
-	report(0, 10., emb)
-	for epoch in 1:epochs
+    emb = h
+    function report(epoch, loss, h)
+        # p = visualize_embeddings(h)
+        @info (; epoch, loss)
+    end
+
+    report(0, 10.0, emb)
+    for epoch in 1:epochs
         loss, gs = Flux.withgradient(ps) do
-			ŷ, emb = model(g, g.ndata.x)
-            logitcrossentropy(ŷ[:,train_mask], y[:,train_mask])
+            ŷ, emb = model(g, g.ndata.x)
+            logitcrossentropy(ŷ[:, train_mask], y[:, train_mask])
         end
-		
+
         Flux.Optimise.update!(opt, ps, gs)
-		if epoch % 200 == 0
-			report(epoch, loss, emb)
-		end
-	end
+        if epoch % 200 == 0
+            report(epoch, loss, emb)
+        end
+    end
 end
 
 # ╔═╡ c8a217c9-0087-41f0-90c8-aac29bc1c996
@@ -312,7 +311,7 @@ mean(onecold(ŷ[:, train_mask]) .== onecold(y[:, train_mask]))
 mean(onecold(ŷ[:, .!train_mask]) .== onecold(y[:, .!train_mask]))
 
 # ╔═╡ 44d9f8cf-1023-48ad-a01f-07e59f4b4226
-visualize_embeddings(emb_final, colors=labels)
+visualize_embeddings(emb_final, colors = labels)
 
 # ╔═╡ a8841d35-97f9-431d-acab-abf478ce91a9
 md"""

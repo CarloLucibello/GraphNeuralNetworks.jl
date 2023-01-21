@@ -72,10 +72,10 @@ struct DataStore
     _n::Int # either -1 or numobs(data)
     _data::Dict{Symbol, Any}
 
-    function DataStore(n::Int, data::Dict{Symbol,Any})
+    function DataStore(n::Int, data::Dict{Symbol, Any})
         if n >= 0
             for (k, v) in data
-                @assert numobs(v) == n "DataStore: data[$k] has $(numobs(v)) observations, but n = $n"
+                @assert numobs(v)==n "DataStore: data[$k] has $(numobs(v)) observations, but n = $n"
             end
         end
         return new(n, data)
@@ -85,11 +85,11 @@ end
 @functor DataStore
 
 DataStore(data) = DataStore(-1, data)
-DataStore(n::Int, data::NamedTuple) = DataStore(n, Dict{Symbol,Any}(pairs(data)))
-DataStore(n::Int, data) = DataStore(n, Dict{Symbol,Any}(data))
+DataStore(n::Int, data::NamedTuple) = DataStore(n, Dict{Symbol, Any}(pairs(data)))
+DataStore(n::Int, data) = DataStore(n, Dict{Symbol, Any}(data))
 
 DataStore(; kws...) = DataStore(-1; kws...)
-DataStore(n::Int; kws...) = DataStore(n, Dict{Symbol,Any}(kws...))
+DataStore(n::Int; kws...) = DataStore(n, Dict{Symbol, Any}(kws...))
 
 getdata(ds::DataStore) = getfield(ds, :_data)
 getn(ds::DataStore) = getfield(ds, :_n)
@@ -106,12 +106,12 @@ function Base.getproperty(ds::DataStore, s::Symbol)
 end
 
 function Base.setproperty!(ds::DataStore, s::Symbol, x)
-    @assert s != :_n "cannot set _n directly"
-    @assert s != :_data "cannot set _data directly"
+    @assert s!=:_n "cannot set _n directly"
+    @assert s!=:_data "cannot set _data directly"
     if getn(ds) > 0
-        @assert numobs(x) == getn(ds) "expected (numobs(x) == getn(ds)) but got $(numobs(x)) != $(getn(ds))"
+        @assert numobs(x)==getn(ds) "expected (numobs(x) == getn(ds)) but got $(numobs(x)) != $(getn(ds))"
     end
-   return getdata(ds)[s] = x
+    return getdata(ds)[s] = x
 end
 
 Base.getindex(ds::DataStore, s::Symbol) = getproperty(ds, s)
@@ -125,7 +125,7 @@ function Base.show(io::IO, ds::DataStore)
     else
         print(io, "DataStore($(getn(ds)))")
     end
-    if len > 0    
+    if len > 0
         print(io, " with $(length(getdata(ds))) element")
         len > 1 && print(io, "s")
         print(io, ":")
@@ -147,7 +147,7 @@ Base.:(==)(ds1::DataStore, ds2::DataStore) = getdata(ds1) == getdata(ds2)
 Base.isempty(ds::DataStore) = isempty(getdata(ds))
 Base.delete!(ds::DataStore, k) = delete!(getdata(ds), k)
 
-function Base.map(f, ds::DataStore) 
+function Base.map(f, ds::DataStore)
     d = getdata(ds)
     newd = Dict{Symbol, Any}(k => f(v) for (k, v) in d)
     return DataStore(getn(ds), newd)
@@ -160,7 +160,8 @@ function MLUtils.getobs(ds::DataStore, i::Int)
     return DataStore(-1, newdata)
 end
 
-function MLUtils.getobs(ds::DataStore, i::AbstractVector{T}) where T <: Union{Integer,Bool}
+function MLUtils.getobs(ds::DataStore,
+                        i::AbstractVector{T}) where {T <: Union{Integer, Bool}}
     newdata = getobs(getdata(ds), i)
     n = getn(ds)
     if n > -1
@@ -179,7 +180,7 @@ end
 
 function cat_features(ds1::DataStore, ds2::DataStore)
     n1, n2 = getn(ds1), getn(ds2)
-    n1 = n1 > 0 ? n1 : 1 
+    n1 = n1 > 0 ? n1 : 1
     n2 = n2 > 0 ? n2 : 1
     return DataStore(n1 + n2, cat_features(getdata(ds1), getdata(ds2)))
 end
@@ -205,5 +206,5 @@ end
 
 function Base.hash(ds::D, h::UInt) where {D <: DataStore}
     fs = (getfield(ds, k) for k in fieldnames(D))
-    return foldl((h, f) -> hash(f, h),  fs, init=hash(D, h))
+    return foldl((h, f) -> hash(f, h), fs, init = hash(D, h))
 end
