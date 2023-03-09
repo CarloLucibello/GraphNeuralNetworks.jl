@@ -99,3 +99,49 @@ function broadcast_edges(g::GNNGraph, x)
     gi = graph_indicator(g, edges = true)
     return gather(x, gi)
 end
+
+function _sort_row(matrix::AbstractArray; rev::Bool = true, sortby::Int = 1)
+    index = sortperm(view(matrix, :, sortby); rev)
+    return matrix[index, :]
+end
+
+function _sort_row2(matrix::AbstractArray; rev::Bool = true, sortby::Int = 1) #scalarindexing
+    sorted_matrix=sort(collect(eachrow(matrix)),by= x->x[end])
+    reduce(hcat,sorted_matrix)'
+end
+
+function _topk(feat::DataStore, k::Int; rev::Bool = true, sortby = nothing)
+    matrices = values(feat)
+    if sortby === nothing
+        return map(matrix -> sort(matrix, dims = 1; rev)[1:k, :], matrices)
+    else
+        return map(matrix -> _sort_row(matrix; rev, sortby)[1:k, :], matrices)
+    end
+end
+
+function _topk2(matrices, k::Int; rev::Bool = true, sortby = nothing)
+    if sortby === nothing
+        return map(matrix -> sort(matrix, dims = 1; rev)[1:k, :], matrices)
+    else
+        return map(matrix -> _sort_row(matrix; rev, sortby)[1:k, :], matrices)
+    end
+end
+
+function _topk_tensor(feat::DataStore,numgra, k::Int; rev::Bool = true, sortby = nothing)
+    matrices = values(feat)
+    p=map(matrix -> reshape(matrix,size(matrix,1),size(matrix,2)÷numgra,numgra),matrices)
+    v=map(x -> _topk2(collect(eachslice(x,dims=3)), k; rev,sortby), p)
+    p=map(matrix -> reduce(hcat,matrix),v)
+end
+
+
+
+
+function topk_nodes(g::GNNGraph, k::Int; rev = true, sortby = nothing)
+    return _topk(g.ndata, k; rev, sortby)
+end
+
+function topk_edges(g::GNNGraph, k::Int; rev = true, sortby = nothing)
+    return _topk(g.edata, k; rev, sortby)
+end
+
