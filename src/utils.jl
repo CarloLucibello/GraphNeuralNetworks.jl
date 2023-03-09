@@ -105,43 +105,41 @@ function _sort_row(matrix::AbstractArray; rev::Bool = true, sortby::Int = 1)
     return matrix[index, :]
 end
 
-function _sort_row2(matrix::AbstractArray; rev::Bool = true, sortby::Int = 1) #scalarindexing
-    sorted_matrix=sort(collect(eachrow(matrix)),by= x->x[end])
-    reduce(hcat,sorted_matrix)'
-end
-
-function _topk(feat::DataStore, k::Int; rev::Bool = true, sortby = nothing)
-    matrices = values(feat)
+function _sort_matrix(matrix::AbstractArray, k::Int; rev::Bool = true, sortby = nothing)
     if sortby === nothing
-        return map(matrix -> sort(matrix, dims = 1; rev)[1:k, :], matrices)
+        return sort(matrix, dims = 1; rev)[1:k, :]
     else
-        return map(matrix -> _sort_row(matrix; rev, sortby)[1:k, :], matrices)
+        return _sort_row(matrix; rev, sortby)[1:k, :]
     end
 end
 
-function _topk2(matrices, k::Int; rev::Bool = true, sortby = nothing)
-    if sortby === nothing
-        return map(matrix -> sort(matrix, dims = 1; rev)[1:k, :], matrices)
+function _sort_batch(matrices::AbstractArray, k::Int; rev::Bool = true, sortby = nothing)
+    return map(x -> _sort_matrix(x, k; rev, sortby), matrices)
+end
+
+function _topk_batch(matrix::AbstractArray, number_graphs::Int, k::Int; rev::Bool = true,
+                     sortby = nothing)
+    tensor_matrix = reshape(matrix, size(matrix, 1), size(matrix, 2) ÷ number_graphs,
+                            number_graphs)
+    sorted_matrix = _sort_batch(collect(eachslice(tensor_matrix, dims = 3)), k; rev, sortby)
+    return reduce(hcat, sorted_matrix)
+end
+
+function _topk(matrix::AbstractArray, number_graphs::Int, k::Int; rev::Bool = true,
+               sortby = nothing)
+    if number_graphs==1
+        return _sort_matrix(matrix, k; rev, sortby)
     else
-        return map(matrix -> _sort_row(matrix; rev, sortby)[1:k, :], matrices)
+        return _topk_batch(matrix, number_graphs, k; rev, sortby)
     end
 end
 
-function _topk_tensor(feat::DataStore,numgra, k::Int; rev::Bool = true, sortby = nothing)
-    matrices = values(feat)
-    p=map(matrix -> reshape(matrix,size(matrix,1),size(matrix,2)÷numgra,numgra),matrices)
-    v=map(x -> _topk2(collect(eachslice(x,dims=3)), k; rev,sortby), p)
-    p=map(matrix -> reduce(hcat,matrix),v)
+function topk_nodes(g::GNNGraph, feat::Symbol, k::Int; rev = true, sortby = nothing)
+    matrix = getproperty(g.ndata, feat)
+    return _topk(matrix, g.num_graphs, k; rev, sortby)
 end
 
-
-
-
-function topk_nodes(g::GNNGraph, k::Int; rev = true, sortby = nothing)
-    return _topk(g.ndata, k; rev, sortby)
+function topk_edges(g::GNNGraph, feat::Symbol, k::Int; rev = true, sortby = nothing)
+    matrix = getproperty(g.edata, feat)
+    return _topk(matrix, g.num_graphs, k; rev, sortby)
 end
-
-function topk_edges(g::GNNGraph, k::Int; rev = true, sortby = nothing)
-    return _topk(g.edata, k; rev, sortby)
-end
-
