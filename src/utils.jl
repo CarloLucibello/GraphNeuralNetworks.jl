@@ -100,16 +100,16 @@ function broadcast_edges(g::GNNGraph, x)
     return gather(x, gi)
 end
 
-function _sort_row(matrix::AbstractArray; rev::Bool = true, sortby::Int = 1)
-    index = sortperm(view(matrix, :, sortby); rev)
-    return matrix[index, :]
+function _sort_col(matrix::AbstractArray; rev::Bool = true, sortby::Int = 1)
+    index = sortperm(view(matrix, sortby, : ); rev)
+    return matrix[ :, index]
 end
 
 function _sort_matrix(matrix::AbstractArray, k::Int; rev::Bool = true, sortby = nothing)
     if sortby === nothing
-        return sort(matrix, dims = 1; rev)[1:k, :]
+        return sort(matrix, dims = 2; rev)[:, 1:k]
     else
-        return _sort_row(matrix; rev, sortby)[1:k, :]
+        return _sort_col(matrix; rev, sortby)[:, 1:k]
     end
 end
 
