@@ -100,11 +100,13 @@ function broadcast_edges(g::GNNGraph, x)
     return gather(x, gi)
 end
 
+# return a permuted matrix according to the sorting of the sortby column
 function _sort_col(matrix::AbstractArray; rev::Bool = true, sortby::Int = 1)
-    index = sortperm(view(matrix, sortby, : ); rev)
-    return matrix[ :, index]
+    index = sortperm(view(matrix, sortby, :); rev)
+    return matrix[:, index]
 end
 
+# sort and reshape matrix 
 function _sort_matrix(matrix::AbstractArray, k::Int; rev::Bool = true, sortby = nothing)
     if sortby === nothing
         return sort(matrix, dims = 2; rev)[:, 1:k]
@@ -113,32 +115,45 @@ function _sort_matrix(matrix::AbstractArray, k::Int; rev::Bool = true, sortby = 
     end
 end
 
-function _sort_batch(matrices::AbstractArray, k::Int; rev::Bool = true, sortby = nothing)
+# sort the iterator of batch matrices
+function _sort_batch(matrices, k::Int; rev::Bool = true, sortby = nothing)
     return map(x -> _sort_matrix(x, k; rev, sortby), matrices)
 end
 
+# sort and reshape batch matrix
 function _topk_batch(matrix::AbstractArray, number_graphs::Int, k::Int; rev::Bool = true,
                      sortby = nothing)
     tensor_matrix = reshape(matrix, size(matrix, 1), size(matrix, 2) ÷ number_graphs,
                             number_graphs)
-    sorted_matrix = _sort_batch(collect(eachslice(tensor_matrix, dims = 3)), k; rev, sortby)
+    sorted_matrix = _sort_batch(eachslice(tensor_matrix, dims = 3), k; rev, sortby)
     return reduce(hcat, sorted_matrix)
 end
 
+# topk for a feature matrix
 function _topk(matrix::AbstractArray, number_graphs::Int, k::Int; rev::Bool = true,
                sortby = nothing)
-    if number_graphs==1
+    if number_graphs == 1
         return _sort_matrix(matrix, k; rev, sortby)
     else
         return _topk_batch(matrix, number_graphs, k; rev, sortby)
     end
 end
 
+"""
+    topk_nodes(g, feat, k; rev = true, sortby = nothing)
+
+Graph-wise top-k on node features `feat` according to the `sortby` feature index.
+"""
 function topk_nodes(g::GNNGraph, feat::Symbol, k::Int; rev = true, sortby = nothing)
     matrix = getproperty(g.ndata, feat)
     return _topk(matrix, g.num_graphs, k; rev, sortby)
 end
 
+"""
+    topk_edges(g, feat, k; rev = true, sortby = nothing)
+
+Graph-wise top-k on edge features `feat` according to the `sortby` feature index.
+"""
 function topk_edges(g::GNNGraph, feat::Symbol, k::Int; rev = true, sortby = nothing)
     matrix = getproperty(g.edata, feat)
     return _topk(matrix, g.num_graphs, k; rev, sortby)
