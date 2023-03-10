@@ -68,11 +68,8 @@
              0.451793 0.00704976 0.0189275]
         g1 = rand_graph(3, 6, ndata = (x = A,))
         g2 = rand_graph(3, 6, ndata = B)
-
-        #
         output1 = topk_nodes(g1, :x, 2)
         output2 = topk_nodes(g2, :x, 1, sortby = 2)
-
         @test output1 == [9.0 5.0;
                           10.0 6.0;
                           11.0 7.0;
@@ -88,4 +85,13 @@
                11.0 7.0 0.921823 0.494715;
                12.0 8.0 0.451793 0.0189275]
     end
-end;
+
+    @testset "topk_edges" begin
+        A = [0.157163 0.561874 0.886584 0.0475203 0.72576 0.815986;
+             0.852048 0.974619 0.0345627 0.874303 0.614322 0.113491]
+        g1 = rand_graph(5, 6, edata = (x = A,))
+        output1 = topk_edges(g1, :x, 2)
+        @test output1 == [0.886584 0.815986;
+                          0.974619 0.874303]
+    end
+end
