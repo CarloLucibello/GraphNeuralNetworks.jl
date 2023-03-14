@@ -143,3 +143,14 @@ function topk_index(y::AbstractVector, k::Int)
 end
 
 topk_index(y::Adjoint, k::Int) = topk_index(y', k)
+
+struct WeigthAndSumPool
+    in_feats::Int
+end
+
+function (ws::WeigthAndSumPool)(g::GNNGraph, x::AbstractArray)
+    atom_weighting = Dense(ws.in_feats, 1, sigmoid; bias = true)
+    return reduce_nodes(+, g, atom_weighting(x) .* x )
+end
+
+(ws::WeigthAndSumPool)(g::GNNGraph) = GNNGraph(g, gdata = ws(g, node_features(g)))
