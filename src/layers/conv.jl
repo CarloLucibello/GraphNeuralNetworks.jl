@@ -74,23 +74,23 @@ function GCNConv(ch::Pair{Int, Int}, σ = identity;
     GCNConv(W, b, σ, add_self_loops, use_edge_weight)
 end
 
-check_gcnconv_input(g::GNNGraph{<:ADJMAT_T}, edge_weight::AbstractVector) = 
+function check_gcnconv_input(g::GNNGraph{<:ADJMAT_T}, edge_weight::AbstractVector)
     throw(ArgumentError("Providing external edge_weight is not yet supported for adjacency matrix graphs"))
+end
 
 function check_gcnconv_input(g::GNNGraph, edge_weight::AbstractVector)
-    if length(edge_weight) !== g.num_edges 
+    if length(edge_weight) !== g.num_edges
         throw(ArgumentError("Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"))
     end
 end
 
 check_gcnconv_input(g::GNNGraph, edge_weight::Nothing) = nothing
 
-
-function (l::GCNConv)(g::GNNGraph, 
+function (l::GCNConv)(g::GNNGraph,
                       x::AbstractMatrix{T},
-                      edge_weight::EW = nothing
-                      ) where {T, EW <: Union{Nothing, AbstractVector}}
-
+                      edge_weight::EW = nothing) where {T,
+                                                        EW <:
+                                                        Union{Nothing, AbstractVector}}
     check_gcnconv_input(g, edge_weight)
 
     if l.add_self_loops
