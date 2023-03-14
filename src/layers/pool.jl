@@ -144,13 +144,23 @@ end
 
 topk_index(y::Adjoint, k::Int) = topk_index(y', k)
 
+"""
+    WeigthAndSumPool(in_feats)
+
+WeigthAndSum sum pooling layer. Compute the weights for each node and perform a weighted sum.
+"""
 struct WeigthAndSumPool
     in_feats::Int
 end
 
 function (ws::WeigthAndSumPool)(g::GNNGraph, x::AbstractArray)
     atom_weighting = Dense(ws.in_feats, 1, sigmoid; bias = true)
-    return reduce_nodes(+, g, atom_weighting(x) .* x )
+    return reduce_nodes(+, g, atom_weighting(x) .* x)
+end
+
+function (ws::WeigthAndSumPool)(g::GNNGraph, x::CuArray)
+    atom_weighting = Dense(ws.in_feats, 1, sigmoid; bias = true) |> gpu
+    return reduce_nodes(+, g, atom_weighting(x) .* x)
 end
 
 (ws::WeigthAndSumPool)(g::GNNGraph) = GNNGraph(g, gdata = ws(g, node_features(g)))
