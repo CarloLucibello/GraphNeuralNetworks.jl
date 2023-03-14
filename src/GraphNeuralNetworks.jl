@@ -71,6 +71,7 @@ export
       GlobalAttentionPool,
       TopKPool,
       topk_index,
+      WeigthAndSumPool,
 
 # mldatasets
       mldataset2gnngraph
