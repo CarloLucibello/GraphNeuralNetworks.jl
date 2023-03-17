@@ -216,11 +216,17 @@ end
 """
     to64(m)
 
-Convert the `eltype` of model's parameters to `Float64` or `Int64`.
+Convert the `eltype` of model's float parameters to `Float64`.
+Preserves integer arrays.
 """
-function to64(m)
-    f(x::AbstractArray) = eltype(x) <: Integer ? adapt(Int64, x) : adapt(Float64, x)
-    f(x::Number) = typeof(x) <: Integer ? adapt(Int64, x) : adapt(Float64, x)
-    f(x) = adapt(Float64, x)
-    return fmap(f, m)
-end
+to64() = _paramtype(Float64, m)
+
+
+struct GNNEltypeAdaptor{T} end
+
+Adapt.adapt_storage(::GNNEltypeAdaptor{T}, x::AbstractArray{<:AbstractFloat}) where T = convert(AbstractArray{T}, x)
+Adapt.adapt_storage(::GNNEltypeAdaptor{T}, x::AbstractArray{<:Integer}) where T = x
+Adapt.adapt_storage(::GNNEltypeAdaptor{T}, x::AbstractArray{<:Number}) where T = convert(AbstractArray{T}, x)
+
+_paramtype(::Type{T}, m) where T = fmap(adapt(GNNEltypeAdaptor{T}()), m)
+# _paramtype(::Type{T}, x::AbstractArray{<:Real}) where {T} = convert(AbstractArray{T}, x)
