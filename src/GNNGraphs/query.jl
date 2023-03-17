@@ -284,6 +284,9 @@ function normalized_adjacency(g::GNNGraph, T::DataType = Float32;
         A = A + I
     end
     degs = vec(sum(A; dims = 2))
+    ChainRulesCore.ignore_derivatives() do
+        @assert all(!iszero, degs) "Graph contains isolated nodes, cannot compute `normalized_adjacency`."
+    end
     inv_sqrtD = Diagonal(inv.(sqrt.(degs)))
     return inv_sqrtD * A * inv_sqrtD
 end

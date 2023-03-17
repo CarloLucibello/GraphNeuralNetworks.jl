@@ -50,8 +50,10 @@ tests = [
                                                                             :sparse)
     global GRAPH_T = graph_type
     global TEST_GPU = CUDA.functional() && (GRAPH_T != :sparse)
+    # global GRAPH_T = :coo
+    # global TEST_GPU = false
 
-    for t in tests
+    @testset "$t" for t in tests
         startswith(t, "examples") && GRAPH_T == :dense && continue     # not testing :dense since causes OutOfMememory on github's CI
         include("$t.jl")
     end
