@@ -1670,3 +1670,67 @@ function Base.show(io::IO, l::TransformerConv)
     (in, ein), out = l.channels
     print(io, "TransformerConv(($in, $ein) => $out, heads=$(l.heads))")
 end
+
+struct GraphomerLayer{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix, F, B} <: GNNLayer
+    dense_x::DX
+    dense_e::DE
+    bias::B
+    a::A
+    σ::F
+    negative_slope::T
+    channel::Pair{NTuple{2, Int}, Int}
+    heads::Int
+    concat::Bool
+    add_self_loops::Bool
+end
+
+@functor GraphomerLayer
+
+Flux.trainable(l::GraphomerLayer) = (l.dense_x, l.dense_e, l.bias, l.a)
+
+GraphomerLayer(ch::Pair{Int, Int}, args...; kws...) = GraphomerLayer((ch[1], 0) => ch[2], args...; kws...)
+
+function GraphomerLayer(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
+                 heads::Int = 1, concat::Bool = true, negative_slope = 0.2,
+                 init = glorot_uniform, bias::Bool = true, add_self_loops = true)
+    (in, ein), out = ch
+    if add_self_loops
+        @assert ein==0 "Using edge features and setting add_self_loops=true at the same time is not yet supported."
+    end
+
+    dense_x = Dense(in, out * heads, bias = false)
+    dense_e = ein > 0 ? Dense(ein, out * heads, bias = false) : nothing
+    b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out * heads : out) : false
+    a = init(ein > 0 ? 3out : 2out, heads)
+    negative_slope = convert(Float32, negative_slope)
+    GraphomerLayer(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops)
+end
+
+(l::GraphomerLayer)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
+
+function (l::GraphomerLayer)(g::GNNGraph, x::AbstractMatrix,
+                      e::Union{Nothing, AbstractMatrix} = nothing)
+    check_num_nodes(g, x)
+    @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
+    @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"
+
+    if l.add_self_loops
+        @assert e===nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
+        g = add_self_loops(g)
+    end
+
+    _, chout = l.channel
+    heads = l.heads
+
+    Wx = l.dense_x(x)
+    Wx = reshape(Wx, chout, heads, :)
+
+    # a hand-written message passing
+    m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wx, Wx, e)
+    α = softmax_edge_neighbors(g, m.logα)
+    β = α .* m.Wxj
+    x = aggregate_neighbors(g, +, β)
+
+    if !l.concat
+        x = mean(x, dims = 2)
+    end
