@@ -219,8 +219,7 @@ end
 Convert the `eltype` of model's float parameters to `Float64`.
 Preserves integer arrays.
 """
-to64() = _paramtype(Float64, m)
-
+to64(m) = _paramtype(Float64, m)
 
 struct GNNEltypeAdaptor{T} end
 
