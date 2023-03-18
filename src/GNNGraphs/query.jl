@@ -164,18 +164,15 @@ function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType = eltype(g
     return dir == :out ? A : A'
 end
 
-function _get_edge_weight(g, edge_weight)
-    if edge_weight === true || edge_weight === nothing
-        ew = get_edge_weight(g)
+function _get_edge_weight(g, edge_weight::Bool)
+    if edge_weight === true
+        return get_edge_weight(g)
     elseif edge_weight === false
-        ew = nothing
-    elseif edge_weight isa AbstractVector
-        ew = edge_weight
-    else
-        error("Invalid edge_weight argument.")
+        return nothing
     end
-    return ew
 end
+
+_get_edge_weight(g, edge_weight::AbstractVector) = edge_weight
 
 """
     degree(g::GNNGraph, T=nothing; dir=:out, edge_weight=true)
@@ -200,27 +197,27 @@ function Graphs.degree(g::GNNGraph{<:COO_T}, T::TT = nothing; dir = :out,
                                                   TT <: Union{Nothing, Type{<:Number}}}
     s, t = edge_index(g)
 
-    edge_weight = _get_edge_weight(g, edge_weight)
-    edge_weight = edge_weight === nothing ? ones_like(s) : edge_weight
+    ew = _get_edge_weight(g, edge_weight)
+    ew = ew === nothing ? ones_like(s) : ew # TODO do we need to create the weights?
 
-    T = isnothing(T) ? eltype(edge_weight) : T
-    degs = fill!(similar(s, T, g.num_nodes), 0)
-
-    if dir ∈ [:out, :both]
-        degs = degs .+ NNlib.scatter(+, edge_weight, s, dstsize = (g.num_nodes,))
-    end
-    if dir ∈ [:in, :both]
-        degs = degs .+ NNlib.scatter(+, edge_weight, t, dstsize = (g.num_nodes,))
-    end
-    return degs
+    T = if isnothing(T)
+            if !isnothing(ew)
+                eltype(ew)
+            else
+                eltype(s)
+            end
+        else 
+            T
+        end
+    return _degree((s, t), T, dir, ew, g.num_nodes)
 end
 
 # TODO:: Make efficient
 Graphs.degree(g::GNNGraph, i::Union{Int, AbstractVector}; dir = :out) = degree(g; dir)[i]
 
 function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT = nothing; dir = :out,
-                       edge_weight = true) where {TT}
-    TT <: Union{Nothing, Type{<:Number}}
+                       edge_weight = true) where {TT<:Union{Nothing, Type{<:Number}}}
+    
     # edge_weight=true or edge_weight=nothing act the same here
     @assert !(edge_weight isa AbstractArray) "passing the edge weights is not support by adjacency matrix representations"
     @assert dir ∈ (:in, :out, :both)
@@ -234,6 +231,22 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT = nothing; dir = :out,
         end
     end
     A = adjacency_matrix(g)
+    return _degree(A, T, dir, edge_weight, g.num_nodes)
+end
+
+function _degree((s, t)::Tuple, T::Type, dir::Symbol, edge_weight, num_nodes::Int)
+    degs = fill!(similar(s, T, num_nodes), 0)
+
+    if dir ∈ [:out, :both]
+        degs = degs .+ NNlib.scatter(+, edge_weight, s, dstsize = (num_nodes,))
+    end
+    if dir ∈ [:in, :both]
+        degs = degs .+ NNlib.scatter(+, edge_weight, t, dstsize = (num_nodes,))
+    end
+    return degs
+end
+
+function _degree(A::AbstractMatrix, T::Type, dir::Symbol, edge_weight::Bool, num_nodes::Int)
     if edge_weight === false
         A = binarize(A)
     end
@@ -242,6 +255,42 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT = nothing; dir = :out,
            dir == :in ? vec(sum(A, dims = 1)) :
            vec(sum(A, dims = 1)) .+ vec(sum(A, dims = 2))
 end
+
+function ChainRulesCore.rrule(::typeof(_degree), graph::Tuple, T, dir, edge_weight::AbstractVector, num_nodes)
+    degs = _degree(graph, T, dir, edge_weight, num_nodes)
+    coeff = dir ∈ (:in, :out) ? T(1) : T(2)
+    function _degree_pullback(Δ)
+        return (NoTangent(), NoTangent(), NoTangent(), NoTangent(), (Δ*coeff) .* ones_like(edge_weight), NoTangent())
+    end
+    return degs, _degree_pullback
+end
+
+function ChainRulesCore.rrule(::typeof(_degree), graph::Tuple, T, dir, edge_weight::Nothing, num_nodes)
+    degs = _degree(graph, T, dir, edge_weight, num_nodes)
+    function _degree_pullback(Δ)
+        return (NoTangent(), NoTangent(), NoTangent(), NoTangent(), NoTangent(), NoTangent())
+    end
+    return degs, _degree_pullback
+end
+
+function ChainRulesCore.rrule(::typeof(_degree), A::ADJMAT_T, T, dir, edge_weight::Bool, num_nodes)
+    degs = _degree(A, T, dir, edge_weight, num_nodes)
+    if edge_weight === false
+        function _degree_pullback_noweights(Δ)
+            return (NoTangent(), NoTangent(), NoTangent(), NoTangent(), NoTangent(), NoTangent())
+        end
+        return degs, _degree_pullback_noweights
+    else
+        coeff = dir ∈ (:in, :out) ? T(1) : T(2)
+        function _degree_pullback_weights(Δ)
+            dA = (Δ*coeff) .* binarize(A)
+            return (NoTangent(), dA, NoTangent(), NoTangent(), NoTangent(), NoTangent())
+        end
+        return degs, _degree_pullback_weights
+    end
+end
+
+
 
 """
     has_isolated_nodes(g::GNNGraph; dir=:out)

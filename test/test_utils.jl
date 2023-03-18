@@ -204,14 +204,10 @@ end
 """
     to32(m)
 
-Convert the `eltype` of model's parameters to `Float32` or `Int32`.
+Convert the `eltype` of model's float parameters to `Float32`.
+Preserves integer arrays.
 """
-function to32(m)
-    f(x::AbstractArray) = eltype(x) <: Integer ? adapt(Int32, x) : adapt(Float32, x)
-    f(x::Number) = typeof(x) <: Integer ? adapt(Int32, x) : adapt(Float32, x)
-    f(x) = adapt(Float32, x)
-    return fmap(f, m)
-end
+to32(m) = _paramtype(Float32, m)
 
 """
     to64(m)
@@ -228,4 +224,3 @@ Adapt.adapt_storage(::GNNEltypeAdaptor{T}, x::AbstractArray{<:Integer}) where T 
 Adapt.adapt_storage(::GNNEltypeAdaptor{T}, x::AbstractArray{<:Number}) where T = convert(AbstractArray{T}, x)
 
 _paramtype(::Type{T}, m) where T = fmap(adapt(GNNEltypeAdaptor{T}()), m)
-# _paramtype(::Type{T}, x::AbstractArray{<:Real}) where {T} = convert(AbstractArray{T}, x)

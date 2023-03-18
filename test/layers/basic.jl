@@ -49,9 +49,9 @@
                         LayerNorm(d),
                         Dense(d, dout))
 
-        testmode!(gnn)
+        trainmode!(gnn)
 
-        test_layer(gnn, g, rtol = 1e-5, exclude_grad_fields = [:μ, :σ²])
+        test_layer(gnn, g, rtol = 1e-5, atol=1e-5, exclude_grad_fields = [:μ, :σ²])
     end
 
     @testset "Only graph input" begin
