@@ -8,10 +8,10 @@
     x = g.ndata.x
 
     gnn = GNNChain(GCNConv(din => d),
-                    # BatchNorm(d),
+                    LayerNorm(d),
                     x -> tanh.(x),
                     GraphConv(d => d, tanh),
-                    # Dropout(0.5),
+                    Dropout(0.5),
                     Dense(d, dout))
 
     testmode!(gnn)
@@ -20,7 +20,7 @@
 
     @testset "constructor with names" begin
         m = GNNChain(GCNConv(din => d),
-                        BatchNorm(d),
+                        LayerNorm(d),
                         x -> relu.(x),
                         Dense(d, dout))
 
@@ -33,7 +33,7 @@
 
     @testset "constructor with vector" begin
         m = GNNChain(GCNConv(din => d),
-                        BatchNorm(d),
+                        LayerNorm(d),
                         x -> relu.(x),
                         Dense(d, dout))
         m2 = GNNChain([m.layers...])
@@ -44,9 +44,9 @@
         AddResidual(l) = Parallel(+, identity, l)
 
         gnn = GNNChain(ResGatedGraphConv(din => d, tanh),
-                        BatchNorm(d),
+                        LayerNorm(d),
                         AddResidual(ResGatedGraphConv(d => d, tanh)),
-                        BatchNorm(d),
+                        LayerNorm(d),
                         Dense(d, dout))
 
         testmode!(gnn)

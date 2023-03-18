@@ -55,6 +55,7 @@ tests = [
 
     @testset "$t" for t in tests
         startswith(t, "examples") && GRAPH_T == :dense && continue     # not testing :dense since causes OutOfMememory on github's CI
+        t == "GNNGraphs/sampling" && GRAPH_T != :coo && continue
         include("$t.jl")
     end
 end

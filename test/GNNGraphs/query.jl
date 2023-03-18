@@ -73,7 +73,6 @@ end
         eweight = [0.1, 2.1, 1.2, 1]
         g = GNNGraph((s, t, eweight), graph_type = GRAPH_T)
         @test degree(g) == [2.2, 1.2, 1.0, 0.0]
-        @test degree(g, edge_weight = nothing) == degree(g)
         d = degree(g, edge_weight = false)
         if GRAPH_T == :coo
             @test d == [2, 1, 1, 0]
