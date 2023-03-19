@@ -1672,7 +1672,7 @@ function Base.show(io::IO, l::TransformerConv)
 end
 
 @doc raw"""
-GraphomerLayer constructor.
+GraphormerLayer constructor.
 
 Parameters:
 - `ch`: A `Pair` object representing the input and output channels of the layer. The input channel should be a tuple of the form `(in_channels, num_edge_features)`, where `in_channels` is the number of input node features and `num_edge_features` is the number of input edge features. The output channel should be an integer representing the number of output features for each node.
@@ -1685,9 +1685,9 @@ Parameters:
 - `add_self_loops`: Whether to add self-loops to the graph. Defaults to `true`.
 
 Example:
-layer = GraphomerLayer((64, 32) => 128, σ = relu, heads = 4, concat = true, negative_slope = 0.1, init = xavier_uniform, bias = true, add_self_loops = false)
+layer = GraphormerLayer((64, 32) => 128, σ = relu, heads = 4, concat = true, negative_slope = 0.1, init = xavier_uniform, bias = true, add_self_loops = false)
 """
-struct GraphomerLayer{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix, F, B} <: GNNLayer
+struct GraphormerLayer{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix, F, B} <: GNNLayer
     dense_x::DX
     dense_e::DE
     bias::B
@@ -1700,13 +1700,12 @@ struct GraphomerLayer{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: Abstract
     add_self_loops::Bool
 end
 
-@functor GraphomerLayer
+@functor GraphormerLayer
 
-Flux.trainable(l::GraphomerLayer) = (l.dense_x, l.dense_e, l.bias, l.a)
+Flux.trainable(l::GraphormerLayer) = (l.dense_x, l.dense_e, l.bias, l.a)
+GraphormerLayer(ch::Pair{Int, Int}, args...; kws...) = GraphormerLayer((ch[1], 0) => ch[2], args...; kws...)
 
-GraphomerLayer(ch::Pair{Int, Int}, args...; kws...) = GraphomerLayer((ch[1], 0) => ch[2], args...; kws...)
-
-function GraphomerLayer(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
+function GraphormerLayer(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
                  heads::Int = 1, concat::Bool = true, negative_slope = 0.2,
                  init = glorot_uniform, bias::Bool = true, add_self_loops = true)
     (in, ein), out = ch
@@ -1719,12 +1718,12 @@ function GraphomerLayer(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
     b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out * heads : out) : false
     a = init(ein > 0 ? 3out : 2out, heads)
     negative_slope = convert(Float32, negative_slope)
-    GraphomerLayer(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops)
+    GraphormerLayer(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops)
 end
 
-(l::GraphomerLayer)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
+(l::GraphormerLayer)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
 
-function (l::GraphomerLayer)(g::GNNGraph, x::AbstractMatrix,
+function (l::GraphormerLayer)(g::GNNGraph, x::AbstractMatrix,
                       e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
     @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
