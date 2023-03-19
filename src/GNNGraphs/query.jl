@@ -194,7 +194,7 @@ function ChainRulesCore.rrule(::typeof(adjacency_matrix), g::G, T::DataType;
     else
         function adjacency_matrix_pullback_weighted(Δ)
             s, t = edge_index(g)
-            dg = Tangent{G}(; graph = (NoTangent(), NoTangent(), gather(Δ, s, t)))
+            dg = Tangent{G}(; graph = (NoTangent(), NoTangent(), NNlib.gather(Δ, s, t)))
             return (NoTangent(), dg, NoTangent())  
         end
         return A, adjacency_matrix_pullback_weighted
