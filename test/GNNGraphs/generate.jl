@@ -22,6 +22,14 @@
 
     g2 = rand_graph(n, m, bidirected = false, seed = 17, graph_type = GRAPH_T)
     @test edge_index(g2) == edge_index(g)
+
+    ew = rand(m2)
+    g = rand_graph(n, m, bidirected = true, seed = 17, graph_type = GRAPH_T, edge_weight = ew)
+    @test get_edge_weight(g) == [ew; ew] broken=(GRAPH_T != :coo)
+    
+    ew = rand(m)
+    g = rand_graph(n, m, bidirected = false, seed = 17, graph_type = GRAPH_T, edge_weight = ew)
+    @test get_edge_weight(g) == ew broken=(GRAPH_T != :coo)
 end
 
 @testset "knn_graph" begin

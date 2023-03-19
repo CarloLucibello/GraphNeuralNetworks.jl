@@ -52,6 +52,7 @@ end
         t = [2, 2, 2, 4]
         g = GNNGraph(s, t, graph_type = GRAPH_T)
 
+        @test degree(g) isa Vector{Int}
         @test degree(g) == degree(g; dir = :out) == [2, 1, 1, 0] # default is outdegree
         @test degree(g; dir = :in) == [0, 3, 0, 1]
         @test degree(g; dir = :both) == [2, 4, 1, 1]
@@ -70,9 +71,9 @@ end
         # weighted degree
         s = [1, 1, 2, 3]
         t = [2, 2, 2, 4]
-        eweight = [0.1, 2.1, 1.2, 1]
+        eweight = Float32[0.1, 2.1, 1.2, 1]
         g = GNNGraph((s, t, eweight), graph_type = GRAPH_T)
-        @test degree(g) == [2.2, 1.2, 1.0, 0.0]
+        @test degree(g) ≈ [2.2, 1.2, 1.0, 0.0]
         d = degree(g, edge_weight = false)
         if GRAPH_T == :coo
             @test d == [2, 1, 1, 0]
@@ -82,13 +83,8 @@ end
             @test d == [1, 1, 1, 0]
         end
         @test eltype(d) <: Integer
-        if GRAPH_T == :coo
-            # TODO use the @test option broken = (GRAPH_T != :coo) on julia >= 1.7
-            @test degree(g, edge_weight = 2 * eweight) == [4.4, 2.4, 2.0, 0.0]
-        else
-            @test_broken degree(g, edge_weight = 2 * eweight) == [4.4, 2.4, 2.0, 0.0]
-        end
-
+        @test degree(g, edge_weight = 2 * eweight) ≈ [4.4, 2.4, 2.0, 0.0] broken = (GRAPH_T != :coo)
+        
         if TEST_GPU
             g_gpu = g |> gpu
             d = degree(g)
@@ -109,11 +105,59 @@ end
                 sum(degree(g, edge_weight = true))
             end[1]
 
-            if GRAPH_T == :sparse
-                @test_broken gw isa Vector{Float64}
-                @test gw isa AbstractVector{Float64}
+            @test gw isa AbstractVector{Float32}
+            @test gw isa Vector{Float32} broken = (GRAPH_T == :sparse)
+            @test gw ≈ ones(Float32, length(gw))            
+
+            gw = gradient(eweight) do w
+                g = GNNGraph((s, t, w), graph_type = GRAPH_T)
+                sum(degree(g, dir=:both, edge_weight=true))
+            end[1]
+
+            @test gw isa AbstractVector{Float32}
+            @test gw isa Vector{Float32} broken = (GRAPH_T == :sparse)
+            @test gw ≈ 2 * ones(Float32, length(gw))
+
+            grad = gradient(g) do g
+                sum(degree(g, edge_weight=false))
+            end[1]
+            @test grad === nothing
+            
+            grad = gradient(g) do g
+                sum(degree(g, edge_weight=true))
+            end[1]
+            
+            if GRAPH_T == :coo
+                @test grad.graph[3] isa Vector{Float32}
+                @test grad.graph[3] ≈ ones(Float32, length(gw))
             else
-                @test gw isa Vector{Float64}
+                if GRAPH_T == :sparse
+                    @test grad.graph isa AbstractSparseMatrix{Float32}
+                end
+                @test grad.graph isa AbstractMatrix{Float32}
+                
+                @test grad.graph ≈ [0.0  1.0  0.0  0.0
+                                    0.0  1.0  0.0  0.0
+                                    0.0  0.0  0.0  1.0
+                                    0.0  0.0  0.0  0.0]
+            end
+
+            @testset "directed, degree dir=$dir" for dir in [:in, :out, :both]
+                g = rand_graph(10, 30, bidirected=false)
+                w = rand(Float32, 30)
+                s, t = edge_index(g)
+                
+                grad = gradient(w) do w
+                    g = GNNGraph((s, t, w), graph_type = GRAPH_T)
+                    sum(tanh.(degree(g; dir, edge_weight=true)))
+                end[1]
+
+                ngrad = ngradient(w) do w
+                    g = GNNGraph((s, t, w), graph_type = GRAPH_T)
+                    sum(tanh.(degree(g; dir, edge_weight=true)))
+                end[1]
+
+                @test grad ≈ ngrad
             end
         end
     end

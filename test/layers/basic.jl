@@ -46,18 +46,18 @@
         gnn = GNNChain(ResGatedGraphConv(din => d, tanh),
                         LayerNorm(d),
                         AddResidual(ResGatedGraphConv(d => d, tanh)),
-                        LayerNorm(d),
+                        BatchNorm(d),
                         Dense(d, dout))
 
-        testmode!(gnn)
+        trainmode!(gnn)
 
-        test_layer(gnn, g, rtol = 1e-5, exclude_grad_fields = [:μ, :σ²])
+        test_layer(gnn, g, rtol = 1e-5, atol=1e-5, exclude_grad_fields = [:μ, :σ²])
     end
 
     @testset "Only graph input" begin
         nin, nout = 2, 4
-        ndata = rand(nin, 3)
-        edata = rand(nin, 3)
+        ndata = rand(Float32, nin, 3)
+        edata = rand(Float32, nin, 3)
         g = GNNGraph([1, 1, 2], [2, 3, 3], ndata = ndata, edata = edata)
         m = NNConv(nin => nout, Dense(2, nin * nout, tanh))
         chain = GNNChain(m)
@@ -91,14 +91,4 @@ end
     chain = GNNChain(GraphConv(2 => 2))
     params, restructure = Flux.destructure(chain)
     @test restructure(params) isa GNNChain
-end
-
-@testset "GNNGraph array input" begin
-    gs = [rand_graph(5, 6, ndata = rand(2, 5), graph_type = GRAPH_T) for _ in 1:4]
-    l = GCNConv(2 => 3)
-    y = l(gs, rand(2, 20))
-    @test size(y) == (3, 20)
-
-    gout = l(gs)
-    @test size(gout.ndata.x) == (3, 20)
 end

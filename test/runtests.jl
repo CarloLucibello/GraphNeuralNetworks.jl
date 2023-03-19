@@ -46,11 +46,12 @@ tests = [
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
 
-@testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :dense,
-                                                                            :sparse)
+# @testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :dense, :sparse)
+for graph_type in (:coo, :dense, :sparse)
+    @info "Testing graph format :$graph_type"
     global GRAPH_T = graph_type
     global TEST_GPU = CUDA.functional() && (GRAPH_T != :sparse)
-    # global GRAPH_T = :coo
+    # global GRAPH_T = :sparse
     # global TEST_GPU = false
 
     @testset "$t" for t in tests

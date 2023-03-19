@@ -90,4 +90,3 @@ end
 #     @test sprint(show, MIME("text/plain"), hg3; context=:compact => false) =="GNNHeteroGraph:\n num_nodes: (:A => 10, :B => 20)\n num_edges: ((:A, :rel1, :B) => 20, (:B, :rel2, :A) => 30)\n ndata:\n\t:A  =>  (x = 2×10 Matrix{Float64}, y = 3×10 Matrix{Float64})\n\t:B  =>  x = 10×20 Matrix{Float64}"
 #     @test sprint(show, MIME("text/plain"), hg2; context=:compact => false) != sprint(show, MIME("text/plain"), hg3; context=:compact => false)
 # end
-
