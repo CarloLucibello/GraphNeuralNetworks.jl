@@ -56,8 +56,8 @@
 
     @testset "Only graph input" begin
         nin, nout = 2, 4
-        ndata = rand(nin, 3)
-        edata = rand(nin, 3)
+        ndata = rand(Float32, nin, 3)
+        edata = rand(Float32, nin, 3)
         g = GNNGraph([1, 1, 2], [2, 3, 3], ndata = ndata, edata = edata)
         m = NNConv(nin => nout, Dense(2, nin * nout, tanh))
         chain = GNNChain(m)

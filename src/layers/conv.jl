@@ -27,12 +27,16 @@ and optionally an edge weight vector.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
 - `use_edge_weight`: If `true`, consider the edge weights in the input graph (if available).
                      If `add_self_loops=true` the new weights will be set to 1. 
-                     This option if the `edge_weight` is explicitly provided in the forward pass.
+                     This option is ignored if the `edge_weight` is explicitly provided in the forward pass.
                      Default `false`.
 
 # Forward
 
     (::GCNConv)(g::GNNGraph, x::AbstractMatrix, edge_weight = nothing) -> AbstractMatrix
+
+Takes as input a graph `g`,ca node feature matrix `x` of size `[in, num_nodes]`,
+and optionally an edge weight vector. Returns a node feature matrix of size 
+`[out, num_nodes]`.
 
 # Examples
 
@@ -1301,7 +1305,7 @@ function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T},
     if edge_weight !== nothing
         d = degree(g, T; dir = :in, edge_weight)
     else
-        d = degree(g, T; dir = :in, l.use_edge_weight)
+        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
     end
     c = 1 ./ sqrt.(d)
     for iter in 1:(l.k)

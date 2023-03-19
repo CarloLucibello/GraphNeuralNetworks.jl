@@ -273,17 +273,6 @@ function ChainRulesCore.rrule(::typeof(_degree), graph, T, dir, edge_weight::Not
     return degs, _degree_pullback
 end
 
-# function ChainRulesCore.rrule(::typeof(_degree), graph::Tuple, T, dir, edge_weight::AbstractVector, num_nodes)
-#     degs = _degree(graph, T, dir, edge_weight, num_nodes)
-#     coeff = dir ∈ (:in, :out) ? T(1) : T(2)
-#     @show length(edge_weight) length(degs)
-#     function _degree_pullback(Δ)
-#         @show length(edge_weight) length(degs) length(Δ)
-#         return (NoTangent(), NoTangent(), NoTangent(), NoTangent(), coeff .* Δ .* ones_like(edge_weight), NoTangent())
-#     end
-#     return degs, _degree_pullback
-# end
-
 function ChainRulesCore.rrule(::typeof(_degree), A::ADJMAT_T, T, dir, edge_weight::Bool, num_nodes)
     degs = _degree(A, T, dir, edge_weight, num_nodes)
     if edge_weight === false

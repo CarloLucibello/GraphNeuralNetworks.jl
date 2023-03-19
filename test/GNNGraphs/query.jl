@@ -115,7 +115,6 @@ end
             @test gw isa Vector{Float32}
             @test gw ≈ 2 * ones(Float32, length(gw))
 
-
             grad = gradient(g) do g
                 sum(degree(g, edge_weight=false))
             end[1]
@@ -142,7 +141,7 @@ end
 
             @testset "directed, degree dir=$dir" for dir in [:in, :out, :both]
                 g = rand_graph(10, 30, bidirected=false)
-                w = rand(T, 30)
+                w = rand(Float32, 30)
                 s, t = edge_index(g)
                 
                 grad = gradient(w) do w
