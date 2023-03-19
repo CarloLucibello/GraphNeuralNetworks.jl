@@ -139,6 +139,24 @@ end
                                     0.0  0.0  0.0  1.0
                                     0.0  0.0  0.0  0.0]
             end
+
+            @testset "directed, degree dir=$dir" for dir in [:in, :out, :both]
+                g = rand_graph(10, 30, bidirected=false)
+                w = rand(T, 30)
+                s, t = edge_index(g)
+                
+                grad = gradient(w) do w
+                    g = GNNGraph((s, t, w), graph_type = GRAPH_T)
+                    sum(tanh.(degree(g; dir, edge_weight=true)))
+                end[1]
+
+                ngrad = ngradient(w) do w
+                    g = GNNGraph((s, t, w), graph_type = GRAPH_T)
+                    sum(tanh.(degree(g; dir, edge_weight=true)))
+                end[1]
+
+                @test grad ≈ ngrad
+            end
         end
     end
 end

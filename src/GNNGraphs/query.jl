@@ -179,18 +179,24 @@ _get_edge_weight(g, edge_weight::AbstractVector) = edge_weight
 
 Return a vector containing the degrees of the nodes in `g`.
 
+The gradient is propagated through this function only if `edge_weight` is `true`
+or a vector.
+
 # Arguments
+
 - `g`: A graph.
 - `T`: Element type of the returned vector. If `nothing`, is
        chosen based on the graph type and will be an integer
-       if `edge_weight=false`.
+       if `edge_weight=false`. Default `nothing`.
 - `dir`: For `dir=:out` the degree of a node is counted based on the outgoing edges.
          For `dir=:in`, the ingoing edges are used. If `dir=:both` we have the sum of the two.
 - `edge_weight`: If `true` and the graph contains weighted edges, the degree will 
                 be weighted. Set to `false` instead to just count the number of
-                outgoing/ingoing edges.
-                In alternative, you can also pass a vector of weights to be used
+                outgoing/ingoing edges. 
+                Finally, you can also pass a vector of weights to be used
                 instead of the graph's own weights.
+                Default `true`.
+
 """
 function Graphs.degree(g::GNNGraph{<:COO_T}, T::TT = nothing; dir = :out,
                        edge_weight = true) where {
@@ -198,8 +204,7 @@ function Graphs.degree(g::GNNGraph{<:COO_T}, T::TT = nothing; dir = :out,
     s, t = edge_index(g)
 
     ew = _get_edge_weight(g, edge_weight)
-    ew = ew === nothing ? ones_like(s) : ew # TODO do we need to create the weights?
-
+    
     T = if isnothing(T)
             if !isnothing(ew)
                 eltype(ew)
@@ -234,7 +239,11 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT = nothing; dir = :out,
     return _degree(A, T, dir, edge_weight, g.num_nodes)
 end
 
-function _degree((s, t)::Tuple, T::Type, dir::Symbol, edge_weight, num_nodes::Int)
+function _degree((s, t)::Tuple, T::Type, dir::Symbol, edge_weight::Nothing, num_nodes::Int)
+    _degree((s, t), T, dir, ones_like(s, T), num_nodes)
+end
+
+function _degree((s, t)::Tuple, T::Type, dir::Symbol, edge_weight::AbstractVector, num_nodes::Int)
     degs = fill!(similar(s, T, num_nodes), 0)
 
     if dir ∈ [:out, :both]
@@ -256,22 +265,24 @@ function _degree(A::AbstractMatrix, T::Type, dir::Symbol, edge_weight::Bool, num
            vec(sum(A, dims = 1)) .+ vec(sum(A, dims = 2))
 end
 
-function ChainRulesCore.rrule(::typeof(_degree), graph::Tuple, T, dir, edge_weight::AbstractVector, num_nodes)
-    degs = _degree(graph, T, dir, edge_weight, num_nodes)
-    coeff = dir ∈ (:in, :out) ? T(1) : T(2)
-    function _degree_pullback(Δ)
-        return (NoTangent(), NoTangent(), NoTangent(), NoTangent(), (Δ*coeff) .* ones_like(edge_weight), NoTangent())
-    end
-    return degs, _degree_pullback
-end
-
-function ChainRulesCore.rrule(::typeof(_degree), graph::Tuple, T, dir, edge_weight::Nothing, num_nodes)
+function ChainRulesCore.rrule(::typeof(_degree), graph, T, dir, edge_weight::Nothing, num_nodes)
     degs = _degree(graph, T, dir, edge_weight, num_nodes)
     function _degree_pullback(Δ)
         return (NoTangent(), NoTangent(), NoTangent(), NoTangent(), NoTangent(), NoTangent())
     end
     return degs, _degree_pullback
 end
+
+# function ChainRulesCore.rrule(::typeof(_degree), graph::Tuple, T, dir, edge_weight::AbstractVector, num_nodes)
+#     degs = _degree(graph, T, dir, edge_weight, num_nodes)
+#     coeff = dir ∈ (:in, :out) ? T(1) : T(2)
+#     @show length(edge_weight) length(degs)
+#     function _degree_pullback(Δ)
+#         @show length(edge_weight) length(degs) length(Δ)
+#         return (NoTangent(), NoTangent(), NoTangent(), NoTangent(), coeff .* Δ .* ones_like(edge_weight), NoTangent())
+#     end
+#     return degs, _degree_pullback
+# end
 
 function ChainRulesCore.rrule(::typeof(_degree), A::ADJMAT_T, T, dir, edge_weight::Bool, num_nodes)
     degs = _degree(A, T, dir, edge_weight, num_nodes)
@@ -281,15 +292,22 @@ function ChainRulesCore.rrule(::typeof(_degree), A::ADJMAT_T, T, dir, edge_weigh
         end
         return degs, _degree_pullback_noweights
     else
-        coeff = dir ∈ (:in, :out) ? T(1) : T(2)
         function _degree_pullback_weights(Δ)
-            dA = (Δ*coeff) .* binarize(A)
+            # We propagate the gradient only to the non-zero elements
+            # of the adjacency matrix.
+            bA = binarize(A)
+            if dir == :in
+                dA = bA .* Δ'
+            elseif dir == :out
+                dA = Δ .* bA
+            else # dir == :both
+                dA = Δ .* bA + Δ' .* bA
+            end
             return (NoTangent(), dA, NoTangent(), NoTangent(), NoTangent(), NoTangent())
         end
         return degs, _degree_pullback_weights
     end
 end
-
 
 
 """
