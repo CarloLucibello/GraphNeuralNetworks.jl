@@ -10,10 +10,8 @@ if TEST_GPU
         @test Array(y) ≈ [2, 2, 2, 2, 2, 2]
 
         s, t = get_st(A)
-        @test s isa CuVector
-        @test t isa CuVector
-        @test_broken s isa CuVector{Int32}
-        @test_broken t isa CuVector{Int32}
+        @test s isa CuVector{<:Integer}
+        @test t isa CuVector{<:Integer}
         @test Array(s) == [2, 3, 1, 3, 1, 2]
         @test Array(t) == [1, 1, 2, 2, 3, 3]
 

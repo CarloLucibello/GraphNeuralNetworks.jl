@@ -144,7 +144,8 @@ If `weighted=true`, the `A` will contain the edge weights if any, otherwise the 
 function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType = eltype(g); dir = :out,
                                  weighted = true)
     if g.graph[1] isa CuVector
-        # TODO revisit after https://github.com/JuliaGPU/CUDA.jl/pull/1152
+        # Revisit after 
+        # https://github.com/JuliaGPU/CUDA.jl/issues/1113
         A, n, m = to_dense(g.graph, T; num_nodes = g.num_nodes, weighted)
     else
         A, n, m = to_sparse(g.graph, T; num_nodes = g.num_nodes, weighted)
@@ -162,6 +163,42 @@ function Graphs.adjacency_matrix(g::GNNGraph{<:ADJMAT_T}, T::DataType = eltype(g
     end
     A = T != eltype(A) ? T.(A) : A
     return dir == :out ? A : A'
+end
+
+function ChainRulesCore.rrule(::typeof(adjacency_matrix), g::G, T::DataType; 
+            dir = :out, weighted = true) where {G <: GNNGraph{<:ADJMAT_T}}
+    A = adjacency_matrix(g, T; dir, weighted)
+    if !weighted
+        function adjacency_matrix_pullback_noweight(Δ)
+            return (NoTangent(), ZeroTangent(), NoTangent())  
+        end
+        return A, adjacency_matrix_pullback_noweight
+    else
+        function adjacency_matrix_pullback_weighted(Δ)
+            dg = Tangent{G}(; graph = Δ .* binarize(A))
+            return (NoTangent(), dg, NoTangent())  
+        end
+        return A, adjacency_matrix_pullback_weighted
+    end
+end
+
+function ChainRulesCore.rrule(::typeof(adjacency_matrix), g::G, T::DataType; 
+            dir = :out, weighted = true) where {G <: GNNGraph{<:COO_T}}
+    A = adjacency_matrix(g, T; dir, weighted)
+    w = get_edge_weight(g)
+    if !weighted || w === nothing
+        function adjacency_matrix_pullback_noweight(Δ)
+            return (NoTangent(), ZeroTangent(), NoTangent())  
+        end
+        return A, adjacency_matrix_pullback_noweight
+    else
+        function adjacency_matrix_pullback_weighted(Δ)
+            s, t = edge_index(g)
+            dg = Tangent{G}(; graph = (NoTangent(), NoTanget(), gather(Δ, s, t)))
+            return (NoTangent(), dg, NoTangent())  
+        end
+        return A, adjacency_matrix_pullback_weighted
+    end
 end
 
 function _get_edge_weight(g, edge_weight::Bool)
