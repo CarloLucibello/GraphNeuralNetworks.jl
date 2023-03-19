@@ -1671,6 +1671,22 @@ function Base.show(io::IO, l::TransformerConv)
     print(io, "TransformerConv(($in, $ein) => $out, heads=$(l.heads))")
 end
 
+@doc raw"""
+GraphomerLayer constructor.
+
+Parameters:
+- `ch`: A `Pair` object representing the input and output channels of the layer. The input channel should be a tuple of the form `(in_channels, num_edge_features)`, where `in_channels` is the number of input node features and `num_edge_features` is the number of input edge features. The output channel should be an integer representing the number of output features for each node.
+- `σ`: The activation function to apply to the node features after the linear transformation. Defaults to `identity`.
+- `heads`: The number of attention heads to use. Defaults to 1.
+- `concat`: Whether to concatenate the output of each head or average them. Defaults to `true`.
+- `negative_slope`: The slope of the negative part of the LeakyReLU activation function. Defaults to 0.2.
+- `init`: The initialization function to use for the attention weights. Defaults to `glorot_uniform`.
+- `bias`: Whether to include a bias term in the linear transformation. Defaults to `true`.
+- `add_self_loops`: Whether to add self-loops to the graph. Defaults to `true`.
+
+Example:
+layer = GraphomerLayer((64, 32) => 128, σ = relu, heads = 4, concat = true, negative_slope = 0.1, init = xavier_uniform, bias = true, add_self_loops = false)
+"""
 struct GraphomerLayer{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix, F, B} <: GNNLayer
     dense_x::DX
     dense_e::DE
@@ -1734,3 +1750,4 @@ function (l::GraphomerLayer)(g::GNNGraph, x::AbstractMatrix,
     if !l.concat
         x = mean(x, dims = 2)
     end
+end
