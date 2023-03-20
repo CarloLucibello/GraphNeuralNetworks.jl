@@ -694,6 +694,25 @@ function rand_edge_split(g::GNNGraph, frac; bidirected = is_bidirected(g))
     return g1, g2
 end
 
+function add_RandomWalkPE!(g::GNNGraph, walk_length::Int, symbol::Symbol=:p)
+    matrix=zeros(walk_length,g.num_nodes)
+    adj = adjacency_matrix(g)
+    if adj isa CuArray
+        matrix = CuArray(matrix)
+    end
+    deg = degree(g)
+    deg_inv = inv.(deg)
+    deg_inv[isinf.(deg_inv)] .= 0
+    RW = adj * Diagonal(deg_inv)
+    out = RW
+    matrix[1,:] .= diag(RW)
+    for i in 2:walk_length
+        out = out * RW
+        matrix[i,:] .= diag(out)
+    end
+    setproperty!(g.ndata, symbol, matrix)
+end
+
 # """
 # Transform vector of cartesian indexes into a tuple of vectors containing integers.
 # """
