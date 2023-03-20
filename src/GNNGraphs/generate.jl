@@ -1,12 +1,14 @@
 """
-    rand_graph(n, m; bidirected=true, seed=-1, kws...)
+    rand_graph(n, m; bidirected=true, seed=-1, edge_weight = nothing, kws...)
 
-Generate a random (Erdós-Renyi) `GNNGraph` with `n` nodes
-and `m` edges.
+Generate a random (Erdós-Renyi) `GNNGraph` with `n` nodes and `m` edges.
 
 If `bidirected=true` the reverse edge of each edge will be present.
 If `bidirected=false` instead, `m` unrelated edges are generated.
 In any case, the output graph will contain no self-loops or multi-edges.
+
+A vector can be passed  as `edge_weight`. Its length has to be equal to `m`
+in the directed case, and `m÷2` in the bidirected one.
 
 Use a `seed > 0` for reproducibility.
 
@@ -37,12 +39,12 @@ julia> edge_index(g)
 
 ```
 """
-function rand_graph(n::Integer, m::Integer; bidirected = true, seed = -1, kws...)
+function rand_graph(n::Integer, m::Integer; bidirected = true, seed = -1, edge_weight = nothing, kws...)
     if bidirected
         @assert iseven(m) "Need even number of edges for bidirected graphs, given m=$m."
     end
     m2 = bidirected ? m ÷ 2 : m
-    return GNNGraph(Graphs.erdos_renyi(n, m2; is_directed = !bidirected, seed); kws...)
+    return GNNGraph(Graphs.erdos_renyi(n, m2; is_directed = !bidirected, seed); edge_weight, kws...)
 end
 
 """
@@ -68,7 +70,7 @@ GNNHeteroGraph:
   num_edges: ((:user, :rate, :movie) => 30,)
 ```
 """
-rand_heteropraph
+function rand_heteropraph end
 
 # for generic iterators of pairs
 rand_heterograph(n, m; kws...) = rand_heterograph(Dict(n), Dict(m); kws...)
