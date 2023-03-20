@@ -62,6 +62,7 @@ export add_nodes,
        set_edge_weight,
        to_bidirected,
        to_unidirected,
+       add_RandomWalkPE!,
 # from Flux
        batch,
        unbatch,
