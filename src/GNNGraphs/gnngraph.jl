@@ -176,15 +176,20 @@ GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
 
 # GNNGraph(g::AbstractGraph; kws...) = GNNGraph(adjacency_matrix(g, dir=:out); kws...)
 
-function GNNGraph(g::AbstractGraph; kws...)
+function GNNGraph(g::AbstractGraph; edge_weight = nothing, kws...)
     s = Graphs.src.(Graphs.edges(g))
     t = Graphs.dst.(Graphs.edges(g))
+    w = edge_weight
     if !Graphs.is_directed(g)
         # add reverse edges since GNNGraph is directed
         s, t = [s; t], [t; s]
+        if !isnothing(w)
+            @assert length(w) == Graphs.ne(g) "edge_weight must have length equal to the number of undirected edges"
+            w = [w; w]
+        end
     end
     num_nodes::Int = Graphs.nv(g)
-    GNNGraph((s, t); num_nodes = num_nodes, kws...)
+    GNNGraph((s, t, w); num_nodes = num_nodes, kws...)
 end
 
 function GNNGraph(g::GNNGraph; ndata = g.ndata, edata = g.edata, gdata = g.gdata,
