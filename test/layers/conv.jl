@@ -334,3 +334,46 @@
         end
     end
 end
+
+@testset "Graphormer" begin
+    @testset "Initialization" begin
+        n_layers = 3
+        d_model = 64
+        n_heads = 8
+        d_ff = 256
+        dropout = 0.1
+        g = Graphormer(n_layers, d_model, n_heads, d_ff, dropout)
+        @test typeof(g) == Graphormer
+        @test length(g.layers) == n_layers
+    end
+
+    @testset "Forward pass" begin
+        n_nodes = 16
+        n_edges = 32
+        n_feats = 32
+        n_classes = 10
+        g = rand_graph(n_nodes, n_edges)
+        x = randn(Float32, n_feats, n_nodes)
+        y = rand(1:n_classes, n_nodes)
+        model = Graphormer(3, 64, 8, 256, 0.1)
+        out = model(g, x)
+        @test size(out) == (n_classes, n_nodes)
+    end
+
+    @testset "Backward pass" begin
+        n_nodes = 16
+        n_edges = 32
+        n_feats = 32
+        n_classes = 10
+        g = rand_graph(n_nodes, n_edges)
+        x = randn(Float32, n_feats, n_nodes)
+        y = rand(1:n_classes, n_nodes)
+        model = Graphormer(3, 64, 8, 256, 0.1)
+        out = model(g, x)
+        loss = Flux.crossentropy(out, y)
+        Flux.back!(loss)
+        for p in params(model)
+            @test size(grad(p)) == size(p)
+        end
+    end
+end
