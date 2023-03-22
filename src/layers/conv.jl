@@ -1721,6 +1721,7 @@ end
 @functor GraphormerLayer
 
 Flux.trainable(l::GraphormerLayer) = (l.dense_x, l.dense_e, l.bias, l.a)
+
 GraphormerLayer(ch::Pair{Int, Int}, args...; kws...) = GraphormerLayer((ch[1], 0) => ch[2], args...; kws...)
 
 function GraphormerLayer(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
