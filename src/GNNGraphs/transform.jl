@@ -700,7 +700,7 @@ function add_RandomWalkPE!(g::GNNGraph, walk_length::Int, symbol::Symbol=:p)
     if adj isa CuArray
         matrix = CuArray(matrix)
     end
-    deg = degree(g)
+    deg = sum(adj, dims=2) |> vec
     deg_inv = inv.(deg)
     deg_inv[isinf.(deg_inv)] .= 0
     RW = adj * Diagonal(deg_inv)
