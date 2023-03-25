@@ -712,7 +712,7 @@ function add_RandomWalkPE!(g::GNNGraph, walk_length::Int)
 end
 
 dense_zeros_like(a::SparseMatrixCSC, T::Type, sz = size(a)) = zeros(T, sz)
-dense_zeros_like(a::AbstractArray, T::Type, sz = size(a)) = fill!(similar(x, T, sz), 0)  
+dense_zeros_like(a::AbstractArray, T::Type, sz = size(a)) = fill!(similar(a, T, sz), 0)  
 dense_zeros_like(a::CUMAT_T, T::Type, sz = size(a)) = CUDA.zeros(T, sz)
 dense_zeros_like(x, sz = size(x)) = dense_zeros_like(x, eltype(x), sz)
 
