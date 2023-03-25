@@ -694,7 +694,7 @@ function rand_edge_split(g::GNNGraph, frac; bidirected = is_bidirected(g))
     return g1, g2
 end
 
-function add_RandomWalkPE!(g::GNNGraph, walk_length::Int)
+function random_walk_pe(g::GNNGraph, walk_length::Int)
     matrix=zeros(walk_length,g.num_nodes)
     adj = adjacency_matrix(g, Float32; dir=:out)
     matrix = dense_zeros_like(adj, Float32, (walk_length, g.num_nodes))
