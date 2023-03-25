@@ -269,8 +269,13 @@ end end
     @test ne(DG) == g.num_edges
 end
 
-@testset "RandomWalkPE" begin
-    g = rand_graph(10, 20, graph_type = GRAPH_T)
-    add_RandomWalkPE!(g, 3)
-    @test size(g.ndata.p) == (3, 10)
+@testset "random_walk_pe" begin
+    s = [1, 2, 2, 3]
+    t = [2, 1, 3, 2]
+    ndata = [-1, 0, 1]
+    g = GNNGraph(s, t, graph_type = GRAPH_T, ndata = ndata)
+    output = random_walk_pe(g, 3)
+    @test output == [0.0 0.0 0.0
+                     0.5 1.0 0.5
+                     0.0 0.0 0.0]
 end
