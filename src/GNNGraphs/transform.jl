@@ -694,7 +694,7 @@ function rand_edge_split(g::GNNGraph, frac; bidirected = is_bidirected(g))
     return g1, g2
 end
 
-function add_RandomWalkPE!(g::GNNGraph, walk_length::Int, symbol::Symbol=:p)
+function add_RandomWalkPE!(g::GNNGraph, walk_length::Int)
     matrix=zeros(walk_length,g.num_nodes)
     adj = adjacency_matrix(g)
     if adj isa CuArray
@@ -710,8 +710,13 @@ function add_RandomWalkPE!(g::GNNGraph, walk_length::Int, symbol::Symbol=:p)
         out = out * RW
         matrix[i,:] .= diag(out)
     end
-    setproperty!(g.ndata, symbol, matrix)
+    return matrix
 end
+
+dense_zeros_like(a::SparseMatrixCSC, T::Type, sz = size(a)) = zeros(T, sz)
+dense_zeros_like(a::AbstractArray, T::Type, sz = size(a)) = fill!(similar(x, T, sz), 0)  
+dense_zeros_like(a::CUMAT_T, T::Type, sz = size(a)) = CUDA.zeros(T, sz)
+dense_zeros_like(x, sz = size(x)) = dense_zeros_like(x, eltype(x), sz)
 
 # """
 # Transform vector of cartesian indexes into a tuple of vectors containing integers.
