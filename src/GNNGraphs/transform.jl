@@ -696,7 +696,7 @@ end
 
 function add_RandomWalkPE!(g::GNNGraph, walk_length::Int)
     matrix=zeros(walk_length,g.num_nodes)
-    adj = adjacency_matrix(g)
+    adj = adjacency_matrix(g, Float32; dir=:out)
     matrix = dense_zeros_like(adj, Float32, (walk_length, g.num_nodes))
     deg = sum(adj, dims=2) |> vec
     deg_inv = inv.(deg)
