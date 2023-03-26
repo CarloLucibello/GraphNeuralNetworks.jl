@@ -147,7 +147,8 @@ topk_index(y::Adjoint, k::Int) = topk_index(y', k)
 """
     WeigthAndSumPool(in_feats)
 
-WeigthAndSum sum pooling layer. Compute the weights for each node and perform a weighted sum.
+WeigthAndSum sum pooling layer.
+Takes a graph and the node features as inputs, computes the weights for each node and perform a weighted sum.
 """
 struct WeigthAndSumPool
     in_feats::Int
