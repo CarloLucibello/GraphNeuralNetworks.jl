@@ -151,15 +151,25 @@ WeigthAndSum sum pooling layer. Compute the weights for each node and perform a 
 """
 struct WeigthAndSumPool
     in_feats::Int
+    dense_layer::Dense
+end
+
+@functor WeigthAndSumPool
+
+Flux.trainable(ws::WeigthAndSumPool) = (ws.dense_layer)
+
+function WeigthAndSumPool(in_feats::Int)
+    dense_layer = Dense(in_feats, 1, sigmoid; bias = true)
+    WeigthAndSumPool(in_feats, dense_layer)
 end
 
 function (ws::WeigthAndSumPool)(g::GNNGraph, x::AbstractArray)
-    atom_weighting = Dense(ws.in_feats, 1, sigmoid; bias = true)
+    atom_weighting = ws.dense_layer
     return reduce_nodes(+, g, atom_weighting(x) .* x)
 end
 
 function (ws::WeigthAndSumPool)(g::GNNGraph, x::CuArray)
-    atom_weighting = Dense(ws.in_feats, 1, sigmoid; bias = true) |> gpu
+    atom_weighting = ws.dense_layer |> gpu
     return reduce_nodes(+, g, atom_weighting(x) .* x)
 end
 
