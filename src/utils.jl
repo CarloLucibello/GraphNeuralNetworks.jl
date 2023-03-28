@@ -136,6 +136,7 @@ end
     topk_feature(g, feat, k; rev = true, sortby = nothing)
 
 Graph-wise top-`k` on feature array `x` according to the `sortby` index.
+Returns a tuple of the top-`k` features and their indices.
 
 # Arguments
 
@@ -144,6 +145,26 @@ Graph-wise top-`k` on feature array `x` according to the `sortby` index.
 - `k`: the number of top features to return.
 - `rev`: if `true`, sort in descending order otherwise returns the `k` smallest elements.
 - `sortby`: the index of the feature to sort by. If `nothing`, every row independently.
+
+# Examples
+    
+```julia
+julia> g = rand_graph(5, 4, ndata = rand(3,5));
+
+julia> g.ndata.x
+3×5 Matrix{Float64}:
+ 0.333661  0.683551  0.315145  0.794089   0.840085
+ 0.263023  0.726028  0.626617  0.412247   0.0914052
+ 0.296433  0.186584  0.960758  0.0999844  0.813808
+
+julia> topk_feature(g, g.ndata.x, 2)
+([0.8400845757074524 0.7940891040468462; 0.7260276789396128 0.6266174187625888; 0.9607582005024967 0.8138081223752274], [5 4; 2 3; 3 5])
+
+julia> topk_feature(g, g.ndata.x, 2; sortby=3)
+([0.3151452763177829 0.8400845757074524; 0.6266174187625888 0.09140519108918477; 0.9607582005024967 0.8138081223752274], [3, 5])
+
+```
+
 """
 function topk_feature(g::GNNGraph, x::AbstractArray, k::Int; rev::Bool = true,
                       sortby::Union{Nothing, Int} = nothing)
