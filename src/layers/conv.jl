@@ -1716,13 +1716,12 @@ struct GraphormerLayer{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: Abstrac
     heads::Int
     concat::Bool
     add_self_loops::Bool
+    phi::Function
 end
 
 @functor GraphormerLayer
 
 Flux.trainable(l::GraphormerLayer) = (l.dense_x, l.dense_e, l.bias, l.a)
-
-GraphormerLayer(ch::Pair{Int, Int}, args...; kws...) = GraphormerLayer((ch[1], 0) => ch[2], args...; kws...)
 
 function GraphormerLayer(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
                  heads::Int = 1, concat::Bool = true, negative_slope = 0.2,
@@ -1737,7 +1736,7 @@ function GraphormerLayer(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
     b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out * heads : out) : false
     a = init(ein > 0 ? 3out : 2out, heads)
     negative_slope = convert(Float32, negative_slope)
-    GraphormerLayer(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops)
+    GraphormerLayer(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops, phi)
 end
 
 (l::GraphormerLayer)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
@@ -1755,17 +1754,15 @@ function (l::GraphormerLayer)(g::GNNGraph, x::AbstractMatrix,
 
     _, chout = l.channel
     heads = l.heads
-
     Wx = l.dense_x(x)
     Wx = reshape(Wx, chout, heads, :)
-
-    # a hand-written message passing
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wx, Wx, e)
     α = softmax_edge_neighbors(g, m.logα)
     β = α .* m.Wxj
     x = aggregate_neighbors(g, +, β)
-
     if !l.concat
         x = mean(x, dims = 2)
+    else
+        x = reshape(x, size(x, 1), heads *
     end
 end
