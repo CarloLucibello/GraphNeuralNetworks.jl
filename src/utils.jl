@@ -102,51 +102,47 @@ end
 
 function _sort_col(matrix::AbstractArray; rev::Bool = true, sortby::Int = 1)
     index = sortperm(view(matrix, sortby, :); rev)
-    return matrix[:, index]
+    return matrix[:, index], index
 end
 
 function _topk_matrix(matrix::AbstractArray, k::Int; rev::Bool = true, sortby = nothing)
     if sortby === nothing
-        return sort(matrix, dims = 2; rev)[:, 1:k]
+        sorted_matrix = sort(matrix, dims = 2; rev)[:, 1:k]
+        vector_indices = map(x -> sortperm(x; rev), eachrow(matrix))
+        indices = reduce(vcat, vector_indices')[:, 1:k]
+        return sorted_matrix, indices
     else
-        return _sort_col(matrix; rev, sortby)[:, 1:k]
+        sorted_matrix, indices = _sort_col(matrix; rev, sortby)
+        return sorted_matrix[:, 1:k], indices[1:k]
     end
 end
 
 function _topk_batch(matrices::AbstractArray, k::Int; rev::Bool = true,
                      sortby = nothing)
-    sorted_matrix = map(x -> _topk_matrix(x, k; rev, sortby), matrices)
-    return reduce(hcat, sorted_matrix)
-end
-
-"""
-    topk_nodes(g, feat, k; rev = true, sortby = nothing)
-
-Graph-wise top-k on node features `feat` according to the `sortby` feature index.
-"""
-function topk_nodes(g::GNNGraph, feat::Symbol, k::Int; rev = true, sortby = nothing)
-    if g.num_graphs == 1
-        matrix = getproperty(g.ndata, feat)
-        return _topk_matrix(matrix, k; rev, sortby)
+    num_graphs = length(matrices)
+    num_feat = size(matrices[1], 1)
+    sorted_matrix = map(x -> _topk_matrix(x, k; rev, sortby)[1], matrices)
+    output_matrix = reshape(reduce(hcat, sorted_matrix), num_feat, k, num_graphs)
+    indices = map(x -> _topk_matrix(x, k; rev, sortby)[2], matrices)
+    if sortby === nothing
+        output_indices = reshape(reduce(hcat, indices), num_feat, k, num_graphs)
     else
-        graphs = [getgraph(g, i) for i in 1:(g.num_graphs)]
-        matrices = map(graph -> getproperty(graph.ndata, feat), graphs)
-        return _topk_batch(matrices, k; rev, sortby)
+        output_indices = reshape(reduce(hcat, indices), k, 1, num_graphs)
     end
+    return output_matrix, output_indices
 end
 
 """
-    topk_edges(g, feat, k; rev = true, sortby = nothing)
+    topk_feature(g, feat, k; rev = true, sortby = nothing)
 
-Graph-wise top-k on edge features `feat` according to the `sortby` feature index.
+Graph-wise top-k on feature array `x` according to the `sortby` index.
 """
-function topk_edges(g::GNNGraph, feat::Symbol, k::Int; rev = true, sortby = nothing)
+function topk_feature(g::GNNGraph, x::AbstractArray, k::Int; rev::Bool = true,
+                      sortby::Union{Nothing, Int} = nothing)
     if g.num_graphs == 1
-        matrix = getproperty(g.edata, feat)
-        return _topk_matrix(matrix, k; rev, sortby)
+        return _topk_matrix(x, k; rev, sortby)
     else
-        graphs = [getgraph(g, i) for i in 1:(g.num_graphs)]
-        matrices = map(graph -> getproperty(graph.edata, feat), graphs)
+        matrices = [x[:, g.graph_indicator .== i] for i in 1:(g.num_graphs)]
         return _topk_batch(matrices, k; rev, sortby)
     end
 end
