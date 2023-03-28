@@ -105,7 +105,7 @@ function _sort_col(matrix::AbstractArray; rev::Bool = true, sortby::Int = 1)
     return matrix[:, index], index
 end
 
-function _topk_matrix(matrix::AbstractArray, k::Int; rev::Bool = true, sortby = nothing)
+function _topk_matrix(matrix::AbstractArray, k::Int; rev::Bool = true, sortby::Union{Nothing, Int} = nothing)
     if sortby === nothing
         sorted_matrix = sort(matrix, dims = 2; rev)[:, 1:k]
         vector_indices = map(x -> sortperm(x; rev), eachrow(matrix))
@@ -118,7 +118,7 @@ function _topk_matrix(matrix::AbstractArray, k::Int; rev::Bool = true, sortby = 
 end
 
 function _topk_batch(matrices::AbstractArray, k::Int; rev::Bool = true,
-                     sortby = nothing)
+                     sortby::Union{Nothing, Int} = nothing)
     num_graphs = length(matrices)
     num_feat = size(matrices[1], 1)
     sorted_matrix = map(x -> _topk_matrix(x, k; rev, sortby)[1], matrices)
@@ -135,7 +135,15 @@ end
 """
     topk_feature(g, feat, k; rev = true, sortby = nothing)
 
-Graph-wise top-k on feature array `x` according to the `sortby` index.
+Graph-wise top-`k` on feature array `x` according to the `sortby` index.
+
+# Arguments
+
+- `g`: a `GNNGraph``.
+- `x`: a feature array of size `(number_features, g.num_nodes)` or `(number_features, g.num_edges)` of the graph `g`.
+- `k`: the number of top features to return.
+- `rev`: if `true`, sort in descending order otherwise returns the `k` smallest elements.
+- `sortby`: the index of the feature to sort by. If `nothing`, every row independently.
 """
 function topk_feature(g::GNNGraph, x::AbstractArray, k::Int; rev::Bool = true,
                       sortby::Union{Nothing, Int} = nothing)
