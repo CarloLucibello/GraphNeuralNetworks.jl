@@ -26,7 +26,17 @@ and optionally an edge weight vector.
 - `init`: Weights' initializer. Default `glorot_uniform`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
 - `use_edge_weight`: If `true`, consider the edge weights in the input graph (if available).
-                     If `add_self_loops=true` the new weights will be set to 1. Default `false`.
+                     If `add_self_loops=true` the new weights will be set to 1. 
+                     This option is ignored if the `edge_weight` is explicitly provided in the forward pass.
+                     Default `false`.
+
+# Forward
+
+    (::GCNConv)(g::GNNGraph, x::AbstractMatrix, edge_weight = nothing) -> AbstractMatrix
+
+Takes as input a graph `g`,ca node feature matrix `x` of size `[in, num_nodes]`,
+and optionally an edge weight vector. Returns a node feature matrix of size 
+`[out, num_nodes]`.
 
 # Examples
 
@@ -74,14 +84,24 @@ function GCNConv(ch::Pair{Int, Int}, σ = identity;
     GCNConv(W, b, σ, add_self_loops, use_edge_weight)
 end
 
-function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T},
-                      edge_weight::EW = nothing) where
-    {T, EW <: Union{Nothing, AbstractVector}}
-    @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+check_gcnconv_input(g::GNNGraph{<:ADJMAT_T}, edge_weight::AbstractVector) = 
+    throw(ArgumentError("Providing external edge_weight is not yet supported for adjacency matrix graphs"))
 
-    if edge_weight !== nothing
-        @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
+function check_gcnconv_input(g::GNNGraph, edge_weight::AbstractVector)
+    if length(edge_weight) !== g.num_edges 
+        throw(ArgumentError("Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"))
     end
+end
+
+check_gcnconv_input(g::GNNGraph, edge_weight::Nothing) = nothing
+
+
+function (l::GCNConv)(g::GNNGraph, 
+                      x::AbstractMatrix{T},
+                      edge_weight::EW = nothing
+                      ) where {T, EW <: Union{Nothing, AbstractVector}}
+
+    check_gcnconv_input(g, edge_weight)
 
     if l.add_self_loops
         g = add_self_loops(g)
@@ -97,7 +117,11 @@ function (l::GCNConv)(g::GNNGraph, x::AbstractMatrix{T},
         # multiply before convolution if it is more convenient, otherwise multiply after
         x = l.weight * x
     end
-    d = degree(g, T; dir = :in, edge_weight)
+    if edge_weight !== nothing
+        d = degree(g, T; dir = :in, edge_weight)
+    else
+        d = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
+    end
     c = 1 ./ sqrt.(d)
     x = x .* c'
     if edge_weight !== nothing
@@ -1278,7 +1302,11 @@ function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T},
     if Dout < Din
         x = l.weight * x
     end
-    d = degree(g, T; dir = :in, edge_weight)
+    if edge_weight !== nothing
+        d = degree(g, T; dir = :in, edge_weight)
+    else
+        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+    end
     c = 1 ./ sqrt.(d)
     for iter in 1:(l.k)
         x = x .* c'
