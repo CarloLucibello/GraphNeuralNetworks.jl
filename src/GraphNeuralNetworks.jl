@@ -27,8 +27,7 @@ export
       broadcast_nodes,
       broadcast_edges,
       softmax_edge_neighbors,
-      topk_nodes,
-      topk_edges,
+      topk_feature,
 
 # msgpass
       apply_edges,
