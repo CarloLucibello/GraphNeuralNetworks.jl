@@ -149,6 +149,18 @@ topk_index(y::Adjoint, k::Int) = topk_index(y', k)
 
 WeigthAndSum sum pooling layer.
 Takes a graph and the node features as inputs, computes the weights for each node and perform a weighted sum.
+
+# Example
+
+```julia
+n = 3
+chin = 5
+
+ws = WeigthAndSumPool(chin)
+g = GNNGraph(rand_graph(3, 4), ndata = rand(Float32, chin, 3), graph_type = GRAPH_T) 
+
+u = ws(g, g.ndata.x)
+```
 """
 struct WeigthAndSumPool
     in_feats::Int
@@ -156,8 +168,6 @@ struct WeigthAndSumPool
 end
 
 @functor WeigthAndSumPool
-
-Flux.trainable(ws::WeigthAndSumPool) = (ws.dense_layer)
 
 function WeigthAndSumPool(in_feats::Int)
     dense_layer = Dense(in_feats, 1, sigmoid; bias = true)
