@@ -1766,3 +1766,14 @@ function (l::GraphormerLayer)(g::GNNGraph, x::AbstractMatrix,
         x = reshape(x, size(x, 1), heads *
     end
 end
+function message(l::GraphormerLayer, xi, xj, e)
+    θ = cat(xi, xj, dims=2)
+    if l.dense_e !== nothing
+        fe = l.dense_e(e)
+        fe = reshape(fe, size(fe, 1), l.heads, :)
+        θ = cat(θ, fe, dims=1)
+    end
+    W = l.a * θ
+    W = l.σ.(W)
+    return W
+end
