@@ -1,12 +1,12 @@
 @testset "add self-loops" begin
     A = [1 1 0 0
-            0 0 1 0
-            0 0 0 1
-            1 0 0 0]
+         0 0 1 0
+         0 0 0 1
+         1 0 0 0]
     A2 = [2 1 0 0
-            0 1 1 0
-            0 0 1 1
-            1 0 0 1]
+          0 1 1 0
+          0 0 1 1
+          1 0 0 1]
 
     g = GNNGraph(A; graph_type = GRAPH_T)
     fg2 = add_self_loops(g)
@@ -18,7 +18,7 @@ end
 
 @testset "batch" begin
     g1 = GNNGraph(random_regular_graph(10, 2), ndata = rand(16, 10),
-                    graph_type = GRAPH_T)
+                  graph_type = GRAPH_T)
     g2 = GNNGraph(random_regular_graph(4, 2), ndata = rand(16, 4), graph_type = GRAPH_T)
     g3 = GNNGraph(random_regular_graph(7, 2), ndata = rand(16, 7), graph_type = GRAPH_T)
 
@@ -44,7 +44,7 @@ end
     # Batch of batches
     g123123 = Flux.batch([g123, g123])
     @test g123123.graph_indicator ==
-            [fill(1, 10); fill(2, 4); fill(3, 7); fill(4, 10); fill(5, 4); fill(6, 7)]
+          [fill(1, 10); fill(2, 4); fill(3, 7); fill(4, 10); fill(5, 4); fill(6, 7)]
     @test g123123.num_graphs == 6
 end
 
@@ -67,8 +67,8 @@ end
     c = 3
     ngraphs = 10
     gs = [rand_graph(n, c * n, ndata = rand(2, n), edata = rand(3, c * n),
-                        graph_type = GRAPH_T)
-            for _ in 1:ngraphs]
+                     graph_type = GRAPH_T)
+          for _ in 1:ngraphs]
     gall = Flux.batch(gs)
     gs2 = Flux.unbatch(gall)
     @test gs2[1] == gs[1]
@@ -77,7 +77,7 @@ end
 
 @testset "getgraph" begin
     g1 = GNNGraph(random_regular_graph(10, 2), ndata = rand(16, 10),
-                    graph_type = GRAPH_T)
+                  graph_type = GRAPH_T)
     g2 = GNNGraph(random_regular_graph(4, 2), ndata = rand(16, 4), graph_type = GRAPH_T)
     g3 = GNNGraph(random_regular_graph(7, 2), ndata = rand(16, 7), graph_type = GRAPH_T)
     g = Flux.batch([g1, g2, g3])
@@ -267,4 +267,15 @@ end end
     DG = Graphs.DiGraph(g)
     @test nv(DG) == g.num_nodes
     @test ne(DG) == g.num_edges
+end
+
+@testset "random_walk_pe" begin
+    s = [1, 2, 2, 3]
+    t = [2, 1, 3, 2]
+    ndata = [-1, 0, 1]
+    g = GNNGraph(s, t, graph_type = GRAPH_T, ndata = ndata)
+    output = random_walk_pe(g, 3)
+    @test output == [0.0 0.0 0.0
+                     0.5 1.0 0.5
+                     0.0 0.0 0.0]
 end

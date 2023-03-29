@@ -694,6 +694,33 @@ function rand_edge_split(g::GNNGraph, frac; bidirected = is_bidirected(g))
     return g1, g2
 end
 
+"""
+    random_walk_pe(g, walk_length)
+
+Return the random walk positional encoding from the paper [Graph Neural Networks with Learnable Structural and Positional Representations](https://arxiv.org/abs/2110.07875) of the given graph `g` and the length of the walk `walk_length` as a matrix of size `(walk_length, g.num_nodes)`. 
+"""
+function random_walk_pe(g::GNNGraph, walk_length::Int)
+    matrix = zeros(walk_length, g.num_nodes)
+    adj = adjacency_matrix(g, Float32; dir = :out)
+    matrix = dense_zeros_like(adj, Float32, (walk_length, g.num_nodes))
+    deg = sum(adj, dims = 2) |> vec
+    deg_inv = inv.(deg)
+    deg_inv[isinf.(deg_inv)] .= 0
+    RW = adj * Diagonal(deg_inv)
+    out = RW
+    matrix[1, :] .= diag(RW)
+    for i in 2:walk_length
+        out = out * RW
+        matrix[i, :] .= diag(out)
+    end
+    return matrix
+end
+
+dense_zeros_like(a::SparseMatrixCSC, T::Type, sz = size(a)) = zeros(T, sz)
+dense_zeros_like(a::AbstractArray, T::Type, sz = size(a)) = fill!(similar(a, T, sz), 0)
+dense_zeros_like(a::CUMAT_T, T::Type, sz = size(a)) = CUDA.zeros(T, sz)
+dense_zeros_like(x, sz = size(x)) = dense_zeros_like(x, eltype(x), sz)
+
 # """
 # Transform vector of cartesian indexes into a tuple of vectors containing integers.
 # """
