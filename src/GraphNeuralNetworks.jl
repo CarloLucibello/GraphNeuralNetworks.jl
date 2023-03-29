@@ -2,7 +2,7 @@ module GraphNeuralNetworks
 
 using Statistics: mean
 using LinearAlgebra, Random
-using Base: tail
+using Base: tail, Fix1, Fix2
 using CUDA
 using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, @functor, batch
@@ -11,6 +11,7 @@ using NNlib, NNlibCUDA
 using NNlib: scatter, gather
 using ChainRulesCore
 using Reexport
+using SnoopPrecompile
 using SparseArrays, Graphs # not needed but if removed Documenter will complain
 
 include("GNNGraphs/GNNGraphs.jl")
@@ -82,5 +83,9 @@ include("layers/pool.jl")
 include("msgpass.jl")
 include("mldatasets.jl")
 include("deprecations.jl")
+
+@precompile_all_calls begin
+    include("precompile.jl")
+end
 
 end

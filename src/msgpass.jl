@@ -73,11 +73,11 @@ See also [`apply_edges`](@ref) and [`aggregate_neighbors`](@ref).
 """
 function propagate end
 
-function propagate(f, g::GNNGraph, aggr; xi = nothing, xj = nothing, e = nothing)
-    propagate(f, g, aggr, xi, xj, e)
+function propagate(f::F, g::GNNGraph, aggr; xi = nothing, xj = nothing, e = nothing) where F
+    propagate(f, g, aggr, xi, xj, e) 
 end
 
-function propagate(f, g::GNNGraph, aggr, xi, xj, e = nothing)
+function propagate(f::F, g::GNNGraph, aggr, xi, xj, e = nothing) where F
     m = apply_edges(f, g, xi, xj, e)
     m̄ = aggregate_neighbors(g, aggr, m)
     return m̄
@@ -87,12 +87,12 @@ end
 # https://github.com/JuliaLang/julia/issues/15276
 ## and zygote issues
 # https://github.com/FluxML/Zygote.jl/issues/1317
-function propagate(f, g::GNNGraph, aggr, l::GNNLayer; xi = nothing, xj = nothing,
-                   e = nothing)
-    propagate((xi, xj, e) -> f(l, xi, xj, e), g, aggr, xi, xj, e)
+function propagate(f::F, g::GNNGraph, aggr, l::GNNLayer; xi = nothing, xj = nothing,
+                   e = nothing) where F
+    propagate(Fix1(f, l), g, aggr, xi, xj, e)
 end
-function propagate(f, g::GNNGraph, aggr, l::GNNLayer, xi, xj, e = nothing)
-    propagate((xi, xj, e) -> f(l, xi, xj, e), g, aggr, xi, xj, e)
+function propagate(f::F, g::GNNGraph, aggr, l::GNNLayer, xi, xj, e = nothing) where F
+    propagate(Fix1(f, l), g, aggr, xi, xj, e)
 end
 
 ## APPLY EDGES
@@ -135,11 +135,11 @@ See also [`propagate`](@ref) and [`aggregate_neighbors`](@ref).
 """
 function apply_edges end
 
-function apply_edges(f, g::GNNGraph; xi = nothing, xj = nothing, e = nothing)
+function apply_edges(f::F, g::GNNGraph; xi = nothing, xj = nothing, e = nothing) where F
     apply_edges(f, g, xi, xj, e)
 end
 
-function apply_edges(f, g::GNNGraph, xi, xj, e = nothing)
+function apply_edges(f::F, g::GNNGraph, xi, xj, e = nothing) where F
     check_num_nodes(g, xi)
     check_num_nodes(g, xj)
     check_num_edges(g, e)
@@ -154,12 +154,12 @@ end
 # https://github.com/JuliaLang/julia/issues/15276
 ## and zygote issues
 # https://github.com/FluxML/Zygote.jl/issues/1317
-function apply_edges(f, g::GNNGraph, l::GNNLayer; xi = nothing, xj = nothing, e = nothing)
-    apply_edges((xi, xj, e) -> f(l, xi, xj, e), g, xi, xj, e)
+function apply_edges(f::F, g::GNNGraph, l::GNNLayer; xi = nothing, xj = nothing, e = nothing) where F
+    apply_edges(Fix1(f, l), g, xi, xj, e)
 end
 
-function apply_edges(f, g::GNNGraph, l::GNNLayer, xi, xj, e = nothing)
-    apply_edges((xi, xj, e) -> f(l, xi, xj, e), g, xi, xj, e)
+function apply_edges(f::F, g::GNNGraph, l::GNNLayer, xi, xj, e = nothing) where F
+    apply_edges(Fix1(f, l), g, xi, xj, e)
 end
 
 ##  AGGREGATE NEIGHBORS
@@ -176,7 +176,7 @@ features
 Neighborhood aggregation is the second step of [`propagate`](@ref), 
 where it comes after [`apply_edges`](@ref).
 """
-function aggregate_neighbors(g::GNNGraph, aggr, m)
+function aggregate_neighbors(g::GNNGraph, aggr::A, m) where {A}
     check_num_edges(g, m)
     s, t = edge_index(g)
     return GNNGraphs._scatter(aggr, m, t, g.num_nodes)
