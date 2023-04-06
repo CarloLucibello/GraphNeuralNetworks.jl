@@ -1756,15 +1756,17 @@ function (l::GraphormerLayer)(g::GNNGraph, x::AbstractMatrix,
     heads = l.heads
     Wx = l.dense_x(x)
     Wx = reshape(Wx, chout, heads, :)
-    m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wx, Wx, e)
-    α = softmax_edge_neighbors(g, m.logα)
-    β = α .* m.Wxj
-    x = aggregate_neighbors(g, +, β)
-    if !l.concat
-        x = mean(x, dims = 2)
-    else
-        x = reshape(x, size(x, 1), heads *
+    h = Wx
+    for i in 1:l.phi
+        h = l.MHA(l.LN(h))
+        h = h + Wx
     end
+    h = reshape(h, size(h, 1), heads * chout)
+    if l.bias !== false
+        h = l.bias(h)
+    end
+    h = l.σ.(h)
+    return h
 end
 function message(l::GraphormerLayer, xi, xj, e)
     θ = cat(xi, xj, dims=2)
