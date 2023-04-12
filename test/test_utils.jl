@@ -158,7 +158,6 @@ function test_layer(l, g::GNNGraph; atol = 1e-5, rtol = 1e-5,
     # TEST LAYER GRADIENT - l(g, x, e) 
     l̄ = gradient(l -> loss(l, g, x, e), l)[1]
     l̄_fd = FiniteDifferences.grad(fdm, l64 -> loss(l64, g64, x64, e64), l64)[1]
-    @show verbose
     test_approx_structs(l, l̄, l̄_fd; atol, rtol, exclude_grad_fields, verbose)
 
     if test_gpu
