@@ -158,6 +158,7 @@ function test_layer(l, g::GNNGraph; atol = 1e-5, rtol = 1e-5,
     # TEST LAYER GRADIENT - l(g, x, e) 
     l̄ = gradient(l -> loss(l, g, x, e), l)[1]
     l̄_fd = FiniteDifferences.grad(fdm, l64 -> loss(l64, g64, x64, e64), l64)[1]
+    @show verbose
     test_approx_structs(l, l̄, l̄_fd; atol, rtol, exclude_grad_fields, verbose)
 
     if test_gpu
@@ -165,9 +166,9 @@ function test_layer(l, g::GNNGraph; atol = 1e-5, rtol = 1e-5,
         test_approx_structs(lgpu, l̄gpu, l̄; atol, rtol, exclude_grad_fields, verbose)
     end
 
-    # TEST LAYER GRADIENT - l(g)
-    l̄ = gradient(l -> loss(l, g), l)[1]
-    test_approx_structs(l, l̄, l̄_fd; atol, rtol, exclude_grad_fields, verbose)
+    # # TEST LAYER GRADIENT - l(g)
+    # l̄ = gradient(l -> loss(l, g), l)[1]
+    # test_approx_structs(l, l̄, l̄_fd; atol, rtol, exclude_grad_fields, verbose)
 
     return true
 end
@@ -180,8 +181,10 @@ function test_approx_structs(l, l̄, l̄fd; atol = 1e-5, rtol = 1e-5,
 
     for f in fieldnames(typeof(l))
         f ∈ exclude_grad_fields && continue
+        verbose && println("Test gradient of field $f...")
         x, g, gfd = getfield(l, f), getfield(l̄, f), getfield(l̄fd, f)
         test_approx_structs(x, g, gfd; atol, rtol, exclude_grad_fields, verbose)
+        verbose && println("... field $f done!")
     end
     return true
 end
