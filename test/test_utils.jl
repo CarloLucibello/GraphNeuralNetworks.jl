@@ -165,9 +165,9 @@ function test_layer(l, g::GNNGraph; atol = 1e-5, rtol = 1e-5,
         test_approx_structs(lgpu, l̄gpu, l̄; atol, rtol, exclude_grad_fields, verbose)
     end
 
-    # # TEST LAYER GRADIENT - l(g)
-    # l̄ = gradient(l -> loss(l, g), l)[1]
-    # test_approx_structs(l, l̄, l̄_fd; atol, rtol, exclude_grad_fields, verbose)
+    # TEST LAYER GRADIENT - l(g)
+    l̄ = gradient(l -> loss(l, g), l)[1]
+    test_approx_structs(l, l̄, l̄_fd; atol, rtol, exclude_grad_fields, verbose)
 
     return true
 end
