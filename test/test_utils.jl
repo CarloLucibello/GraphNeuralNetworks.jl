@@ -180,8 +180,10 @@ function test_approx_structs(l, l̄, l̄fd; atol = 1e-5, rtol = 1e-5,
 
     for f in fieldnames(typeof(l))
         f ∈ exclude_grad_fields && continue
+        verbose && println("Test gradient of field $f...")
         x, g, gfd = getfield(l, f), getfield(l̄, f), getfield(l̄fd, f)
         test_approx_structs(x, g, gfd; atol, rtol, exclude_grad_fields, verbose)
+        verbose && println("... field $f done!")
     end
     return true
 end
