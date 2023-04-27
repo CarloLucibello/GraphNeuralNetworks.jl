@@ -214,8 +214,6 @@ That is exactly where Graph Neural Networks come into play and can help to boost
 md"""
 ## Training a Graph Convolutional Neural Network (GNN)
 
-We can easily convert our MLP to a GNN by swapping the `torch.nn.Linear` layers with PyG's GNN operators.
-
 Following-up on [the first part of this tutorial](), we replace the linear layers by the [`GCNConv`]() module.
 To recap, the **GCN layer** ([Kipf et al. (2017)](https://arxiv.org/abs/1609.02907)) is defined as
 
