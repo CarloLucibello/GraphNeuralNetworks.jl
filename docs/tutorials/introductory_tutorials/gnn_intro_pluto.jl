@@ -258,9 +258,9 @@ Since everything in our model is differentiable and parameterized, we can add so
 Here, we make use of a semi-supervised or transductive learning procedure: We simply train against one node per class, but are allowed to make use of the complete input graph data.
 
 Training our model is very similar to any other Flux model.
-In addition to defining our network architecture, we define a loss criterion (here, `logitcrossentropy` and initialize a stochastic gradient optimizer (here, `Adam`).
+In addition to defining our network architecture, we define a loss criterion (here, `logitcrossentropy`), and initialize a stochastic gradient optimizer (here, `Adam`).
 After that, we perform multiple rounds of optimization, where each round consists of a forward and backward pass to compute the gradients of our model parameters w.r.t. to the loss derived from the forward pass.
-If you are not new to Flux, this scheme should appear familiar to you. 
+If you are not new to Flux, this scheme should appear familiar to you.
 
 Note that our semi-supervised learning scenario is achieved by the following line:
 ```

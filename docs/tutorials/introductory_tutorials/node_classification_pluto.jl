@@ -166,7 +166,7 @@ md"""
 Our MLP is defined by two linear layers and enhanced by [ReLU](https://fluxml.ai/Flux.jl/stable/models/nnlib/#NNlib.relu) non-linearity and [Dropout](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.Dropout).
 Here, we first reduce the 1433-dimensional feature vector to a low-dimensional embedding (`hidden_channels=16`), while the second linear layer acts as a classifier that should map each low-dimensional node embedding to one of the 7 classes.
 
-Let's train our simple MLP by following a similar procedure as described in [the first part of this tutorial](https://carlolucibello.github.io/GraphNeuralNetworks.jl/dev/tutorials/gnn_intro_pluto).
+Let's train our simple MLP by following a similar procedure as described in [the first part of this tutorial](https://carlolucibello.github.io/GraphNeuralNetworks.jl/dev/tutorials/introductory_tutorials/gnn_intro_pluto/#Hands-on-introduction-to-Graph-Neural-Networks).
 We again make use of the **cross entropy loss** and **Adam optimizer**.
 This time, we also define a **`accuracy` function** to evaluate how well our final model performs on the test node set (which labels have not been observed during training).
 """
@@ -214,9 +214,7 @@ That is exactly where Graph Neural Networks come into play and can help to boost
 md"""
 ## Training a Graph Convolutional Neural Network (GNN)
 
-We can easily convert our MLP to a GNN by swapping the `torch.nn.Linear` layers with PyG's GNN operators.
-
-Following-up on [the first part of this tutorial](), we replace the linear layers by the [`GCNConv`]() module.
+Following-up on [the first part of this tutorial](https://carlolucibello.github.io/GraphNeuralNetworks.jl/dev/tutorials/introductory_tutorials/node_classification_pluto/#Multi-layer-Perception-Network-(MLP)), we replace the `Dense` linear layers by the [`GCNConv`](https://carlolucibello.github.io/GraphNeuralNetworks.jl/dev/api/conv/#GraphNeuralNetworks.GCNConv) module.
 To recap, the **GCN layer** ([Kipf et al. (2017)](https://arxiv.org/abs/1609.02907)) is defined as
 
 ```math
