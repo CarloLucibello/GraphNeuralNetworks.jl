@@ -214,7 +214,7 @@ That is exactly where Graph Neural Networks come into play and can help to boost
 md"""
 ## Training a Graph Convolutional Neural Network (GNN)
 
-Following-up on [the first part of this tutorial](), we replace the linear layers by the [`GCNConv`]() module.
+Following-up on [the first part of this tutorial](https://carlolucibello.github.io/GraphNeuralNetworks.jl/dev/tutorials/introductory_tutorials/node_classification_pluto/#Multi-layer-Perception-Network-(MLP)), we replace the `Dense` linear layers by the [`GCNConv`](https://carlolucibello.github.io/GraphNeuralNetworks.jl/dev/api/conv/#GraphNeuralNetworks.GCNConv) module.
 To recap, the **GCN layer** ([Kipf et al. (2017)](https://arxiv.org/abs/1609.02907)) is defined as
 
 ```math
