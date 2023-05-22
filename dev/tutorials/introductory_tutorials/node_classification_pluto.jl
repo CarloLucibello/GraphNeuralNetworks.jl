@@ -44,7 +44,7 @@ Let us start off by importing some libraries. We will be using Flux.jl and `Grap
 # ╔═╡ 0d556a7c-d4b6-4cef-806c-3e1712de0791
 md"""
 ## Visualize
-We want to visualize the the outputs of the resutls using t-distributed stochastic neighbor embedding (tsne) to embed our output embeddings onto a 2D plane.
+We want to visualize the the outputs of the results using t-distributed stochastic neighbor embedding (tsne) to embed our output embeddings onto a 2D plane.
 """
 
 # ╔═╡ 997b5387-3811-4998-a9d1-7981b58b9e09
@@ -57,11 +57,11 @@ end
 md"""
 ## Dataset: Cora
 
-For our tutorial, we will be using the `Cora` dataset. `Cora` is a citaton network of 2708 documents classified into one of seven classes and 5429 links. Each node represent articles/documents and the edges between these nodes if one of them cite each other.
+For our tutorial, we will be using the `Cora` dataset. `Cora` is a citation network of 2708 documents classified into one of seven classes and 5429 links. Each node represent articles/documents and the edges between these nodes if one of them cite each other.
 
 Each publication in the dataset is described by a 0/1-valued word vector indicating the absence/presence of the corresponding word from the dictionary. The dictionary consists of 1433 unique words.
 
-This dataset was first introduced by [Yang et al. (2016)](https://arxiv.org/abs/1603.08861) as one of the datasets of the `Planetoid` benchmark suite. We will be using [MLDatasets.jl](https://juliaml.github.io/MLDatasets.jl/stable/) for an easy accss to this dataset.
+This dataset was first introduced by [Yang et al. (2016)](https://arxiv.org/abs/1603.08861) as one of the datasets of the `Planetoid` benchmark suite. We will be using [MLDatasets.jl](https://juliaml.github.io/MLDatasets.jl/stable/) for an easy access to this dataset.
 """
 
 # ╔═╡ edab1e3a-31f6-471f-9835-5b1f97e5cf3f
@@ -77,7 +77,7 @@ dataset.metadata
 
 # ╔═╡ 3438ee7f-bfca-465d-85df-13379622d415
 md"""
-The `graphs` variable GraphDataset contains the graph. The `Cora` dataaset contains only 1 graph.
+The `graphs` variable GraphDataset contains the graph. The `Cora` dataset contains only 1 graph.
 """
 
 # ╔═╡ eec6fb60-0774-4f2a-bcb7-dbc28ab747a6
@@ -85,7 +85,7 @@ dataset.graphs
 
 # ╔═╡ bd2fd04d-7fb0-4b31-959b-bddabe681754
 md"""
-There is only one graph of the dataset. The `node_data` contians `features` indicating if certain words are present or not and `targets` indicating the class for each document. We convert the single-graph dataset to a `GNNGraph`.
+There is only one graph of the dataset. The `node_data` contains `features` indicating if certain words are present or not and `targets` indicating the class for each document. We convert the single-graph dataset to a `GNNGraph`.
 """
 
 # ╔═╡ b29c3a02-c21b-4b10-aa04-b90bcc2931d8
