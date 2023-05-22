@@ -39,6 +39,24 @@ end
     @test_throws KeyError ds.n
 end
 
+@testset "cat empty" begin
+    ds1 = DataStore(2, (:x => rand(2)))
+    ds2 = DataStore(1, (:x => rand(1)))
+    dsempty = DataStore(0, (:x => rand(0)))
+
+    ds = GNNGraphs.cat_features(ds1, ds2)
+    @test getn(ds) == 3
+    ds = GNNGraphs.cat_features(ds1, dsempty)
+    @test getn(ds) == 2
+
+    # issue #280
+    g = GNNGraph([1], [2])
+    h = add_edges(g, Int[], Int[])  # adds no edges
+    @test getn(g.edata) == 1
+    @test getn(h.edata) == 1
+end
+
+
 @testset "gradient" begin
     ds = DataStore(10, (:x => rand(10), :y => rand(2, 10)))
 
