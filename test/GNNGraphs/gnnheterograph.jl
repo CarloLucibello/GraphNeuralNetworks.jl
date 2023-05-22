@@ -69,7 +69,7 @@ end
     @test hg.num_edges == Dict((:A, :rel1, :B) => 20, (:B, :rel2, :A) => 30)
 end
 
-## Cannot test this because DataStore is not an oredered collection
+## Cannot test this because DataStore is not an ordered collection
 ## Uncomment when/if it will be based on OrderedDict
 # @testset "show" begin
 #     num_nodes = Dict(:A => 10, :B => 20);

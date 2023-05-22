@@ -16,4 +16,4 @@ checkout these tutorials from
 [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html).
 You are expected to use [Pluto.jl](https://github.com/fonsp/Pluto.jl) notebooks
 with [DemoCards.jl](https://github.com/JuliaDocs/DemoCards.jl).
-Please check out exsisting tutorials for more details.
+Please check out existing tutorials for more details.
