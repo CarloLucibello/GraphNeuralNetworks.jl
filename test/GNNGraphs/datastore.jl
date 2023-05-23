@@ -17,7 +17,7 @@ end
     x = rand(10)
     ds = DataStore(10, (:x => x, :y => rand(2, 10)))
     @test ds.x == ds[:x] == x
-    @test_throws AssertionError ds.z=rand(12)
+    @test_throws DimensionMismatch ds.z=rand(12)
     ds.z = [1:10;]
     @test ds.z == [1:10;]
 end
