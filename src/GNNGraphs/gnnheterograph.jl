@@ -137,10 +137,9 @@ function show_sorted_dict(io::IO, d::Dict, compact::Bool)
     if !isempty(d)
         _keys = sort!(collect(keys(d)))
         for key in _keys[1:end-1]
-            print(io, "$key => $(d[key]), ")
+            print(io, "$(_str(key)) => $(d[key]), ")
         end
-        show(io, _keys[end])
-        print(io, "$(_keys[end]) => $(d[_keys[end]])")
+        print(io, "$(_str(_keys[end])) => $(d[_keys[end]])")
     end
     print(io, ")")
 end
