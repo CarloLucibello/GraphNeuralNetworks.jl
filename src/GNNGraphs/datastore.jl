@@ -109,7 +109,7 @@ function Base.setproperty!(ds::DataStore, s::Symbol, x)
     @assert s != :_n "cannot set _n directly"
     @assert s != :_data "cannot set _data directly"
     if getn(ds) >= 0
-        @assert numobs(x) == getn(ds) "expected (numobs(x) == getn(ds)) but got $(numobs(x)) != $(getn(ds))"
+        numobs(x) == getn(ds) ||  throw(DimensionMismatch("expected $(getn(ds)) object features but got $(numobs(x))."))
     end
     return getdata(ds)[s] = x
 end
