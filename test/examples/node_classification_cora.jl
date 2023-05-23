@@ -92,7 +92,7 @@ function train_many(; usecuda = false)
         ## ("ChebConv", (nin, nout) -> ChebConv(nin => nout, 2)), # not working on gpu
         ## ("NNConv", (nin, nout) -> NNConv(nin => nout)),  # needs edge features
         ## ("GatedGraphConv", (nin, nout) -> GatedGraphConv(nout, 2)),  # needs nin = nout
-        ## ("EdgeConv",(nin, nout) -> EdgeConv(Dense(2nin, nout, relu))), # Fits the traning set but does not generalize well
+        ## ("EdgeConv",(nin, nout) -> EdgeConv(Dense(2nin, nout, relu))), # Fits the training set but does not generalize well
     ]
         @show layer
         @time train_res, test_res = train(Layer; usecuda, verbose = false)

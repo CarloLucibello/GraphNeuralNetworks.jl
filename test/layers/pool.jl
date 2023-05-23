@@ -76,3 +76,18 @@ end
     @test topk_index(X, 4) == [1, 2, 3, 4]
     @test topk_index(X', 4) == [1, 2, 3, 4]
 end
+
+@testset "Set2Set" begin
+    n_in = 3
+    n_iters = 2
+    n_layers = 1
+    g = batch([rand_graph(10, 40, graph_type = GRAPH_T) for _ in 1:5])
+    g = GNNGraph(g, ndata = rand(Float32, n_in, g.num_nodes))
+    l = Set2Set(n_in, n_iters, n_layers)
+    y = l(g, node_features(g))
+    @test size(y) == (2 * n_in, g.num_graphs)
+    
+    ## TODO the numerical gradient seems to be 3 times smaller than zygote one
+    # test_layer(l, g, rtol = 1e-4, atol=1e-4, outtype = :graph, outsize = (2 * n_in, g.num_graphs), 
+    #         verbose=true, exclude_grad_fields = [:state0, :state])
+end

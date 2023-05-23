@@ -7,6 +7,7 @@ using CUDA
 using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, @functor, batch
 using MacroTools: @forward
+using MLUtils
 using NNlib, NNlibCUDA
 using NNlib: scatter, gather
 using ChainRulesCore
@@ -69,6 +70,7 @@ export
 # layers/pool
       GlobalPool,
       GlobalAttentionPool,
+      Set2Set,
       TopKPool,
       topk_index,
       WeigthAndSumPool,

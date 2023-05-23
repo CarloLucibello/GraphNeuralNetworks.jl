@@ -185,3 +185,61 @@ function (ws::WeigthAndSumPool)(g::GNNGraph, x::CuArray)
 end
 
 (ws::WeigthAndSumPool)(g::GNNGraph) = GNNGraph(g, gdata = ws(g, node_features(g)))
+
+@doc raw"""
+    Set2Set(n_in, n_iters, n_layers = 1)
+
+Set2Set layer from the paper [Order Matters: Sequence to sequence for sets](https://arxiv.org/abs/1511.06391).
+
+For each graph in the batch, the layer computes an output vector of size `2*n_in` by iterating the following steps `n_iters` times:
+```math
+\mathbf{q} = \mathrm{LSTM}(\mathbf{q}_{t-1}^*)
+\alpha_{i} = \frac{\exp(\mathbf{q}^T \mathbf{x}_i)}{\sum_{j=1}^N \exp(\mathbf{q}^T \mathbf{x}_j)} 
+\mathbf{r} = \sum_{i=1}^N \alpha_{i} \mathbf{x}_i
+\mathbf{q}^*_t = [\mathbf{q}; \mathbf{r}]
+```
+where `N` is the number of nodes in the graph, `LSTM` is a Long-Short-Term-Memory network with `n_layers` layers, 
+input size `2*n_in` and output size `n_in`.
+
+Given a batch of graphs `g` and node features `x`, the layer returns a matrix of size `(2*n_in, n_graphs)`.
+```
+"""
+struct Set2Set{L} <: GNNLayer
+    lstm::L
+    num_iters::Int
+end
+
+@functor Set2Set
+
+function Set2Set(n_in::Int, n_iters::Int, n_layers::Int = 1)
+    @assert n_layers >= 1
+    n_out = 2 * n_in
+
+    if n_layers == 1
+        lstm = LSTM(n_out => n_in)
+    else
+        layers = [LSTM(n_out => n_in)]
+        for _ in 2:n_layers
+            push!(layers, LSTM(n_in => n_in))
+        end
+        lstm = Chain(layers...)
+    end
+
+    return Set2Set(lstm, n_iters)
+end
+
+function (l::Set2Set)(g::GNNGraph, x::AbstractMatrix)
+    n_in = size(x, 1)
+    Flux.reset!(l.lstm)
+    qstar = zeros_like(x, (2*n_in, g.num_graphs))
+    for t in 1:l.num_iters
+        q = l.lstm(qstar)                            # [n_in, n_graphs]
+        qn = broadcast_nodes(g, q)                    # [n_in, n_nodes]
+        α = softmax_nodes(g, sum(qn .* x, dims = 1))  # [1, n_nodes]
+        r = reduce_nodes(+, g, x .* α)               # [n_in, n_graphs]
+        qstar = vcat(q, r)                           # [2*n_in, n_graphs]
+    end
+    return qstar
+end
+
+(l::Set2Set)(g::GNNGraph) = GNNGraph(g, gdata = l(g, node_features(g)))
