@@ -140,7 +140,7 @@ function show_sorted_dict(io::IO, d::Dict, compact::Bool)
             print(io, "$key => $(d[key]), ")
         end
         show(io, _keys[end])
-        print(io, " => $(d[_keys[end]])")
+        print(io, "$(_keys[end]) => $(d[_keys[end]])")
     end
     print(io, ")")
 end
