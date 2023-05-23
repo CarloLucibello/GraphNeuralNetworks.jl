@@ -60,9 +60,7 @@ Additional keyword arguments will be passed to the [`GNNHeteroGraph`](@ref) cons
 
 # Examples
 
-```juliarepl
-
-
+```julia-repl
 julia> g = rand_heterograph((:user => 10, :movie => 20),
                             (:user, :rate, :movie) => 30)
 GNNHeteroGraph:
@@ -70,7 +68,7 @@ GNNHeteroGraph:
   num_edges: ((:user, :rate, :movie) => 30,)
 ```
 """
-function rand_heteropraph end
+function rand_heterograph end
 
 # for generic iterators of pairs
 rand_heterograph(n, m; kws...) = rand_heterograph(Dict(n), Dict(m); kws...)
