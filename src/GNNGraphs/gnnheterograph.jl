@@ -87,6 +87,8 @@ end
 
 @functor GNNHeteroGraph
 
+GNNHeteroGraph(data; kws...) = GNNHeteroGraph(Dict(data); kws...)
+
 function GNNHeteroGraph(data::EDict;
                         num_nodes = nothing,
                         graph_indicator = nothing,
@@ -184,10 +186,36 @@ function Base.show(io::IO, ::MIME"text/plain", g::GNNHeteroGraph)
     end
 end
 
-GNNHeteroGraph(data; kws...) = GNNHeteroGraph(Dict(data); kws...)
-
 _str(s::Symbol) = ":$s"
 _str(s) = "$s"
 
 MLUtils.numobs(g::GNNHeteroGraph) = g.num_graphs
 # MLUtils.getobs(g::GNNHeteroGraph, i) = getgraph(g, i)
+
+function Base.getindex(g::GNNHeteroGraph, node1_t::Symbol, rel_t::Symbol, node2_t::Symbol)
+    edge_t = (node1_t, rel_t, node2_t)
+    graph = g.graph[edge_t]
+    num_nodes = filter((k, v) => k in (node1_t, node2_t), g.num_nodes)
+    num_edges = filter((k, v) => k == edge_t, g.num_edges)
+    # graph_indicator::Union{Nothing, NDict} # TODO
+    ndata = filter((k, v) => k in (node1_t, node2_t), g.ndata)
+    edata = filter((k, v) => k == edge_t, g.edata)
+    ntypes = filter((k, v) => k in (node1_t, node2_t), g.ntypes)
+    etypes = filter((k, v) => k == edge_t, g.etypes) 
+
+    return GNNHeteroGraph(
+        graph,
+        num_nodes,
+        num_edges,
+        g.num_graphs,
+        g.graph_indicator, # TODO
+        ndata,
+        edata,
+        gdata,
+        ntypes,
+        etypes)
+end
+
+num_edge_types(g::GNNGraph) = 1
+
+num_edge_types(g::GNNHeteroGraph) = length(g.etypes)
