@@ -30,7 +30,7 @@ struct GNN                                # step 1
     dense
 end
 
-Flux.@functor GNN                              # step 2
+Flux.@functor GNN                         # step 2
 
 function GNN(din::Int, d::Int, dout::Int) # step 3    
     GNN(GCNConv(din => d),
