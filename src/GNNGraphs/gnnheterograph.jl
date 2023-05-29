@@ -6,7 +6,7 @@ const NDict{T} = Dict{Symbol, T}
     GNNHeteroGraph(data; ndata, edata, gdata, num_nodes, graph_indicator, dir])
 
 A type representing a heterogeneous graph structure.
-it is similar [`GNNGraph`](@ref) but node and edges are of different types.
+It is similar to [`GNNGraph`](@ref) but nodes and edges are of different types.
 
 # Arguments
 
@@ -69,8 +69,7 @@ julia> hg.ndata[:A].x
     0.631286  0.316292   0.705325  0.239211  0.533007  0.249233  0.473736  0.595475  0.0623298  0.159307
 ```
 
-See also [`GNNGraph`](@ref) for a homogeneous graph type.
-and [`rand_heterograph`](@ref) for a function to generate random heterographs.
+See also [`GNNGraph`](@ref) for a homogeneous graph type and [`rand_heterograph`](@ref) for a function to generate random heterographs.
 """
 struct GNNHeteroGraph
     graph::EDict

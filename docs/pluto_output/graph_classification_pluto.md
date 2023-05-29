@@ -134,7 +134,7 @@ end</code></pre>
         x =&gt; 7×1191 Matrix{Float32}</pre>
 
 
-<div class="markdown"><p>Each batched graph object is equipped with a <strong><code>graph_indicator</code> vector</strong>, which maps each node to its respective graph in the batch:</p><p class="tex">$$\textrm{graph-indicator} = [1, \ldots, 1, 2, \ldots, 2, 3, \ldots ]$$</p></div>
+<div class="markdown"><p>Each batched graph object is equipped with a <strong><code>graph_indicator</code> vector</strong>, which maps each node to its respective graph in the batch:</p><p class="tex">$$\textrm{graph\_indicator} = [1, \ldots, 1, 2, \ldots, 2, 3, \ldots ]$$</p></div>
 
 
 ```
