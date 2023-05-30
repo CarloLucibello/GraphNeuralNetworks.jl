@@ -1,3 +1,4 @@
+#missig docs!
 struct TemporalDataStore 
     _n::Int # either -1 or numobs(data)
     _t::Int # number of snapshots
