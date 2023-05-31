@@ -129,7 +129,7 @@ md"""
 Each batched graph object is equipped with a **`graph_indicator` vector**, which maps each node to its respective graph in the batch:
 
 ```math
-\textrm{graph-indicator} = [1, \ldots, 1, 2, \ldots, 2, 3, \ldots ]
+\textrm{graph\_indicator} = [1, \ldots, 1, 2, \ldots, 2, 3, \ldots ]
 ```
 """
 
