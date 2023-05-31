@@ -12,7 +12,7 @@ struct TemporalDataStore
             end
         end
         if t == 1
-            return TemporalDataStore(n,data)
+            return DataStore(n,data)
         end 
         return new(n, t, data)
     end
