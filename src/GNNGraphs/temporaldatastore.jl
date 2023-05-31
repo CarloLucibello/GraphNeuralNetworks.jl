@@ -12,7 +12,7 @@ struct TemporalDataStore
             end
         end
         if t == 1
-            return DataStore(n,data)
+            return TemporalDataStore(n,data)
         end 
         return new(n, t, data)
     end
@@ -77,4 +77,21 @@ function Base.show(io::IO, tds::TemporalDataStore)
             print(io, "\n  $(k) = $(summary(v))")
         end
     end
+end
+
+Base.iterate(tds::TemporalDataStore) = iterate(getdata(tds))
+Base.iterate(tds::TemporalDataStore, state) = iterate(getdata(tds), state)
+Base.keys(tds::TemporalDataStore) = keys(getdata(tds))
+Base.values(tds::TemporalDataStore) = values(getdata(tds))
+Base.haskey(tds::TemporalDataStore, k) = haskey(getdata(tds), k)
+Base.get(tds::TemporalDataStore, k, default) = get(getdata(tds), k, default)
+Base.pairs(tds::TemporalDataStore) = pairs(getdata(tds))
+Base.:(==)(ds1::TemporalDataStore, ds2::TemporalDataStore) = getdata(ds1) == getdata(ds2)
+Base.isempty(tds::TemporalDataStore) = isempty(getdata(tds))
+Base.delete!(tds::TemporalDataStore, k) = delete!(getdata(tds), k)
+
+function Base.map(f, tds::TemporalDataStore)
+    d = getdata(tds)
+    newd = Dict{Symbol, Any}(k => f(v) for (k, v) in d)
+    return TemporalDataStore(getn(tds), gett(tds), newd)
 end
