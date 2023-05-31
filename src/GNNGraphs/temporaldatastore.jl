@@ -7,7 +7,7 @@ struct TemporalDataStore
     function TemporalDataStore(n::Int, t::Int, data::Dict{Symbol, Any})
         if n >= 0 && t != 1
             for (k, v) in data
-                @assert size(v)[end-1]==n "TemporalDataStore: data[$k] has $(size(v)[end-1]) observations, but n = $n"
+                @assert size(v)[end-1]==n "TemporalDataStore: data[$k] has $(size(v)[end-1]) observations, but n = $n"  #should be DimensionMismatch?
                 @assert size(v)[end]==t "TemporalDataStore: data[$k] has $(size(v)[end]) snapshots, but t = $t"
             end
         end
@@ -64,7 +64,7 @@ function Base.show(io::IO, tds::TemporalDataStore)
     len = length(tds)
     n = getn(tds)
     t = gett(tds)
-    if n < 0 && t == 0
+    if n < 0 || t == 0
         print(io, "TemporalDataStore()")
     else
         print(io, "TemporalDataStore($(getn(tds)), $(gett(tds)))")
@@ -94,4 +94,28 @@ function Base.map(f, tds::TemporalDataStore)
     d = getdata(tds)
     newd = Dict{Symbol, Any}(k => f(v) for (k, v) in d)
     return TemporalDataStore(getn(tds), gett(tds), newd)
+end
+
+function gettobs(A::AbstractArray{<:Any, N}, idx) where N
+    I = ntuple(_ -> :, N-2)
+    return A[I..., idx, :]
+end
+
+gettobs(data::Dict, i) = Dict(k => gettobs(v, i) for (k, v) in pairs(data))
+
+function MLUtils.getobs(tds::TemporalDataStore, i)
+    newdata = gettobs(getdata(tds), i)
+    return TemporalDataStore(-1, gett(tds),newdata)
+end
+
+function getsnaps(A::AbstractArray{<:Any, N}, idx) where N
+    I = ntuple(_ -> :, N-1)
+    return A[I..., idx]
+end
+
+getsnaps(data::Dict, i) = Dict(k => getsnaps(v, i) for (k, v) in pairs(data))
+
+function getsnaps(tds::TemporalDataStore, i)
+    newdata = getsnaps(getdata(tds), i)
+    return TemporalDataStore(getn(tds), length(i), newdata)
 end
