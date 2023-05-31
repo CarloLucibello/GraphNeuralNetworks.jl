@@ -147,7 +147,7 @@ We can see that for each edge, `edge_index` holds a tuple of two node indices, w
 This representation is known as the **COO format (coordinate format)** commonly used for representing sparse matrices.
 Instead of holding the adjacency information in a dense representation ``\mathbf{A} \in \{ 0, 1 \}^{|\mathcal{V}| \times |\mathcal{V}|}``, GraphNeuralNetworks.jl represents graphs sparsely, which refers to only holding the coordinates/values for which entries in ``\mathbf{A}`` are non-zero.
 
-Importantly, GraphNeuralNetworks.jl does not distinguish between directed and undirected graphs, and treats undirected graphs as a special case of directed graphs in which reverse edges exist for every entry in the edge_index.
+Importantly, GraphNeuralNetworks.jl does not distinguish between directed and undirected graphs, and treats undirected graphs as a special case of directed graphs in which reverse edges exist for every entry in the `edge_index`.
 
 Since a `GNNGraph` is an `AbstractGraph` from the `Graphs.jl` library, it supports graph algorithms and visualization tools from the wider julia graph ecosystem:
 """
@@ -252,10 +252,10 @@ This leads to the conclusion that GNNs introduce a strong inductive bias, leadin
 
 ### Training on the Karate Club Network
 
-But can we do better? Let's look at an example on how to train our network parameters based on the knowledge of the community assignments of 4 nodes in the graph (one for each community):
+But can we do better? Let's look at an example on how to train our network parameters based on the knowledge of the community assignments of 4 nodes in the graph (one for each community).
 
 Since everything in our model is differentiable and parameterized, we can add some labels, train the model and observe how the embeddings react.
-Here, we make use of a semi-supervised or transductive learning procedure: We simply train against one node per class, but are allowed to make use of the complete input graph data.
+Here, we make use of a semi-supervised or transductive learning procedure: we simply train against one node per class, but are allowed to make use of the complete input graph data.
 
 Training our model is very similar to any other Flux model.
 In addition to defining our network architecture, we define a loss criterion (here, `logitcrossentropy`), and initialize a stochastic gradient optimizer (here, `Adam`).
