@@ -3,7 +3,7 @@
     @test_throws AssertionError TemporalDataStore(5,3, (:x => rand(10,4,3), :y => rand(3,3,5,3)))
 
     x = rand(10,5)
-    @test  TemporalDataStore(5,1, (:x => x)) == DataStore(5, (:x => x))
+    @test  TemporalDataStore(5, 1, (:x => x)) == DataStore(5, (:x => x))
 
     @testset "keyword args" begin
         tds = TemporalDataStore(4, 10, x = rand(2,4,10), y = rand(4, 10))
@@ -14,7 +14,7 @@
         @test size(tds.x) == (2, 4, 10)
         @test size(tds.y) == (4, 10)
     end
-end
+end;
 
 @testset "getdata / getn / gett" begin
     tds = TemporalDataStore(4, 10, x = rand(2,4,10))
@@ -24,7 +24,7 @@ end
     @test_throws KeyError tds.n
     @test gett(tds) == getfield(tds, :_t)
     @test_throws KeyError tds.t
-end
+end;
 
 @testset "getproperty / setproperty!" begin
     x = rand(10,5)
@@ -34,6 +34,13 @@ end
     @test_throws DimensionMismatch tds.z=rand(10,4)
     tds.z = z
     @test tds.z == z
-end
+end;
 
+@testset "map" begin
+    tds = TemporalDataStore(5, 10, (:x => rand(5,10), :y => rand(2,5, 10)))
+    tds2 = map(x -> x .+ 1, tds)
+    @test tds2.x == tds.x .+ 1
+    @test tds2.y == tds.y .+ 1
 
+    @test_throws AssertionError tds2 = map(x -> [x; x], tds)
+end;
