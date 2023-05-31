@@ -44,3 +44,12 @@ end;
 
     @test_throws AssertionError tds2 = map(x -> [x; x], tds)
 end;
+
+@testset "getobs / getsnaps" begin
+    x=rand(3,5,10)
+    tds = TemporalDataStore(5, 10, (:x => x))
+    @test getobs(tds, 1).x == x[:,1,:]
+    @test getobs(tds, [1,2]).x == x[:,[1,2],:]
+    @test getsnaps(tds, 10).x == x[:,:,end]
+    @test getsnaps(tds, [1,2]).x == x[:,:,[1,2]]
+end;
