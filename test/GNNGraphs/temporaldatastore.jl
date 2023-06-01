@@ -55,9 +55,37 @@ end;
 end;
 
 @testset "cat" begin
-    tds1 = TemporalDataStore(3,4, x=rand(2,3,4))
-    tds2 = TemporalDataStore(2,4, x=rand(2,2,4))
+    tds1 = TemporalDataStore(3, 4, x=rand(2,3,4))
+    tds2 = TemporalDataStore(2, 4, x=rand(2,2,4))
 
     tds = GNNGraphs.cat_features(tds1, tds2)
     @test getn(tds) == 5
 end;
+
+@testset "gradient" begin
+    tds = TemporalDataStore(3, 4, x=rand(2,3,4))
+
+    f1(tds) = sum(tds.x)
+    grad = gradient(f1, tds)[1]
+    @test grad._data[:x] ≈ ngradient(f1, tds)[1][:x]
+end;
+
+@testset "functor" begin
+    tds1 = TemporalDataStore(3, 4, x=rand(2,3,4))
+    p, re = Functors.functor(tds1)
+    @test p[1] === getn(tds1)
+    @test p[2] === gett(tds1)
+    @test p[3] == getdata(tds1)
+    @test tds1 == re(p)
+
+    tds2 = Functors.fmap(tds1) do x
+        if x isa AbstractArray
+            x .+ 1
+        else
+            x
+        end
+    end
+    @test tds1 isa TemporalDataStore
+    @test tds2.x == tds1.x .+ 1
+end;
+
