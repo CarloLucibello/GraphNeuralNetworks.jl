@@ -1,6 +1,6 @@
 using GraphNeuralNetworks
 using GraphNeuralNetworks.GNNGraphs: sort_edge_index
-using GraphNeuralNetworks.GNNGraphs: getn, getdata
+using GraphNeuralNetworks.GNNGraphs: getn, getdata, gett,getsnaps
 using Functors
 using Flux
 using CUDA
