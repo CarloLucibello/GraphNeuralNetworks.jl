@@ -1,4 +1,27 @@
-#missig docs!
+"""
+    TemporalDataStore([n, t, data])
+    TemporalDataStore([n, t], x1 = array1, x2 = array2, ...)
+
+A `TemporalDataStore` is a container for temporal feature arrays. The optional arguments `n`, `t` enforces the values of the penultimate and last dimensions of the contained array, respectively.  If `t` is 1, the `TemporalDataStore` is treated as a `DataStore`. 
+
+At construction time, the `data` can be provided as any iterables of pairs of symbols and arrays or as keyword arguments:
+
+```julia-repl
+julia> tds = TemporalDataStore(3, 10,x = rand(2,3,10), y = rand(3,10))
+TemporalDataStore(3, 10) with 2 elements:
+  y = 3×10 Matrix{Float64}
+  x = 2×3×10 Array{Float64, 3}
+
+julia> tds = TemporalDataStore(3, 10 , Dict(:x => rand(2,3,10), :y => rand(3,10))); # equivalent to above
+
+julia> tds = TemporalDataStore(3, 10, x = rand(2,2,10)) # wrong number of observations in the array 
+ERROR: AssertionError: TemporalDataStore: data[x] has 2 observations, but n = 3
+
+julia> tds = TemporalDataStore(3, 10, x = rand(2,3,5)) # wrong number of snapshots in the array 
+ERROR: AssertionError: TemporalDataStore: data[x] has 5 snapshots, but t = 10
+```
+As for the `DataStore`, the `TemporalDataStore` has an interface similar to both dictionaries and named tuples.
+"""    
 struct TemporalDataStore 
     _n::Int # either -1 or numobs(data)
     _t::Int # number of snapshots
@@ -7,7 +30,7 @@ struct TemporalDataStore
     function TemporalDataStore(n::Int, t::Int, data::Dict{Symbol, Any})
         if n >= 0 && t != 1
             for (k, v) in data
-                @assert size(v)[end-1]==n "TemporalDataStore: data[$k] has $(size(v)[end-1]) observations, but n = $n"  #should be DimensionMismatch?
+                @assert size(v)[end-1]==n "TemporalDataStore: data[$k] has $(size(v)[end-1]) observations, but n = $n"  #should be DimensionMismatch? in case change also docs!
                 @assert size(v)[end]==t "TemporalDataStore: data[$k] has $(size(v)[end]) snapshots, but t = $t"
             end
         end
