@@ -88,6 +88,59 @@ function cat_features(xs::AbstractVector{Dict{Symbol, T}}) where {T}
     return Dict{Symbol, T}(k => cat_features([x[k] for x in xs]) for k in syms)
 end
 
+#### TEMPORAL cat_features, probably better to add the dimension to the ones above
+cat_tempfeatures(x1::Nothing, x2::Nothing) = nothing
+cat_tempfeatures(x1::AbstractArray, x2::AbstractArray) = cat(x1, x2, dims = ndims(x1)-1)
+
+# workaround for issue #98 #104
+# See https://github.com/JuliaStrings/InlineStrings.jl/issues/21
+# Remove when minimum supported version is julia v1.8
+cat_tempfeatures(x1::NamedTuple{(), Tuple{}}, x2::NamedTuple{(), Tuple{}}) = (;)
+cat_tempfeatures(xs::AbstractVector{NamedTuple{(), Tuple{}}}) = (;)
+
+function cat_tempfeatures(x1::NamedTuple, x2::NamedTuple)
+    sort(collect(keys(x1))) == sort(collect(keys(x2))) ||
+        @error "cannot concatenate feature data with different keys"
+
+    return NamedTuple(k => cat_tempfeatures(x1[k], x2[k]) for k in keys(x1))
+end
+
+function cat_tempfeatures(x1::Dict{Symbol, T}, x2::Dict{Symbol, T}) where {T}
+    sort(collect(keys(x1))) == sort(collect(keys(x2))) ||
+        @error "cannot concatenate feature data with different keys"
+
+    return Dict{Symbol, T}(k => cat_tempfeatures(x1[k], x2[k]) for k in keys(x1))
+end
+
+function cat_tempfeatures(xs::AbstractVector{<:AbstractArray{T, N}}) where {T <: Number, N}
+    cat(xs...; dims = N-1)
+end
+
+cat_tempfeatures(xs::AbstractVector{Nothing}) = nothing
+cat_tempfeatures(xs::AbstractVector{<:Number}) = xs
+
+function cat_tempfeatures(xs::AbstractVector{<:NamedTuple})
+    symbols = [sort(collect(keys(x))) for x in xs]
+    all(y -> y == symbols[1], symbols) ||
+        @error "cannot concatenate feature data with different keys"
+    length(xs) == 1 && return xs[1]
+
+    # concatenate
+    syms = symbols[1]
+    NamedTuple(k => cat_tempfeatures([x[k] for x in xs]) for k in syms)
+end
+
+function cat_tempfeatures(xs::AbstractVector{Dict{Symbol, T}}) where {T}
+    symbols = [sort(collect(keys(x))) for x in xs]
+    all(y -> y == symbols[1], symbols) ||
+        @error "cannot concatenate feature data with different keys"
+    length(xs) == 1 && return xs[1]
+
+    # concatenate 
+    syms = symbols[1]
+    return Dict{Symbol, T}(k => cat_tempfeatures([x[k] for x in xs]) for k in syms)
+end
+
 # Turns generic type into named tuple
 normalize_graphdata(data::Nothing; n, kws...) = DataStore(n)
 

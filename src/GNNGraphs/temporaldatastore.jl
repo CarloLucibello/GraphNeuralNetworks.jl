@@ -86,7 +86,7 @@ Base.values(tds::TemporalDataStore) = values(getdata(tds))
 Base.haskey(tds::TemporalDataStore, k) = haskey(getdata(tds), k)
 Base.get(tds::TemporalDataStore, k, default) = get(getdata(tds), k, default)
 Base.pairs(tds::TemporalDataStore) = pairs(getdata(tds))
-Base.:(==)(ds1::TemporalDataStore, ds2::TemporalDataStore) = getdata(ds1) == getdata(ds2)
+Base.:(==)(tds1::TemporalDataStore, tds2::TemporalDataStore) = getdata(tds1) == getdata(tds2)
 Base.isempty(tds::TemporalDataStore) = isempty(getdata(tds))
 Base.delete!(tds::TemporalDataStore, k) = delete!(getdata(tds), k)
 
@@ -118,4 +118,17 @@ getsnaps(data::Dict, i) = Dict(k => getsnaps(v, i) for (k, v) in pairs(data))
 function getsnaps(tds::TemporalDataStore, i)
     newdata = getsnaps(getdata(tds), i)
     return TemporalDataStore(getn(tds), length(i), newdata)
+end
+
+function cat_features(tds1::TemporalDataStore, tds2::TemporalDataStore)
+    n1, n2 = getn(tds1), getn(tds2)
+    n1 = n1 >= 0 ? n1 : 1
+    n2 = n2 >= 0 ? n2 : 1
+    return TemporalDataStore(n1 + n2, gett(tds1), cat_tempfeatures(getdata(tds1), getdata(tds2)))
+end
+
+function cat_features(tdss::AbstractVector{TemporalDataStore}; kws...)
+    ns = getn.(tdss)
+    ns = map(n -> n >= 0 ? n : 1, ns)
+    return TemporalDataStore(sum(ns),gett(tdss[1]), cat_features(getdata.(tdss); kws...))
 end

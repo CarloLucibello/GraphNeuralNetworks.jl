@@ -53,3 +53,11 @@ end;
     @test getsnaps(tds, 10).x == x[:,:,end]
     @test getsnaps(tds, [1,2]).x == x[:,:,[1,2]]
 end;
+
+@testset "cat" begin
+    tds1 = TemporalDataStore(3,4, x=rand(2,3,4))
+    tds2 = TemporalDataStore(2,4, x=rand(2,2,4))
+
+    tds = GNNGraphs.cat_features(tds1, tds2)
+    @test getn(tds) == 5
+end;
