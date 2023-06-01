@@ -1,9 +1,9 @@
 """
     DataStore([n, data])
-    DataStore([n,] k1 = x1, k2 = x2, ...)
+    DataStore([n], k1 = x1, k2 = x2, ...)
 
 A container for feature arrays. The optional argument `n` enforces that
-`numobs(x) == n` for each array contained in the datastore.
+`numobs(x) == n` for each array contained in the `Datastore``.
 
 At construction time, the `data` can be provided as any iterables of pairs
 of symbols and arrays or as keyword arguments:
