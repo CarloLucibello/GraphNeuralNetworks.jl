@@ -132,3 +132,5 @@ function cat_features(tdss::AbstractVector{TemporalDataStore}; kws...)
     ns = map(n -> n >= 0 ? n : 1, ns)
     return TemporalDataStore(sum(ns),gett(tdss[1]), cat_features(getdata.(tdss); kws...))
 end
+
+normalize_graphdata(tds::TemporalDataStore; kws...) = tds
