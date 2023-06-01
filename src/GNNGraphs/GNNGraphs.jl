@@ -21,6 +21,9 @@ import Functors
 include("datastore.jl")
 export DataStore
 
+include("temporaldatastore.jl")
+export TemporalDataStore
+
 include("gnngraph.jl")
 export GNNGraph,
        node_features,

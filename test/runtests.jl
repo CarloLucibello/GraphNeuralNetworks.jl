@@ -26,6 +26,7 @@ include("test_utils.jl")
 
 tests = [
     "GNNGraphs/datastore",
+    "GNNGraphs/temporaldatastore",
     "GNNGraphs/gnngraph",
     "GNNGraphs/convert",
     "GNNGraphs/transform",
