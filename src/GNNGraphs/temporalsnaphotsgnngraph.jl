@@ -8,8 +8,6 @@ end
 
 function TemporalSnapshotsGNNGraph(snapshots::AbstractVector{<:GNNGraph})
     @assert all([s.num_nodes == snapshots[1].num_nodes for s in snapshots]) "all snapshots must have the same number of nodes"
-    tgdata = normalize_graphdata(nothing, default_name = :u,
-                                n = num_graphs > 1 ? num_graphs : -1)
     return TemporalSnapshotsGNNGraph(
         [s.num_nodes for s in snapshots],
         [s.num_edges for s in snapshots],
