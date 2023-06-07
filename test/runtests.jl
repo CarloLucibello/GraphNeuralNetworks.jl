@@ -34,6 +34,7 @@ tests = [
     "GNNGraphs/query",
     "GNNGraphs/sampling",
     "GNNGraphs/gnnheterograph",
+    "GNNGraphs/temporalsnapshotsgnngraph",
     "utils",
     "msgpass",
     "layers/basic",
