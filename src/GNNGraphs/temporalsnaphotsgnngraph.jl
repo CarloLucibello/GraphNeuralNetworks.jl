@@ -17,6 +17,14 @@ function TemporalSnapshotsGNNGraph(snapshots::AbstractVector{<:GNNGraph})
     )
 end
 
+function Base.:(==)(tsg1::TemporalSnapshotsGNNGraph, tsg2::TemporalSnapshotsGNNGraph)
+    tsg1 === tsg2 && return true
+    for k in fieldnames(typeof(tsg1))
+        getfield(tsg1, k) != getfield(tsg2, k) && return false
+    end
+    return true
+end
+
 function Base.getindex(tg::TemporalSnapshotsGNNGraph, t::Int)
     return tg.snapshots[t]
 end
