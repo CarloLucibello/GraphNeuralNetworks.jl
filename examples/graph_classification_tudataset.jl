@@ -81,8 +81,7 @@ function train(; kws...)
                      GlobalPool(mean),
                      Dense(nhidden, 1)) |> device
 
-    ps = Flux.params(model)
-    opt = Adam(args.η)
+    opt = Flux.setup(Adam(args.η), model)
 
     # LOGGING FUNCTION
 
@@ -98,11 +97,11 @@ function train(; kws...)
     for epoch in 1:(args.epochs)
         for (g, y) in train_loader
             g, y = (g, y) |> device
-            gs = Flux.gradient(ps) do
+            grads = Flux.gradient(model) do model
                 ŷ = model(g, g.ndata.x) |> vec
                 logitbinarycrossentropy(ŷ, y)
             end
-            Flux.Optimise.update!(opt, ps, gs)
+            Flux.update!(opt, model, grads[1])
         end
         epoch % args.infotime == 0 && report(epoch)
     end
