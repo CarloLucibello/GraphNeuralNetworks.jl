@@ -58,14 +58,14 @@ end
 
 function Base.show(io::IO, tsg::TemporalSnapshotsGNNGraph)
     print(io, "TemporalSnapshotsGNNGraph($(tsg.num_snapshots)) with ")
-    print_feature(io, tsg.tgdata)
+    print_feature_t(io, tsg.tgdata)
     print(io, " data")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", tsg::TemporalSnapshotsGNNGraph)
     if get(io, :compact, false)
         print(io, "TemporalSnapshotsGNNGraph($(tsg.num_snapshots)) with ")
-        print_feature(io, tsg.tgdata)
+        print_feature_t(io, tsg.tgdata)
         print(io, " data")
     else
         print(io,
@@ -80,7 +80,7 @@ function Base.show(io::IO, ::MIME"text/plain", tsg::TemporalSnapshotsGNNGraph)
 end
 
 
-function print_feature(io::IO, feature)
+function print_feature_t(io::IO, feature)
     if !isempty(feature)
         if length(keys(feature)) == 1
             k = first(keys(feature))
