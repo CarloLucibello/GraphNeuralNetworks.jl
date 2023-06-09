@@ -44,6 +44,11 @@ function Base.getindex(tg::TemporalSnapshotsGNNGraph, t::AbstractVector)
     return TemporalSnapshotsGNNGraph(tg.num_nodes[t], tg.num_edges[t], length(t), tg.snapshots[t], tg.tgdata)
 end
 
+"""
+    add_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
+
+Return a `TemporalSnapshotsGNNGraph` created starting from `tg` by adding the snapshot `g` at time index `t`.
+"""
 function add_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
     @assert g.num_nodes == tg.num_nodes[t] "number of nodes must match"
     num_nodes= tg.num_nodes
@@ -56,6 +61,11 @@ function add_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
     return TemporalSnapshotsGNNGraph(num_nodes, num_edges, num_snapshots, snapshots, tg.tgdata) 
 end
 
+"""
+    remove_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int)
+
+Return a `TemporalSnapshotsGNNGraph` created starting from `tg` by removing the snapshot at time index `t`.
+"""
 function remove_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int)
     num_nodes= tg.num_nodes
     num_edges = tg.num_edges
