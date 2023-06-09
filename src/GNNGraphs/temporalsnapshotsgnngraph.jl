@@ -1,3 +1,14 @@
+"""
+    TemporalSnapshotsGNNGraph(snapshots::AbstractVector{<:GNNGraph})
+
+A type representing a temporal graph as a sequence of snapshots, in this case a snapshot is a [`GNNGraph`](@ref).
+
+It stores the feature array associated to the graph itself as a [`DataStore`](@ref) object, and it uses the [`DataStore`](@ref) objects of each snapshot for the node and edge features.
+The features can be passed at construction time or added later.
+
+# Arguments
+- snapshot: a vector of snapshots, each snapshot must have the same number of nodes.
+"""
 struct TemporalSnapshotsGNNGraph
     num_nodes::Vector{Int}   
     num_edges::Vector{Int}
