@@ -30,6 +30,12 @@ export GNNGraph,
 include("gnnheterograph.jl")
 export GNNHeteroGraph
 
+
+include("temporalsnapshotsgnngraph.jl")
+export TemporalSnapshotsGNNGraph,
+       add_snapshot,
+       remove_snapshot
+
 include("query.jl")
 export adjacency_list,
        edge_index,
