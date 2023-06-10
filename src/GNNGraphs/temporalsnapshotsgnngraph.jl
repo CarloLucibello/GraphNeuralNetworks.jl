@@ -1,3 +1,37 @@
+"""
+    TemporalSnapshotsGNNGraph(snapshots::AbstractVector{<:GNNGraph})
+
+A type representing a temporal graph as a sequence of snapshots, in this case a snapshot is a [`GNNGraph`](@ref).
+
+It stores the feature array associated to the graph itself as a [`DataStore`](@ref) object, and it uses the [`DataStore`](@ref) objects of each snapshot for the node and edge features.
+The features can be passed at construction time or added later.
+
+# Arguments
+- snapshot: a vector of snapshots, each snapshot must have the same number of nodes.
+
+# Examples
+```julia
+julia> using GraphNeuralNetworks
+
+julia> snapshots = [rand_graph(10,20) for i in 1:5];
+
+julia> tgs = TemporalSnapshotsGNNGraph(snapshots)
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10, 10, 10, 10]
+  num_edges: [20, 20, 20, 20, 20]
+  num_snapshots: 5
+
+julia> tgs.tgdata.x = rand(4); # add temporal graph feature
+
+julia> tgs # show temporal graph with new feature
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10, 10, 10, 10]
+  num_edges: [20, 20, 20, 20, 20]
+  num_snapshots: 5
+  tgdata:
+        x = 4-element Vector{Float64}
+```
+"""
 struct TemporalSnapshotsGNNGraph
     num_nodes::Vector{Int}   
     num_edges::Vector{Int}
@@ -33,6 +67,30 @@ function Base.getindex(tg::TemporalSnapshotsGNNGraph, t::AbstractVector)
     return TemporalSnapshotsGNNGraph(tg.num_nodes[t], tg.num_edges[t], length(t), tg.snapshots[t], tg.tgdata)
 end
 
+"""
+    add_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
+
+Return a `TemporalSnapshotsGNNGraph` created starting from `tg` by adding the snapshot `g` at time index `t`.
+
+# Example
+```julia
+julia> using GraphNeuralNetworks
+
+julia> snapshots = [rand_graph(10,20) for i in 1:5];
+
+julia> tgs = TemporalSnapshotsGNNGraph(snapshots)
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10, 10, 10, 10]
+  num_edges: [20, 20, 20, 20, 20]
+  num_snapshots: 5
+
+julia> new_tgs = add_snapshot(tgs, 3, rand_graph(10,16)) # add a new snapshot at time 3
+TemporalSnapshotsGNNGraph:
+num_nodes: [10, 10, 10, 10, 10, 10]
+num_edges: [20, 20, 16, 20, 20, 20]
+num_snapshots: 6
+```
+"""
 function add_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
     @assert g.num_nodes == tg.num_nodes[t] "number of nodes must match"
     num_nodes= tg.num_nodes
@@ -45,6 +103,30 @@ function add_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
     return TemporalSnapshotsGNNGraph(num_nodes, num_edges, num_snapshots, snapshots, tg.tgdata) 
 end
 
+"""
+    remove_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int)
+
+Return a `TemporalSnapshotsGNNGraph` created starting from `tg` by removing the snapshot at time index `t`.
+
+# Example
+```julia
+julia> using GraphNeuralNetworks
+
+julia> snapshots = [rand_graph(10,20), rand_graph(10,14), rand_graph(10,22)];
+
+julia> tgs = TemporalSnapshotsGNNGraph(snapshots)
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10, 10]
+  num_edges: [20, 14, 22]
+  num_snapshots: 3
+
+julia> new_tgs = remove_snapshot(tgs,2) # remove snapshot at time 2
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10]
+  num_edges: [20, 22]
+  num_snapshots: 2
+```
+"""
 function remove_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int)
     num_nodes= tg.num_nodes
     num_edges = tg.num_edges
