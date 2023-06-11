@@ -28,7 +28,8 @@ export GNNGraph,
        graph_features
 
 include("gnnheterograph.jl")
-export GNNHeteroGraph
+export GNNHeteroGraph,
+       num_edge_types
 
 
 include("temporalsnapshotsgnngraph.jl")

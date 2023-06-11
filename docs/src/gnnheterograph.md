@@ -1,9 +1,5 @@
 # Heterogeneous Graphs
 
-!!! warning
-    Heterographs support is still experimental.
-    The interface could be subject to change in the future.
-
 Heterogeneus graphs (also called heterographs), are graphs where each node has a type,
 that we denote with symbols such as `:user` and `:movie`,
 and edges also represent different relations identified
@@ -20,6 +16,7 @@ the type [`GNNHeteroGraph`](@ref).
 ```@docs
 GNNHeteroGraph
 rand_heterograph
+num_edge_types
 ```
 
 

@@ -93,9 +93,9 @@ num_snapshots: 6
 """
 function add_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
     @assert g.num_nodes == tg.num_nodes[t] "number of nodes must match"
-    num_nodes= tg.num_nodes
-    num_edges = tg.num_edges
-    snapshots = tg.snapshots
+    num_nodes= tg.num_nodes |> deepcopy
+    num_edges = tg.num_edges |> deepcopy
+    snapshots = tg.snapshots |> deepcopy
     num_snapshots = tg.num_snapshots + 1
     insert!(num_nodes, t, g.num_nodes)
     insert!(num_edges, t, g.num_edges)
@@ -128,14 +128,30 @@ TemporalSnapshotsGNNGraph:
 ```
 """
 function remove_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int)
-    num_nodes= tg.num_nodes
-    num_edges = tg.num_edges
-    snapshots = tg.snapshots
+    num_nodes = tg.num_nodes |> deepcopy
+    num_edges = tg.num_edges |> deepcopy
+    snapshots = tg.snapshots |> deepcopy
     num_snapshots = tg.num_snapshots - 1
     deleteat!(num_nodes, t)
     deleteat!(num_edges, t)
     deleteat!(snapshots, t)
     return TemporalSnapshotsGNNGraph(num_nodes, num_edges, num_snapshots, snapshots, tg.tgdata) 
+end
+
+"""
+    remove_snapshot!(tg::TemporalSnapshotsGNNGraph, t::Int)
+
+Remove the snapshot at time index `t` from `tg`.
+
+See [`remove_snapshot`](@ref) for a non-mutating version.
+"""
+function remove_snapshot!(tg::TemporalSnapshotsGNNGraph, t::Int)
+    @assert t <= tg.num_snapshots "snapshot index $t out of bounds"
+    tg.num_snapshots -= 1
+    deleteat!(tg.num_nodes, t)
+    deleteat!(tg.num_edges, t)
+    deleteat!(tg.snapshots, t)
+    return tg
 end
 
 function Base.show(io::IO, tsg::TemporalSnapshotsGNNGraph)
