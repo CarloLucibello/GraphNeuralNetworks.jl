@@ -77,12 +77,11 @@ function train(; kws...)
 
     pred = DotPredictor()
 
-    ps = Flux.params(model)
-    opt = Adam(args.η)
+    opt = Flux.setup(Adam(args.η), model)
 
     ### LOSS FUNCTION ############
 
-    function loss(pos_g, neg_g = nothing; with_accuracy = false)
+    function loss(model, pos_g, neg_g = nothing; with_accuracy = false)
         h = model(X)
         if neg_g === nothing
             # We sample a negative graph at each training step
@@ -103,16 +102,16 @@ function train(; kws...)
 
     ### LOGGING FUNCTION
     function report(epoch)
-        train_loss, train_acc = loss(train_pos_g, with_accuracy = true)
-        test_loss, test_acc = loss(test_pos_g, test_neg_g, with_accuracy = true)
+        train_loss, train_acc = loss(model, train_pos_g, with_accuracy = true)
+        test_loss, test_acc = loss(model, test_pos_g, test_neg_g, with_accuracy = true)
         println("Epoch: $epoch  $((; train_loss, train_acc))  $((; test_loss, test_acc))")
     end
 
     ### TRAINING
     report(0)
     for epoch in 1:(args.epochs)
-        gs = Flux.gradient(() -> loss(train_pos_g), ps)
-        Flux.Optimise.update!(opt, ps, gs)
+        grads = Flux.gradient(model -> loss(model, train_pos_g), model)
+        Flux.update!(opt, model, grads[1])
         epoch % args.infotime == 0 && report(epoch)
     end
 end
