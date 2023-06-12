@@ -54,6 +54,8 @@ end
     @test length(tsg.snapshots) == 5
     @test tsg.num_snapshots == 5
     
+    tsg21 = add_snapshot(tsg2, 7, g)
+    @test tsg21.num_snapshots == 7
     
     tsg3 = remove_snapshot(tsg, 3)
     @test tsg3.num_nodes == [10 for i in 1:4]
