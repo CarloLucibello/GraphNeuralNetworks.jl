@@ -1,29 +1,32 @@
 """
     TemporalSnapshotsGNNGraph(snapshots::AbstractVector{<:GNNGraph})
 
-A type representing a temporal graph as a sequence of snapshots, in this case a snapshot is a [`GNNGraph`](@ref).
+A type representing a temporal graph as a sequence of snapshots. In this case a snapshot is a [`GNNGraph`](@ref).
 
-It stores the feature array associated to the graph itself as a [`DataStore`](@ref) object, and it uses the [`DataStore`](@ref) objects of each snapshot for the node and edge features.
+`TemporalSnapshotsGNNGraph` can store the feature array associated to the graph itself as a [`DataStore`](@ref) object, 
+and it uses the [`DataStore`](@ref) objects of each snapshot for the node and edge features.
 The features can be passed at construction time or added later.
 
-# Arguments
-- snapshot: a vector of snapshots, each snapshot must have the same number of nodes.
+# Constructor Arguments
+
+- `snapshot`: a vector of snapshots, where each snapshot must have the same number of nodes.
 
 # Examples
+
 ```julia
 julia> using GraphNeuralNetworks
 
 julia> snapshots = [rand_graph(10,20) for i in 1:5];
 
-julia> tgs = TemporalSnapshotsGNNGraph(snapshots)
+julia> tg = TemporalSnapshotsGNNGraph(snapshots)
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10, 10, 10, 10]
   num_edges: [20, 20, 20, 20, 20]
   num_snapshots: 5
 
-julia> tgs.tgdata.x = rand(4); # add temporal graph feature
+julia> tg.tgdata.x = rand(4); # add temporal graph feature
 
-julia> tgs # show temporal graph with new feature
+julia> tg # show temporal graph with new feature
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10, 10, 10, 10]
   num_edges: [20, 20, 20, 20, 20]
@@ -72,19 +75,20 @@ end
 
 Return a `TemporalSnapshotsGNNGraph` created starting from `tg` by adding the snapshot `g` at time index `t`.
 
-# Example
-```julia
+# Examples
+
+```julia-repl
 julia> using GraphNeuralNetworks
 
 julia> snapshots = [rand_graph(10,20) for i in 1:5];
 
-julia> tgs = TemporalSnapshotsGNNGraph(snapshots)
+julia> tg = TemporalSnapshotsGNNGraph(snapshots)
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10, 10, 10, 10]
   num_edges: [20, 20, 20, 20, 20]
   num_snapshots: 5
 
-julia> new_tgs = add_snapshot(tgs, 3, rand_graph(10,16)) # add a new snapshot at time 3
+julia> new_tg = add_snapshot(tg, 3, rand_graph(10,16)) # add a new snapshot at time 3
 TemporalSnapshotsGNNGraph:
 num_nodes: [10, 10, 10, 10, 10, 10]
 num_edges: [20, 20, 16, 20, 20, 20]
@@ -93,9 +97,9 @@ num_snapshots: 6
 """
 function add_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
     @assert g.num_nodes == tg.num_nodes[t] "number of nodes must match"
-    num_nodes= tg.num_nodes |> deepcopy
-    num_edges = tg.num_edges |> deepcopy
-    snapshots = tg.snapshots |> deepcopy
+    num_nodes = tg.num_nodes |> copy
+    num_edges = tg.num_edges |> copy
+    snapshots = tg.snapshots |> copy
     num_snapshots = tg.num_snapshots + 1
     insert!(num_nodes, t, g.num_nodes)
     insert!(num_edges, t, g.num_edges)
@@ -103,24 +107,45 @@ function add_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
     return TemporalSnapshotsGNNGraph(num_nodes, num_edges, num_snapshots, snapshots, tg.tgdata) 
 end
 
+# """
+#     add_snapshot!(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
+
+# Add to `tg` the snapshot `g` at time index `t`.
+
+# See also [`add_snapshot`](@ref) for a non-mutating version.
+# """
+# function add_snapshot!(tg::TemporalSnapshotsGNNGraph, t::Int, g::GNNGraph)
+#     if t > tg.num_snapshots + 1
+#         error("cannot add snapshot at time $t, the temporal graph has only $(tg.num_snapshots) snapshots")
+#     end
+#     if tg.num_snapshots > 0
+#         @assert g.num_nodes == first(tg.num_nodes) "number of nodes must match"
+#     end
+#     insert!(tg.num_nodes, t, g.num_nodes)
+#     insert!(tg.num_edges, t, g.num_edges)
+#     insert!(tg.snapshots, t, g)
+#     return tg 
+# end
+
 """
     remove_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int)
 
-Return a `TemporalSnapshotsGNNGraph` created starting from `tg` by removing the snapshot at time index `t`.
+Return a [`TemporalSnapshotsGNNGraph`](@ref) created starting from `tg` by removing the snapshot at time index `t`.
 
-# Example
-```julia
+# Examples
+
+```julia-repl
 julia> using GraphNeuralNetworks
 
 julia> snapshots = [rand_graph(10,20), rand_graph(10,14), rand_graph(10,22)];
 
-julia> tgs = TemporalSnapshotsGNNGraph(snapshots)
+julia> tg = TemporalSnapshotsGNNGraph(snapshots)
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10, 10]
   num_edges: [20, 14, 22]
   num_snapshots: 3
 
-julia> new_tgs = remove_snapshot(tgs,2) # remove snapshot at time 2
+julia> new_tg = remove_snapshot(tg, 2) # remove snapshot at time 2
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10]
   num_edges: [20, 22]
@@ -128,9 +153,9 @@ TemporalSnapshotsGNNGraph:
 ```
 """
 function remove_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int)
-    num_nodes = tg.num_nodes |> deepcopy
-    num_edges = tg.num_edges |> deepcopy
-    snapshots = tg.snapshots |> deepcopy
+    num_nodes = tg.num_nodes |> copy
+    num_edges = tg.num_edges |> copy
+    snapshots = tg.snapshots |> copy
     num_snapshots = tg.num_snapshots - 1
     deleteat!(num_nodes, t)
     deleteat!(num_edges, t)
@@ -138,21 +163,21 @@ function remove_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int)
     return TemporalSnapshotsGNNGraph(num_nodes, num_edges, num_snapshots, snapshots, tg.tgdata) 
 end
 
-"""
-    remove_snapshot!(tg::TemporalSnapshotsGNNGraph, t::Int)
+# """
+#     remove_snapshot!(tg::TemporalSnapshotsGNNGraph, t::Int)
 
-Remove the snapshot at time index `t` from `tg`.
+# Remove the snapshot at time index `t` from `tg` and return `tg`.
 
-See [`remove_snapshot`](@ref) for a non-mutating version.
-"""
-function remove_snapshot!(tg::TemporalSnapshotsGNNGraph, t::Int)
-    @assert t <= tg.num_snapshots "snapshot index $t out of bounds"
-    tg.num_snapshots -= 1
-    deleteat!(tg.num_nodes, t)
-    deleteat!(tg.num_edges, t)
-    deleteat!(tg.snapshots, t)
-    return tg
-end
+# See [`remove_snapshot`](@ref) for a non-mutating version.
+# """
+# function remove_snapshot!(tg::TemporalSnapshotsGNNGraph, t::Int)
+#     @assert t <= tg.num_snapshots "snapshot index $t out of bounds"
+#     tg.num_snapshots -= 1
+#     deleteat!(tg.num_nodes, t)
+#     deleteat!(tg.num_edges, t)
+#     deleteat!(tg.snapshots, t)
+#     return tg
+# end
 
 function Base.show(io::IO, tsg::TemporalSnapshotsGNNGraph)
     print(io, "TemporalSnapshotsGNNGraph($(tsg.num_snapshots)) with ")

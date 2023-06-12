@@ -35,7 +35,9 @@ export GNNHeteroGraph,
 include("temporalsnapshotsgnngraph.jl")
 export TemporalSnapshotsGNNGraph,
        add_snapshot,
+       # add_snapshot!,
        remove_snapshot
+       # remove_snapshot!
 
 include("query.jl")
 export adjacency_list,
