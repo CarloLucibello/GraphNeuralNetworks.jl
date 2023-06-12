@@ -47,5 +47,3 @@ end
     tsg.tgdata.x=rand(4)
     @test sprint(show,tsg) == "TemporalSnapshotsGNNGraph(5) with x: 4-element data"
 end
-
-#     @test sprint(show, MIME("text/plain"), rand_graph(10, 20); context=:compact => true) == "GNNGraph(10, 20) with no data"
