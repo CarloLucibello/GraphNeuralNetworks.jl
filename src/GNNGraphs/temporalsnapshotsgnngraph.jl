@@ -138,8 +138,39 @@ function remove_snapshot(tg::TemporalSnapshotsGNNGraph, t::Int)
     return TemporalSnapshotsGNNGraph(num_nodes, num_edges, num_snapshots, snapshots, tg.tgdata) 
 end
 
+"""
+    getproperty(tg::TemporalSnapshotsGNNGraph, prop::Symbol)
+
+If `prop` is a field of `TemporalSnapshotsGNNGraph` return the corresponding value, if `prop` is `:ndata`, `:edata` or `:gdata` return the corresponding array of `DataStore`, otherwise return an array containing the `prop` feature of each snapshot.
+
+# Examples
+```julia
+julia> snaps=[rand_graph(10,20,ndata = rand(3,10)) for i in 1:3];
+
+julia> tgs = TemporalSnapshotsGNNGraph(snaps)
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10, 10]
+  num_edges: [20, 20, 20]
+  num_snapshots: 3
+
+julia> tgs.ndata
+3-element Vector{DataStore}:
+ DataStore(10) with 1 element:
+  x = 3×10 Matrix{Float64}
+ DataStore(10) with 1 element:
+  x = 3×10 Matrix{Float64}
+ DataStore(10) with 1 element:
+  x = 3×10 Matrix{Float64}
+
+julia> tgs.ndata.x
+3-element Vector{Matrix{Float64}}:
+ [0.8673509190658151 0.44507039178583574 … 0.3540406246655291 0.32301290218226175; 0.2657940264407055 0.8955046116193814 … 0.33941467211298426 0.38485049221502465; 0.48030055946962036 0.7127377333270681 … 0.21132801599438156 0.8045821310635392]
+ [0.8195347950242018 0.9823449883057142 … 0.530094072794728 0.49424179101438703; 0.16734985599253294 0.7669357123643717 … 0.3501525426697579 0.5951573310727881; 0.23798757760327838 0.8353144950964572 … 0.04964083551409626 0.4725336527008097]
+ [0.9655069785658686 0.8354570027415478 … 0.8238130292494555 0.8478137086159969; 0.2445514712259027 0.19057411837712268 … 0.8214337153973568 0.9790470076645307; 0.6972044915443449 0.22701496021424217 … 0.5837902745512978 0.6671225562067188]
+```
+"""
 function Base.getproperty(tg::TemporalSnapshotsGNNGraph, prop::Symbol)
-    if prop ∈ fieldnames(tg)
+    if prop ∈ fieldnames(TemporalSnapshotsGNNGraph)
         return getfield(tg, prop)
     elseif prop == :ndata
         return [s.ndata for s in tg.snapshots]
