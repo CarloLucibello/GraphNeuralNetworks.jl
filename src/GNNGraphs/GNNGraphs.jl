@@ -29,8 +29,8 @@ export GNNGraph,
 
 include("gnnheterograph.jl")
 export GNNHeteroGraph,
-       num_edge_types
-
+       num_edge_types,
+       num_node_types
 
 include("temporalsnapshotsgnngraph.jl")
 export TemporalSnapshotsGNNGraph,
