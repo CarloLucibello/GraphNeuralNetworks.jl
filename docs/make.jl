@@ -20,7 +20,7 @@ makedocs(;
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets),
          sitename = "GraphNeuralNetworks.jl",
          pages = ["Home" => "index.md",
-             "Graphs" => ["gnngraph.md", "gnnheterograph.md", "heterogeneous.md"],
+             "Graphs" => ["gnngraph.md", "heterograph.md", "temporalgraph.md"],
              "Message Passing" => "messagepassing.md",
              "Model Building" => "models.md",
              "Datasets" => "datasets.md",
