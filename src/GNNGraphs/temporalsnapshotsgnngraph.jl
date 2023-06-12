@@ -141,7 +141,7 @@ end
 """
     getproperty(tg::TemporalSnapshotsGNNGraph, prop::Symbol)
 
-If `prop` is a field of `TemporalSnapshotsGNNGraph` return the corresponding value, if `prop` is `:ndata`, `:edata` or `:gdata` return the corresponding array of `DataStore`, otherwise return an array containing the `prop` feature of each snapshot.
+If `prop` is a field of `TemporalSnapshotsGNNGraph` return the corresponding value, if `prop` is `:ndata`, `:edata` or `:gdata` return the corresponding array of `DataStore`s, otherwise return an array containing the `prop` feature of each snapshot.
 
 # Examples
 ```julia
