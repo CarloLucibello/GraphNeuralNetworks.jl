@@ -1,4 +1,4 @@
-# Graphs
+# Working with GNNGraph 
 
 The fundamental graph type in GraphNeuralNetworks.jl is the [`GNNGraph`](@ref).
 A GNNGraph `g` is a directed graph with nodes labeled from 1 to `g.num_nodes`.

@@ -198,10 +198,6 @@ _str(s) = "$s"
 MLUtils.numobs(g::GNNHeteroGraph) = g.num_graphs
 # MLUtils.getobs(g::GNNHeteroGraph, i) = getgraph(g, i)
 
-Base.getindex(g::GNNHeteroGraph, node1_t::Symbol, rel_t::Symbol, node2_t::Symbol) =
-    g.edata[(node1_t, rel_t, node2_t)]
-
-Base.getindex(g::GNNHeteroGraph, node_t::Symbol)= g.ndata[node_t]
 
 """
     num_edge_types(g)
