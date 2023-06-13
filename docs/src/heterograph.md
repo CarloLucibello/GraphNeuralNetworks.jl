@@ -12,11 +12,3 @@ and data containers.
 In GraphNeuralNetworks.jl heterographs are implemented in 
 the type [`GNNHeteroGraph`](@ref).
 
-
-```@docs
-GNNHeteroGraph
-rand_heterograph
-num_edge_types
-```
-
-

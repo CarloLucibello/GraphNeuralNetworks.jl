@@ -1,10 +1,10 @@
 using Flux, NNlib, GraphNeuralNetworks, Graphs, SparseArrays
 using Documenter, DemoCards
 
-tutorials, tutorials_cb, tutorial_assets = makedemos("tutorials")
+# tutorials, tutorials_cb, tutorial_assets = makedemos("tutorials")
 
 assets = []
-isnothing(tutorial_assets) || push!(assets, tutorial_assets)
+# isnothing(tutorial_assets) || push!(assets, tutorial_assets)
 
 DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup,
                     :(using GraphNeuralNetworks, Graphs, SparseArrays, NNlib, Flux);
@@ -24,7 +24,7 @@ makedocs(;
              "Message Passing" => "messagepassing.md",
              "Model Building" => "models.md",
              "Datasets" => "datasets.md",
-             "Tutorials" => tutorials,
+            #  "Tutorials" => tutorials,
              "API Reference" => [
                  "GNNGraph" => "api/gnngraph.md",
                  "Basic Layers" => "api/basic.md",
@@ -39,6 +39,6 @@ makedocs(;
              "Summer Of Code" => "gsoc.md",
          ])
 
-tutorials_cb()
+# tutorials_cb()
 
 deploydocs(repo = "github.com/CarloLucibello/GraphNeuralNetworks.jl.git")
