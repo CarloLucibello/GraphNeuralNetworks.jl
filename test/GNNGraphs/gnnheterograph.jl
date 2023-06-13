@@ -69,6 +69,31 @@ end
     @test hg.num_edges == Dict((:A, :rel1, :B) => 20, (:B, :rel2, :A) => 30)
 end
 
+@testset "num_edge_types / num_node_types" begin
+    hg = rand_heterograph((:A => 10, :B => 20),
+            ((:A, :rel1, :B) => 30, (:B, :rel2, :A) => 10),
+            ndata = (:A => rand(2, 10),
+                    :B => (x = rand(3, 20), y = rand(4, 20))),
+            edata = (:A, :rel1, :B) => rand(5, 30),
+            gdata = 1)
+    @test num_edge_types(hg) == 2
+    @test num_node_types(hg) == 2
+
+    g = rand_graph(10, 20)
+    @test num_edge_types(g) == 1
+    @test num_node_types(g) == 1
+end
+
+@testset "numobs" begin
+    hg = rand_heterograph((:A => 10, :B => 20),
+            ((:A, :rel1, :B) => 30, (:B, :rel2, :A) => 10),
+            ndata = (:A => rand(2, 10),
+                    :B => (x = rand(3, 20), y = rand(4, 20))),
+            edata = (:A, :rel1, :B) => rand(5, 30),
+            gdata = 1)
+    @test MLUtils.numobs(hg) == 1
+end
+
 ## Cannot test this because DataStore is not an ordered collection
 ## Uncomment when/if it will be based on OrderedDict
 # @testset "show" begin

@@ -28,13 +28,16 @@ export GNNGraph,
        graph_features
 
 include("gnnheterograph.jl")
-export GNNHeteroGraph
-
+export GNNHeteroGraph,
+       num_edge_types,
+       num_node_types
 
 include("temporalsnapshotsgnngraph.jl")
 export TemporalSnapshotsGNNGraph,
        add_snapshot,
+       # add_snapshot!,
        remove_snapshot
+       # remove_snapshot!
 
 include("query.jl")
 export adjacency_list,

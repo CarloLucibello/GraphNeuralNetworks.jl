@@ -38,6 +38,50 @@ end
     @test tsg.snapshots == snapshots
 end
 
+@testset "add/remove_snapshot" begin
+    snapshots = [rand_graph(10, 20) for i in 1:5]
+    tsg = TemporalSnapshotsGNNGraph(snapshots)
+    g = rand_graph(10, 20)
+    tsg2 = add_snapshot(tsg, 3, g)
+    @test tsg2.num_nodes == [10 for i in 1:6]
+    @test tsg2.num_edges == [20 for i in 1:6]
+    @test tsg2.snapshots[3] == g
+    @test tsg2.num_snapshots == 6
+    @test tsg.num_nodes == [10 for i in 1:5]
+    @test tsg.num_edges == [20 for i in 1:5]
+    @test tsg.snapshots[2] === tsg2.snapshots[2]
+    @test tsg.snapshots[3] === tsg2.snapshots[4]
+    @test length(tsg.snapshots) == 5
+    @test tsg.num_snapshots == 5
+    
+    tsg21 = add_snapshot(tsg2, 7, g)
+    @test tsg21.num_snapshots == 7
+    
+    tsg3 = remove_snapshot(tsg, 3)
+    @test tsg3.num_nodes == [10 for i in 1:4]
+    @test tsg3.num_edges == [20 for i in 1:4]
+    @test tsg3.snapshots == snapshots[[1,2,4,5]]
+end
+
+
+# @testset "add/remove_snapshot!" begin
+#     snapshots = [rand_graph(10, 20) for i in 1:5]
+#     tsg = TemporalSnapshotsGNNGraph(snapshots)
+#     g = rand_graph(10, 20)
+#     tsg2 = add_snapshot!(tsg, 3, g)
+#     @test tsg2.num_nodes == [10 for i in 1:6]
+#     @test tsg2.num_edges == [20 for i in 1:6]
+#     @test tsg2.snapshots[3] == g
+#     @test tsg2.num_snapshots == 6
+#     @test tsg2 === tsg
+    
+#     tsg3 = remove_snapshot!(tsg, 3)
+#     @test tsg3.num_nodes == [10 for i in 1:4]
+#     @test tsg3.num_edges == [20 for i in 1:4]
+#     @test length(tsg3.snapshots) === 4
+#     @test tsg3 === tsg
+# end
+
 @testset "show" begin
     snapshots = [rand_graph(10, 20) for i in 1:5]
     tsg = TemporalSnapshotsGNNGraph(snapshots)
