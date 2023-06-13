@@ -145,7 +145,7 @@ If `prop` is a field of `TemporalSnapshotsGNNGraph` return the corresponding val
 
 # Examples
 ```julia
-julia> snaps=[rand_graph(10,20,ndata = rand(3,10)) for i in 1:3];
+julia> snaps = [rand_graph(10, 20, ndata = rand(3, 10)) for i in 1:3];
 
 julia> tg = TemporalSnapshotsGNNGraph(snaps)
 TemporalSnapshotsGNNGraph:
