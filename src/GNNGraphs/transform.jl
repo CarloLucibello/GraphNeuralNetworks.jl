@@ -21,7 +21,7 @@ function add_self_loops(g::GNNGraph{<:COO_T})
         ew = [ew; fill!(similar(ew, n), 1)]
     end
 
-    GNNGraph((s, t, ew),
+    return GNNGraph((s, t, ew),
              g.num_nodes, length(s), g.num_graphs,
              g.graph_indicator,
              g.ndata, g.edata, g.gdata)
@@ -32,7 +32,7 @@ function add_self_loops(g::GNNGraph{<:ADJMAT_T})
     @assert isempty(g.edata)
     num_edges = g.num_edges + g.num_nodes
     A = A + I
-    GNNGraph(A,
+    return GNNGraph(A,
              g.num_nodes, num_edges, g.num_graphs,
              g.graph_indicator,
              g.ndata, g.edata, g.gdata)
@@ -71,7 +71,7 @@ function remove_self_loops(g::GNNGraph{<:ADJMAT_T})
         dropzeros!(A)
     end
     num_edges = numnonzeros(A)
-    GNNGraph(A,
+    return GNNGraph(A,
              g.num_nodes, num_edges, g.num_graphs,
              g.graph_indicator,
              g.ndata, g.edata, g.gdata)
@@ -110,7 +110,7 @@ function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr = +)
         edata = _scatter(aggr, edata, idxs, num_edges)
     end
 
-    GNNGraph((s, t, w),
+    return GNNGraph((s, t, w),
              g.num_nodes, num_edges, g.num_graphs,
              g.graph_indicator,
              g.ndata, edata, g.gdata)
@@ -137,13 +137,55 @@ function add_edges(g::GNNGraph{<:COO_T},
     s = [s; snew]
     t = [t; tnew]
 
-    GNNGraph((s, t, nothing),
+    return GNNGraph((s, t, nothing),
              g.num_nodes, length(s), g.num_graphs,
              g.graph_indicator,
              g.ndata, edata, g.gdata)
 end
 
-### TODO Cannot implement this since GNNGraph is immutable (cannot change num_edges)
+function add_edges(g::GNNHeteroGraph{<:COO_T},
+                   edge_t::EType,
+                   snew::AbstractVector{<:Integer},
+                   tnew::AbstractVector{<:Integer};
+                   edata = nothing)
+    @assert length(snew) == length(tnew)
+    # TODO remove this constraint
+    @assert get_edge_weight(g, edge_t) === nothing
+
+    edata = normalize_graphdata(edata, default_name = :e, n = length(snew))
+    g_edata = g.edata |> copy
+    if !isempty(g.edata)
+        if haskey(g_edata, edge_t)
+            g_edata[edge_t] = cat_features(g.edata[edge_t], edata)
+        else
+            g_edata[edge_t] = edata
+        end
+    end
+
+    graph = g.graph |> copy
+    etypes = g.etypes |> copy
+    if !haskey(graph, edge_t)
+        @assert edge_t[1] ∈ g.ntypes && edge_t[3] ∈ g.ntypes
+        push!(g.etypes, edge_t)
+    else
+        s, t = edge_index(g, edge_t)
+        snew = [s; snew]
+        tnew = [t; tnew]
+    end
+    graph[edge_t] = (snew, tnew, nothing)
+    num_edges = g.num_edges |> copy
+    num_edges[edge_t] = length(graph[edge_t][1])
+
+    return GNNHeteroGraph(graph,
+             g.num_nodes, num_edges, g.num_graphs,
+             g.graph_indicator,
+             g.ndata, g_edata, g.gdata,
+             g.ntypes, etypes)
+end
+
+
+
+### TODO Cannot implement this since GNNGraph is immutable (cannot change num_edges). make it mutable
 # function Graphs.add_edge!(g::GNNGraph{<:COO_T}, snew::T, tnew::T; edata=nothing) where T<:Union{Integer, AbstractVector}
 #     s, t = edge_index(g)
 #     @assert length(snew) == length(tnew)

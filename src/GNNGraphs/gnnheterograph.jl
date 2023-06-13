@@ -1,6 +1,8 @@
 
-const EDict{T} = Dict{Tuple{Symbol, Symbol, Symbol}, T}
-const NDict{T} = Dict{Symbol, T}
+const EType = Tuple{Symbol, Symbol, Symbol} 
+const NType = Symbol
+const EDict{T} = Dict{EType, T}
+const NDict{T} = Dict{NType, T}
 
 """
     GNNHeteroGraph(data; [ndata, edata, gdata, num_nodes])
@@ -78,8 +80,8 @@ julia> hg.ndata[:A].x
 
 See also [`GNNGraph`](@ref) for a homogeneous graph type and [`rand_heterograph`](@ref) for a function to generate random heterographs.
 """
-struct GNNHeteroGraph
-    graph::EDict
+struct GNNHeteroGraph{T <: Union{COO_T, ADJMAT_T}}
+    graph::EDict{T}
     num_nodes::NDict{Int}
     num_edges::EDict{Int}
     num_graphs::Int
@@ -87,21 +89,26 @@ struct GNNHeteroGraph
     ndata::NDict{DataStore}
     edata::EDict{DataStore}
     gdata::DataStore
-    ntypes::Vector{Symbol}
-    etypes::Vector{Symbol}
+    ntypes::Vector{NType}
+    etypes::Vector{EType}
 end
 
 @functor GNNHeteroGraph
 
 GNNHeteroGraph(data; kws...) = GNNHeteroGraph(Dict(data); kws...)
 
+function GNNHeteroGraph(data::Dict; kws...)
+    all(k -> k isa EType, keys(data)) || throw(ArgumentError("Keys of data must be tuples of the form (source_type, edge_type, target_type)"))
+    return GNNHeteroGraph(Dict(k => v for (k, v) in pairs(data)); kws...)
+end
+
 function GNNHeteroGraph(data::EDict;
                         num_nodes = nothing,
                         graph_indicator = nothing,
                         graph_type = :coo,
                         dir = :out,
-                        ndata = NDict{NamedTuple}(),
-                        edata = EDict{NamedTuple}(),
+                        ndata = NDict{DataStore}(),
+                        edata = EDict{DataStore}(),
                         gdata = (;))
     @assert graph_type ∈ [:coo, :dense, :sparse] "Invalid graph_type $graph_type requested"
     @assert dir ∈ [:in, :out]
@@ -112,7 +119,7 @@ function GNNHeteroGraph(data::EDict;
     end
 
     ntypes = union([[k[1] for k in keys(data)]; [k[3] for k in keys(data)]])
-    etypes = [k[2] for k in keys(data)]
+    etypes = collect(keys(data))
 
     if graph_type == :coo
         graph, num_nodes, num_edges = to_coo(data; num_nodes, dir)
