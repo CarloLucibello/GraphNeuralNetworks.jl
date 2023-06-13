@@ -48,21 +48,23 @@ function rand_graph(n::Integer, m::Integer; bidirected = true, seed = -1, edge_w
 end
 
 """
-    rand_heterograph(n, m; seed=-1, kws...)
+    rand_heterograph(n, m; seed=-1, bidirected=false, kws...)
 
 Construct an [`GNNHeteroGraph`](@ref) with number of nodes and edges 
-specified by `n` and `m` respectively.
-`n` and `m` can be any iterable of pairs.
+specified by `n` and `m` respectively. `n` and `m` can be any iterable of pairs
+specifing node/edge types and their numbers.
 
 Use a `seed > 0` for reproducibility.
+
+Setting `bidirected=true` will generate a bidirected graph, i.e. each edge will have a reverse edge.
+Therefore, for each edge type `(:A, :rel, :B)` a corresponding reverse edge type `(:B, :rel, :A)`
+will be generated.
 
 Additional keyword arguments will be passed to the [`GNNHeteroGraph`](@ref) constructor.
 
 # Examples
 
-```juliarepl
-
-
+```julia-repl
 julia> g = rand_heterograph((:user => 10, :movie => 20),
                             (:user, :rate, :movie) => 30)
 GNNHeteroGraph:
@@ -70,15 +72,35 @@ GNNHeteroGraph:
   num_edges: ((:user, :rate, :movie) => 30,)
 ```
 """
-function rand_heteropraph end
+function rand_heterograph end
 
 # for generic iterators of pairs
 rand_heterograph(n, m; kws...) = rand_heterograph(Dict(n), Dict(m); kws...)
 
 function rand_heterograph(n::NDict, m::EDict; bidirected = false, seed = -1, kws...)
-    @assert !bidirected "Bidirected graphs not supported yet."
     rng = seed > 0 ? MersenneTwister(seed) : Random.GLOBAL_RNG
+    if bidirected
+        return _rand_bidirected_heterograph(rng, n, m; kws...)
+    end
     graphs = Dict(k => _rand_edges(rng, (n[k[1]], n[k[3]]), m[k]) for k in keys(m))
+    return GNNHeteroGraph(graphs; num_nodes = n, kws...)
+end
+
+function _rand_bidirected_heterograph(rng, n::NDict, m::EDict; kws...)
+    for k in keys(m)
+        if reverse(k) ∈ keys(m)
+            @assert m[k] == m[reverse(k)] "Number of edges must be the same in reverse edge types for bidirected graphs."
+        else
+            m[reverse(k)] = m[k]
+        end
+    end
+    graphs = Dict{EType, Tuple{Vector{Int}, Vector{Int}, Nothing}}()
+    for k in keys(m)
+        reverse(k) ∈ keys(graphs) && continue
+        s, t, val =  _rand_edges(rng, (n[k[1]], n[k[3]]), m[k])
+        graphs[k] = s, t, val
+        graphs[reverse(k)] = t, s, val
+    end
     return GNNHeteroGraph(graphs; num_nodes = n, kws...)
 end
 
@@ -87,6 +109,39 @@ function _rand_edges(rng, (n1, n2), m)
     s, t = edge_decoding(idx, n1, n2)
     val = nothing
     return s, t, val
+end
+
+"""
+    rand_bipartite_heterograph(n1, n2, m; [bidirected, seed, node_t, edge_t, kws...])
+    rand_bipartite_heterograph((n1, n2), m; ...)
+    rand_bipartite_heterograph((n1, n2), (m1, m2); ...)
+
+Construct an [`GNNHeteroGraph`](@ref) with number of nodes and edges
+specified by `n1`, `n2` and `m1` and `m2` respectively.
+
+See [`rand_heterograph`](@ref) for a more general version.
+
+# Keyword arguments
+
+- `bidirected`: whether to generate a bidirected graph. Default is `true`.
+- `seed`: random seed. Default is `-1` (no seed).
+- `node_t`: node types. If `bipartite=true`, this should be a tuple of two node types, otherwise it should be a single node type.
+- `edge_t`: edge types. If `bipartite=true`, this should be a tuple of two edge types, otherwise it should be a single edge type.
+"""
+function rand_bipartite_heterograph end
+
+rand_bipartite_heterograph(n1::Int, n2::Int, m::Int; kws...) = rand_bipartite_heterograph((n1, n2), (m, m); kws...)
+
+rand_bipartite_heterograph((n1, n2)::NTuple{2,Int}, m::Int; kws...) = rand_bipartite_heterograph((n1, n2), (m, m); kws...)
+
+function rand_bipartite_heterograph((n1, n2)::NTuple{2,Int}, (m1, m2)::NTuple{2,Int}; bidirected=true, 
+                        node_t = (:A, :B), edge_t = :to, kws...)
+    if edge_t isa Symbol
+        edge_t = (edge_t, edge_t)
+    end
+    return rand_heterograph(Dict(node_t[1] => n1, node_t[2] => n2), 
+                            Dict((node_t[1], edge_t[1], node_t[2]) => m1, (node_t[2], edge_t[2], node_t[1]) => m2); 
+                            bidirected, kws...)
 end
 
 """
