@@ -81,6 +81,7 @@ export add_nodes,
 include("generate.jl")
 export rand_graph,
        rand_heterograph,
+       rand_bipartite_heterograph,
        knn_graph,
        radius_graph
 

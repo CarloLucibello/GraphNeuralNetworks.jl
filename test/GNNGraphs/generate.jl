@@ -75,3 +75,20 @@ end
     s, t = edge_index(g)
     @test (s .> 5) == (t .> 5)
 end
+
+@testset "rand_bipartite_heterograph" begin
+    g = rand_bipartite_heterograph(10, 15, 20)
+    @test g.num_nodes == Dict(:A => 10, :B => 15)
+    @test g.num_edges == Dict((:A, :to, :B) => 20, (:B, :to, :A) => 20)
+    sA, tB = edge_index(g, (:A, :to, :B))
+    for (s, t) in zip(sA, tB)
+        @test 1 <= s <= 10
+        @test 1 <= t <= 15
+        @test has_edge(g, (:A,:to,:B), s, t)
+        @test has_edge(g, (:B,:to,:A), t, s)
+    end
+
+    g = rand_bipartite_heterograph((2, 2), (4, 0), bidirected=false)
+    @test has_edge(g, (:A,:to,:B), 1, 1)
+    @test !has_edge(g, (:B,:to,:A), 1, 1)
+end

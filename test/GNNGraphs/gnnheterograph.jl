@@ -18,7 +18,7 @@
     @test hg.edata == Dict()
     @test isempty(hg.gdata)
     @test sort(hg.ntypes) == [:A, :B]
-    @test sort(hg.etypes) == [:rel1, :rel2]
+    @test sort(hg.etypes) == [(:A, :rel1, :B), (:B, :rel2, :A)]
 end
 
 @testset "features" begin

@@ -1,7 +1,7 @@
 ### CONVERT_TO_COO REPRESENTATION ########
 
 function to_coo(data::EDict; num_nodes = nothing, kws...)
-    graph = EDict{Any}()
+    graph = EDict{COO_T}()
     _num_nodes = NDict{Int}()
     num_edges = EDict{Int}()
     for k in keys(data)
@@ -23,6 +23,7 @@ function to_coo(data::EDict; num_nodes = nothing, kws...)
         _num_nodes[k[1]] = max(get(_num_nodes, k[1], 0), nnodes[1])
         _num_nodes[k[3]] = max(get(_num_nodes, k[3], 0), nnodes[2])
     end
+    graph = Dict(k => v for (k, v) in pairs(graph)) # try to restrict the key/value types
     return graph, _num_nodes, num_edges
 end
 

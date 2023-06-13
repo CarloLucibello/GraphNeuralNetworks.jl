@@ -24,7 +24,7 @@ makedocs(;
              "Message Passing" => "messagepassing.md",
              "Model Building" => "models.md",
              "Datasets" => "datasets.md",
-            #  "Tutorials" => tutorials,
+             "Tutorials" => tutorials,
              "API Reference" => [
                  "GNNGraph" => "api/gnngraph.md",
                  "Basic Layers" => "api/basic.md",
