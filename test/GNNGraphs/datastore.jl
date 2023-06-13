@@ -23,6 +23,8 @@ end
     vec = [DataStore(10, (:x => x,)), DataStore(10, (:x => x, :y => rand(2, 10)))]
     @test vec.x == [x, x]
     @test_throws KeyError vec.z 
+    @test vec._n == [10, 10]
+    @test vec._data == [Dict(:x => x), Dict(:x => x, :y => vec[2].y)]
 end
 
 @testset "map" begin
@@ -34,7 +36,7 @@ end
     @test_throws AssertionError ds2=map(x -> [x; x], ds)
 end
 
-@testset """getdata / getn""" begin
+@testset "getdata / getn" begin
     ds = DataStore(10, (:x => rand(10), :y => rand(2, 10)))
     @test getdata(ds) == getfield(ds, :_data)
     @test_throws KeyError ds.data
