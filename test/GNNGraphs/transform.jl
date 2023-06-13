@@ -96,22 +96,35 @@ end
     @test nodemap == 1:(g1.num_nodes)
 end
 
-@testset "add_edges" begin if GRAPH_T == :coo
-    s = [1, 1, 2, 3]
-    t = [2, 3, 4, 5]
-    g = GNNGraph(s, t, graph_type = GRAPH_T)
-    snew = [1]
-    tnew = [4]
-    gnew = add_edges(g, snew, tnew)
-    @test gnew.num_edges == 5
-    @test sort(inneighbors(gnew, 4)) == [1, 2]
+@testset "add_edges" begin 
+    if GRAPH_T == :coo
+        s = [1, 1, 2, 3]
+        t = [2, 3, 4, 5]
+        g = GNNGraph(s, t, graph_type = GRAPH_T)
+        snew = [1]
+        tnew = [4]
+        gnew = add_edges(g, snew, tnew)
+        @test gnew.num_edges == 5
+        @test sort(inneighbors(gnew, 4)) == [1, 2]
 
-    g = GNNGraph(s, t, edata = (e1 = rand(2, 4), e2 = rand(3, 4)), graph_type = GRAPH_T)
-    # @test_throws ErrorException add_edges(g, snew, tnew)
-    gnew = add_edges(g, snew, tnew, edata = (e1 = ones(2, 1), e2 = zeros(3, 1)))
-    @test all(gnew.edata.e1[:, 5] .== 1)
-    @test all(gnew.edata.e2[:, 5] .== 0)
-end end
+        g = GNNGraph(s, t, edata = (e1 = rand(2, 4), e2 = rand(3, 4)), graph_type = GRAPH_T)
+        # @test_throws ErrorException add_edges(g, snew, tnew)
+        gnew = add_edges(g, snew, tnew, edata = (e1 = ones(2, 1), e2 = zeros(3, 1)))
+        @test all(gnew.edata.e1[:, 5] .== 1)
+        @test all(gnew.edata.e2[:, 5] .== 0)
+
+        @testset "heterograph" begin
+            hg = rand_bipartite_heterograph((2, 2), (4, 0), bidirected=false)
+            hg = add_edges(hg, (:B,:to,:A), [1, 1], [1,2])
+            @test hg.num_edges == Dict((:A,:to,:B) => 4, (:B,:to,:A) => 2)
+            @test has_edge(hg, (:B,:to,:A), 1, 1)
+            @test has_edge(hg, (:B,:to,:A), 1, 2)
+            @test !has_edge(hg, (:B,:to,:A), 2, 1)
+            @test !has_edge(hg, (:B,:to,:A), 2, 2)
+        end
+    end 
+end
+
 
 @testset "add_nodes" begin if GRAPH_T == :coo
     g = rand_graph(6, 4, ndata = rand(2, 6), graph_type = GRAPH_T)

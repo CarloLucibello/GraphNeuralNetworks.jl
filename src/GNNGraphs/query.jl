@@ -24,6 +24,8 @@ get_edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
 
 get_edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes = g.num_nodes)[1][3]
 
+get_edge_weight(g::GNNHeteroGraph{<:COO_T}, edge_t::EType) = g.graph[edge_t][3]
+
 Graphs.edges(g::GNNGraph) = Graphs.Edge.(edge_index(g)...)
 
 Graphs.edgetype(g::GNNGraph) = Graphs.Edge{eltype(g)}
