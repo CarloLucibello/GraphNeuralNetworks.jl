@@ -1,17 +1,9 @@
 #===================================
-Define GNNGraph type as a subtype of Graphs' AbstractGraph.
+Define GNNGraph type as a subtype of Graphs.AbstractGraph.
 For the core methods to be implemented by any AbstractGraph, see
 https://juliagraphs.org/Graphs.jl/latest/types/#AbstractGraph-Type
 https://juliagraphs.org/Graphs.jl/latest/developing/#Developing-Alternate-Graph-Types
 =============================================#
-
-const COO_T = Tuple{T, T, V} where {T <: AbstractVector{<:Integer}, V}
-const ADJLIST_T = AbstractVector{T} where {T <: AbstractVector{<:Integer}}
-const ADJMAT_T = AbstractMatrix
-const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
-const CUMAT_T = Union{CUDA.AnyCuMatrix, CUDA.CUSPARSE.CuSparseMatrix}
-
-const AVecI = AbstractVector{<:Integer}
 
 """
     GNNGraph(data; [graph_type, ndata, edata, gdata, num_nodes, graph_indicator, dir])
@@ -113,7 +105,7 @@ g = g |> gpu
 source, target = edge_index(g)
 ```
 """
-struct GNNGraph{T <: Union{COO_T, ADJMAT_T}} <: AbstractGraph{Int}
+struct GNNGraph{T <: Union{COO_T, ADJMAT_T}} <: AbstractGNNGraph{T}
     graph::T
     num_nodes::Int
     num_edges::Int

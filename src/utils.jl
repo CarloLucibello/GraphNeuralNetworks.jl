@@ -99,3 +99,8 @@ function broadcast_edges(g::GNNGraph, x)
     gi = graph_indicator(g, edges = true)
     return gather(x, gi)
 end
+
+
+expand_srcdst(g::AbstractGNNGraph, x) = throw(ArgumentError("Invalid input type, expected matrix or tuple of matrices."))
+expand_srcdst(g::AbstractGNNGraph, x::AbstractMatrix) = (x, x)
+expand_srcdst(g::AbstractGNNGraph, x::Tuple{<:AbstractMatrix, <:AbstractMatrix}) = x

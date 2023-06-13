@@ -1,6 +1,6 @@
-# HeteroGNNGraph
+# GNNHeteroGraph
 
-Documentation page for the graph type `HeteroGNNGraph` and related methods representing heterogeneous graphs,
+Documentation page for the graph type `GNNHeteroGraph` and related methods representing heterogeneous graphs,
 where  nodes and edges can have different types.
 
 

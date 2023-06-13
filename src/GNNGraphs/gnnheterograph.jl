@@ -80,7 +80,7 @@ julia> hg.ndata[:A].x
 
 See also [`GNNGraph`](@ref) for a homogeneous graph type and [`rand_heterograph`](@ref) for a function to generate random heterographs.
 """
-struct GNNHeteroGraph{T <: Union{COO_T, ADJMAT_T}}
+struct GNNHeteroGraph{T <: Union{COO_T, ADJMAT_T}} <: AbstractGNNGraph{T}
     graph::EDict{T}
     num_nodes::NDict{Int}
     num_edges::EDict{Int}
@@ -225,3 +225,63 @@ For [`GNNHeteroGraph`](@ref)s, this is the number of unique node types.
 num_node_types(g::GNNGraph) = 1
 
 num_node_types(g::GNNHeteroGraph) = length(g.ntypes)
+
+
+"""
+    edge_type_subgraph(g::GNNHeteroGraph, edge_ts)
+
+Return a subgraph of `g` that contains only the edges of type `edge_ts`.
+Edge types can be specified as a single edge type (i.e. a tuple containing 3 symbols) or a vector of edge types.
+"""
+edge_type_subgraph(g::GNNHeteroGraph, edge_t::EType) = edge_type_subgraph(g, [edge_t])
+
+function edge_type_subgraph(g::GNNHeteroGraph, edge_ts::AbstractVector{<:EType})
+    for edge_t in edge_ts
+        @assert edge_t in g.etypes "Edge type $(edge_t) not found in graph"
+    end
+    node_ts = _ntypes_from_edges(edge_ts)
+    graph = Dict(edge_t => g.graph[edge_t] for edge_t in edge_ts)
+    num_nodes = Dict(node_t => g.num_nodes[node_t] for node_t in node_ts)
+    num_edges = Dict(edge_t => g.num_edges[edge_t] for edge_t in edge_ts)
+    if g.graph_indicator === nothing
+        graph_indicator = nothing
+    else
+        graph_indicator = Dict(node_t => g.graph_indicator[node_t] for node_t in node_ts)
+    end
+    ndata = Dict(node_t => g.ndata[node_t] for node_t in node_ts if node_t in keys(g.ndata))
+    edata = Dict(edge_t => g.edata[edge_t] for edge_t in edge_ts if edge_t in keys(g.edata))
+    
+    return GNNHeteroGraph(graph, num_nodes, num_edges, g.num_graphs,
+                          graph_indicator, ndata, edata, g.gdata,
+                          node_ts, edge_ts)
+end
+
+function _ntypes_from_edges(edge_ts::AbstractVector{<:EType})
+    ntypes = Symbol[]
+    for edge_t in edge_ts
+        node1_t, _, node2_t = edge_t
+        !in(node1_t, ntypes) && push!(ntypes, node1_t)
+        !in(node2_t, ntypes) && push!(ntypes, node2_t)
+    end
+    return ntypes
+end 
+
+@non_differentiable _ntypes_from_edges(::Any...)
+
+
+function Base.getindex(g::GNNHeteroGraph, node_t::NType)
+    if !haskey(g.ndata, node_t) && node_t in g.ntypes
+        g.ndata[node_t] = DataStore(g.num_nodes[node_t])
+    end
+    return g.ndata[node_t]
+end
+
+Base.setindex!(g::GNNHeteroGraph, node_t::NType, x) = g.ndata[node_t] = x
+
+function Base.getindex(g::GNNHeteroGraph, edge_t::EType)
+    if !haskey(g.edata, node_t) && edge_t in g.etypes
+        g.ndata[node_t] = DataStore(g.num_edges[edge_t])
+    end
+    return g.edata[edge_t]
+end
+Base.setindex!(g::GNNHeteroGraph, edge_t::EType, x) = g.edata[edge_t] = x

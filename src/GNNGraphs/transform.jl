@@ -772,3 +772,4 @@ ci2t(ci::AbstractVector{<:CartesianIndex}, dims) = ntuple(i -> map(x -> x[i], ci
 @non_differentiable add_self_loops(x...)     # TODO this is wrong, since g carries feature arrays, needs rrule
 @non_differentiable remove_self_loops(x...)  # TODO this is wrong, since g carries feature arrays, needs rrule
 @non_differentiable dense_zeros_like(x...)
+

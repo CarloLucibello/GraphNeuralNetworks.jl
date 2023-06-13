@@ -9,6 +9,14 @@ end
 
 check_num_nodes(::GNNGraph, ::Nothing) = true
 
+function check_num_nodes(g::GNNHeteroGraph, x::Tuple{<:AbstractMatrix, <:AbstractMatrix})
+    @assert length(g.etypes) == 1
+    nt1, _, nt2 = g.etypes[1]
+    @assert size(x[1], 2) == g.num_nodes[nt1]
+    @assert size(x[2], 2) == g.num_nodes[nt2]
+    return true
+end
+
 function check_num_edges(g::GNNGraph, e::AbstractArray)
     @assert g.num_edges==size(e, ndims(e)) "Got $(size(e, ndims(e))) as last dimension size instead of num_edges=$(g.num_edges)"
     return true
