@@ -275,8 +275,7 @@ Let us now start training and see how our node embeddings evolve over time (best
 # ╔═╡ 912560a1-9c72-47bd-9fce-9702b346b603
 begin
     model = GCN(num_features, num_classes)
-    ps = Flux.params(model)
-    opt = Adam(1e-2)
+    opt = Flux.setup(Adam(1e-2), model)
     epochs = 2000
 
     emb = h
@@ -287,12 +286,12 @@ begin
 
     report(0, 10.0, emb)
     for epoch in 1:epochs
-        loss, gs = Flux.withgradient(ps) do
+        loss, grad = Flux.withgradient(model) do model
             ŷ, emb = model(g, g.ndata.x)
             logitcrossentropy(ŷ[:, train_mask], y[:, train_mask])
         end
 
-        Flux.Optimise.update!(opt, ps, gs)
+        Flux.update!(opt, model, grad[1])
         if epoch % 200 == 0
             report(epoch, loss, emb)
         end

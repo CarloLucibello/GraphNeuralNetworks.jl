@@ -56,7 +56,7 @@ g = rand_graph(10, 30)
 X = randn(Float32, din, 10) 
 
 y = model(g, X)  # output size: (dout, g.num_nodes)
-gs = gradient(() -> sum(model(g, X)), Flux.params(model))
+grad = gradient(model -> sum(model(g, X)), model)
 ```
 
 ## Implicit modeling with GNNChains

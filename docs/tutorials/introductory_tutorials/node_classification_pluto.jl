@@ -172,16 +172,16 @@ This time, we also define a **`accuracy` function** to evaluate how well our fin
 """
 
 # ╔═╡ 05979cfe-439c-4abc-90cd-6ca2a05f6e0f
-function train(model::MLP, data::AbstractMatrix, epochs::Int, opt, ps)
+function train(model::MLP, data::AbstractMatrix, epochs::Int, opt)
     Flux.trainmode!(model)
 
     for epoch in 1:epochs
-        loss, gs = Flux.withgradient(ps) do
+        loss, grad = Flux.withgradient(model) do model
             ŷ = model(data)
             logitcrossentropy(ŷ[:, train_mask], y[:, train_mask])
         end
 
-        Flux.Optimise.update!(opt, ps, gs)
+        Flux.update!(opt, model, grad[1])
         if epoch % 200 == 0
             @show epoch, loss
         end
@@ -276,16 +276,16 @@ The training and testing procedure is once again the same, but this time we make
 """
 
 # ╔═╡ 901d9478-9a12-4122-905d-6cfc6d80e84c
-function train(model::GCN, g::GNNGraph, x::AbstractMatrix, epochs::Int, ps, opt)
+function train(model::GCN, g::GNNGraph, x::AbstractMatrix, epochs::Int, opt)
     Flux.trainmode!(model)
 
     for epoch in 1:epochs
-        loss, gs = Flux.withgradient(ps) do
+        loss, grad[1] = Flux.withgradient(model) do model
             ŷ = model(g, x)
             logitcrossentropy(ŷ[:, train_mask], y[:, train_mask])
         end
 
-        Flux.Optimise.update!(opt, ps, gs)
+        Flux.update!(opt, model, grad)
         if epoch % 200 == 0
             @show epoch, loss
         end
@@ -296,10 +296,9 @@ end
 # ╠═╡ show_logs = false
 begin
     mlp = MLP(num_features, num_classes, hidden_channels)
-    ps_mlp = Flux.params(mlp)
-    opt_mlp = Adam(1e-3)
+    opt_mlp = Flux.setup(Adam(1e-3), mlp)
     epochs = 2000
-    train(mlp, g.ndata.features, epochs, opt_mlp, ps_mlp)
+    train(mlp, g.ndata.features, epochs, opt_mlp)
 end
 
 # ╔═╡ 65d9fd3d-1649-4b95-a106-f26fa4ab9bce
@@ -315,9 +314,8 @@ accuracy(mlp, g.ndata.features, y, .!train_mask)
 # ╔═╡ 20be52b1-1c33-4f54-b5c0-fecc4e24fbb5
 # ╠═╡ show_logs = false
 begin
-    ps_gcn = Flux.params(gcn)
-    opt_gcn = Adam(1e-2)
-    train(gcn, g, x, epochs, ps_gcn, opt_gcn)
+    opt_gcn = Flux.setup(Adam(1e-2), gcn)
+    train(gcn, g, x, epochs, opt_gcn)
 end
 
 # ╔═╡ 5aa99aff-b5ed-40ec-a7ec-0ba53385e6bd

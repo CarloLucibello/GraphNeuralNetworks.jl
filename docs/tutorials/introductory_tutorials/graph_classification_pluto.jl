@@ -193,8 +193,7 @@ function train!(model; epochs = 200, η = 1e-2, infotime = 10)
     # device = Flux.gpu # uncomment this for GPU training
     device = Flux.cpu
     model = model |> device
-    ps = Flux.params(model)
-    opt = Adam(1e-3)
+    opt = Flux.setup(Adam(1e-3), model)
 
     function report(epoch)
         train = eval_loss_accuracy(model, train_loader, device)
@@ -206,11 +205,11 @@ function train!(model; epochs = 200, η = 1e-2, infotime = 10)
     for epoch in 1:epochs
         for (g, y) in train_loader
             g, y = MLUtils.batch(g) |> device, y |> device
-            gs = Flux.gradient(ps) do
+            grad = Flux.gradient(model) do model
                 ŷ = model(g, g.ndata.x)
                 logitcrossentropy(ŷ, y)
             end
-            Flux.Optimise.update!(opt, ps, gs)
+            Flux.update!(opt, model, grad[1])
         end
         epoch % infotime == 0 && report(epoch)
     end
