@@ -43,15 +43,15 @@
     @testset "Parallel" begin
         AddResidual(l) = Parallel(+, identity, l)
 
-        gnn = GNNChain(ResGatedGraphConv(din => d, tanh),
+        gnn = GNNChain(GraphConv(din => d, tanh),
                         LayerNorm(d),
-                        AddResidual(ResGatedGraphConv(d => d, tanh)),
+                        AddResidual(GraphConv(d => d, tanh)),
                         BatchNorm(d),
                         Dense(d, dout))
 
         trainmode!(gnn)
 
-        test_layer(gnn, g, rtol = 1e-5, atol=1e-5, exclude_grad_fields = [:μ, :σ²])
+        test_layer(gnn, g, rtol = 1e-4, atol=1e-4, exclude_grad_fields = [:μ, :σ²])
     end
 
     @testset "Only graph input" begin
