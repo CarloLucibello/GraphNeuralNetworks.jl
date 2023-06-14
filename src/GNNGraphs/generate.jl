@@ -298,3 +298,31 @@ function radius_graph(points::AbstractMatrix, r::AbstractFloat;
     end
     return g
 end
+
+function temporal_rand_radius_graph(number_nodes::Int, 
+                      number_snapshots::Int,
+                      speed::AbstractFloat,
+                      radius::AbstractFloat;
+                      self_loops = false,
+                      dir = :in,
+                      kws...)
+    points=rand(2, number_nodes)
+    tg = Vector{GNNGraph}(undef, number_snapshots)
+    for t in 1:number_snapshots
+        balltree = NearestNeighbors.BallTree(points)
+
+        idxs = NearestNeighbors.inrange(balltree, points, radius, false)
+
+        tg[t] = GNNGraph(idxs; dir,  kws...)
+        if !self_loops
+            tg[t] = remove_self_loops(tg[t])
+        end
+        for i in 1:number_nodes
+            r=2*speed*rand()-speed
+            theta=2*pi*rand()
+            points[1,i]=abs(points[1,i]+r*cos(theta))%1
+            points[2,i]=abs(points[2,i]+r*sin(theta))%1
+        end
+    end
+    return TemporalSnapshotsGNNGraph(tg)
+end
