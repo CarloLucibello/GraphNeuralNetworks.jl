@@ -21,6 +21,9 @@ import Functors
 include("datastore.jl")
 export DataStore
 
+include("abstracttypes.jl")
+export AbstractGNNGraph
+
 include("gnngraph.jl")
 export GNNGraph,
        node_features,
@@ -30,7 +33,8 @@ export GNNGraph,
 include("gnnheterograph.jl")
 export GNNHeteroGraph,
        num_edge_types,
-       num_node_types
+       num_node_types,
+       edge_type_subgraph
 
 include("temporalsnapshotsgnngraph.jl")
 export TemporalSnapshotsGNNGraph,

@@ -14,11 +14,15 @@ edge_index(g::GNNGraph{<:COO_T}) = g.graph[1:2]
 edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes = g.num_nodes)[1][1:2]
 
 """"
-    edge_index(g::GNNHeteroGraph, edge_t)
+    edge_index(g::GNNHeteroGraph, [edge_t])
 
-Return a tuple containing two vectors, respectively storing the source and target nodes for each edges in `g` of type `edge_t = (:node1_t, :rel, :node2_t)`.
+Return a tuple containing two vectors, respectively storing the source and target nodes
+for each edges in `g` of type `edge_t = (:node1_t, :rel, :node2_t)`.
+
+If `edge_t` is not provided, it will error if `g` has more than one edge type.
 """
 edge_index(g::GNNHeteroGraph{<:COO_T}, edge_t::EType) = g.graph[edge_t][1:2]
+edge_index(g::GNNHeteroGraph{<:COO_T}) = only(g.graph)[2][1:2]
 
 get_edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
 
