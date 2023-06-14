@@ -24,6 +24,16 @@ end
     @test tsg[[1,2]] == TemporalSnapshotsGNNGraph([10,10], [20,20], 2, snapshots[1:2], tsg.tgdata)
 end
 
+@testset "getproperty" begin
+    x = rand(10)
+    snapshots = [rand_graph(10, 20, ndata = x) for i in 1:5]
+    tsg = TemporalSnapshotsGNNGraph(snapshots)
+    @test tsg.tgdata == DataStore()
+    @test tsg.x == tsg.ndata.x == [x for i in 1:5]
+    @test_throws KeyError tsg.ndata.w
+    @test_throws ArgumentError tsg.w
+end
+
 @testset "add/remove_snapshot" begin
     snapshots = [rand_graph(10, 20) for i in 1:5]
     tsg = TemporalSnapshotsGNNGraph(snapshots)
@@ -91,5 +101,3 @@ end
     tsg.tgdata.x=rand(4)
     @test sprint(show,tsg) == "TemporalSnapshotsGNNGraph(5) with x: 4-element data"
 end
-
-#     @test sprint(show, MIME("text/plain"), rand_graph(10, 20); context=:compact => true) == "GNNGraph(10, 20) with no data"

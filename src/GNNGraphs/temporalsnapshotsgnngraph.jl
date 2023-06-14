@@ -182,6 +182,20 @@ end
 #     return tg
 # end
 
+function Base.getproperty(tg::TemporalSnapshotsGNNGraph, prop::Symbol)
+    if prop ∈ fieldnames(TemporalSnapshotsGNNGraph)
+        return getfield(tg, prop)
+    elseif prop == :ndata
+        return [s.ndata for s in tg.snapshots]
+    elseif prop == :edata
+        return [s.edata for s in tg.snapshots]
+    elseif prop == :gdata
+        return [s.gdata for s in tg.snapshots]
+    else 
+        return [getproperty(s,prop) for s in tg.snapshots]
+    end
+end
+
 function Base.show(io::IO, tsg::TemporalSnapshotsGNNGraph)
     print(io, "TemporalSnapshotsGNNGraph($(tsg.num_snapshots)) with ")
     print_feature_t(io, tsg.tgdata)
@@ -204,7 +218,6 @@ function Base.show(io::IO, ::MIME"text/plain", tsg::TemporalSnapshotsGNNGraph)
         end
     end
 end
-
 
 function print_feature_t(io::IO, feature)
     if !isempty(feature)
