@@ -14,8 +14,8 @@
     @test hg.num_edges == Dict((:A, :rel1, :B) => 30, (:B, :rel2, :A) => 10)
     @test hg.graph_indicator === nothing
     @test hg.num_graphs == 1
-    @test hg.ndata == Dict()
-    @test hg.edata == Dict()
+    @test hg.ndata isa Dict{Tuple{Symbol, Symbol, Symbol}, DataStore}      
+    @test hg.edata isa Dict{Symbol, DataStore}
     @test isempty(hg.gdata)
     @test sort(hg.ntypes) == [:A, :B]
     @test sort(hg.etypes) == [(:A, :rel1, :B), (:B, :rel2, :A)]
