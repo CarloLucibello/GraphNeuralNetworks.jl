@@ -98,10 +98,10 @@ end
     d, n = 3, 5
     g = rand_bipartite_heterograph(n, 2*n, 15)
     g[:A].x = rand(Float32, d, n)
-    g[:B].x = rand(Float32, d, n)
+    g[:B].y = rand(Float32, d, 2*n)
 
     @test size(g[:A].x) == (d, n)
-    @test size(g[:B].x) == (d, 2*n)
+    @test size(g[:B].y) == (d, 2*n)
 end
 
 ## Cannot test this because DataStore is not an ordered collection
