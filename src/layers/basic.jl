@@ -24,8 +24,8 @@ A type wrapping the `model` and tying it to the graph `g`.
 In the forward pass, can only take feature arrays as inputs,
 returning `model(g, x...; kws...)`.
 
-If `traingraph=false`, the graph's parameters, won't be collected
-when calling `Flux.params` on a `WithGraph` object.
+If `traingraph=false`, the graph's parameters won't be part of 
+the `trainable` parameters in the gradient updates.
 
 # Examples
 

@@ -11,7 +11,7 @@ NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
 NNlibCUDA = "a00861dc-f156-4864-bf3c-e6376f28a68d"
 
 [compat]
-DiffEqFlux = "1.45"
+DiffEqFlux = "2"
 Flux = "0.13"
 GraphNeuralNetworks = "0.6"
 Graphs = "1"

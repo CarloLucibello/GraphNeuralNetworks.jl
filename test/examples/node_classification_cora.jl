@@ -52,8 +52,7 @@ function train(Layer; verbose = false, kws...)
                      Layer(nhidden, nhidden),
                      Dense(nhidden, nout)) |> device
 
-    ps = Flux.params(model)
-    opt = Adam(args.η)
+    opt = Flux.setup(Adam(args.η), model)
 
     ## TRAINING
     function report(epoch)

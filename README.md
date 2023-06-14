@@ -19,6 +19,7 @@ Among its features:
 * CUDA support.
 * Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
 * [Examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) of node, edge, and graph level machine learning tasks. 
+* Heterogeneous and temporal graphs. 
 
 ## Installation
 
@@ -30,7 +31,7 @@ pkg> add GraphNeuralNetworks
 
 ## Usage
 
-Usage examples can be found in the [examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) and in the [notebooks](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/notebooks)  folder. Also, make sure to read the [documentation](https://CarloLucibello.github.io/GraphNeuralNetworks.jl/dev) for a comprehensive introduction to the library.
+Usage examples can be found in the [examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) and in the [notebooks](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/notebooks) folder. Also, make sure to read the [documentation](https://CarloLucibello.github.io/GraphNeuralNetworks.jl/dev) for a comprehensive introduction to the library.
 
 
 ## Citing
