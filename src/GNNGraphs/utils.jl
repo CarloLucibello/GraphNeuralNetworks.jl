@@ -9,11 +9,24 @@ end
 
 check_num_nodes(::GNNGraph, ::Nothing) = true
 
-function check_num_nodes(g::GNNHeteroGraph, x::Tuple{<:AbstractMatrix, <:AbstractMatrix})
+function check_num_nodes(g::GNNGraph, x::Tuple)
+    @assert length(x) == 2
+    check_num_nodes(g, x[1])
+    check_num_nodes(g, x[2])
+    return true
+end
+
+# x = (Xsrc, Xdst) = (Xj, Xi)
+function check_num_nodes(g::GNNHeteroGraph, x::Tuple)
+    @assert length(x) == 2
     @assert length(g.etypes) == 1
-    nt1, _, nt2 = g.etypes[1]
-    @assert size(x[1], 2) == g.num_nodes[nt1]
-    @assert size(x[2], 2) == g.num_nodes[nt2]
+    nt1, _, nt2 = only(g.etypes)
+    if x[1] isa AbstractArray
+        @assert size(x[1], ndims(x[1])) == g.num_nodes[nt1]
+    end
+    if x[2] isa AbstractArray
+        @assert size(x[2], ndims(x[2])) == g.num_nodes[nt2] 
+    end
     return true
 end
 
@@ -21,12 +34,18 @@ function check_num_edges(g::GNNGraph, e::AbstractArray)
     @assert g.num_edges==size(e, ndims(e)) "Got $(size(e, ndims(e))) as last dimension size instead of num_edges=$(g.num_edges)"
     return true
 end
-function check_num_edges(g::GNNGraph, x::Union{Tuple, NamedTuple})
+function check_num_edges(g::AbstractGNNGraph, x::Union{Tuple, NamedTuple})
     map(x -> check_num_edges(g, x), x)
     return true
 end
 
-check_num_edges(::GNNGraph, ::Nothing) = true
+check_num_edges(::AbstractGNNGraph, ::Nothing) = true
+
+function check_num_edges(g::GNNHeteroGraph, e::AbstractArray)
+    num_edgs = only(g.num_edges)[2]
+    @assert only(num_edgs)==size(e, ndims(e)) "Got $(size(e, ndims(e))) as last dimension size instead of num_edges=$(num_edgs)"
+    return true
+end
 
 sort_edge_index(eindex::Tuple) = sort_edge_index(eindex...)
 

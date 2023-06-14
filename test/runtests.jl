@@ -39,6 +39,7 @@ tests = [
     "msgpass",
     "layers/basic",
     "layers/conv",
+    "layers/heteroconv",
     "layers/pool",
     "mldatasets",
     "examples/node_classification_cora",

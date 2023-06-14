@@ -13,7 +13,12 @@ function HeteroGraphConv(itr; aggr = +)
 end
 
 function (hgc::HeteroGraphConv)(g::GNNHeteroGraph, x::NamedTuple)
-    outs = [l(edge_type_subgraph(g, et), (x[et[1]], x[et[3]])) for (l, et) in zip(hgc.layers, hgc.etypes)]
+    function forw(l, et)
+        sg = edge_type_subgraph(g, et)
+        node1_t, _, node2_t = et
+        return l(sg, (x[node1_t], x[node2_t]))
+    end
+    outs = [forw(l, et) for (l, et) in zip(hgc.layers, hgc.etypes)]
     dst_ntypes = [et[3] for et in hgc.etypes]
     return _reduceby_node_t(hgc.aggr, outs, dst_ntypes)
 end
@@ -29,6 +34,6 @@ function _reduceby_node_t(aggr, outs, ntypes)
             return foldl(aggr, outs[i] for i in idxs)
         end
     end
-
-    return (; (node_t => _reduce(node_t) for node_t in ntypes)...)
+    vals = [_reduce(node_t) for node_t in ntypes]
+    return NamedTuple{tuple(ntypes...)}(vals)
 end

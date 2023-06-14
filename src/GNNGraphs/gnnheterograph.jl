@@ -256,6 +256,10 @@ function edge_type_subgraph(g::GNNHeteroGraph, edge_ts::AbstractVector{<:EType})
                           node_ts, edge_ts)
 end
 
+# TODO this is not correct but Zygote cannot differentiate
+# through dictionary generation
+@non_differentiable edge_type_subgraph(::Any...)
+
 function _ntypes_from_edges(edge_ts::AbstractVector{<:EType})
     ntypes = Symbol[]
     for edge_t in edge_ts
