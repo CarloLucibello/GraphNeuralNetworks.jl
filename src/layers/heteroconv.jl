@@ -12,7 +12,7 @@ function HeteroGraphConv(itr; aggr = +)
     return HeteroGraphConv(etypes, layers, aggr)
 end
 
-function (hgc::HeteroGraphConv)(g::GNNHeteroGraph, x::NamedTuple)
+function (hgc::HeteroGraphConv)(g::GNNHeteroGraph, x::Union{NamedTuple,Dict})
     function forw(l, et)
         sg = edge_type_subgraph(g, et)
         node1_t, _, node2_t = et

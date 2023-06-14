@@ -18,6 +18,8 @@ import MLUtils
 using MLUtils: getobs, numobs
 import Functors
 
+include("chainrules.jl") # hacks for differentiability
+
 include("datastore.jl")
 export DataStore
 
