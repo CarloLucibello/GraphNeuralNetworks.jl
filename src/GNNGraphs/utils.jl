@@ -163,12 +163,16 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
 end
 
 # For heterogeneous graphs
+function normalize_heterographdata(data::Nothing; default_name::Symbol, ns::Dict, kws...)
+    Dict([k => normalize_graphdata(nothing; default_name = default_name, n, kws...)
+         for (k, n) in ns]...)
+end
+
 normalize_heterographdata(data; kws...) = normalize_heterographdata(Dict(data); kws...)
 
-function normalize_heterographdata(data::Dict; default_name::Symbol, n::Dict, kws...)
-    isempty(data) && return data
-    Dict(k => normalize_graphdata(v; default_name = default_name, n = n[k], kws...)
-         for (k, v) in data)
+function normalize_heterographdata(data::Dict; default_name::Symbol, ns::Dict, kws...)
+    Dict([k => normalize_graphdata(get(data, k, nothing); default_name = default_name, n, kws...)
+         for (k, n) in ns]...)
 end
 
 ones_like(x::AbstractArray, T::Type, sz = size(x)) = fill!(similar(x, T, sz), 1)

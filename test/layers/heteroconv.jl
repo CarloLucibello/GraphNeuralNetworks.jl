@@ -19,3 +19,15 @@
     @test grad.layers[2].weight2 ≈ ngrad.layers[2].weight2  rtol=1e-4
     @test grad.layers[2].bias ≈ ngrad.layers[2].bias        rtol=1e-4
 end
+
+
+GNNHeteroGraph(::Dict{Tuple{Symbol, Symbol, Symbol}, Tuple{Vector{Int64}, Vector{Int64}, Nothing}}, 
+               ::Dict{Symbol, Int64}, 
+               ::Dict{Tuple{Symbol, Symbol, Symbol}, Int64}, 
+               ::Int64, 
+               ::Nothing, 
+               ::Dict{Any, Any}, 
+               ::Dict{Any, Any}, 
+               ::DataStore, 
+               ::Vector{Symbol}, 
+               ::Vector{Tuple{Symbol, Symbol, Symbol}})

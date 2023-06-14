@@ -99,7 +99,7 @@ GNNHeteroGraph(data; kws...) = GNNHeteroGraph(Dict(data); kws...)
 
 function GNNHeteroGraph(data::Dict; kws...)
     all(k -> k isa EType, keys(data)) || throw(ArgumentError("Keys of data must be tuples of the form (source_type, edge_type, target_type)"))
-    return GNNHeteroGraph(Dict(k => v for (k, v) in pairs(data)); kws...)
+    return GNNHeteroGraph(Dict([k => v for (k, v) in pairs(data)]...); kws...)
 end
 
 function GNNHeteroGraph(data::EDict;
@@ -107,8 +107,8 @@ function GNNHeteroGraph(data::EDict;
                         graph_indicator = nothing,
                         graph_type = :coo,
                         dir = :out,
-                        ndata = NDict{DataStore}(),
-                        edata = EDict{DataStore}(),
+                        ndata = nothing,
+                        edata = nothing,
                         gdata = (;))
     @assert graph_type ∈ [:coo, :dense, :sparse] "Invalid graph_type $graph_type requested"
     @assert dir ∈ [:in, :out]
@@ -132,8 +132,8 @@ function GNNHeteroGraph(data::EDict;
     num_graphs = !isnothing(graph_indicator) ?
                  maximum([maximum(gi) for gi in values(graph_indicator)]) : 1
 
-    ndata = normalize_heterographdata(ndata, default_name = :x, n = num_nodes)
-    edata = normalize_heterographdata(edata, default_name = :e, n = num_edges,
+    ndata = normalize_heterographdata(ndata, default_name = :x, ns = num_nodes)
+    edata = normalize_heterographdata(edata, default_name = :e, ns = num_edges,
                                       duplicate_if_needed = true)
     gdata = normalize_graphdata(gdata, default_name = :u, n = num_graphs)
 
@@ -226,7 +226,6 @@ num_node_types(g::GNNGraph) = 1
 
 num_node_types(g::GNNHeteroGraph) = length(g.ntypes)
 
-
 """
     edge_type_subgraph(g::GNNHeteroGraph, edge_ts)
 
@@ -240,16 +239,16 @@ function edge_type_subgraph(g::GNNHeteroGraph, edge_ts::AbstractVector{<:EType})
         @assert edge_t in g.etypes "Edge type $(edge_t) not found in graph"
     end
     node_ts = _ntypes_from_edges(edge_ts)
-    graph = Dict(edge_t => g.graph[edge_t] for edge_t in edge_ts)
-    num_nodes = Dict(node_t => g.num_nodes[node_t] for node_t in node_ts)
-    num_edges = Dict(edge_t => g.num_edges[edge_t] for edge_t in edge_ts)
+    graph = Dict([edge_t => g.graph[edge_t] for edge_t in edge_ts]...)
+    num_nodes = Dict([node_t => g.num_nodes[node_t] for node_t in node_ts]...)
+    num_edges = Dict([edge_t => g.num_edges[edge_t] for edge_t in edge_ts]...)
     if g.graph_indicator === nothing
         graph_indicator = nothing
     else
-        graph_indicator = Dict(node_t => g.graph_indicator[node_t] for node_t in node_ts)
+        graph_indicator = Dict([node_t => g.graph_indicator[node_t] for node_t in node_ts]...)
     end
-    ndata = Dict(node_t => g.ndata[node_t] for node_t in node_ts if node_t in keys(g.ndata))
-    edata = Dict(edge_t => g.edata[edge_t] for edge_t in edge_ts if edge_t in keys(g.edata))
+    ndata = Dict([node_t => g.ndata[node_t] for node_t in node_ts if node_t in keys(g.ndata)]...)
+    edata = Dict([edge_t => g.edata[edge_t] for edge_t in edge_ts if edge_t in keys(g.edata)]...)
     
     return GNNHeteroGraph(graph, num_nodes, num_edges, g.num_graphs,
                           graph_indicator, ndata, edata, g.gdata,
@@ -258,7 +257,7 @@ end
 
 # TODO this is not correct but Zygote cannot differentiate
 # through dictionary generation
-@non_differentiable edge_type_subgraph(::Any...)
+# @non_differentiable edge_type_subgraph(::Any...)
 
 function _ntypes_from_edges(edge_ts::AbstractVector{<:EType})
     ntypes = Symbol[]
