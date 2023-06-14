@@ -58,8 +58,7 @@ function train(; kws...)
                   GCNConv(g, nhidden => nhidden, relu),
                   Dense(nhidden, nout)) |> device
 
-    ps = Flux.params(model)
-    opt = Adam(args.η)
+    opt = Flux.setup(Adam(args.η), model)
 
     @info g
 
@@ -73,12 +72,12 @@ function train(; kws...)
     ## TRAINING
     report(0)
     for epoch in 1:(args.epochs)
-        gs = Flux.gradient(ps) do
+        grad = Flux.gradient(model) do model
             ŷ = model(X)
             logitcrossentropy(ŷ[:, train_ids], ytrain)
         end
 
-        Flux.Optimise.update!(opt, ps, gs)
+        Flux.update!(opt, model, grad[1])
 
         epoch % args.infotime == 0 && report(epoch)
     end

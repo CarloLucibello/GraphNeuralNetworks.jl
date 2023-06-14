@@ -35,11 +35,9 @@ model = Chain(Flux.flatten,
               Dense(nhidden, nout)) |> device
 
 # # Training
-# ## Model Parameters
-ps = Flux.params(model);
 
 # ## Optimizer
-opt = Adam(0.01)
+opt = Flux.setup(Adam(0.01), model)
 
 function eval_loss_accuracy(X, y)
     ŷ = model(X)
@@ -50,10 +48,10 @@ end
 
 # ## Training Loop
 for epoch in 1:epochs
-    gs = gradient(ps) do
+    grad = gradient(model) do model
         ŷ = model(X)
         logitcrossentropy(ŷ, y)
     end
-    Flux.Optimise.update!(opt, ps, gs)
+    Flux.update!(opt, model, grad[1])
     @show eval_loss_accuracy(X, y)
 end

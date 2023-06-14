@@ -63,11 +63,11 @@ function train(Layer; verbose = false, kws...)
 
     verbose && report(0)
     @time for epoch in 1:(args.epochs)
-        gs = Flux.gradient(ps) do
+        grad = Flux.gradient(model) do model
             ŷ = model(g, X)
             logitcrossentropy(ŷ[:, train_mask], ytrain)
         end
-        Flux.Optimise.update!(opt, ps, gs)
+        Flux.update!(opt, model, grad[1])
         verbose && report(epoch)
     end
 
