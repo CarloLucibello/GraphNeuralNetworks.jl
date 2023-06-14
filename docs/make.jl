@@ -1,4 +1,5 @@
 using Flux, NNlib, GraphNeuralNetworks, Graphs, SparseArrays
+using Pluto, PlutoStaticHTML # for tutorials
 using Documenter, DemoCards
 
 tutorials, tutorials_cb, tutorial_assets = makedemos("tutorials")

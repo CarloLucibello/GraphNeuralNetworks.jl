@@ -39,7 +39,7 @@ julia> compare(dfpr, dfmaster)
 
 Tutorials in GraphNeuralNetworks.jl are written in Pluto and rendered using [DemoCards.jl](https://github.com/JuliaDocs/DemoCards.jl) and [PlutoStaticHTML.jl](https://github.com/rikhuijzer/PlutoStaticHTML.jl). Rendering a Pluto notebook is time and resource-consuming, especially in a CI environment. So we use the [caching functionality](https://huijzer.xyz/PlutoStaticHTML.jl/dev/#Caching) provided by PlutoStaticHTML.jl to reduce CI time.
 
-If you are contributing a new tutorial or making changes to the existing notebook, generate the docs locally before committing/pushing. For caching to work, the cache environment(your local) and the documenter CI should have the same Julia version. So use the [documenter CI Julia version](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/master/.github/workflows/docs.yml#L17) for generating docs locally.
+If you are contributing a new tutorial or making changes to the existing notebook, generate the docs locally before committing/pushing. For caching to work, the cache environment(your local) and the documenter CI should have the same Julia version (e.g. "v1.9.1", also the patch number must match). So use the [documenter CI Julia version](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/master/.github/workflows/docs.yml#L17) for generating docs locally.
 
 ```console
 julia --version # check julia version before generating docs
