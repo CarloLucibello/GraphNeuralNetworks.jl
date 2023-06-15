@@ -299,6 +299,17 @@ function radius_graph(points::AbstractMatrix, r::AbstractFloat;
     return g
 end
 
+"""
+    rand_temporal_graph(number_nodes::Int, 
+                        number_snapshots::Int, 
+                        number_edges::Int, 
+                        speed::AbstractFloat;
+                        self_loops = false,
+                        dir = :in,
+                        kws...)
+
+Create a random temporal graph starting from `number_nodes` nodes, `number_snapshots` snapshots,
+"""
 function temporal_rand_radius_graph(number_nodes::Int, 
                       number_snapshots::Int,
                       speed::AbstractFloat,
@@ -313,8 +324,8 @@ function temporal_rand_radius_graph(number_nodes::Int,
         for i in 1:number_nodes
             ρ=2*speed*rand()-speed
             theta=2*pi*rand()
-            points[1,i]=abs(points[1,i]+ρ*cos(theta))%1
-            points[2,i]=abs(points[2,i]+ρ*sin(theta))%1
+            points[1,i]=1-abs(1-(abs(points[1,i]+ρ*cos(theta))))
+            points[2,i]=1-abs(1-(abs(points[2,i]+ρ*sin(theta))))
         end
     end
     return TemporalSnapshotsGNNGraph(tg)
