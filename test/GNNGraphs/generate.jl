@@ -92,3 +92,16 @@ end
     @test has_edge(g, (:A,:to,:B), 1, 1)
     @test !has_edge(g, (:B,:to,:A), 1, 1)
 end
+
+@testset "temporal_rand_radius_graph" begin
+    number_nodes = 30
+    number_snapshots = 5
+    r = 0.1
+    speed = 0.1
+    tg = temporal_rand_radius_graph(number_nodes, number_snapshots, speed, r)
+    @test tg.num_nodes == [number_nodes for i in 1:number_snapshots]
+    @test tg.num_snapshots == number_snapshots
+    r2 = 0.95
+    tg2 = temporal_rand_radius_graph(number_nodes, number_snapshots, speed, r2)
+    @test mean(mean(degree.(tg.snapshots)))<=mean(mean(degree.(tg2.snapshots)))
+end
