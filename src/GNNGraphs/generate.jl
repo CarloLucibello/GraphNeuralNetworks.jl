@@ -300,23 +300,52 @@ function radius_graph(points::AbstractMatrix, r::AbstractFloat;
 end
 
 """
-    rand_temporal_graph(number_nodes::Int, 
-                        number_snapshots::Int, 
-                        number_edges::Int, 
-                        speed::AbstractFloat;
-                        self_loops = false,
-                        dir = :in,
-                        kws...)
+    temporal_rand_radius_graph(number_nodes::Int, 
+                               number_snapshots::Int,
+                               speed::AbstractFloat,
+                               r::AbstractFloat;
+                               self_loops = false,
+                               dir = :in,
+                               kws...)
 
-Create a random temporal graph starting from `number_nodes` nodes, `number_snapshots` snapshots,
+Create a random temporal graph given `number_nodes` nodes and `number_snapshots` snapshots.
+First, the positions of the nodes are randomly generated in the unit square. Two nodes are connected if their distance is less than a given radius `r`.
+For each snapshot, the new positions of the points are determined by applying a vector to it. The direction of the vector is chosen uniformly and its length is chosen uniformly in [-`speed`, `speed`]. Then the connections are recomputed.
+If a point happens to move outside the boundary, its position is updated as if it had bounced off the boundary.
+
+# Arguments
+
+- `number_nodes`: The number of nodes of each snapshot.
+- `number_snapshots`: The number of snapshots.
+- `speed`: The speed to update the nodes.
+- `r`: The radius of connection.
+- `self_loops`: If `true`, consider the node itself among its neighbors, in which
+                case the graph will contain self-loops. 
+- `dir`: The direction of the edges. If `dir=:in` edges go from the
+         neighbors to the central node. If `dir=:out` we have the opposite
+         direction.
+- `kws`: Further keyword arguments will be passed to the [`GNNGraph`](@ref) constructor of each snapshot.
+
+# Example
+
+```julia-repl
+julia> n, snaps, s, r = 10, 5, 0.1, 1.5;
+
+julia> tg = temporal_rand_radius_graph(n,snaps,s,r) # complete graph at each snapshot
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10, 10, 10, 10]
+  num_edges: [90, 90, 90, 90, 90]
+  num_snapshots: 5
+```  
+
 """
 function temporal_rand_radius_graph(number_nodes::Int, 
-                      number_snapshots::Int,
-                      speed::AbstractFloat,
-                      r::AbstractFloat;
-                      self_loops = false,
-                      dir = :in,
-                      kws...)
+                                    number_snapshots::Int,
+                                    speed::AbstractFloat,
+                                    r::AbstractFloat;
+                                    self_loops = false,
+                                    dir = :in,
+                                    kws...)
     points=rand(2, number_nodes)
     tg = Vector{GNNGraph}(undef, number_snapshots)
     for t in 1:number_snapshots
