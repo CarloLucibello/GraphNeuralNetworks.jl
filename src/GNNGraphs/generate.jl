@@ -270,6 +270,8 @@ GNNGraph:
     num_graphs = 2
 
 ```
+# References
+Section B paragraphs 1 and 2 of the paper [Dynamic Hidden-Variable Network Models](https://arxiv.org/pdf/2101.00414.pdf)
 """
 function radius_graph(points::AbstractMatrix, r::AbstractFloat;
                       graph_indicator = nothing,
