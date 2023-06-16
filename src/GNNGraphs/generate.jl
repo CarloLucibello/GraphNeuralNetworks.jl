@@ -310,7 +310,8 @@ end
 
 Create a random temporal graph given `number_nodes` nodes and `number_snapshots` snapshots.
 First, the positions of the nodes are randomly generated in the unit square. Two nodes are connected if their distance is less than a given radius `r`.
-For each snapshot, the new positions of the points are determined by applying a vector to it. The direction of the vector is chosen uniformly and its length is chosen uniformly in [-`speed`, `speed`]. Then the connections are recomputed.
+Each following snapshot is obtained by applying the same construction to new positions obtained as follows.
+For each snapshot, the new positions of the points are determined by applying random independent displacement vectors to the previous positions. The direction of the displacement is chosen uniformly at random and its length is chosen uniformly in `[0, speed]`. Then the connections are recomputed.
 If a point happens to move outside the boundary, its position is updated as if it had bounced off the boundary.
 
 # Arguments
