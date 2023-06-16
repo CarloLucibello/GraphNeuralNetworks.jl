@@ -351,7 +351,7 @@ function temporal_rand_radius_graph(number_nodes::Int,
     for t in 1:number_snapshots
         tg[t] = radius_graph(points, r; graph_indicator = nothing, self_loops, dir, kws...)
         for i in 1:number_nodes
-            ρ=2*speed*rand()-speed
+            ρ = 2 * speed * rand() - speed
             theta=2*pi*rand()
             points[1,i]=1-abs(1-(abs(points[1,i]+ρ*cos(theta))))
             points[2,i]=1-abs(1-(abs(points[2,i]+ρ*sin(theta))))
