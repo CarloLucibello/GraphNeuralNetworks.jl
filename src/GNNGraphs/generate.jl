@@ -300,7 +300,7 @@ function radius_graph(points::AbstractMatrix, r::AbstractFloat;
 end
 
 """
-    temporal_rand_radius_graph(number_nodes::Int, 
+    rand_temporal_radius_graph(number_nodes::Int, 
                                number_snapshots::Int,
                                speed::AbstractFloat,
                                r::AbstractFloat;
@@ -331,7 +331,7 @@ If a point happens to move outside the boundary, its position is updated as if i
 ```julia-repl
 julia> n, snaps, s, r = 10, 5, 0.1, 1.5;
 
-julia> tg = temporal_rand_radius_graph(n,snaps,s,r) # complete graph at each snapshot
+julia> tg = rand_temporal_radius_graph(n,snaps,s,r) # complete graph at each snapshot
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10, 10, 10, 10]
   num_edges: [90, 90, 90, 90, 90]
@@ -339,7 +339,7 @@ TemporalSnapshotsGNNGraph:
 ```  
 
 """
-function temporal_rand_radius_graph(number_nodes::Int, 
+function rand_temporal_radius_graph(number_nodes::Int, 
                                     number_snapshots::Int,
                                     speed::AbstractFloat,
                                     r::AbstractFloat;
