@@ -89,7 +89,8 @@ export rand_graph,
        rand_heterograph,
        rand_bipartite_heterograph,
        knn_graph,
-       radius_graph
+       radius_graph,
+       rand_temporal_radius_graph
 
 include("sampling.jl")
 export sample_neighbors
