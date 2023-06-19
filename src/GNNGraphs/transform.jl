@@ -120,7 +120,8 @@ end
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
 
 Add to graph `g` the edges with source nodes `s` and target nodes `t`.
-Optionally, pass the features  `edata` for the new edges. 
+Optionally, pass the features  `edata` for the new edges.
+Returns a new graph sharing part of the underlying data with `g`.
 """
 function add_edges(g::GNNGraph{<:COO_T},
                    snew::AbstractVector{<:Integer},
@@ -143,14 +144,33 @@ function add_edges(g::GNNGraph{<:COO_T},
              g.ndata, edata, g.gdata)
 end
 
+
+"""
+    add_edges(g::GNNHeteroGraph, edge_t, s, t; [edata, num_nodes])
+    add_edges(g::GNNHeteroGraph, edge_t => (s, t); [edata, num_nodes])
+
+Add to heterograph `g` the releation of type `edge_t` with source node vector `s` and target node vector `t`.
+Optionally, pass the features  `edata` for the new edges.
+`edge_t` is a triplet of symbols `(srctype, etype, dsttype)`. 
+
+If the edge type is not already present in the graph, it is added. If it involves new node types, they are added to the graph as well.
+In this case, a dictionary or named tuple of `num_nodes` can be passed to specify the number of nodes of the new types,
+otherwise the number of nodes is inferred from the maximum node id in `s` and `t`.
+"""
+add_edges(g::GNNHeteroGraph{<:COO_T}, data::Pair{EType, <:Tuple}; kws...) = add_edges(g, data.first, data.second...; kws...)
+
 function add_edges(g::GNNHeteroGraph{<:COO_T},
                    edge_t::EType,
                    snew::AbstractVector{<:Integer},
                    tnew::AbstractVector{<:Integer};
-                   edata = nothing)
+                   edata = nothing,
+                   num_nodes = Dict{Symbol,Int}())
     @assert length(snew) == length(tnew)
+    is_existing_rel = haskey(g.graph, edge_t)
     # TODO remove this constraint
-    @assert get_edge_weight(g, edge_t) === nothing
+    if is_existing_rel
+        @assert get_edge_weight(g, edge_t) === nothing
+    end
 
     edata = normalize_graphdata(edata, default_name = :e, n = length(snew))
     g_edata = g.edata |> copy
@@ -164,23 +184,41 @@ function add_edges(g::GNNHeteroGraph{<:COO_T},
 
     graph = g.graph |> copy
     etypes = g.etypes |> copy
-    if !haskey(graph, edge_t)
-        @assert edge_t[1] ∈ g.ntypes && edge_t[3] ∈ g.ntypes
-        push!(g.etypes, edge_t)
+    ntypes = g.ntypes |> copy
+    _num_nodes = g.num_nodes |> copy
+    ndata = g.ndata |> copy
+    if !is_existing_rel
+        for (node_t, st) in [(edge_t[1], snew), (edge_t[3], tnew)]
+            if node_t ∉ ntypes
+                push!(ntypes, node_t)
+                if haskey(num_nodes, node_t)
+                    _num_nodes[node_t] == num_nodes[node_t]
+                else
+                    _num_nodes[node_t] = maximum(st)
+                end
+                ndata[node_t] = DataStore(_num_nodes[node_t])
+            end
+        end
+        push!(etypes, edge_t)
     else
         s, t = edge_index(g, edge_t)
         snew = [s; snew]
         tnew = [t; tnew]
     end
+    @assert maximum(snew) <= _num_nodes[edge_t[1]]
+    @assert maximum(tnew) <= _num_nodes[edge_t[3]]
+    @assert minimum(snew) >= 1
+    @assert minimum(tnew) >= 1
+
     graph[edge_t] = (snew, tnew, nothing)
     num_edges = g.num_edges |> copy
     num_edges[edge_t] = length(graph[edge_t][1])
 
     return GNNHeteroGraph(graph,
-             g.num_nodes, num_edges, g.num_graphs,
+            _num_nodes, num_edges, g.num_graphs,
              g.graph_indicator,
              g.ndata, g_edata, g.gdata,
-             g.ntypes, etypes)
+             ntypes, etypes)
 end
 
 
@@ -470,6 +508,60 @@ end
 
 function Flux.batch(g::GNNGraph)
     throw(ArgumentError("Cannot batch a `GNNGraph` (containing $(g.num_graphs) graphs). Pass a vector of `GNNGraph`s instead."))
+end
+
+
+function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph{T}}) where {T <: COO_T}
+    @assert length(gs) > 0
+    ntypes = union([g.ntypes for g in gs]...)
+    etypes = union([g.etypes for g in gs]...)
+    # TODO remove these constraints
+    @assert ntypes == gs[1].ntypes
+    @assert etypes == gs[1].etypes
+    
+    v_num_nodes = Dict(node_t => [get(g.num_nodes,node_t,0) for g in gs] for node_t in ntypes)
+    num_nodes = Dict(node_t => sum(v_num_nodes[node_t]) for node_t in ntypes)
+    num_edges = Dict(edge_t => sum(g.num_edges[edge_t] for g in gs) for edge_t in etypes)
+    edge_indices = Dict(edge_t => [edge_index(g, edge_t) for g in gs] for edge_t in etypes)
+    nodesum = Dict(node_t => cumsum([0; v_num_nodes[node_t]])[1:(end - 1)] for node_t in ntypes)
+    graphs = []
+    for edge_t in etypes
+        src_t, _, dst_t = edge_t
+        # @show edge_t edge_indices[edge_t] first(edge_indices[edge_t])
+        # for ei in edge_indices[edge_t]
+        #     @show ei[1]
+        # end 
+        # # [ei[1] for (ii, ei) in enumerate(edge_indices[edge_t])]
+        s = cat_features([ei[1] .+ nodesum[src_t][ii] for (ii, ei) in enumerate(edge_indices[edge_t])])
+        t = cat_features([ei[2] .+ nodesum[dst_t][ii] for (ii, ei) in enumerate(edge_indices[edge_t])])
+        w = cat_features([get_edge_weight(g, edge_t) for g in gs])
+        push!(graphs, edge_t => (s, t, w))
+    end
+    graph = Dict(graphs...)
+
+    #TODO relax this restriction
+    @assert all(g -> g.num_graphs == 1, gs) 
+
+    s = edge_index(gs[1], etypes[1])[1] # grab any source vector
+
+    function materialize_graph_indicator(g, node_t)     
+        ones_like(s, g.num_nodes[node_t])
+    end
+    v_gi = Dict(node_t => [materialize_graph_indicator(g, node_t) for g in gs] for node_t in ntypes)
+    v_num_graphs = [g.num_graphs for g in gs]
+    graphsum = cumsum([0; v_num_graphs])[1:(end - 1)]
+    v_gi = Dict(node_t => [ng .+ gi for (ng, gi) in zip(graphsum, v_gi[node_t])] for node_t in ntypes)
+    graph_indicator = Dict(node_t => cat_features(v_gi[node_t]) for node_t in ntypes)
+
+    GNNHeteroGraph(graph,
+             num_nodes,
+             num_edges,
+             sum(v_num_graphs),
+             graph_indicator,
+             cat_features([g.ndata for g in gs]),
+             cat_features([g.edata for g in gs]),
+             cat_features([g.gdata for g in gs]),
+             ntypes, etypes)
 end
 
 """
