@@ -292,3 +292,7 @@ end
                      0.5 1.0 0.5
                      0.0 0.0 0.0]
 end
+
+@testset "batch heterograph" begin
+    gs = [rand_bipartite_heterograph(10,15,20) for _ in 1:5]
+end
