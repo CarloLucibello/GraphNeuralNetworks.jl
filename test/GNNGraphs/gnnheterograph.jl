@@ -34,7 +34,19 @@ end
     @test size(hg.ndata[:B].y) == (4, 20)
     @test size(hg.edata[(:A, :rel1, :B)].e) == (5, 30)
     @test hg.gdata == DataStore(u = 1)
+
 end
+
+@testset "indexing syntax" begin
+    g = GNNHeteroGraph((:user, :rate, :movie) => ([1,1,2,3], [7,13,5,7]))
+    g[:movie].z = rand(Float32, 64, 13);
+    g[:user, :rate, :movie].e = rand(Float32, 64, 4);
+    g[:user].x = rand(Float32, 64, 3);
+    @test size(g.ndata[:user].x) == (64, 3)
+    @test size(g.ndata[:movie].z) == (64, 13)
+    @test size(g.edata[(:user, :rate, :movie)].e) == (64, 4) 
+end
+
 
 @testset "simplified constructor" begin
     hg = rand_heterograph((:A => 10, :B => 20),

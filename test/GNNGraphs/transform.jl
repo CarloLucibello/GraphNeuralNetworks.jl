@@ -121,6 +121,23 @@ end
             @test has_edge(hg, (:B,:to,:A), 1, 2)
             @test !has_edge(hg, (:B,:to,:A), 2, 1)
             @test !has_edge(hg, (:B,:to,:A), 2, 2)
+
+            @testset "new nodes" begin
+                hg = rand_bipartite_heterograph((2, 2), 3)
+                hg = add_edges(hg, (:C,:rel,:B) => ([1, 3], [1,2]))
+                @test hg.num_nodes == Dict(:A => 2, :B => 2, :C => 3)
+                @test hg.num_edges == Dict((:A,:to,:B) => 3, (:B,:to,:A) => 3, (:C,:rel,:B) => 2)
+                s, t = edge_index(hg, (:C,:rel,:B))
+                @test s == [1, 3]
+                @test t == [1, 2]
+
+                hg = add_edges(hg, (:D,:rel,:F) => ([1, 3], [1,2]))
+                @test hg.num_nodes == Dict(:A => 2, :B => 2, :C => 3, :D => 3, :F => 2)
+                @test hg.num_edges == Dict((:A,:to,:B) => 3, (:B,:to,:A) => 3, (:C,:rel,:B) => 2, (:D,:rel,:F) => 2)
+                s, t = edge_index(hg, (:D,:rel,:F))
+                @test s == [1, 3]
+                @test t == [1, 2]
+            end
         end
     end 
 end

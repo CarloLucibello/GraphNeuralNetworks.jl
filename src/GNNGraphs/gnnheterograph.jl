@@ -145,9 +145,9 @@ function GNNHeteroGraph(data::EDict;
 end
 
 function show_sorted_dict(io::IO, d::Dict, compact::Bool)
-    if compact
+    # if compact
         print(io, "Dict")
-    end
+    # end
     print(io, "(")
     if !isempty(d)
         _keys = sort!(collect(keys(d)))
@@ -156,6 +156,9 @@ function show_sorted_dict(io::IO, d::Dict, compact::Bool)
         end
         print(io, "$(_str(_keys[end])) => $(d[_keys[end]])")
     end
+    # if length(d) == 1
+    #     print(io, ",")
+    # end
     print(io, ")")
 end
 
@@ -180,15 +183,17 @@ function Base.show(io::IO, ::MIME"text/plain", g::GNNHeteroGraph)
         print(io, "\n  num_edges: ")
         show_sorted_dict(io, g.num_edges, false)
         g.num_graphs > 1 && print(io, "\n  num_graphs: $(g.num_graphs)")
-        if !isempty(g.ndata)
+        if !isempty(g.ndata) && !all(isempty, values(g.ndata))
             print(io, "\n  ndata:")
             for k in sort(collect(keys(g.ndata)))
+                isempty(g.ndata[k]) && continue    
                 print(io, "\n\t", _str(k), "  =>  $(shortsummary(g.ndata[k]))")
             end
         end
-        if !isempty(g.edata)
+        if !isempty(g.edata) && !all(isempty, values(g.edata))
             print(io, "\n  edata:")
             for k in sort(collect(keys(g.edata)))
+                isempty(g.edata[k]) && continue
                 print(io, "\n\t$k  =>  $(shortsummary(g.edata[k]))")
             end
         end
@@ -271,20 +276,12 @@ end
 
 @non_differentiable _ntypes_from_edges(::Any...)
 
-
 function Base.getindex(g::GNNHeteroGraph, node_t::NType)
-    if !haskey(g.ndata, node_t) && node_t in g.ntypes
-        g.ndata[node_t] = DataStore(g.num_nodes[node_t])
-    end
     return g.ndata[node_t]
 end
 
-Base.setindex!(g::GNNHeteroGraph, node_t::NType, x) = g.ndata[node_t] = x
+Base.getindex(g::GNNHeteroGraph, n1_t::Symbol, rel::Symbol, n2_t::Symbol) = g[(n1_t, rel, n2_t)]
 
 function Base.getindex(g::GNNHeteroGraph, edge_t::EType)
-    if !haskey(g.edata, node_t) && edge_t in g.etypes
-        g.ndata[node_t] = DataStore(g.num_edges[edge_t])
-    end
     return g.edata[edge_t]
 end
-Base.setindex!(g::GNNHeteroGraph, edge_t::EType, x) = g.edata[edge_t] = x
