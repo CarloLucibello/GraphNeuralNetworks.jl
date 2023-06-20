@@ -94,4 +94,34 @@ GNNHeteroGraph:
         (:user, :rate, :movie)  =>  DataStore(e = [64×4 Matrix{Float32}])
 ```
 
+## Batching
+Similarly to graphs, also heterographs can be batched together.
+```julia-repl
+```julia
+julia> gs = [rand_bipartite_heterograph((5, 10), 20) for _ in 1:32];
+
+julia> Flux.batch(gs)
+GNNHeteroGraph:
+  num_nodes: Dict(:A => 160, :B => 320)
+  num_edges: Dict((:A, :to, :B) => 640, (:B, :to, :A) => 640)
+  num_graphs: 32
+```
+Batching is automatically performed by the [`DataLoader`](@ref) iterator
+when the `collate` option is set to `true`.
+```julia-repl
+using Flux: DataLoader
+
+data = [rand_bipartite_heterograph((5, 10), 20, 
+            ndata=Dict(:A=>rand(Float32, 3, 5))) 
+        for _ in 1:320];
+
+train_loader = DataLoader(data, batchsize=16, shuffle=true, collate=true)
+
+for g in train_loader
+    @assert g.num_graphs == 16
+    @assert g.num_nodes[:A] == 80
+    @assert size(g.ndata[:A].x) == (3, 80)    
+    # ...
+end
+``
 
