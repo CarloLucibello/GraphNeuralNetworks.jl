@@ -125,3 +125,6 @@ for g in train_loader
 end
 ``
 
+# Graph convolutions on heterographs
+
+See [`GNNHeteroConv`](@ref) for a list of available graph convolutions on heterographs.
