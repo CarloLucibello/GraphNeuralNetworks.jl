@@ -109,16 +109,29 @@ function cat_features(xs::AbstractVector{<:NamedTuple})
     NamedTuple(k => cat_features([x[k] for x in xs]) for k in syms)
 end
 
-function cat_features(xs::AbstractVector{Dict{Symbol, T}}) where {T}
-    symbols = [sort(collect(keys(x))) for x in xs]
-    all(y -> y == symbols[1], symbols) ||
+# function cat_features(xs::AbstractVector{Dict{Symbol, T}}) where {T}
+#     symbols = [sort(collect(keys(x))) for x in xs]
+#     all(y -> y == symbols[1], symbols) ||
+#         @error "cannot concatenate feature data with different keys"
+#     length(xs) == 1 && return xs[1]
+
+#     # concatenate 
+#     syms = symbols[1]
+#     return Dict{Symbol, T}([k => cat_features([x[k] for x in xs]) for k in syms]...)
+# end
+
+function cat_features(xs::AbstractVector{<:Dict})
+    _allkeys = [sort(collect(keys(x))) for x in xs]
+    _keys = _allkeys[1]
+    all(y -> y == _keys, _allkeys) ||
         @error "cannot concatenate feature data with different keys"
     length(xs) == 1 && return xs[1]
 
     # concatenate 
-    syms = symbols[1]
-    return Dict{Symbol, T}(k => cat_features([x[k] for x in xs]) for k in syms)
+    return Dict([k => cat_features([x[k] for x in xs]) for k in _keys]...)
 end
+
+
 
 # Turns generic type into named tuple
 normalize_graphdata(data::Nothing; n, kws...) = DataStore(n)

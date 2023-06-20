@@ -294,5 +294,25 @@ end
 end
 
 @testset "batch heterograph" begin
-    gs = [rand_bipartite_heterograph(10,15,20) for _ in 1:5]
+    gs = [rand_bipartite_heterograph((10, 15), 20) for _ in 1:5]
+    g = Flux.batch(gs)
+    @test g.num_nodes[:A] == 50
+    @test g.num_nodes[:B] == 75
+    @test g.num_edges[(:A,:to,:B)] == 100
+    @test g.num_edges[(:B,:to,:A)] == 100
+    @test g.num_graphs == 5
+    @test g.graph_indicator == Dict(:A => vcat([fill(i, 10) for i in 1:5]...),
+                                    :B => vcat([fill(i, 15) for i in 1:5]...))
+
+    for gi in gs
+        gi.ndata[:A].x = ones(2, 10)
+        gi.ndata[:A].y = zeros(10)
+        gi.edata[(:A,:to,:B)].e = fill(2, 20)
+        gi.gdata.u = 7
+    end
+    g = Flux.batch(gs)
+    @test g.ndata[:A].x == ones(2, 50)
+    @test g.ndata[:A].y == zeros(50)
+    @test g.edata[(:A,:to,:B)].e == fill(2, 100)
+    @test g.gdata.u == fill(7, 5)
 end

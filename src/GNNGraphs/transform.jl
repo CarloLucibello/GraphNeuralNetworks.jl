@@ -513,7 +513,7 @@ function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph{T}}) where {T <: COO_T}
     v_num_graphs = [g.num_graphs for g in gs]
     graphsum = cumsum([0; v_num_graphs])[1:(end - 1)]
     v_gi = Dict(node_t => [ng .+ gi for (ng, gi) in zip(graphsum, v_gi[node_t])] for node_t in ntypes)
-    graph_indicator = Dict(node_t => cat_features(v_gi) for node_t in ntypes)
+    graph_indicator = Dict(node_t => cat_features(v_gi[node_t]) for node_t in ntypes)
 
     GNNHeteroGraph(graph,
              num_nodes,
