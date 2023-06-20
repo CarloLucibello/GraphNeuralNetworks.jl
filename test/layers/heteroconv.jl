@@ -28,7 +28,7 @@
         @test dx[:B] ≈ ndx[:B]        rtol=1e-4
     end
 
-    @test "Constructor from pairs" begin
+    @testset "Constructor from pairs" begin
         layer = HeteroGraphConv((:A, :to, :B) => GraphConv(64 => 32, relu),
                                 (:B, :to, :A) => GraphConv(64 => 32, relu));
         @test length(layer.etypes) == 2
