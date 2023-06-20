@@ -26,10 +26,15 @@ GNNHeteroGraph:
   num_nodes: Dict(:A => 10, :B => 15)
   num_edges: Dict((:A, :to, :B) => 20, (:B, :to, :A) => 20)
 
-julia> X = (A = rand(Float32, 64, 10), B = rand(Float32, 64, 15));
+julia> x = (A = rand(Float32, 64, 10), B = rand(Float32, 64, 15));
 
-julia> layer = HeteroGraphConv((:A, :to, :B) => GraphConv(64 => 64, relu),
-                               (:B, :to, :A) => GraphConv(64 => 64, relu)) 
+julia> layer = HeteroGraphConv((:A, :to, :B) => GraphConv(64 => 32, relu),
+                               (:B, :to, :A) => GraphConv(64 => 32, relu));
+
+julia> y = layer(g, x); # output is a named tuple
+
+julia> size(y.A) == (32, 10) && size(y.B) == (32, 15)
+true
 """
 struct HeteroGraphConv
     etypes::Vector{EType}

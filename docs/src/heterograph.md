@@ -123,8 +123,8 @@ for g in train_loader
     @assert size(g.ndata[:A].x) == (3, 80)    
     # ...
 end
-``
+```
 
-# Graph convolutions on heterographs
+## Graph convolutions on heterographs
 
-See [`GNNHeteroConv`](@ref) for a list of available graph convolutions on heterographs.
+See [`HeteroGraphConv`](@ref) for how to perform convolutions on heterogenous graphs.
