@@ -362,3 +362,54 @@ function rand_temporal_radius_graph(number_nodes::Int,
     end
     return TemporalSnapshotsGNNGraph(tg)
 end
+
+
+function _hyperbolic_distance(nodeA::Array{Float64, 1},nodeB::Array{Float64, 1}; ζ::Real)
+    if nodeA!=nodeB
+        d=acosh(cosh(ζ*nodeA[1])*cosh(ζ*nodeB[1])-(sinh(ζ*nodeA[1])*sinh(ζ*nodeB[1])*cos(pi-abs(pi-abs(nodeA[2]-nodeB[2])))))/ζ
+    else
+        d=0.0
+    end
+    return d
+end
+
+function rand_temporal_hyperbolic_graph(number_nodes::Int,
+                                        number_snapshots::Int;
+                                        α::Real,
+                                        R::Real,
+                                        speed::Real,
+                                        ζ::Real=1,
+                                        self_loop = false,
+                                        kws...)
+        @assert number_snapshots > 1 "The number of snapshots must be greater than 1"
+        @assert α > 0 "α must be greater than 0"
+
+        probabilities=rand(number_nodes)
+
+        points=Array{Float64}(undef,2,number_nodes)
+        points[1,:].= (1/α)*acosh.(1 .+ (cosh(α * R) - 1)*probabilities)
+        points[2,:].= 2*pi*rand(number_nodes)
+
+        tg = Vector{GNNGraph}(undef, number_snapshots)
+
+        for time in 1:number_snapshots
+            adj=zeros(number_nodes,number_nodes)
+            for i in 1:number_nodes
+                for j in 1:number_nodes
+                    if !self_loop && i==j
+                        continue
+                    elseif _hyperbolic_distance(points[:,i],points[:,j]; ζ) <= R
+                        adj[i,j]=adj[j,i]=1
+                    end
+                end
+            end
+            tg[time] = GNNGraph(adj)
+            probabilities.=probabilities.+ (2 * speed * rand(number_nodes) .- speed)
+            probabilities[probabilities.>1].= 1 .- (probabilities[probabilities.>1].%1)
+            probabilities[probabilities.<0].= abs.(probabilities[probabilities.<0])
+
+            points[1,:].= (1/α)*acosh.(1 .+ (cosh(α * R) - 1)*probabilities)
+            points[2,:].= points[2,:].+ (2 * speed * rand(number_nodes) .- speed)
+        end
+    return TemporalSnapshotsGNNGraph(tg)
+end
