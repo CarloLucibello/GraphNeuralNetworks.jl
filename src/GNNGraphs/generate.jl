@@ -366,7 +366,10 @@ end
 
 function _hyperbolic_distance(nodeA::Array{Float64, 1},nodeB::Array{Float64, 1}; ζ::Real)
     if nodeA != nodeB
-        d=acosh(cosh(ζ*nodeA[1])*cosh(ζ*nodeB[1])-(sinh(ζ*nodeA[1])*sinh(ζ*nodeB[1])*cos(pi-abs(pi-abs(nodeA[2]-nodeB[2])))))/ζ
+        a = cosh(ζ * nodeA[1]) * cosh(ζ * nodeB[1])
+        b = sinh(ζ * nodeA[1]) * sinh(ζ * nodeB[1])
+        c = cos(pi - abs(pi - abs(nodeA[2] - nodeB[2])))
+        d = acosh(a - (b * c)) / ζ
     else
         d = 0.0
     end
