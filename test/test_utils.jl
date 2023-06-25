@@ -1,9 +1,9 @@
 using ChainRulesTestUtils, FiniteDifferences, Zygote, Adapt, CUDA
 CUDA.allowscalar(false)
 
-function ngradient(f, x)
+function ngradient(f, x...)
     fdm = central_fdm(5, 1)
-    return FiniteDifferences.grad(fdm, f, x)
+    return FiniteDifferences.grad(fdm, f, x...)
 end
 
 const rule_config = Zygote.ZygoteRuleConfig()
@@ -20,7 +20,7 @@ end
 # Test gradients with respects to layer weights and to input. 
 # If `g` has edge features, it is assumed that the layer can 
 # use them in the forward pass as `l(g, x, e)`.
-# Test also gradient with repspect to `e`. 
+# Test also gradient with respect to `e`. 
 function test_layer(l, g::GNNGraph; atol = 1e-5, rtol = 1e-5,
                     exclude_grad_fields = [],
                     verbose = false,

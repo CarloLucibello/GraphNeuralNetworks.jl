@@ -14,11 +14,11 @@
     @test hg.num_edges == Dict((:A, :rel1, :B) => 30, (:B, :rel2, :A) => 10)
     @test hg.graph_indicator === nothing
     @test hg.num_graphs == 1
-    @test hg.ndata == Dict()
-    @test hg.edata == Dict()
+    @test hg.ndata isa Dict{Symbol, DataStore}
+    @test hg.edata isa Dict{Tuple{Symbol, Symbol, Symbol}, DataStore}
     @test isempty(hg.gdata)
     @test sort(hg.ntypes) == [:A, :B]
-    @test sort(hg.etypes) == [:rel1, :rel2]
+    @test sort(hg.etypes) == [(:A, :rel1, :B), (:B, :rel2, :A)]
 end
 
 @testset "features" begin
@@ -34,7 +34,19 @@ end
     @test size(hg.ndata[:B].y) == (4, 20)
     @test size(hg.edata[(:A, :rel1, :B)].e) == (5, 30)
     @test hg.gdata == DataStore(u = 1)
+
 end
+
+@testset "indexing syntax" begin
+    g = GNNHeteroGraph((:user, :rate, :movie) => ([1,1,2,3], [7,13,5,7]))
+    g[:movie].z = rand(Float32, 64, 13);
+    g[:user, :rate, :movie].e = rand(Float32, 64, 4);
+    g[:user].x = rand(Float32, 64, 3);
+    @test size(g.ndata[:user].x) == (64, 3)
+    @test size(g.ndata[:movie].z) == (64, 13)
+    @test size(g.edata[(:user, :rate, :movie)].e) == (64, 4) 
+end
+
 
 @testset "simplified constructor" begin
     hg = rand_heterograph((:A => 10, :B => 20),
@@ -69,7 +81,42 @@ end
     @test hg.num_edges == Dict((:A, :rel1, :B) => 20, (:B, :rel2, :A) => 30)
 end
 
-## Cannot test this because DataStore is not an oredered collection
+@testset "num_edge_types / num_node_types" begin
+    hg = rand_heterograph((:A => 10, :B => 20),
+            ((:A, :rel1, :B) => 30, (:B, :rel2, :A) => 10),
+            ndata = (:A => rand(2, 10),
+                    :B => (x = rand(3, 20), y = rand(4, 20))),
+            edata = (:A, :rel1, :B) => rand(5, 30),
+            gdata = 1)
+    @test num_edge_types(hg) == 2
+    @test num_node_types(hg) == 2
+
+    g = rand_graph(10, 20)
+    @test num_edge_types(g) == 1
+    @test num_node_types(g) == 1
+end
+
+@testset "numobs" begin
+    hg = rand_heterograph((:A => 10, :B => 20),
+            ((:A, :rel1, :B) => 30, (:B, :rel2, :A) => 10),
+            ndata = (:A => rand(2, 10),
+                    :B => (x = rand(3, 20), y = rand(4, 20))),
+            edata = (:A, :rel1, :B) => rand(5, 30),
+            gdata = 1)
+    @test MLUtils.numobs(hg) == 1
+end
+
+@testset "get/set node features" begin
+    d, n = 3, 5
+    g = rand_bipartite_heterograph(n, 2*n, 15)
+    g[:A].x = rand(Float32, d, n)
+    g[:B].y = rand(Float32, d, 2*n)
+
+    @test size(g[:A].x) == (d, n)
+    @test size(g[:B].y) == (d, 2*n)
+end
+
+## Cannot test this because DataStore is not an ordered collection
 ## Uncomment when/if it will be based on OrderedDict
 # @testset "show" begin
 #     num_nodes = Dict(:A => 10, :B => 20);

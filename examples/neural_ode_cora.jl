@@ -42,11 +42,8 @@ model = GNNChain(GCNConv(nin => nhidden, relu),
                  Dense(nhidden, nout)) |> device
 
 # # Training
-# ## Model Parameters
-ps = Flux.params(model);
 
-# ## Optimizer
-opt = Adam(0.01)
+opt = Flux.setup(Adam(0.01), model)
 
 function eval_loss_accuracy(X, y, mask)
     ŷ = model(g, X)
@@ -57,10 +54,10 @@ end
 
 # ## Training Loop
 for epoch in 1:epochs
-    gs = gradient(ps) do
+    grad = gradient(model) do model
         ŷ = model(g, X)
         logitcrossentropy(ŷ[:, train_mask], ytrain)
     end
-    Flux.Optimise.update!(opt, ps, gs)
+    Flux.update!(opt, model, grad[1])
     @show eval_loss_accuracy(X, y, train_mask)
 end

@@ -52,8 +52,7 @@ function train(Layer; verbose = false, kws...)
                      Layer(nhidden, nhidden),
                      Dense(nhidden, nout)) |> device
 
-    ps = Flux.params(model)
-    opt = Adam(args.η)
+    opt = Flux.setup(Adam(args.η), model)
 
     ## TRAINING
     function report(epoch)
@@ -64,11 +63,11 @@ function train(Layer; verbose = false, kws...)
 
     verbose && report(0)
     @time for epoch in 1:(args.epochs)
-        gs = Flux.gradient(ps) do
+        grad = Flux.gradient(model) do model
             ŷ = model(g, X)
             logitcrossentropy(ŷ[:, train_mask], ytrain)
         end
-        Flux.Optimise.update!(opt, ps, gs)
+        Flux.update!(opt, model, grad[1])
         verbose && report(epoch)
     end
 
@@ -92,7 +91,7 @@ function train_many(; usecuda = false)
         ## ("ChebConv", (nin, nout) -> ChebConv(nin => nout, 2)), # not working on gpu
         ## ("NNConv", (nin, nout) -> NNConv(nin => nout)),  # needs edge features
         ## ("GatedGraphConv", (nin, nout) -> GatedGraphConv(nout, 2)),  # needs nin = nout
-        ## ("EdgeConv",(nin, nout) -> EdgeConv(Dense(2nin, nout, relu))), # Fits the traning set but does not generalize well
+        ## ("EdgeConv",(nin, nout) -> EdgeConv(Dense(2nin, nout, relu))), # Fits the training set but does not generalize well
     ]
         @show layer
         @time train_res, test_res = train(Layer; usecuda, verbose = false)

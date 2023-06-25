@@ -105,11 +105,21 @@ function Base.getproperty(ds::DataStore, s::Symbol)
     end
 end
 
+function Base.getproperty(vds::Vector{DataStore}, s::Symbol)
+    if s === :_n
+        return [getn(ds) for ds in vds]
+    elseif s === :_data
+        return [getdata(ds) for ds in vds]
+    else
+        return [getdata(ds)[s] for ds in vds]
+    end
+end
+
 function Base.setproperty!(ds::DataStore, s::Symbol, x)
-    @assert s!=:_n "cannot set _n directly"
-    @assert s!=:_data "cannot set _data directly"
-    if getn(ds) > 0
-        @assert numobs(x)==getn(ds) "expected (numobs(x) == getn(ds)) but got $(numobs(x)) != $(getn(ds))"
+    @assert s != :_n "cannot set _n directly"
+    @assert s != :_data "cannot set _data directly"
+    if getn(ds) >= 0
+        numobs(x) == getn(ds) || throw(DimensionMismatch("expected $(getn(ds)) object features but got $(numobs(x))."))
     end
     return getdata(ds)[s] = x
 end
@@ -164,7 +174,7 @@ function MLUtils.getobs(ds::DataStore,
                         i::AbstractVector{T}) where {T <: Union{Integer, Bool}}
     newdata = getobs(getdata(ds), i)
     n = getn(ds)
-    if n > -1
+    if n >= 0
         if length(ds) > 0
             n = numobs(newdata)
         else
@@ -180,14 +190,14 @@ end
 
 function cat_features(ds1::DataStore, ds2::DataStore)
     n1, n2 = getn(ds1), getn(ds2)
-    n1 = n1 > 0 ? n1 : 1
-    n2 = n2 > 0 ? n2 : 1
+    n1 = n1 >= 0 ? n1 : 1
+    n2 = n2 >= 0 ? n2 : 1
     return DataStore(n1 + n2, cat_features(getdata(ds1), getdata(ds2)))
 end
 
 function cat_features(dss::AbstractVector{DataStore}; kws...)
     ns = getn.(dss)
-    ns = map(n -> n > 0 ? n : 1, ns)
+    ns = map(n -> n >= 0 ? n : 1, ns)
     return DataStore(sum(ns), cat_features(getdata.(dss); kws...))
 end
 

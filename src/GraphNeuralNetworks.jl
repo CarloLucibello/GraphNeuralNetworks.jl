@@ -17,7 +17,8 @@ using SparseArrays, Graphs # not needed but if removed Documenter will complain
 include("GNNGraphs/GNNGraphs.jl")
 @reexport using .GNNGraphs
 using .GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
-                  check_num_nodes, check_num_edges
+                  check_num_nodes, check_num_edges,
+                  EType, NType # for heteroconvs
 
 export
 # utils
@@ -67,6 +68,9 @@ export
       SGConv,
       TransformerConv,
 
+# layers/heteroconv
+      HeteroGraphConv,
+
 # layers/pool
       GlobalPool,
       GlobalAttentionPool,
@@ -80,6 +84,7 @@ export
 include("utils.jl")
 include("layers/basic.jl")
 include("layers/conv.jl")
+include("layers/heteroconv.jl")
 include("layers/pool.jl")
 include("msgpass.jl")
 include("mldatasets.jl")

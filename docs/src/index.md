@@ -53,15 +53,14 @@ model = GNNChain(GCNConv(16 => 64),
                 GlobalPool(mean),  # aggregate node-wise features into graph-wise features
                 Dense(64, 1)) |> device
 
-ps = Flux.params(model)
-opt = Adam(1f-4)
+opt = Flux.setup(Adam(1f-4), model)
 ```
 
 ### Training 
 
 Finally, we use a standard Flux training pipeline to fit our dataset.
 We use Flux's `DataLoader` to iterate over mini-batches of graphs 
-that are glued together into a single `GNNGraph` using the [`MLUtils.batch`](@ref) method. This is what happens under the hood when creating a `DataLoader` with the
+that are glued together into a single `GNNGraph` using the [`Flux.batch`](@ref) method. This is what happens under the hood when creating a `DataLoader` with the
 `collate=true` option. 
 
 ```julia
@@ -72,15 +71,15 @@ train_loader = DataLoader(train_graphs,
 test_loader = DataLoader(test_graphs, 
                 batchsize=32, shuffle=false, collate=true)
 
-loss(g::GNNGraph) = mean((vec(model(g, g.x)) - g.y).^2)
+loss(model, g::GNNGraph) = mean((vec(model(g, g.x)) - g.y).^2)
 
-loss(loader) = mean(loss(g |> device) for g in loader)
+loss(model, loader) = mean(loss(model, g |> device) for g in loader)
 
 for epoch in 1:100
     for g in train_loader
         g = g |> device
-        grad = gradient(() -> loss(g), ps)
-        Flux.Optimise.update!(opt, ps, grad)
+        grad = gradient(model -> loss(model, g), model)
+        Flux.update!(opt, model, grad[1])
     end
 
     @info (; epoch, train_loss=loss(train_loader), test_loss=loss(test_loader))

@@ -1,4 +1,4 @@
-# Graphs
+# Working with GNNGraph 
 
 The fundamental graph type in GraphNeuralNetworks.jl is the [`GNNGraph`](@ref).
 A GNNGraph `g` is a directed graph with nodes labeled from 1 to `g.num_nodes`.
@@ -189,15 +189,15 @@ graph_indicator(gall)
 ## DataLoader and mini-batch iteration
 
 While constructing a batched graph and passing it to the `DataLoader` is always 
-an option for mini-batch iteration, the recommended way is
-to pass an array of graphs directly:
+an option for mini-batch iteration, the recommended way for better performance is
+to pass an array of graphs directly and set the `collate` option to `true`:
 
 ```julia
 using Flux: DataLoader
 
 data = [rand_graph(10, 30, ndata=rand(Float32, 3, 10)) for _ in 1:320]
 
-train_loader = DataLoader(data, batchsize=16, shuffle=true)
+train_loader = DataLoader(data, batchsize=16, shuffle=true, collate=true)
 
 for g in train_loader
     @assert g.num_graphs == 16

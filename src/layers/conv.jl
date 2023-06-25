@@ -263,10 +263,11 @@ function GraphConv(ch::Pair{Int, Int}, σ = identity; aggr = +,
     GraphConv(W1, W2, b, σ, aggr)
 end
 
-function (l::GraphConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::GraphConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
-    m = propagate(copy_xj, g, l.aggr, xj = x)
-    x = l.σ.(l.weight1 * x .+ l.weight2 * m .+ l.bias)
+    xj, xi = expand_srcdst(g, x)
+    m = propagate(copy_xj, g, l.aggr, xj = xj)
+    x = l.σ.(l.weight1 * xi .+ l.weight2 * m .+ l.bias)
     return x
 end
 

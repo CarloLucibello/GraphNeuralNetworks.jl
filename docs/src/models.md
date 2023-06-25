@@ -30,7 +30,7 @@ struct GNN                                # step 1
     dense
 end
 
-Flux.@functor GNN                              # step 2
+Flux.@functor GNN                         # step 2
 
 function GNN(din::Int, d::Int, dout::Int) # step 3    
     GNN(GCNConv(din => d),
@@ -56,7 +56,7 @@ g = rand_graph(10, 30)
 X = randn(Float32, din, 10) 
 
 y = model(g, X)  # output size: (dout, g.num_nodes)
-gs = gradient(() -> sum(model(g, X)), Flux.params(model))
+grad = gradient(model -> sum(model(g, X)), model)
 ```
 
 ## Implicit modeling with GNNChains

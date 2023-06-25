@@ -13,7 +13,7 @@ abstract type GNNLayer end
 
 function (l::GNNLayer)(g::AbstractVector{<:GNNGraph}, args...; kws...)
     @warn "Passing an array of graphs to a `GNNLayer` is discouraged. 
-           Explicitely call `MLUtils.batch(graphs)` first instead." maxlog=1
+           Explicitely call `Flux.batch(graphs)` first instead." maxlog=1
     return l(batch(g), args...; kws...)
 end
 
@@ -24,8 +24,8 @@ A type wrapping the `model` and tying it to the graph `g`.
 In the forward pass, can only take feature arrays as inputs,
 returning `model(g, x...; kws...)`.
 
-If `traingraph=false`, the graph's parameters, won't be collected
-when calling `Flux.params` on a `WithGraph` object.
+If `traingraph=false`, the graph's parameters won't be part of 
+the `trainable` parameters in the gradient updates.
 
 # Examples
 

@@ -7,7 +7,7 @@ applying the message function `fmsg`, and returning an aggregated message ``\\ba
 (depending on the return value of `fmsg`, an array or a named tuple of 
 arrays with last dimension's size `g.num_nodes`).
 
-If also a [GNNLayer](@ref) `layer` is provided, it will be passed to `fmsg` 
+If also a [`GNNLayer`](@ref) `layer` is provided, it will be passed to `fmsg` 
 as a first argument.
 
 It can be decomposed in two steps:
@@ -35,7 +35,7 @@ providing as input `f` a closure.
       with the same batch size. If also `layer` is passed to propagate,
       the signature of `fmsg` has to be `fmsg(layer, xi, xj, e)` 
       instead of `fmsg(xi, xj, e)`.
-- `layer`: A [GNNLayer](@ref). If provided it will be passed to `fmsg` as a first argument.
+- `layer`: A [`GNNLayer`](@ref). If provided it will be passed to `fmsg` as a first argument.
 - `aggr`: Neighborhood aggregation operator. Use `+`, `mean`, `max`, or `min`. 
 
 
@@ -73,11 +73,11 @@ See also [`apply_edges`](@ref) and [`aggregate_neighbors`](@ref).
 """
 function propagate end
 
-function propagate(f, g::GNNGraph, aggr; xi = nothing, xj = nothing, e = nothing)
+function propagate(f, g::AbstractGNNGraph, aggr; xi = nothing, xj = nothing, e = nothing)
     propagate(f, g, aggr, xi, xj, e)
 end
 
-function propagate(f, g::GNNGraph, aggr, xi, xj, e = nothing)
+function propagate(f, g::AbstractGNNGraph, aggr, xi, xj, e = nothing)
     m = apply_edges(f, g, xi, xj, e)
     m̄ = aggregate_neighbors(g, aggr, m)
     return m̄
@@ -112,12 +112,12 @@ The function `fmsg` operates on batches of edges, therefore
 is the batch size, or can be named tuples of 
 such tensors.
 
-If also a [GNNLayer](@ref) `layer` is provided, it will be passed to `fmsg` 
+If also a [`GNNLayer`](@ref) `layer` is provided, it will be passed to `fmsg` 
 as a first argument.
     
 # Arguments
 
-- `g`: A `GNNGraph`.
+- `g`: An `AbstractGNNGraph`.
 - `xi`: An array or a named tuple containing arrays whose last dimension's size 
         is `g.num_nodes`. It will be appropriately materialized on the
         target node of each edge (see also [`edge_index`](@ref)).
@@ -129,42 +129,42 @@ as a first argument.
        with the same batch size. If also `layer` is passed to propagate,
       the signature of `fmsg` has to be `fmsg(layer, xi, xj, e)` 
       instead of `fmsg(xi, xj, e)`.
-- `layer`: A [GNNLayer](@ref). If provided it will be passed to `fmsg` as a first argument.
+- `layer`: A [`GNNLayer`](@ref). If provided it will be passed to `fmsg` as a first argument.
 
 See also [`propagate`](@ref) and [`aggregate_neighbors`](@ref).
 """
 function apply_edges end
 
-function apply_edges(f, g::GNNGraph; xi = nothing, xj = nothing, e = nothing)
+function apply_edges(f, g::AbstractGNNGraph; xi = nothing, xj = nothing, e = nothing)
     apply_edges(f, g, xi, xj, e)
 end
 
-function apply_edges(f, g::GNNGraph, xi, xj, e = nothing)
-    check_num_nodes(g, xi)
-    check_num_nodes(g, xj)
+function apply_edges(f, g::AbstractGNNGraph, xi, xj, e = nothing)
+    check_num_nodes(g, (xj, xi))
     check_num_edges(g, e)
-    s, t = edge_index(g)
+    s, t = edge_index(g) # for heterographs, errors if more than one edge type
     xi = GNNGraphs._gather(xi, t)   # size: (D, num_nodes) -> (D, num_edges)
     xj = GNNGraphs._gather(xj, s)
     m = f(xi, xj, e)
     return m
 end
 
+
 ## convenience methods for working around performance issues
 # https://github.com/JuliaLang/julia/issues/15276
 ## and zygote issues
 # https://github.com/FluxML/Zygote.jl/issues/1317
-function apply_edges(f, g::GNNGraph, l::GNNLayer; xi = nothing, xj = nothing, e = nothing)
+function apply_edges(f, g::AbstractGNNGraph, l::GNNLayer; xi = nothing, xj = nothing, e = nothing)
     apply_edges((xi, xj, e) -> f(l, xi, xj, e), g, xi, xj, e)
 end
 
-function apply_edges(f, g::GNNGraph, l::GNNLayer, xi, xj, e = nothing)
+function apply_edges(f, g::AbstractGNNGraph, l::GNNLayer, xi, xj, e = nothing)
     apply_edges((xi, xj, e) -> f(l, xi, xj, e), g, xi, xj, e)
 end
 
 ##  AGGREGATE NEIGHBORS
 @doc raw"""
-    aggregate_neighbors(g::GNNGraph, aggr, m)
+    aggregate_neighbors(g, aggr, m)
 
 Given a graph `g`, edge features `m`, and an aggregation
 operator `aggr` (e.g `+, min, max, mean`), returns the new node
@@ -180,6 +180,13 @@ function aggregate_neighbors(g::GNNGraph, aggr, m)
     check_num_edges(g, m)
     s, t = edge_index(g)
     return GNNGraphs._scatter(aggr, m, t, g.num_nodes)
+end
+
+function aggregate_neighbors(g::GNNHeteroGraph, aggr, m)
+    check_num_edges(g, m)
+    s, t = edge_index(g)
+    dest_node_t = only(g.etypes)[3]
+    return GNNGraphs._scatter(aggr, m, t, g.num_nodes[dest_node_t])
 end
 
 ### MESSAGE FUNCTIONS ###
