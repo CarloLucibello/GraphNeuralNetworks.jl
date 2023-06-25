@@ -1691,22 +1691,43 @@ function Base.show(io::IO, l::TransformerConv)
 end
 
 @doc raw"""
-GraphormerLayer constructor.
+    GraphormerLayer((in, ein) => out; [σ, heads, concat, negative_slope, init, add_self_loops, bias, phi])
 
-Parameters:
-- `ch`: A `Pair` object representing the input and output channels of the layer. The input channel should be a tuple of the form `(in_channels, num_edge_features)`, where `in_channels` is the number of input node features and `num_edge_features` is the number of input edge features. The output channel should be an integer representing the number of output features for each node.
-- `σ`: The activation function to apply to the node features after the linear transformation. Defaults to `identity`.
-- `heads`: The number of attention heads to use. Defaults to 1.
-- `concat`: Whether to concatenate the output of each head or average them. Defaults to `true`.
-- `negative_slope`: The slope of the negative part of the LeakyReLU activation function. Defaults to 0.2.
-- `init`: The initialization function to use for the attention weights. Defaults to `glorot_uniform`.
-- `bias`: Whether to include a bias term in the linear transformation. Defaults to `true`.
-- `add_self_loops`: Whether to add self-loops to the graph. Defaults to `true`.
+A layer implementing the Graphormer model from the paper 
+["Do Transformers Really Perform Bad for Graph Representation?"](https://arxiv.org/abs/2106.05234), 
+which combines transformers and graph neural networks.
 
-Example:
-layer = GraphormerLayer((64, 32) => 128, σ = relu, heads = 4, concat = true, negative_slope = 0.1, init = xavier_uniform, bias = true, add_self_loops = false)
+It applies a multi-head attention mechanism to node features and optionally edge features, 
+along with layer normalization and an activation function, 
+which makes it possible to capture both intra-node and inter-node dependencies.
+
+The layer's forward pass is given by:
+```math
+h^{(0)} = Wx,
+h^{(l+1)} = h^{(l)} + \mathrm{MHA}(\mathrm{LN}(h^{(l)})),
+where W is a learnable weight matrix, x are the node features,
+LN is layer normalization, and MHA is multi-head attention.
+
+Arguments
+
+in: Dimension of input node features.
+ein: Dimension of the edge features; if 0, no edge features will be used.
+out: Dimension of the output.
+σ: Activation function to apply to the node features after the linear transformation.
+Default identity.
+heads: Number of heads in output. Default 1.
+concat: Concatenate layer output or not. If not, layer output is averaged
+over the heads. Default true.
+negative_slope: The slope of the negative part of the LeakyReLU activation function.
+Default 0.2.
+init: Weight matrices' initializing function. Default glorot_uniform.
+add_self_loops: Add self loops to the input graph. Default true.
+bias: If set, the layer will also learn an additive bias for the nodes.
+Default true.
+phi: Number of Phi functions (Layer Normalization and Multi-Head Attention)
+to be applied. Default 2.
 """
-struct GraphormerLayer{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix, F, B} <: GNNLayer
+struct GraphormerLayer{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix, F, B, LN, MHA} <: GNNLayer
     dense_x::DX
     dense_e::DE
     bias::B
@@ -1717,16 +1738,14 @@ struct GraphormerLayer{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: Abstrac
     heads::Int
     concat::Bool
     add_self_loops::Bool
-    phi::Function
+    phi::Int
+    LN::LN
+    MHA::MHA
 end
-
-@functor GraphormerLayer
-
-Flux.trainable(l::GraphormerLayer) = (l.dense_x, l.dense_e, l.bias, l.a)
 
 function GraphormerLayer(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
                  heads::Int = 1, concat::Bool = true, negative_slope = 0.2,
-                 init = glorot_uniform, bias::Bool = true, add_self_loops = true)
+                 init = glorot_uniform, bias::Bool = true, add_self_loops = true, phi::Int = 2)
     (in, ein), out = ch
     if add_self_loops
         @assert ein==0 "Using edge features and setting add_self_loops=true at the same time is not yet supported."
@@ -1737,13 +1756,12 @@ function GraphormerLayer(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
     b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out * heads : out) : false
     a = init(ein > 0 ? 3out : 2out, heads)
     negative_slope = convert(Float32, negative_slope)
-    GraphormerLayer(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops, phi)
+    LN = LayerNorm(out)
+    MHA = MultiheadAttention(out, heads)
+    GraphormerLayer(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops, phi, LN, MHA)
 end
 
-(l::GraphormerLayer)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
-
-function (l::GraphormerLayer)(g::GNNGraph, x::AbstractMatrix,
-                      e::Union{Nothing, AbstractMatrix} = nothing)
+function (l::GraphormerLayer)(g::GNNGraph, x::AbstractMatrix, e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
     @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
     @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"
@@ -1769,6 +1787,7 @@ function (l::GraphormerLayer)(g::GNNGraph, x::AbstractMatrix,
     h = l.σ.(h)
     return h
 end
+
 function message(l::GraphormerLayer, xi, xj, e)
     θ = cat(xi, xj, dims=2)
     if l.dense_e !== nothing
@@ -1776,7 +1795,8 @@ function message(l::GraphormerLayer, xi, xj, e)
         fe = reshape(fe, size(fe, 1), l.heads, :)
         θ = cat(θ, fe, dims=1)
     end
-    W = l.a * θ
+    α = softmax(l.a' * θ)  ## Not sure if I can use it from flux directly
+    W = α .* θ
     W = l.σ.(W)
     return W
 end

@@ -333,3 +333,41 @@ end
                     outsize = (in_channel, g.num_nodes))
     end
 end
+
+@testset "GraphormerLayer" begin
+    heads = 2
+    concat = true
+    negative_slope = 0.2
+    add_self_loops = true
+    phi = 2
+    ch = (in_channel, 0) => out_channel
+    σ = relu
+    init = glorot_uniform
+    bias = true
+    l = GraphormerLayer(ch, σ; heads = heads, concat = concat, 
+                        negative_slope = negative_slope, init = init, 
+                        bias = bias, add_self_loops = add_self_loops, phi = phi)
+    for g in test_graphs
+        test_layer(l, g, rtol = RTOL_HIGH, 
+                   outsize = (concat ? heads * out_channel : out_channel, g.num_nodes))
+    end
+    l = GraphormerLayer(ch, σ; heads = heads, concat = concat, 
+                        negative_slope = negative_slope, init = init, 
+                        bias = bias, add_self_loops = false, phi = phi)
+    test_layer(l, g1, rtol = RTOL_HIGH, 
+               outsize = (concat ? heads * out_channel : out_channel, g1.num_nodes))
+    ein = 3
+    ch = (in_channel, ein) => out_channel
+    l = GraphormerLayer(ch, σ; heads = heads, concat = concat, 
+                        negative_slope = negative_slope, init = init, 
+                        bias = bias, add_self_loops = add_self_loops, phi = phi)
+    g = GNNGraph(g1, edata = rand(T, ein, g1.num_edges))
+    test_layer(l, g, rtol = RTOL_HIGH, 
+               outsize = (concat ? heads * out_channel : out_channel, g.num_nodes))
+    l = GraphormerLayer(ch, σ; heads = heads, concat = concat, 
+                        negative_slope = negative_slope, init = init, 
+                        bias = false, add_self_loops = add_self_loops, phi = phi)
+    test_layer(l, g, rtol = RTOL_HIGH, 
+               outsize = (concat ? heads * out_channel : out_channel, g.num_nodes))
+    @test length(Flux.params(l)) == (ein > 0 ? 7 : 6)
+end
