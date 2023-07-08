@@ -105,3 +105,18 @@ end
     tg2 = rand_temporal_radius_graph(number_nodes, number_snapshots, speed, r2)
     @test mean(mean(degree.(tg.snapshots)))<=mean(mean(degree.(tg2.snapshots)))
 end
+
+@testset "rand_temporal_hyperbolic_graph" begin
+    @test GraphNeuralNetworks.GNNGraphs._hyperbolic_distance([1.0,1.0],[1.0,1.0];ζ=1)==0
+    @test GraphNeuralNetworks.GNNGraphs._hyperbolic_distance([0.23,0.11],[0.98,0.55];ζ=1)==GraphNeuralNetworks.GNNGraphs._hyperbolic_distance([0.98,0.55],[0.23,0.11];ζ=1)
+    number_nodes = 30
+    number_snapshots = 5
+    α, R, speed, ζ = 1, 1, 0.1, 1
+  
+    tg = rand_temporal_hyperbolic_graph(number_nodes, number_snapshots; α, R, speed, ζ)
+    @test tg.num_nodes == [number_nodes for i in 1:number_snapshots]
+    @test tg.num_snapshots == number_snapshots
+    R = 10
+    tg1 = rand_temporal_hyperbolic_graph(number_nodes, number_snapshots; α, R, speed, ζ)
+    @test mean(mean(degree.(tg1.snapshots)))<=mean(mean(degree.(tg.snapshots)))
+end
