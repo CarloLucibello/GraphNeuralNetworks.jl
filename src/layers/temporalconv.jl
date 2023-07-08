@@ -15,6 +15,7 @@ struct TGCNCell <: GNNLayer
     dense_update_gate::Dense
     dense_reset_gate::Dense
     dense_candidate_state::Dense
+    in::Int
     out::Int
 end
 
@@ -30,7 +31,7 @@ function TGCNCell(ch::Pair{Int, Int}; init = Flux.glorot_uniform,
     dense_update_gate = Dense(2 * out => out, sigmoid)
     dense_reset_gate = Dense(2 * out => out, sigmoid)
     dense_candidate_state = Dense(2 * out => out, tanh)
-    return TGCNCell(conv, dense_update_gate, dense_reset_gate, dense_candidate_state, out)
+    return TGCNCell(conv, dense_update_gate, dense_reset_gate, dense_candidate_state, in, out)
 end
 
 function (tgcn::TGCNCell)(g::GNNGraph, x::AbstractArray; h = nothing)
@@ -43,3 +44,6 @@ function (tgcn::TGCNCell)(g::GNNGraph, x::AbstractArray; h = nothing)
     return h
 end
 
+function Base.show(io::IO, tgcn::TGCNCell)
+    print(io, "TGCNCell($(tgcn.in) => $(tgcn.out))")
+end
