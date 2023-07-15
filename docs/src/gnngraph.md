@@ -220,9 +220,9 @@ g′ = add_edges(g, [1, 2], [2, 3]) # add edges 1->2 and 2->3
 Move a `GNNGraph` to a CUDA device using `Flux.gpu` method. 
 
 ```julia
-using Flux: gpu
+using CUDA, Flux
 
-g_gpu = g |> gpu
+g_gpu = g |> Flux.gpu
 ```
 
 ## Integration with Graphs.jl

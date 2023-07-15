@@ -8,7 +8,7 @@ using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, @functor, batch
 using MacroTools: @forward
 using MLUtils
-using NNlib, NNlibCUDA
+using NNlib
 using NNlib: scatter, gather
 using ChainRulesCore
 using Reexport
