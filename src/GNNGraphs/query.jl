@@ -181,7 +181,7 @@ If `weighted=true`, the `A` will contain the edge weights if any, otherwise the 
 """
 function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType = eltype(g); dir = :out,
                                  weighted = true)
-    if g.graph[1] isa CuVector
+    if iscuarray(g.graph[1])
         # Revisit after 
         # https://github.com/JuliaGPU/CUDA.jl/issues/1113
         A, n, m = to_dense(g.graph, T; num_nodes = g.num_nodes, weighted)
@@ -448,7 +448,6 @@ function _eigmax(A)
 end
 
 _rand_dense_vector(A::AbstractMatrix{T}) where {T} = randn(float(T), size(A, 1))
-_rand_dense_vector(A::CUMAT_T) = CUDA.randn(size(A, 1))
 
 # Eigenvalues for cuarray don't seem to be well supported. 
 # https://github.com/JuliaGPU/CUDA.jl/issues/154

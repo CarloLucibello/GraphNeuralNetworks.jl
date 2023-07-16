@@ -756,7 +756,7 @@ function negative_sample(g::GNNGraph;
 
     s, t = edge_index(g)
     n = g.num_nodes
-    if s isa CuArray
+    if iscuarray(s)
         # Convert to gpu since set operations and sampling are not supported by CUDA.jl
         device = Flux.gpu
         s, t = Flux.cpu(s), Flux.cpu(t)
@@ -852,7 +852,6 @@ end
 
 dense_zeros_like(a::SparseMatrixCSC, T::Type, sz = size(a)) = zeros(T, sz)
 dense_zeros_like(a::AbstractArray, T::Type, sz = size(a)) = fill!(similar(a, T, sz), 0)
-dense_zeros_like(a::CUMAT_T, T::Type, sz = size(a)) = CUDA.zeros(T, sz)
 dense_zeros_like(x, sz = size(x)) = dense_zeros_like(x, eltype(x), sz)
 
 # """

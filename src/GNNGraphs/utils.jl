@@ -55,11 +55,6 @@ function sort_edge_index(u, v)
     return u[p], v[p]
 end
 
-function sort_edge_index(u::AnyCuArray, v::AnyCuArray)
-    #TODO proper cuda friendly implementation
-    sort_edge_index(u |> Flux.cpu, v |> Flux.cpu) |> Flux.gpu
-end
-
 cat_features(x1::Nothing, x2::Nothing) = nothing
 cat_features(x1::AbstractArray, x2::AbstractArray) = cat(x1, x2, dims = ndims(x1))
 function cat_features(x1::Union{Number, AbstractVector}, x2::Union{Number, AbstractVector})
@@ -193,11 +188,6 @@ function normalize_heterographdata(data::Dict; default_name::Symbol, ns::Dict, k
          for (k, n) in ns]...)
 end
 
-ones_like(x::AbstractArray, T::Type, sz = size(x)) = fill!(similar(x, T, sz), 1)
-ones_like(x::SparseMatrixCSC, T::Type, sz = size(x)) = ones(T, sz)
-ones_like(x::CUMAT_T, T::Type, sz = size(x)) = CUDA.ones(T, sz)
-ones_like(x, sz = size(x)) = ones_like(x, eltype(x), sz)
-
 numnonzeros(a::AbstractSparseMatrix) = nnz(a)
 numnonzeros(a::AbstractMatrix) = count(!=(0), a)
 
@@ -303,3 +293,6 @@ end
 
 @non_differentiable normalize_graphdata(::NamedTuple{(), Tuple{}})
 @non_differentiable normalize_graphdata(::Nothing)
+
+iscuarray(x::AbstractArray) = false 
+@non_differentiable iscuarray(::Any)
