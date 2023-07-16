@@ -2,7 +2,6 @@ module GNNGraphs
 
 using SparseArrays
 using Functors: @functor
-using CUDA
 import Graphs
 using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree,
               has_self_loops, is_directed
@@ -15,7 +14,7 @@ import KrylovKit
 using ChainRulesCore
 using LinearAlgebra, Random, Statistics
 import MLUtils
-using MLUtils: getobs, numobs
+using MLUtils: getobs, numobs, ones_like, zeros_like
 import Functors
 
 include("chainrules.jl") # hacks for differentiability

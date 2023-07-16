@@ -3,7 +3,6 @@ module GraphNeuralNetworks
 using Statistics: mean
 using LinearAlgebra, Random
 using Base: tail
-using CUDA
 using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, @functor, batch
 using MacroTools: @forward
