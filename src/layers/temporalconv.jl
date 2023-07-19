@@ -1,11 +1,3 @@
-function _tgcn_set_hidden_state(x::AbstractMatrix, h::Union{AbstractMatrix, Nothing}, out::Int)
-    if h === nothing
-        h = zeros(eltype(x), out, size(x, 2))
-    end
-    return h
-end
-
-
 """
     TGCNCell(in => out; [bias, init, add_self_loops, use_edge_weight])
 
@@ -28,6 +20,7 @@ Performs a layer of GCNConv to model spatial dependencies, followed by a Gated R
 struct TGCNCell <: GNNLayer
     conv::GCNConv
     gru::Flux.GRUv3Cell
+    state0
     in::Int
     out::Int
 end
@@ -37,21 +30,21 @@ Flux.@functor TGCNCell
 function TGCNCell(ch::Pair{Int, Int};
                   bias::Bool = true,
                   init = Flux.glorot_uniform,
+                  init_state = Flux.zeros32,
                   add_self_loops = false,
                   use_edge_weight = true)
     in, out = ch
     conv = GCNConv(in => out, sigmoid; init, bias, add_self_loops,
                    use_edge_weight)
     gru = Flux.GRUv3Cell(out, out)
-    return TGCNCell(conv, gru, in,
-                    out)
+    state0 = init_state(out,1)
+    return TGCNCell(conv, gru, state0, in,out)
 end
 
-function (tgcn::TGCNCell)(g::GNNGraph, x::AbstractArray; h = nothing)
-    h = _tgcn_set_hidden_state(x, h, tgcn.out)
+function (tgcn::TGCNCell)(h, g::GNNGraph, x::AbstractArray)
     x̃ = tgcn.conv(g, x)
-    h, _ = tgcn.gru(h, x̃)
-    return h
+    h, x̃ = tgcn.gru(h, x̃)
+    return h, x̃
 end
 
 function Base.show(io::IO, tgcn::TGCNCell)
