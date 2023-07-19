@@ -70,6 +70,9 @@ export
 # layers/heteroconv
       HeteroGraphConv,
 
+# layers/temporalconv
+      TGCNCell,
+
 # layers/pool
       GlobalPool,
       GlobalAttentionPool,
@@ -84,6 +87,7 @@ include("utils.jl")
 include("layers/basic.jl")
 include("layers/conv.jl")
 include("layers/heteroconv.jl")
+include("layers/temporalconv.jl")
 include("layers/pool.jl")
 include("msgpass.jl")
 include("mldatasets.jl")
