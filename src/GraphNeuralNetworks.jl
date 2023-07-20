@@ -71,7 +71,7 @@ export
       HeteroGraphConv,
 
 # layers/temporalconv
-      TGCNCell,
+      TGCN,
 
 # layers/pool
       GlobalPool,
