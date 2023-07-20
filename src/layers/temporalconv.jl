@@ -1,3 +1,14 @@
+function (m::Flux.Recur)(g, x)
+    m.state, y = m.cell(m.state, g, x)
+    return y
+    end
+    
+function (m::Flux.Recur)(g::GNNGraph, x::AbstractArray{T, 3}) where T
+h = [m(g, x_t) for x_t in Flux.eachlastdim(x)]
+sze = size(h[1])
+reshape(reduce(hcat, h), sze[1], sze[2], length(h))
+end
+
 """
     TGCNCell(in => out; [bias, init, add_self_loops, use_edge_weight])
 
@@ -50,3 +61,6 @@ end
 function Base.show(io::IO, tgcn::TGCNCell)
     print(io, "TGCNCell($(tgcn.in) => $(tgcn.out))")
 end
+
+TGCN(ch; kwargs...) = Flux.Recur(TGCNCell(ch; kwargs...))
+Flux.Recur(tgcn::TGCNCell) = Flux.Recur(tgcn, tgcn.state0)
