@@ -1,5 +1,5 @@
 # Adapting Flux.Recur to work with GNNGraphs
-function (m::Flux.Recur)(g, x)
+function (m::Flux.Recur)(g::GNNGraph, x)
     m.state, y = m.cell(m.state, g, x)
     return y
     end
