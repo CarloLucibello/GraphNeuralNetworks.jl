@@ -1,11 +1,11 @@
 # Heterogeneous Graphs
 
-Heterogeneus graphs (also called heterographs), are graphs where each node has a type,
+Heterogeneous graphs (also called heterographs), are graphs where each node has a type,
 that we denote with symbols such as `:user` and `:movie`,
 and edges also represent different relations identified
 by a triplet of symbols, `(source_node_type, edge_type, target_node_type)`, as in `(:user, :rate, :movie)`.
 
-Different node/edge types can store different group of features
+Different node/edge types can store different groups of features
 and this makes heterographs a very flexible modeling tools 
 and data containers. In GraphNeuralNetworks.jl heterographs are implemented in 
 the type [`GNNHeteroGraph`](@ref).
@@ -73,7 +73,7 @@ julia> g.etypes
 
 ## Data Features
 
-Node, edge, and graph features can be added at constuction time or later using:
+Node, edge, and graph features can be added at construction time or later using:
 ```julia-repl
 # equivalent to g.ndata[:user][:x] = ...
 julia> g[:user].x = rand(Float32, 64, 3);
@@ -97,7 +97,6 @@ GNNHeteroGraph:
 ## Batching
 Similarly to graphs, also heterographs can be batched together.
 ```julia-repl
-```julia
 julia> gs = [rand_bipartite_heterograph((5, 10), 20) for _ in 1:32];
 
 julia> Flux.batch(gs)
@@ -108,6 +107,7 @@ GNNHeteroGraph:
 ```
 Batching is automatically performed by the [`DataLoader`](@ref) iterator
 when the `collate` option is set to `true`.
+
 ```julia-repl
 using Flux: DataLoader
 
@@ -127,4 +127,4 @@ end
 
 ## Graph convolutions on heterographs
 
-See [`HeteroGraphConv`](@ref) for how to perform convolutions on heterogenous graphs.
+See [`HeteroGraphConv`](@ref) for how to perform convolutions on heterogeneous graphs.
