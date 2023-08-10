@@ -9,57 +9,67 @@ using CUDA
 using Statistics, Random
 CUDA.allowscalar(false)
 
+# Import dataset function
 function getdataset()
-    metrla = METRLA()
+    metrla = METRLA(; num_timesteps = 3)
     g=metrla[1]
     features=[]
     targets=[]
     graph = GNNGraph(g.edge_index; edata = g.edge_data, g.num_nodes)
-    for i in 1:1000
+    for i in 1:length(g.node_data.features)
         push!(features, g.node_data.features[i])
         push!(targets,g.node_data.targets[i])
     end
-    train_loader = zip(features, targets) 
-    return train_loader, graph
+    train_loader = zip(features[1:1000], targets[1:1000])
+    test_loader = zip(features[2001:2288], targets[2001:2288])
+    return graph, features, targets, train_loader, test_loader
 end
 
-Base.@kwdef mutable struct Args
-    η = 1.0f-3             # learning rate
-    batchsize = 32         # batch size (number of graphs in each batch)
-    epochs = 10            # number of epochs
-    seed = 17              # set seed > 0 for reproducibility
-    usecuda = true         # if true use cuda (if available)
-    nhidden = 128          # dimension of hidden features
-    infotime = 10          # report every `infotime` epochs
+# Loss and accuracy functions
+lossfunction(ŷ, y)  = Flux.mae(ŷ, y) 
+accuracy(ŷ, y) = 1 - Statistics.norm(y-ŷ)/Statistics.norm(y)
+
+function eval_loss_accuracy(model, graph, data_loader)
+    error = mean([lossfunction(model(graph,x), y) for (x, y) in data_loader])
+    acc = mean([accuracy(model(graph,x), y) for (x, y) in data_loader])
+    return (loss = round(error, digits = 4), acc = round(acc , digits = 4))
 end
 
-
-lossfunction(y,ŷ) = Flux.mse(ŷ, y) 
-
-
-struct mmodel 
+# Creation of the model
+struct TGCNmodel 
     tgcn
     dense::Dense
 end
 
-Flux.@functor mmodel
+Flux.@functor TGCNmodel
 
-function mmodel(ch::Pair{Int, Int};
+function TGCNmodel(ch::Pair{Int, Int};
                 bias::Bool = true,
                 add_self_loops = false,
                 use_edge_weight = true)
     in, out = ch
     tgcn = TGCN(in => out; bias,init_state = CUDA.zeros, add_self_loops, use_edge_weight)
     dense = Dense(out,1)
-    return mmodel(tgcn,dense)
+    return TGCNmodel(tgcn,dense)
 end
 
-function (m::mmodel)(g::GNNGraph, x)
+function (m::TGCNmodel)(g::GNNGraph, x)
     x = m.tgcn(g, x)
     x = m.dense(x)
     return x
 end
 
+# Arguments for the train function
+Base.@kwdef mutable struct Args
+    η = 1.0f-3             # learning rate
+    epochs = 500           # number of epochs
+    seed = 17              # set seed > 0 for reproducibility
+    usecuda = true         # if true use cuda (if available)
+    nhidden = 100          # dimension of hidden features
+    infotime = 20          # report every `infotime` epochs
+end
+
+# Train function
 function train(; kws...)
     args = Args(; kws...)
     args.seed > 0 && Random.seed!(args.seed)
@@ -73,13 +83,22 @@ function train(; kws...)
         @info "Training on CPU"
     end
 
-    model = mmodel(2 => 10) |> device
+    model = TGCNmodel(2 => args.nhidden) |> device
 
     opt = Flux.setup(Adam(args.η), model)
 
-    train_loader, graph=getdataset() 
+    graph, _, _, train_loader, test_loader = getdataset() 
     graph = graph |> device
     train_loader = train_loader |> device
+    test_loader = test_loader |> device
+
+    function report(epoch)
+        train_loss, train_acc = eval_loss_accuracy(model, graph, train_loader)
+        test_loss, test_acc = eval_loss_accuracy(model, graph, test_loader)
+        println("Epoch: $epoch  $((; train_loss, train_acc))  $((; test_loss, test_acc))")
+    end
+
+    report(0)
     for epoch in 1:(args.epochs)
         for (x, y) in train_loader
             x, y = (x, y)
@@ -89,11 +108,12 @@ function train(; kws...)
             end
             Flux.update!(opt, model, grads[1])
         end
-        error = mean([lossfunction(model(graph,x), y) for (x, y) in train_loader])
-        println("$epoch :  $error")
+
+        args.infotime > 0 && epoch % args.infotime == 0 && report(epoch)
+
     end
     return model
 end
 
-model = train()
+train()
 
