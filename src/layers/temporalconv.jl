@@ -96,3 +96,8 @@ julia> tgcn(rand_graph(5, 10), rand(Float32, 2, 5, 20)) |> size # batch size of 
 TGCN(ch; kwargs...) = Flux.Recur(TGCNCell(ch; kwargs...))
 
 Flux.Recur(tgcn::TGCNCell) = Flux.Recur(tgcn, tgcn.state0)
+
+# make TGCN compatible with GNNChain
+(l::Flux.Recur{TGCNCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
+_applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph, x) = l(g, x)
+_applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph) = l(g)
