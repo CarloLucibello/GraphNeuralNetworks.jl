@@ -2,12 +2,12 @@
 function (m::Flux.Recur)(g::GNNGraph, x)
     m.state, y = m.cell(m.state, g, x)
     return y
-    end
+end
     
 function (m::Flux.Recur)(g::GNNGraph, x::AbstractArray{T, 3}) where T
-h = [m(g, x_t) for x_t in Flux.eachlastdim(x)]
-sze = size(h[1])
-reshape(reduce(hcat, h), sze[1], sze[2], length(h))
+    h = [m(g, x_t) for x_t in Flux.eachlastdim(x)]
+    sze = size(h[1])
+    reshape(reduce(hcat, h), sze[1], sze[2], length(h))
 end
 
 struct TGCNCell <: GNNLayer
