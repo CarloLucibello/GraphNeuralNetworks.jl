@@ -2,7 +2,7 @@
 
 # Load packages
 using Flux
-using Flux.Losses: mae, mse
+using Flux.Losses: mae
 using GraphNeuralNetworks
 using MLDatasets: METRLA
 using CUDA
@@ -22,7 +22,7 @@ function getdataset()
     end
     train_loader = zip(features[1:2000], targets[1:2000])
     test_loader = zip(features[2001:2288], targets[2001:2288])
-    return graph, features, targets, train_loader, test_loader
+    return graph, train_loader, test_loader
 end
 
 # Loss and accuracy functions
@@ -64,7 +64,7 @@ function train(; kws...)
 
     opt = Flux.setup(Adam(args.η), model)
 
-    graph, _, _, train_loader, test_loader = getdataset() 
+    graph, train_loader, test_loader = getdataset() 
     graph = graph |> device
     train_loader = train_loader |> device
     test_loader = test_loader |> device
