@@ -77,7 +77,11 @@ Recur(
 )         # Total: 8 trainable arrays, 264 parameters,
           # plus 1 non-trainable, 6 parameters, summarysize 1.492 KiB.
 
-julia> tgcn(rand_graph(5,10),rand(Float32,2,5)) |> size
+julia> g, x = rand_graph(5, 10), rand(Float32, 2, 5);
+
+julia> y = tgcn(g, x);
+
+julia> size(y)
 (6, 5)
 
 julia> Flux.reset!(tgcn);
