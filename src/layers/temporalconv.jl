@@ -82,7 +82,7 @@ julia> tgcn(rand_graph(5,10),rand(Float32,2,5)) |> size
 
 julia> Flux.reset!(tgcn);
 
-julia> tgcn(rand_graph(5,10),rand(Float32,2,5,20)) |> size # batch size of 20
+julia> tgcn(rand_graph(5, 10), rand(Float32, 2, 5, 20)) |> size # batch size of 20
 (6, 5, 20)
 ```
 
