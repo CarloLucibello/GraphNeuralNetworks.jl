@@ -101,3 +101,40 @@ Flux.Recur(tgcn::TGCNCell) = Flux.Recur(tgcn, tgcn.state0)
 (l::Flux.Recur{TGCNCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
 _applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph, x) = l(g, x)
 _applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph) = l(g)
+
+struct A3TGCN
+    tgcn::Flux.Recur{TGCNCell}
+    dense1::Dense
+    dense2::Dense
+    in::Int
+    out::Int
+end
+
+Flux.@functor A3TGCN
+
+function A3TGCN(ch::Pair{Int, Int};
+                  bias::Bool = true,
+                  init = Flux.glorot_uniform,
+                  init_state = Flux.zeros32,
+                  add_self_loops = false,
+                  use_edge_weight = true)
+    in, out = ch
+    tgcn = TGCN(in => out; bias, init, init_state, add_self_loops, use_edge_weight)
+    dense1 = Dense(out, out)
+    dense2 = Dense(out, out)
+    return A3TGCN(tgcn, dense1, dense2, in, out)
+end
+
+function (a3tgcn::A3TGCN)(g::GNNGraph, x::AbstractArray)
+    h = a3tgcn.tgcn(g, x)
+    e = a3tgcn.dense1(h)
+    e = a3tgcn.dense2(e)
+    a = softmax(e, dims = 3)
+    c = sum(a .* h , dims = 3)
+    c= dropdims(c, dims = 3)
+    return c
+end
+
+function Base.show(io::IO, a3tgcn::A3TGCN)
+    print(io, "A3TGCN($(a3tgcn.in) => $(a3tgcn.out))")
+end
