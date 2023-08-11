@@ -102,7 +102,7 @@ Flux.Recur(tgcn::TGCNCell) = Flux.Recur(tgcn, tgcn.state0)
 _applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph, x) = l(g, x)
 _applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph) = l(g)
 
-struct A3TGCN
+struct A3TGCN <: GNNLayer
     tgcn::Flux.Recur{TGCNCell}
     dense1::Dense
     dense2::Dense
@@ -112,7 +112,7 @@ end
 
 Flux.@functor A3TGCN
 
-function A3TGCN(ch::Pair{Int, Int};
+function A3TGCN(ch::Pair{Int, Int},
                   bias::Bool = true,
                   init = Flux.glorot_uniform,
                   init_state = Flux.zeros32,
