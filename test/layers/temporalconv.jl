@@ -22,3 +22,11 @@ end
     @test size(model(g1, g1.ndata.x)) == (1, N)
     @test model(g1) isa GNNGraph            
 end
+
+@testset "A3TGCN" begin
+    a3tgcn = A3TGCN(in_channel => out_channel)
+    @test size(Flux.gradient(x -> sum(a3tgcn(g1, x)), g1.ndata.x)[1]) == (in_channel, N)
+    model = GNNChain(A3TGCN(in_channel => out_channel), Dense(out_channel, 1))
+    @test size(model(g1, g1.ndata.x)) == (1, N)
+    @test model(g1) isa GNNGraph            
+end
