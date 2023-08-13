@@ -45,7 +45,7 @@ function Base.show(io::IO, tgcn::TGCNCell)
 end
 
 """
-    TGCN(in => out; [bias, init, add_self_loops, use_edge_weight])
+    TGCN(in => out; [bias, init, init_state, add_self_loops, use_edge_weight])
 
 Temporal Graph Convolutional Network (T-GCN) recurrent layer from the paper [T-GCN: A Temporal Graph Convolutional Network for Traffic Prediction](https://arxiv.org/pdf/1811.05320.pdf).
 
@@ -57,6 +57,7 @@ Performs a layer of GCNConv to model spatial dependencies, followed by a Gated R
 - `out`: Number of output features.
 - `bias`: Add learnable bias. Default `true`.
 - `init`: Weights' initializer. Default `glorot_uniform`.
+- `init_state`: Initial state of the hidden stat of the GRU layer. Default `zeros32`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
 - `use_edge_weight`: If `true`, consider the edge weights in the input graph (if available).
                      If `add_self_loops=true` the new weights will be set to 1. 
@@ -102,6 +103,51 @@ Flux.Recur(tgcn::TGCNCell) = Flux.Recur(tgcn, tgcn.state0)
 _applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph, x) = l(g, x)
 _applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph) = l(g)
 
+
+"""
+    A3TGCN(in => out; [bias, init, init_state, add_self_loops, use_edge_weight])
+
+Attention Temporal Graph Convolutional Network (A3T-GCN) model from the paper [A3T-GCN: Attention Temporal Graph
+Convolutional Network for Traffic Forecasting](https://arxiv.org/pdf/2006.11583.pdf).
+
+Performs a TGCN layer, followed by a soft attention layer.
+
+# Arguments
+
+- `in`: Number of input features.
+- `out`: Number of output features.
+- `bias`: Add learnable bias. Default `true`.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `init_state`: Initial state of the hidden stat of the GRU layer. Default `zeros32`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
+- `use_edge_weight`: If `true`, consider the edge weights in the input graph (if available).
+                     If `add_self_loops=true` the new weights will be set to 1. 
+                     This option is ignored if the `edge_weight` is explicitly provided in the forward pass.
+                     Default `false`.
+# Examples
+
+```jldoctest
+julia> a3tgcn = A3TGCN(2 => 6)
+A3TGCN(2 => 6)
+
+julia> g, x = rand_graph(5, 10), rand(Float32, 2, 5);
+
+julia> y = a3tgcn(g,x);
+
+julia> size(y)
+(6, 5)
+
+julia> Flux.reset!(a3tgcn);
+
+julia> y = a3tgcn(rand_graph(5, 10), rand(Float32, 2, 5, 20));
+
+julia> size(y)
+(6, 5)
+```
+
+!!! warning "Batch size changes"
+    Failing to call `reset!` when the input batch size changes can lead to unexpected behavior.
+"""
 struct A3TGCN <: GNNLayer
     tgcn::Flux.Recur{TGCNCell}
     dense1::Dense
@@ -131,7 +177,9 @@ function (a3tgcn::A3TGCN)(g::GNNGraph, x::AbstractArray)
     e = a3tgcn.dense2(e)
     a = softmax(e, dims = 3)
     c = sum(a .* h , dims = 3)
-    c= dropdims(c, dims = 3)
+    if length(size(c)) == 3
+        c = dropdims(c, dims = 3)
+    end
     return c
 end
 
