@@ -1,4 +1,4 @@
-# Temporal graph neural networks for traffic prediction
+# Example of using TGCN, a recurrent temporal graph convolutional network of the paper https://arxiv.org/pdf/1811.05320.pdf, for traffic prediction by training it on the METRLA dataset 
 
 # Load packages
 using Flux
@@ -16,10 +16,8 @@ function getdataset()
     features=[]
     targets=[]
     graph = GNNGraph(g.edge_index; edata = g.edge_data, g.num_nodes)
-    for i in 1:length(g.node_data.features)
-        push!(features, g.node_data.features[i])
-        push!(targets,g.node_data.targets[i])
-    end
+    features = g.node_data.features
+    targets = g.node_data.targets
     train_loader = zip(features[1:2000], targets[1:2000])
     test_loader = zip(features[2001:2288], targets[2001:2288])
     return graph, train_loader, test_loader
