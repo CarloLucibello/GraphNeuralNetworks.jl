@@ -12,9 +12,7 @@ CUDA.allowscalar(false)
 # Import dataset function
 function getdataset()
     metrla = METRLA(; num_timesteps = 3)
-    g=metrla[1]
-    features=[]
-    targets=[]
+    g = metrla[1]
     graph = GNNGraph(g.edge_index; edata = g.edge_data, g.num_nodes)
     features = g.node_data.features
     targets = g.node_data.targets
