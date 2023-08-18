@@ -157,7 +157,7 @@ n = 3
 chin = 5
 
 ws = WeigthAndSumPool(chin)
-g = GNNGraph(rand_graph(3, 4), ndata = rand(Float32, chin, 3), graph_type = GRAPH_T) 
+g = GNNGraph(rand_graph(30, 50), ndata = rand(Float32, chin, 30)) 
 
 u = ws(g, g.ndata.x)
 ```
