@@ -1,6 +1,13 @@
 ### A Pluto.jl notebook ###
 # v0.19.26
 
+#> [frontmatter]
+#> author = "[Aurora Rossi](https://github.com/aurorarossi)"
+#> title = "Traffic Prediction using recurrent Temporal Graph Convolutional Network"
+#> date = "2023-08-21"
+#> description = "Traffic Prediction using GraphNeuralNetworks.jl"
+#> cover = "assets/traffic.gif"
+
 using Markdown
 using InteractiveUtils
 
@@ -106,7 +113,7 @@ begin
 graph = GNNGraph(g.edge_index; edata = g.edge_data, g.num_nodes)
 features = g.node_data.features
 targets = g.node_data.targets
-end   
+end;  
 
 # ╔═╡ fde2ac9e-b121-4105-8428-1820b9c17a43
 md"
@@ -118,7 +125,7 @@ Now let's construct the `train_loader` and `data_loader`.
 begin
 train_loader = zip(features[1:200], targets[1:200])
 test_loader = zip(features[2001:2288], targets[2001:2288])
-end
+end;
 
 # ╔═╡ 572a6633-875b-4d7e-9afc-543b442948fb
 md"
