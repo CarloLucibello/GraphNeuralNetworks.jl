@@ -2,12 +2,12 @@
 function (m::Flux.Recur)(g::GNNGraph, x)
     m.state, y = m.cell(m.state, g, x)
     return y
-    end
+end
     
 function (m::Flux.Recur)(g::GNNGraph, x::AbstractArray{T, 3}) where T
-h = [m(g, x_t) for x_t in Flux.eachlastdim(x)]
-sze = size(h[1])
-reshape(reduce(hcat, h), sze[1], sze[2], length(h))
+    h = [m(g, x_t) for x_t in Flux.eachlastdim(x)]
+    sze = size(h[1])
+    reshape(reduce(hcat, h), sze[1], sze[2], length(h))
 end
 
 struct TGCNCell <: GNNLayer
@@ -47,7 +47,7 @@ end
 """
     TGCN(in => out; [bias, init, add_self_loops, use_edge_weight])
 
-Temporal Graph Convolutional Network (T-GCN) cell from the paper [T-GCN: A Temporal Graph Convolutional Network for Traffic Prediction](https://arxiv.org/pdf/1811.05320.pdf).
+Temporal Graph Convolutional Network (T-GCN) recurrent layer from the paper [T-GCN: A Temporal Graph Convolutional Network for Traffic Prediction](https://arxiv.org/pdf/1811.05320.pdf).
 
 Performs a layer of GCNConv to model spatial dependencies, followed by a Gated Recurrent Unit (GRU) cell to model temporal dependencies.
 
@@ -77,12 +77,16 @@ Recur(
 )         # Total: 8 trainable arrays, 264 parameters,
           # plus 1 non-trainable, 6 parameters, summarysize 1.492 KiB.
 
-julia> tgcn(rand_graph(5,10),rand(Float32,2,5)) |> size
+julia> g, x = rand_graph(5, 10), rand(Float32, 2, 5);
+
+julia> y = tgcn(g, x);
+
+julia> size(y)
 (6, 5)
 
 julia> Flux.reset!(tgcn);
 
-julia> tgcn(rand_graph(5,10),rand(Float32,2,5,20)) |> size # batch size of 20
+julia> tgcn(rand_graph(5, 10), rand(Float32, 2, 5, 20)) |> size # batch size of 20
 (6, 5, 20)
 ```
 
@@ -92,3 +96,8 @@ julia> tgcn(rand_graph(5,10),rand(Float32,2,5,20)) |> size # batch size of 20
 TGCN(ch; kwargs...) = Flux.Recur(TGCNCell(ch; kwargs...))
 
 Flux.Recur(tgcn::TGCNCell) = Flux.Recur(tgcn, tgcn.state0)
+
+# make TGCN compatible with GNNChain
+(l::Flux.Recur{TGCNCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
+_applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph, x) = l(g, x)
+_applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph) = l(g)

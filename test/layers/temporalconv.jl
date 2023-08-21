@@ -16,6 +16,9 @@ g1 = GNNGraph(rand_graph(N,8),
 end
 
 @testset "TGCN" begin
-    tgcn = GraphNeuralNetworks.TGCN(in_channel => out_channel)
+    tgcn = TGCN(in_channel => out_channel)
     @test size(Flux.gradient(x -> sum(tgcn(g1, x)), g1.ndata.x)[1]) == (in_channel, N)
+    model = GNNChain(TGCN(in_channel => out_channel), Dense(out_channel, 1))
+    @test size(model(g1, g1.ndata.x)) == (1, N)
+    @test model(g1) isa GNNGraph            
 end

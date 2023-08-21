@@ -1,8 +1,8 @@
-# Temporal graph neural networks for traffic prediction
+# Example of using TGCN, a recurrent temporal graph convolutional network of the paper https://arxiv.org/pdf/1811.05320.pdf, for traffic prediction by training it on the METRLA dataset 
 
 # Load packages
 using Flux
-using Flux.Losses: mae, mse
+using Flux.Losses: mae
 using GraphNeuralNetworks
 using MLDatasets: METRLA
 using CUDA
@@ -12,17 +12,13 @@ CUDA.allowscalar(false)
 # Import dataset function
 function getdataset()
     metrla = METRLA(; num_timesteps = 3)
-    g=metrla[1]
-    features=[]
-    targets=[]
+    g = metrla[1]
     graph = GNNGraph(g.edge_index; edata = g.edge_data, g.num_nodes)
-    for i in 1:length(g.node_data.features)
-        push!(features, g.node_data.features[i])
-        push!(targets,g.node_data.targets[i])
-    end
-    train_loader = zip(features[1:1000], targets[1:1000])
+    features = g.node_data.features
+    targets = g.node_data.targets
+    train_loader = zip(features[1:2000], targets[1:2000])
     test_loader = zip(features[2001:2288], targets[2001:2288])
-    return graph, features, targets, train_loader, test_loader
+    return graph, train_loader, test_loader
 end
 
 # Loss and accuracy functions
@@ -35,34 +31,10 @@ function eval_loss_accuracy(model, graph, data_loader)
     return (loss = round(error, digits = 4), acc = round(acc , digits = 4))
 end
 
-# Creation of the model
-struct TGCNmodel 
-    tgcn
-    dense::Dense
-end
-
-Flux.@functor TGCNmodel
-
-function TGCNmodel(ch::Pair{Int, Int};
-                bias::Bool = true,
-                add_self_loops = false,
-                use_edge_weight = true)
-    in, out = ch
-    tgcn = TGCN(in => out; bias,init_state = CUDA.zeros, add_self_loops, use_edge_weight)
-    dense = Dense(out,1)
-    return TGCNmodel(tgcn,dense)
-end
-
-function (m::TGCNmodel)(g::GNNGraph, x)
-    x = m.tgcn(g, x)
-    x = m.dense(x)
-    return x
-end
-
 # Arguments for the train function
 Base.@kwdef mutable struct Args
     η = 1.0f-3             # learning rate
-    epochs = 500           # number of epochs
+    epochs = 100           # number of epochs
     seed = 17              # set seed > 0 for reproducibility
     usecuda = true         # if true use cuda (if available)
     nhidden = 100          # dimension of hidden features
@@ -83,11 +55,12 @@ function train(; kws...)
         @info "Training on CPU"
     end
 
-    model = TGCNmodel(2 => args.nhidden) |> device
+    # Define model
+    model = GNNChain(TGCN(2 => args.nhidden), Dense(args.nhidden, 1)) |> device
 
     opt = Flux.setup(Adam(args.η), model)
 
-    graph, _, _, train_loader, test_loader = getdataset() 
+    graph, train_loader, test_loader = getdataset() 
     graph = graph |> device
     train_loader = train_loader |> device
     test_loader = test_loader |> device
