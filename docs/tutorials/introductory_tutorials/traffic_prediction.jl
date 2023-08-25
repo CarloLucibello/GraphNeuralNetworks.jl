@@ -22,12 +22,12 @@ end
 
 # ╔═╡ 1f95ad97-a007-4724-84db-392b0026e1a4
 begin
-using GraphNeuralNetworks
-using Flux
-using Flux.Losses: mae
-using MLDatasets: METRLA
-using Statistics
-using Plots
+	using GraphNeuralNetworks
+	using Flux
+	using Flux.Losses: mae
+	using MLDatasets: METRLA
+	using Statistics
+	using Plots
 end
 
 # ╔═╡ 5fdab668-4003-11ee-33f5-3953225b0c0f
@@ -110,9 +110,9 @@ Now let's construct the static graph, the temporal features and targets from the
 
 # ╔═╡ 95d8bd24-a40d-409f-a1e7-4174428ef860
 begin
-graph = GNNGraph(g.edge_index; edata = g.edge_data, g.num_nodes)
-features = g.node_data.features
-targets = g.node_data.targets
+	graph = GNNGraph(g.edge_index; edata = g.edge_data, g.num_nodes)
+	features = g.node_data.features
+	targets = g.node_data.targets
 end;  
 
 # ╔═╡ fde2ac9e-b121-4105-8428-1820b9c17a43
@@ -123,8 +123,8 @@ Now let's construct the `train_loader` and `data_loader`.
 
 # ╔═╡ 111b7d5d-c7e3-44c0-9e5e-2ed1a86854d3
 begin
-train_loader = zip(features[1:200], targets[1:200])
-test_loader = zip(features[2001:2288], targets[2001:2288])
+	train_loader = zip(features[1:200], targets[1:200])
+	test_loader = zip(features[2001:2288], targets[2001:2288])
 end;
 
 # ╔═╡ 572a6633-875b-4d7e-9afc-543b442948fb
@@ -168,7 +168,6 @@ function train(graph, train_loader, model)
 			loss = mean([Flux.mae(model(graph,x), y) for (x, y) in train_loader])
 			@show epoch, loss
 		end
-		
     end
     return model
 end
