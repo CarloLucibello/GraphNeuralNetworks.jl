@@ -164,9 +164,9 @@ function train(graph, train_loader, model)
             Flux.update!(opt, model, grads[1])
 		end
 		
-		if epoch % 10 ==0
-		loss = mean([Flux.mae(model(graph,x), y) for (x, y) in train_loader])
-        @show epoch, loss
+		if epoch % 10 == 0
+			loss = mean([Flux.mae(model(graph,x), y) for (x, y) in train_loader])
+			@show epoch, loss
 		end
 		
     end
