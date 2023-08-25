@@ -178,7 +178,7 @@ train(graph, train_loader, model)
 
 # ╔═╡ 39c82234-97ea-48d6-98dd-915f072b7f85
 function plot_predicted_data(graph,features,targets, sensor)
-	p=plot(legend=false, xlabel="Time (h)", ylabel="Normalized speed")
+	p = plot(legend=false, xlabel="Time (h)", ylabel="Normalized speed")
 	prediction = []
 	grand_truth =[]
 	for i in 1:3:length(features)
