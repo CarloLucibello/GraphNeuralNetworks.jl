@@ -19,10 +19,8 @@ Pages   = ["gnngraph.md"]
 
 ## GNNGraph type
 
-```@autodocs
-Modules = [GraphNeuralNetworks.GNNGraphs]
-Pages   = ["gnngraph.jl"]
-Private = false
+```@docs
+GNNGraph
 ```
 
 ## DataStore
