@@ -1,5 +1,6 @@
-# TemporalSnapshotsGNNGraph
+# Temporal Graphs
 
+## TemporalSnapshotsGNNGraph
 
 Documentation page for the graph type `TemporalSnapshotsGNNGraph` and related methods, representing time varying graphs with time varying features.
 
