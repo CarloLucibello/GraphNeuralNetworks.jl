@@ -9,3 +9,10 @@ Modules = [GraphNeuralNetworks.GNNGraphs]
 Pages   = ["temporalsnapshotsgnngraph.jl"]
 Private = false
 ```
+
+### TemporalSnapshotsGNNGraph random generators
+
+```@docs
+rand_temporal_radius_graph
+rand_temporal_hyperbolic_graph
+```

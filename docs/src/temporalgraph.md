@@ -41,11 +41,20 @@ TemporalSnapshotsGNNGraph:
   num_snapshots: 2
 ```
 
+See [`rand_temporal_radius_graph`](@ref) and ['rand_temporal_hyperbolic_graph'](@ref) for generating random temporal graphs. 
+
+```julia-repl
+julia> tg = rand_temporal_radius_graph(10, 3, 0.1, 0.5)
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10, 10]
+  num_edges: [32, 30, 34]
+  num_snapshots: 3
+``` 
+
 ## Basic Queries
 
 Basic queries are similar to those for [`GNNGraph`](@ref)s:
 ```julia-repl
-
 julia> snapshots = [rand_graph(10,20), rand_graph(10,14), rand_graph(10,22)];
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots)
@@ -109,6 +118,6 @@ julia> tg.ndata # vector of Datastore for node features
  DataStore(10) with 1 element:
   x = 5×10 Matrix{Float64}
 
-julia> typeof(tg.ndata.x) # vector containing the x feature of each snapshot.
+julia> typeof(tg.ndata.x) # vector containing the x feature of each snapshot
 Vector{Matrix{Float64}}
 ```
