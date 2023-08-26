@@ -35,6 +35,7 @@ julia> y = layer(g, x); # output is a named tuple
 
 julia> size(y.A) == (32, 10) && size(y.B) == (32, 15)
 true
+```
 """
 struct HeteroGraphConv
     etypes::Vector{EType}
