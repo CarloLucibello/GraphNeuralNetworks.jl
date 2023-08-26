@@ -58,6 +58,8 @@ Private = false
 Modules = [GraphNeuralNetworks.GNNGraphs]
 Pages   = ["generate.jl"]
 Private = false
+Filter = t -> typeof(t) <: Function && t!=rand_temporal_radius_graph && t!=rand_temporal_hyperbolic_graph
+
 ```
 
 ## Operators
