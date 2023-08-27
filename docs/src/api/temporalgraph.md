@@ -1,10 +1,18 @@
-# TemporalSnapthotsGNNGraph
+# Temporal Graphs
 
+## TemporalSnapshotsGNNGraph
 
 Documentation page for the graph type `TemporalSnapshotsGNNGraph` and related methods, representing time varying graphs with time varying features.
 
+```@autodocs
+Modules = [GraphNeuralNetworks.GNNGraphs]
+Pages   = ["temporalsnapshotsgnngraph.jl"]
+Private = false
+```
+
+### TemporalSnapshotsGNNGraph random generators
+
 ```@docs
-TemporalSnapshotsGNNGraph
-add_snapshot
-remove_snapshot
+rand_temporal_radius_graph
+rand_temporal_hyperbolic_graph
 ```

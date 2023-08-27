@@ -19,10 +19,8 @@ Pages   = ["gnngraph.md"]
 
 ## GNNGraph type
 
-```@autodocs
-Modules = [GraphNeuralNetworks.GNNGraphs]
-Pages   = ["gnngraph.jl"]
-Private = false
+```@docs
+GNNGraph
 ```
 
 ## DataStore
@@ -60,6 +58,8 @@ Private = false
 Modules = [GraphNeuralNetworks.GNNGraphs]
 Pages   = ["generate.jl"]
 Private = false
+Filter = t -> typeof(t) <: Function && t!=rand_temporal_radius_graph && t!=rand_temporal_hyperbolic_graph
+
 ```
 
 ## Operators
