@@ -978,14 +978,14 @@ function Base.show(io::IO, l::CGConv)
 end
 
 @doc raw"""
-    AGNNConv(init_beta=1f0)
+    AGNNConv(; init_beta=1.0f0, trainable=true, add_self_loops=true)
 
 Attention-based Graph Neural Network layer from paper [Attention-based
 Graph Neural Network for Semi-Supervised Learning](https://arxiv.org/abs/1803.03735).
 
 The forward pass is given by
 ```math
-\mathbf{x}_i' = \sum_{j \in {N(i) \cup \{i\}}} \alpha_{ij} W \mathbf{x}_j
+\mathbf{x}_i' = \sum_{j \in N(i)} \alpha_{ij} \mathbf{x}_j
 ```
 where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
@@ -997,32 +997,40 @@ with the cosine distance defined by
 \cos(\mathbf{x}_i, \mathbf{x}_j) = 
   \frac{\mathbf{x}_i \cdot \mathbf{x}_j}{\lVert\mathbf{x}_i\rVert \lVert\mathbf{x}_j\rVert}
 ```
-and ``\beta`` a trainable parameter.
+and ``\beta`` a trainable parameter if `trainable=true`.
 
 # Arguments
 
-- `init_beta`: The initial value of ``\beta``.
+- `init_beta`: The initial value of ``\beta``. Default 1.0f0.
+- `trainable`: If true, ``\beta`` is trainable. Default `true`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
 """
 struct AGNNConv{A <: AbstractVector} <: GNNLayer
     β::A
+    add_self_loops::Bool
+    trainable::Bool
 end
 
 @functor AGNNConv
 
-function AGNNConv(init_beta = 1.0f0)
-    AGNNConv([init_beta])
+Flux.trainable(l::AGNNConv) = l.trainable ? (; l.β) : (;)
+
+function AGNNConv(; init_beta = 1.0f0, add_self_loops = true, trainable = true)
+    AGNNConv([init_beta], add_self_loops, trainable)
 end
 
 function (l::AGNNConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    g = add_self_loops(g)
+    if l.add_self_loops
+        g = add_self_loops(g)
+    end
 
     xn = x ./ sqrt.(sum(x .^ 2, dims = 1))
     cos_dist = apply_edges(xi_dot_xj, g, xi = xn, xj = xn)
     α = softmax_edge_neighbors(g, l.β .* cos_dist)
 
     x = propagate(g, +; xj = x, e = α) do xi, xj, α
-        α .* xj
+        α .* xj 
     end
 
     return x

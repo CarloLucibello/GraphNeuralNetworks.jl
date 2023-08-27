@@ -244,8 +244,17 @@ end
 end
 
 @testset "AGNNConv" begin
-    l = AGNNConv()
+    l = AGNNConv(trainable=false, add_self_loops=false)
     @test l.β == [1.0f0]
+    @test l.add_self_loops == false
+    @test l.trainable == false
+    Flux.trainable(l) == (;)
+
+    l = AGNNConv(init_beta=2.0f0)
+    @test l.β == [2.0f0]
+    @test l.add_self_loops == true
+    @test l.trainable == true 
+    Flux.trainable(l) == (; β = [1f0])
     for g in test_graphs
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (in_channel, g.num_nodes))
     end
