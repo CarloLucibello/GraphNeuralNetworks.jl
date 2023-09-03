@@ -149,7 +149,7 @@ end
     add_edges(g::GNNHeteroGraph, edge_t, s, t; [edata, num_nodes])
     add_edges(g::GNNHeteroGraph, edge_t => (s, t); [edata, num_nodes])
 
-Add to heterograph `g` the releation of type `edge_t` with source node vector `s` and target node vector `t`.
+Add to heterograph `g` the relation of type `edge_t` with source node vector `s` and target node vector `t`.
 Optionally, pass the features  `edata` for the new edges.
 `edge_t` is a triplet of symbols `(srctype, etype, dsttype)`. 
 
