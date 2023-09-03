@@ -192,7 +192,7 @@ function add_edges(g::GNNHeteroGraph{<:COO_T},
             if node_t ∉ ntypes
                 push!(ntypes, node_t)
                 if haskey(num_nodes, node_t)
-                    _num_nodes[node_t] == num_nodes[node_t]
+                    _num_nodes[node_t] = num_nodes[node_t]
                 else
                     _num_nodes[node_t] = maximum(st)
                 end
