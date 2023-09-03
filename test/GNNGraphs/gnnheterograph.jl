@@ -124,7 +124,7 @@ end
     g1 = add_edges(g, (:A, :rel1, :B), s, t)
     @test num_node_types(g1) == 2
     @test num_edge_types(g1) == 3
-    for i in eachindex(sources, targets)
+    for i in eachindex(s, t)
         @test has_edge(g1, (:A, :rel1, :B), s[i], t[i])
     end
     # no change to num_nodes
@@ -135,7 +135,7 @@ end
     g2 = add_edges(g, (:A, :rel1, :B) => (s, t))
     @test num_node_types(g2) == 2
     @test num_edge_types(g2) == 3
-    for i in eachindex(sources, targets)
+    for i in eachindex(s, t)
         @test has_edge(g2, (:A, :rel1, :B), s[i], t[i])
     end
     # no change to num_nodes
@@ -150,7 +150,7 @@ end
         edata)
     @test num_node_types(g3) == 3
     @test num_edge_types(g3) == 3
-    for i in eachindex(sources, targets)
+    for i in eachindex(s, t)
         @test has_edge(g3, (:A, :rel1, :C), s[i], t[i])
     end
     # added edata
