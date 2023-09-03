@@ -76,8 +76,13 @@ function _reduceby_node_t(aggr, outs, ntypes)
             return foldl(aggr, outs[i] for i in idxs)
         end
     end
-    vals = [_reduce(node_t) for node_t in ntypes]
-    return NamedTuple{tuple(ntypes...)}(vals)
+    # workaround to provide the aggregation once per unique node type,
+    # gradient is not needed
+    unique_ntypes = Flux.ChainRulesCore.ignore_derivatives() do
+        unique(ntypes)
+    end
+    vals = [_reduce(node_t) for node_t in unique_ntypes]
+    return NamedTuple{tuple(unique_ntypes...)}(vals)
 end
 
 function Base.show(io::IO, hgc::HeteroGraphConv)
