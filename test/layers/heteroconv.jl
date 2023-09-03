@@ -33,4 +33,62 @@
                                 (:B, :to, :A) => GraphConv(64 => 32, relu));
         @test length(layer.etypes) == 2
     end
+
+    @testset "Destination node aggregation" begin
+        # deterministic setup to validate the aggregation
+        d, n = 3, 5
+        g = GNNHeteroGraph(((:A, :to, :B) => ([1, 1, 2, 3], [1, 2, 2, 3]),
+                (:B, :to, :A) => ([1, 1, 2, 3], [1, 2, 2, 3]),
+                (:C, :to, :A) => ([1, 1, 2, 3], [1, 2, 2, 3])); num_nodes = Dict(:A => n, :B => n, :C => n))
+        model = HeteroGraphConv([
+                (:A, :to, :B) => GraphConv(d => d, init = ones, bias = false),
+                (:B, :to, :A) => GraphConv(d => d, init = ones, bias = false),
+                (:C, :to, :A) => GraphConv(d => d, init = ones, bias = false)]; aggr = +)
+        x = (A = rand(Float32, d, n), B = rand(Float32, d, n), C = rand(Float32, d, n))
+        y = model(g, x)
+        weights = ones(Float32, d, d)
+
+        ### Test default summation aggregation
+        # B2 has 2 edges from A and itself (sense check)
+        expected = sum(weights * x.A[:, [1, 2]]; dims = 2) .+ weights * x.B[:, [2]]
+        output = y.B[:, [2]]
+        @test expected ≈ output
+
+        # B5 has only itself
+        @test weights * x.B[:, [5]] ≈ y.B[:, [5]]
+
+        # A1 has 1 edge from B, 1 from C and twice itself
+        expected = sum(weights * x.B[:, [1]] + weights * x.C[:, [1]]; dims = 2) .+
+                   2 * weights * x.A[:, [1]]
+        output = y.A[:, [1]]
+        @test expected ≈ output
+
+        # A2 has 2 edges from B, 2 from C and twice itself
+        expected = sum(weights * x.B[:, [1, 2]] + weights * x.C[:, [1, 2]]; dims = 2) .+
+                   2 * weights * x.A[:, [2]]
+        output = y.A[:, [2]]
+        @test expected ≈ output
+
+        # A5 has only itself but twice
+        @test 2 * weights * x.A[:, [5]] ≈ y.A[:, [5]]
+
+        #### Test different aggregation function
+        model2 = HeteroGraphConv([
+                (:A, :to, :B) => GraphConv(d => d, init = ones, bias = false),
+                (:B, :to, :A) => GraphConv(d => d, init = ones, bias = false),
+                (:C, :to, :A) => GraphConv(d => d, init = ones, bias = false)]; aggr = -)
+        y2 = model2(g, x)
+        # B no change
+        @test y.B ≈ y2.B
+
+        # A1 has 1 edge from B, 1 from C, itself cancels out
+        expected = sum(weights * x.B[:, [1]] - weights * x.C[:, [1]]; dims = 2)
+        output = y2.A[:, [1]]
+        @test expected ≈ output
+
+        # A2 has 2 edges from B, 2 from C, itself cancels out
+        expected = sum(weights * x.B[:, [1, 2]] - weights * x.C[:, [1, 2]]; dims = 2)
+        output = y2.A[:, [2]]
+        @test expected ≈ output
+    end
 end
