@@ -52,25 +52,25 @@
         # B2 has 2 edges from A and itself (sense check)
         expected = sum(weights * x.A[:, [1, 2]]; dims = 2) .+ weights * x.B[:, [2]]
         output = y.B[:, [2]]
-        @assert expected ≈ output
+        @test expected ≈ output
 
         # B5 has only itself
-        @assert weights * x.B[:, [5]] ≈ y.B[:, [5]]
+        @test weights * x.B[:, [5]] ≈ y.B[:, [5]]
 
         # A1 has 1 edge from B, 1 from C and twice itself
         expected = sum(weights * x.B[:, [1]] + weights * x.C[:, [1]]; dims = 2) .+
                    2 * weights * x.A[:, [1]]
         output = y.A[:, [1]]
-        @assert expected ≈ output
+        @test expected ≈ output
 
         # A2 has 2 edges from B, 2 from C and twice itself
         expected = sum(weights * x.B[:, [1, 2]] + weights * x.C[:, [1, 2]]; dims = 2) .+
                    2 * weights * x.A[:, [2]]
         output = y.A[:, [2]]
-        @assert expected ≈ output
+        @test expected ≈ output
 
         # A5 has only itself but twice
-        @assert 2 * weights * x.A[:, [5]] ≈ y.A[:, [5]]
+        @test 2 * weights * x.A[:, [5]] ≈ y.A[:, [5]]
 
         #### Test different aggregation function
         model2 = HeteroGraphConv([
@@ -79,16 +79,16 @@
                 (:C, :to, :A) => GraphConv(d => d, init = ones, bias = false)]; aggr = -)
         y2 = model2(g, x)
         # B no change
-        @assert y.B ≈ y2.B
+        @test y.B ≈ y2.B
 
         # A1 has 1 edge from B, 1 from C, itself cancels out
         expected = sum(weights * x.B[:, [1]] - weights * x.C[:, [1]]; dims = 2)
         output = y2.A[:, [1]]
-        @assert expected ≈ output
+        @test expected ≈ output
 
         # A2 has 2 edges from B, 2 from C, itself cancels out
         expected = sum(weights * x.B[:, [1, 2]] - weights * x.C[:, [1, 2]]; dims = 2)
         output = y2.A[:, [2]]
-        @assert expected ≈ output
+        @test expected ≈ output
     end
 end
