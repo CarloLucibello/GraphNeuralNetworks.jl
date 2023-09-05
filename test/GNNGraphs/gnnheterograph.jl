@@ -1,10 +1,14 @@
-# d = MovieLens("100k")[1]
-# hg = GNNHeteroGraph(d.edge_indices)
-# @test hg.num_nodes == Dict("movie" => 193609, "user" => 193609)
-# @test hg.num_edges == Dict(("user", "tag", "movie")  => 7366, ("user", "rating", "movie") => 201672)    
-# @test hg.graph_indicator === nothing
 
-# @test hg["user", "tag", "movie"] == (graph = hg.graph[("user", "tag", "movie")], edata = hg.edata[("user", "tag", "movie")])
+@testset "Constructor from pairs" begin
+    hg = GNNHeteroGraph((:A, :e1, :B) => ([1,2,3,4], [3,2,1,5]))
+    @test hg.num_nodes == Dict(:A => 4, :B => 5)
+    @test hg.num_edges == Dict((:A, :e1, :B) => 4)
+
+    hg = GNNHeteroGraph((:A, :e1, :B) => ([1,2,3], [3,2,1]),
+                        (:A, :e2, :C) => ([1,2,3], [4,5,6]))
+    @test hg.num_nodes == Dict(:A => 3, :B => 3, :C => 6)
+    @test hg.num_edges == Dict((:A, :e1, :B) => 3, (:A, :e2, :C) => 3)
+end
 
 @testset "Generation" begin
     hg = rand_heterograph(Dict(:A => 10, :B => 20),
@@ -19,6 +23,7 @@
     @test isempty(hg.gdata)
     @test sort(hg.ntypes) == [:A, :B]
     @test sort(hg.etypes) == [(:A, :rel1, :B), (:B, :rel2, :A)]
+
 end
 
 @testset "features" begin
