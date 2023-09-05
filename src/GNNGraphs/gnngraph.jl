@@ -153,7 +153,7 @@ function GNNGraph(data::D;
              ndata, edata, gdata)
 end
 
-GNNGraph() = GNNGraph(0)
+GNNGraph(; kws...) = GNNGraph(0; kws...)
 
 function (::Type{<:GNNGraph})(num_nodes::T; kws...) where {T <: Integer}
     s, t = T[], T[]

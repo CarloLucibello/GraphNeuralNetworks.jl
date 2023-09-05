@@ -39,6 +39,9 @@ end
     g = G(10)
     @test g.num_nodes == 10
     @test g.num_edges == 0
+
+    g = GNNGraph(graph_type = GRAPH_T)
+    @test g.num_nodes == 0
 end
 
 @testset "symmetric graph" begin
