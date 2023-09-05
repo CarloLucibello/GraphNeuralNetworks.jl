@@ -16,7 +16,7 @@ Additional keyword arguments will be passed to the [`GNNGraph`](@ref) constructo
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> g = rand_graph(5, 4, bidirected=false)
 GNNGraph:
     num_nodes = 5
@@ -64,7 +64,7 @@ Additional keyword arguments will be passed to the [`GNNHeteroGraph`](@ref) cons
 
 # Examples
 
-```julia-repl
+```jldoctest
 julia> g = rand_heterograph((:user => 10, :movie => 20),
                             (:user, :rate, :movie) => 30)
 GNNHeteroGraph:
@@ -170,7 +170,7 @@ to its `k` closest `points`.
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> n, k = 10, 3;
 
 julia> x = rand(3, n);
@@ -251,7 +251,7 @@ to its neighbors within a given distance `r`.
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> n, r = 10, 0.75;
 
 julia> x = rand(3, n);
@@ -331,7 +331,7 @@ If a point happens to move outside the boundary, its position is updated as if i
 
 # Example
 
-```julia-repl
+```jldoctest
 julia> n, snaps, s, r = 10, 5, 0.1, 1.5;
 
 julia> tg = rand_temporal_radius_graph(n,snaps,s,r) # complete graph at each snapshot
@@ -403,7 +403,7 @@ First, the positions of the nodes are generated with a quasi-uniform distributio
 
 # Example
 
-```julia-repl
+```jldoctest
 julia> n, snaps, α, R, speed, ζ = 10, 5, 1.0, 4.0, 0.1, 1.0;
 
 julia> thg = rand_temporal_hyperbolic_graph(n, snaps; α, R, speed, ζ)

@@ -6,6 +6,7 @@ const NDict{T} = Dict{NType, T}
 
 """
     GNNHeteroGraph(data; [ndata, edata, gdata, num_nodes])
+    GNNHeteroGraph(pairs...; [ndata, edata, gdata, num_nodes])
 
 A type representing a heterogeneous graph structure.
 It is similar to [`GNNGraph`](@ref) but nodes and edges are of different types.
@@ -14,6 +15,7 @@ It is similar to [`GNNGraph`](@ref) but nodes and edges are of different types.
 
 - `data`: A dictionary or an iterable object that maps `(source_type, edge_type, target_type)`
           triples to `(source, target)` index vectors (or to `(source, target, weight)` if also edge weights are present).
+- `pairs`: Passing multiple relations as pairs is equivalent to passing `data=Dict(pairs...)`.
 - `ndata`: Node features. A dictionary of arrays or named tuple of arrays.
            The size of the last dimension of each array must be given by `g.num_nodes`.
 - `edata`: Edge features. A dictionary of arrays or named tuple of arrays. Default `nothing`.
@@ -96,6 +98,7 @@ end
 @functor GNNHeteroGraph
 
 GNNHeteroGraph(data; kws...) = GNNHeteroGraph(Dict(data); kws...)
+GNNHeteroGraph(data::Pair...; kws...) = GNNHeteroGraph(Dict(data...); kws...)
 
 function GNNHeteroGraph(data::Dict; kws...)
     all(k -> k isa EType, keys(data)) || throw(ArgumentError("Keys of data must be tuples of the form `(source_type, edge_type, target_type)`"))

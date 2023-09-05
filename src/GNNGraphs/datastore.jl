@@ -8,7 +8,7 @@ A container for feature arrays. The optional argument `n` enforces that
 At construction time, the `data` can be provided as any iterables of pairs
 of symbols and arrays or as keyword arguments:
 
-```julia-repl
+```jldoctest
 julia> ds = DataStore(3, x = rand(2, 3), y = rand(3))
 DataStore(3) with 2 elements:
   y = 3-element Vector{Float64}
@@ -35,7 +35,7 @@ DataStore() with 2 elements:
 The `DataStore` has an interface similar to both dictionaries and named tuples.
 Arrays can be accessed and added using either the indexing or the property syntax:
 
-```julia-repl
+```jldoctest
 julia> ds = DataStore(x = ones(2, 3), y = zeros(3))
 DataStore() with 2 elements:
   y = 3-element Vector{Float64}
@@ -57,7 +57,7 @@ The `DataStore` can be iterated over, and the keys and values can be accessed
 using `keys(ds)` and `values(ds)`. `map(f, ds)` applies the function `f`
 to each feature array:
 
-```julia-repl
+```jldoctest
 julia> ds = DataStore(a = zeros(2), b = zeros(2));
 
 julia> ds2 = map(x -> x .+ 1, ds)

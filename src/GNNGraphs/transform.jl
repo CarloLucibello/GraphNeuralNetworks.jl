@@ -130,7 +130,7 @@ they are added to the graph as well.
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> s, t = [1, 2, 3, 3, 4], [2, 3, 4, 4, 4];
 
 julia> w = Float32[1.0, 2.0, 3.0, 4.0, 5.0];
@@ -145,7 +145,7 @@ GNNGraph:
   num_nodes: 4
   num_edges: 7
 ```
-```juliarepl
+```jldoctest
 julia> g = GNNGraph()
 GNNGraph:
     num_nodes: 0
@@ -301,7 +301,7 @@ See also [`is_bidirected`](@ref).
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> s, t = [1, 2, 3, 3, 4], [2, 3, 4, 4, 4];
 
 julia> w = [1.0, 2.0, 3.0, 4.0, 5.0];
@@ -491,7 +491,7 @@ See also [`Flux.unbatch`](@ref).
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> g1 = rand_graph(4, 6, ndata=ones(8, 4))
 GNNGraph:
     num_nodes = 4
@@ -625,7 +625,7 @@ See also [`Flux.batch`](@ref) and [`getgraph`](@ref).
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> gbatched = Flux.batch([rand_graph(5, 6), rand_graph(10, 8), rand_graph(4,2)])
 GNNGraph:
     num_nodes = 19

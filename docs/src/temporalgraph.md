@@ -6,7 +6,7 @@ Temporal Graphs are graphs with time varying topologies and node features. In Gr
 
 A temporal graph can be created by passing a list of snapshots to the constructor. Each snapshot is a [`GNNGraph`](@ref). 
 
-```julia-repl
+```jldoctest
 julia> snapshots = [rand_graph(10,20) for i in 1:5];
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots)
@@ -18,14 +18,14 @@ TemporalSnapshotsGNNGraph:
 
 A new temporal graph can be created by adding or removing snapshots to an existing temporal graph. 
 
-```julia-repl
+```jldoctest
 julia> new_tg = add_snapshot(tg, 3, rand_graph(10, 16)) # add a new snapshot at time 3
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10, 10, 10, 10, 10]
   num_edges: [20, 20, 16, 20, 20, 20]
   num_snapshots: 6
 ```
-```julia-repl
+```jldoctest
 julia> snapshots = [rand_graph(10,20), rand_graph(10,14), rand_graph(10,22)];
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots)
@@ -43,7 +43,7 @@ TemporalSnapshotsGNNGraph:
 
 See [`rand_temporal_radius_graph`](@ref) and ['rand_temporal_hyperbolic_graph'](@ref) for generating random temporal graphs. 
 
-```julia-repl
+```jldoctest
 julia> tg = rand_temporal_radius_graph(10, 3, 0.1, 0.5)
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10, 10]
@@ -54,7 +54,7 @@ TemporalSnapshotsGNNGraph:
 ## Basic Queries
 
 Basic queries are similar to those for [`GNNGraph`](@ref)s:
-```julia-repl
+```jldoctest
 julia> snapshots = [rand_graph(10,20), rand_graph(10,14), rand_graph(10,22)];
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots)
@@ -94,7 +94,7 @@ GNNGraph:
 
 Node, edge, and graph features can be added at construction time or later using:
 
-```julia-repl
+```jldoctest
 julia> snapshots = [rand_graph(10,20; ndata = rand(3,10)), rand_graph(10,14; ndata = rand(4,10)), rand_graph(10,22; ndata = rand(5,10))]; # node features at construction time
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots);

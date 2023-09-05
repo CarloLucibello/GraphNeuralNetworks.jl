@@ -1,9 +1,8 @@
 # Heterogeneous Graphs
 
 Heterogeneous graphs (also called heterographs), are graphs where each node has a type,
-that we denote with symbols such as `:user` and `:movie`,
-and edges also represent different relations identified
-by a triplet of symbols, `(source_node_type, edge_type, target_node_type)`, as in `(:user, :rate, :movie)`.
+that we denote with symbols such as `:user` and `:movie`.
+Also edges have a type, such as `:rate` or `:like`, and they can connect nodes of different types. We call a triplet `(source_node_type, edge_type, target_node_type)` the type of a *relation*, e.g. `(:user, :rate, :movie)`.
 
 Different node/edge types can store different groups of features
 and this makes heterographs a very flexible modeling tools 
@@ -13,15 +12,21 @@ the type [`GNNHeteroGraph`](@ref).
 
 ## Creating a Heterograph
 
-A heterograph can be created by passing pairs of edge types and data to the constructor.
-```julia-repl
+A heterograph can be created by passing pairs of relation type and data to the constructor.
+```jldoctest
+julia> g = GNNHeteroGraph((:user, :like, :actor) => ([1,2,2,3], [1,3,2,9]),
+                          (:user, :rate, :movie) => ([1,1,2,3], [7,13,5,7]))
+GNNHeteroGraph:
+  num_nodes: Dict(:actor => 9, :movie => 13, :user => 3)
+  num_edges: Dict((:user, :like, :actor) => 4, (:user, :rate, :movie) => 4)
+
 julia> g = GNNHeteroGraph((:user, :rate, :movie) => ([1,1,2,3], [7,13,5,7]))
 GNNHeteroGraph:
   num_nodes: Dict(:movie => 13, :user => 3)
   num_edges: Dict((:user, :rate, :movie) => 4)
 ```
 New relations, possibly with new node types, can be added with the function [`add_edges`](@ref).
-```julia-repl
+```jldoctest
 julia> g = add_edges(g, (:user, :like, :actor) => ([1,2,3,3,3], [3,5,1,9,4]))
 GNNHeteroGraph:
   num_nodes: Dict(:actor => 9, :movie => 13, :user => 3)
@@ -30,7 +35,7 @@ GNNHeteroGraph:
 See [`rand_heterograph`](@ref), [`rand_bipartite_heterograph`](@ref)
 for generating random heterographs. 
 
-```julia-repl
+```jldoctest
 julia> g = rand_bipartite_heterograph((10, 15), 20)
 GNNHeteroGraph:
   num_nodes: Dict(:A => 10, :B => 15)
@@ -40,7 +45,7 @@ GNNHeteroGraph:
 ## Basic Queries
 
 Basic queries are similar to those for homogeneous graphs:
-```julia-repl
+```jldoctest
 julia> g = GNNHeteroGraph((:user, :rate, :movie) => ([1,1,2,3], [7,13,5,7]))
 GNNHeteroGraph:
   num_nodes: Dict(:movie => 13, :user => 3)
@@ -74,7 +79,7 @@ julia> g.etypes
 ## Data Features
 
 Node, edge, and graph features can be added at construction time or later using:
-```julia-repl
+```jldoctest
 # equivalent to g.ndata[:user][:x] = ...
 julia> g[:user].x = rand(Float32, 64, 3);
 
@@ -96,7 +101,7 @@ GNNHeteroGraph:
 
 ## Batching
 Similarly to graphs, also heterographs can be batched together.
-```julia-repl
+```jldoctest
 julia> gs = [rand_bipartite_heterograph((5, 10), 20) for _ in 1:32];
 
 julia> Flux.batch(gs)
@@ -108,7 +113,7 @@ GNNHeteroGraph:
 Batching is automatically performed by the [`DataLoader`](@ref) iterator
 when the `collate` option is set to `true`.
 
-```julia-repl
+```jldoctest
 using Flux: DataLoader
 
 data = [rand_bipartite_heterograph((5, 10), 20, 
