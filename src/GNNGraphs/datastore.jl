@@ -142,6 +142,8 @@ function Base.show(io::IO, ds::DataStore)
         for (k, v) in getdata(ds)
             print(io, "\n  $(k) = $(summary(v))")
         end
+    else
+        print(io, " with no elements")
     end
 end
 

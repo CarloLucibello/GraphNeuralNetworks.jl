@@ -12,18 +12,18 @@ It is similar to [`GNNGraph`](@ref) but nodes and edges are of different types.
 
 # Constructor Arguments
 
-- `data`: A dictionary or an iterable object that maps (source_type, edge_type, target_type)
-    triples to (source, target) index vectors.
+- `data`: A dictionary or an iterable object that maps `(source_type, edge_type, target_type)`
+          triples to `(source, target)` index vectors (or to `(source, target, weight)` if also edge weights are present).
 - `ndata`: Node features. A dictionary of arrays or named tuple of arrays.
            The size of the last dimension of each array must be given by `g.num_nodes`.
-- `edata`: Edge features. A dictionary of arrays or named tuple of arrays.
-           The size of the last dimension of each array must be given by `g.num_edges`.
-- `gdata`: Graph features. An array or named tuple of arrays whose last dimension has size `num_graphs`.
+- `edata`: Edge features. A dictionary of arrays or named tuple of arrays. Default `nothing`.
+           The size of the last dimension of each array must be given by `g.num_edges`. Default `nothing`.
+- `gdata`: Graph features. An array or named tuple of arrays whose last dimension has size `num_graphs`. Default `nothing`.
 - `num_nodes`: The number of nodes for each type. If not specified, inferred from `data`. Default `nothing`.
 
 # Fields
 
-- `graph`: A dictionary that maps `(source_type, edge_type, target_type)`` triples to (source, target) index vectors.
+- `graph`: A dictionary that maps (source_type, edge_type, target_type) triples to (source, target) index vectors.
 - `num_nodes`: The number of nodes for each type.
 - `num_edges`: The number of edges for each type.
 - `ndata`: Node features.
@@ -41,15 +41,15 @@ julia> nA, nB = 10, 20;
 
 julia> num_nodes = Dict(:A => nA, :B => nB);
 
-julia> edges1 = rand(1:nA, 20), rand(1:nB, 20)
+julia> edges1 = (rand(1:nA, 20), rand(1:nB, 20))
 ([4, 8, 6, 3, 4, 7, 2, 7, 3, 2, 3, 4, 9, 4, 2, 9, 10, 1, 3, 9], [6, 4, 20, 8, 16, 7, 12, 16, 5, 4, 6, 20, 11, 19, 17, 9, 12, 2, 18, 12])
 
-julia> edges2 = rand(1:nB, 30), rand(1:nA, 30)
+julia> edges2 = (rand(1:nB, 30), rand(1:nA, 30))
 ([17, 5, 2, 4, 5, 3, 8, 7, 9, 7  …  19, 8, 20, 7, 16, 2, 9, 15, 8, 13], [1, 1, 3, 1, 1, 3, 2, 7, 4, 4  …  7, 10, 6, 3, 4, 9, 1, 5, 8, 5])
 
-julia> eindex = ((:A, :rel1, :B) => edges1, (:B, :rel2, :A) => edges2);
+julia> data = ((:A, :rel1, :B) => edges1, (:B, :rel2, :A) => edges2);
 
-julia> hg = GNNHeteroGraph(eindex; num_nodes)
+julia> hg = GNNHeteroGraph(data; num_nodes)
 GNNHeteroGraph:
   num_nodes: (:A => 10, :B => 20)
   num_edges: ((:A, :rel1, :B) => 20, (:B, :rel2, :A) => 30)
@@ -63,7 +63,7 @@ Dict{Tuple{Symbol, Symbol, Symbol}, Int64} with 2 entries:
 julia> ndata = Dict(:A => (x = rand(2, nA), y = rand(3, num_nodes[:A])),
                     :B => rand(10, nB));
 
-julia> hg = GNNHeteroGraph(eindex; num_nodes, ndata)
+julia> hg = GNNHeteroGraph(data; num_nodes, ndata)
 GNNHeteroGraph:
     num_nodes: (:A => 10, :B => 20)
     num_edges: ((:A, :rel1, :B) => 20, (:B, :rel2, :A) => 30)
@@ -98,7 +98,7 @@ end
 GNNHeteroGraph(data; kws...) = GNNHeteroGraph(Dict(data); kws...)
 
 function GNNHeteroGraph(data::Dict; kws...)
-    all(k -> k isa EType, keys(data)) || throw(ArgumentError("Keys of data must be tuples of the form (source_type, edge_type, target_type)"))
+    all(k -> k isa EType, keys(data)) || throw(ArgumentError("Keys of data must be tuples of the form `(source_type, edge_type, target_type)`"))
     return GNNHeteroGraph(Dict([k => v for (k, v) in pairs(data)]...); kws...)
 end
 
