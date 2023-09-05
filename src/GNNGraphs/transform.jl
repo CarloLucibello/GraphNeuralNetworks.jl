@@ -163,6 +163,9 @@ function add_edges(g::GNNGraph{<:COO_T}, data::COO_T; edata = nothing)
     snew, tnew, wnew = data
     @assert length(snew) == length(tnew)
     @assert isnothing(wnew) || length(wnew) == length(snew)
+    if length(snew) == 0
+        return g
+    end
     @assert minimum(snew) >= 1
     @assert minimum(tnew) >= 1
     num_new = length(snew)
@@ -211,6 +214,9 @@ function add_edges(g::GNNHeteroGraph{<:COO_T},
                    num_nodes = Dict{Symbol,Int}())
     edge_t, (snew, tnew, wnew) = data
     @assert length(snew) == length(tnew)
+    if length(snew) == 0
+        return g
+    end
     @assert minimum(snew) >= 1
     @assert minimum(tnew) >= 1
 
