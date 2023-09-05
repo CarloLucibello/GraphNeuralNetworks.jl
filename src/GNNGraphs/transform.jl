@@ -118,68 +118,116 @@ end
 
 """
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
+    add_edges(g::GNNGraph, (s, t); [edata])
+    add_edges(g::GNNGraph, (s, t, w); [edata])
 
 Add to graph `g` the edges with source nodes `s` and target nodes `t`.
-Optionally, pass the features  `edata` for the new edges.
+Optionally, pass the edge weight `w` and the features  `edata` for the new edges.
 Returns a new graph sharing part of the underlying data with `g`.
-"""
-function add_edges(g::GNNGraph{<:COO_T},
-                   snew::AbstractVector{<:Integer},
-                   tnew::AbstractVector{<:Integer};
-                   edata = nothing)
-    @assert length(snew) == length(tnew)
-    # TODO remove this constraint
-    @assert get_edge_weight(g) === nothing
 
-    edata = normalize_graphdata(edata, default_name = :e, n = length(snew))
+If the `s` or `t` contain nodes that are not already present in the graph,
+they are added to the graph as well.
+
+# Examples
+
+```jldoctest
+julia> s, t = [1, 2, 3, 3, 4], [2, 3, 4, 4, 4];
+
+julia> w = Float32[1.0, 2.0, 3.0, 4.0, 5.0];
+
+julia> g = GNNGraph((s, t, w))
+GNNGraph:
+  num_nodes: 4
+  num_edges: 5
+
+julia> add_edges(g, ([2, 3], [4, 1], [10.0, 20.0]))
+GNNGraph:
+  num_nodes: 4
+  num_edges: 7
+```
+```jldoctest
+julia> g = GNNGraph()
+GNNGraph:
+    num_nodes: 0
+    num_edges: 0
+
+julia> add_edges(g, [1,2], [2,3])
+GNNGraph:
+    num_nodes: 3
+    num_edges: 2    
+"""
+add_edges(g::GNNGraph{<:COO_T}, snew::AbstractVector, tnew::AbstractVector; kws...) = add_edges(g, (snew, tnew, nothing); kws...)
+add_edges(g, data::Tuple{<:AbstractVector, <:AbstractVector}; kws...) = add_edges(g, (data..., nothing); kws...)
+
+function add_edges(g::GNNGraph{<:COO_T}, data::COO_T; edata = nothing)
+    snew, tnew, wnew = data
+    @assert length(snew) == length(tnew)
+    @assert isnothing(wnew) || length(wnew) == length(snew)
+    if length(snew) == 0
+        return g
+    end
+    @assert minimum(snew) >= 1
+    @assert minimum(tnew) >= 1
+    num_new = length(snew)
+    edata = normalize_graphdata(edata, default_name = :e, n = num_new)
     edata = cat_features(g.edata, edata)
 
     s, t = edge_index(g)
     s = [s; snew]
     t = [t; tnew]
+    w = get_edge_weight(g)
+    w = cat_features(w, wnew, g.num_edges, num_new)
 
-    return GNNGraph((s, t, nothing),
-             g.num_nodes, length(s), g.num_graphs,
+    num_nodes = max(maximum(snew), maximum(tnew), g.num_nodes)
+    if num_nodes > g.num_nodes
+        ndata_new = normalize_graphdata((;), default_name = :x, n = num_nodes - g.num_nodes)
+        ndata = cat_features(g.ndata, ndata_new)
+    else
+        ndata = g.ndata
+    end
+
+    return GNNGraph((s, t, w),
+             num_nodes, length(s), g.num_graphs,
              g.graph_indicator,
-             g.ndata, edata, g.gdata)
+             ndata, edata, g.gdata)
 end
 
-
 """
-    add_edges(g::GNNHeteroGraph, edge_t, s, t; [edata, num_nodes])
-    add_edges(g::GNNHeteroGraph, edge_t => (s, t); [edata, num_nodes])
+    add_edges(g::GNNHeteroGraph, rel_t, s, t; [edata, num_nodes])
+    add_edges(g::GNNHeteroGraph, rel_t => (s, t); [edata, num_nodes])
+    add_edges(g::GNNHeteroGraph, rel_t => (s, t, w); [edata, num_nodes])
 
-Add to heterograph `g` the relation of type `edge_t` with source node vector `s` and target node vector `t`.
-Optionally, pass the features  `edata` for the new edges.
-`edge_t` is a triplet of symbols `(srctype, etype, dsttype)`. 
+Add to heterograph `g` the relation of type `rel_t` with source node vector `s` and target node vector `t`.
+Optionally, pass the  edge weights `w` or the features  `edata` for the new edges.
+`rel_t` is a triplet of symbols `(src_t, edge_t, dst_t)`. 
 
-If the edge type is not already present in the graph, it is added. If it involves new node types, they are added to the graph as well.
+If the relation is not already present in the graph, it is added. If it involves new node types, they are added to the graph as well.
 In this case, a dictionary or named tuple of `num_nodes` can be passed to specify the number of nodes of the new types,
 otherwise the number of nodes is inferred from the maximum node id in `s` and `t`.
 """
-add_edges(g::GNNHeteroGraph{<:COO_T}, data::Pair{EType, <:Tuple}; kws...) = add_edges(g, data.first, data.second...; kws...)
+add_edges(g::GNNHeteroGraph{<:COO_T}, edge_t::EType, snew::AbstractVector, tnew::AbstractVector; kws...) = add_edges(g, edge_t => (snew, tnew, nothing); kws...)
+add_edges(g::GNNHeteroGraph{<:COO_T}, data::Pair{EType, <:Tuple{<:AbstractVector, <:AbstractVector}}; kws...) = add_edges(g, data.first => (data.second..., nothing); kws...)
 
 function add_edges(g::GNNHeteroGraph{<:COO_T},
-                   edge_t::EType,
-                   snew::AbstractVector{<:Integer},
-                   tnew::AbstractVector{<:Integer};
+                   data::Pair{EType, <:COO_T};
                    edata = nothing,
                    num_nodes = Dict{Symbol,Int}())
+    edge_t, (snew, tnew, wnew) = data
     @assert length(snew) == length(tnew)
-    is_existing_rel = haskey(g.graph, edge_t)
-    # TODO remove this constraint
-    if is_existing_rel
-        @assert get_edge_weight(g, edge_t) === nothing
+    if length(snew) == 0
+        return g
     end
+    @assert minimum(snew) >= 1
+    @assert minimum(tnew) >= 1
+
+    is_existing_rel = haskey(g.graph, edge_t)
 
     edata = normalize_graphdata(edata, default_name = :e, n = length(snew))
-    g_edata = g.edata |> copy
-    if !isempty(g.edata)
-        if haskey(g_edata, edge_t)
-            g_edata[edge_t] = cat_features(g.edata[edge_t], edata)
-        else
-            g_edata[edge_t] = edata
-        end
+    _edata = g.edata |> copy
+    if haskey(_edata, edge_t)
+        _edata[edge_t] = cat_features(g.edata[edge_t], edata)
+    else
+        _edata[edge_t] = edata
     end
 
     graph = g.graph |> copy
@@ -204,20 +252,29 @@ function add_edges(g::GNNHeteroGraph{<:COO_T},
         s, t = edge_index(g, edge_t)
         snew = [s; snew]
         tnew = [t; tnew]
+        w = get_edge_weight(g, edge_t)
+        wnew = cat_features(w, wnew, length(s), length(snew))
     end
-    @assert maximum(snew) <= _num_nodes[edge_t[1]]
-    @assert maximum(tnew) <= _num_nodes[edge_t[3]]
-    @assert minimum(snew) >= 1
-    @assert minimum(tnew) >= 1
+    
+    if maximum(snew) > _num_nodes[edge_t[1]]
+        ndata_new = normalize_graphdata((;), default_name = :x, n = maximum(snew) - _num_nodes[edge_t[1]])
+        ndata[edge_t[1]] = cat_features(ndata[edge_t[1]], ndata_new)
+        _num_nodes[edge_t[1]] = maximum(snew)
+    end
+    if maximum(tnew) > _num_nodes[edge_t[3]]
+        ndata_new = normalize_graphdata((;), default_name = :x, n = maximum(tnew) - _num_nodes[edge_t[3]])
+        ndata[edge_t[3]] = cat_features(ndata[edge_t[3]], ndata_new)
+        _num_nodes[edge_t[3]] = maximum(tnew)
+    end
 
-    graph[edge_t] = (snew, tnew, nothing)
+    graph[edge_t] = (snew, tnew, wnew)
     num_edges = g.num_edges |> copy
     num_edges[edge_t] = length(graph[edge_t][1])
 
     return GNNHeteroGraph(graph,
-            _num_nodes, num_edges, g.num_graphs,
+             _num_nodes, num_edges, g.num_graphs,
              g.graph_indicator,
-             g.ndata, g_edata, g.gdata,
+             ndata, _edata, g.gdata,
              ntypes, etypes)
 end
 
@@ -250,7 +307,7 @@ See also [`is_bidirected`](@ref).
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> s, t = [1, 2, 3, 3, 4], [2, 3, 4, 4, 4];
 
 julia> w = [1.0, 2.0, 3.0, 4.0, 5.0];
@@ -440,7 +497,7 @@ See also [`Flux.unbatch`](@ref).
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> g1 = rand_graph(4, 6, ndata=ones(8, 4))
 GNNGraph:
     num_nodes = 4
@@ -574,7 +631,7 @@ See also [`Flux.batch`](@ref) and [`getgraph`](@ref).
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> gbatched = Flux.batch([rand_graph(5, 6), rand_graph(10, 8), rand_graph(4,2)])
 GNNGraph:
     num_nodes = 19

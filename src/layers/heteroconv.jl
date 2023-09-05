@@ -20,7 +20,7 @@ have to be aggregated using the `aggr` function. The default is to sum the outpu
 
 # Examples 
 
-```julia-repl
+```jldoctest
 julia> g = rand_bipartite_heterograph((10, 15), 20)
 GNNHeteroGraph:
   num_nodes: Dict(:A => 10, :B => 15)

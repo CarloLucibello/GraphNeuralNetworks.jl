@@ -55,6 +55,8 @@ function sort_edge_index(u, v)
     return u[p], v[p]
 end
 
+
+
 cat_features(x1::Nothing, x2::Nothing) = nothing
 cat_features(x1::AbstractArray, x2::AbstractArray) = cat(x1, x2, dims = ndims(x1))
 function cat_features(x1::Union{Number, AbstractVector}, x2::Union{Number, AbstractVector})
@@ -126,6 +128,12 @@ function cat_features(xs::AbstractVector{<:Dict})
     return Dict([k => cat_features([x[k] for x in xs]) for k in _keys]...)
 end
 
+
+# Used to concatenate edge weights
+cat_features(w1::Nothing, w2::Nothing, n1::Int, n2::Int) = nothing
+cat_features(w1::AbstractVector, w2::Nothing, n1::Int, n2::Int) = cat_features(w1, ones_like(w1, n2))
+cat_features(w1::Nothing, w2::AbstractVector, n1::Int, n2::Int) = cat_features(ones_like(w2, n1), w2)
+cat_features(w1::AbstractVector, w2::AbstractVector, n1::Int, n2::Int) = cat_features(w1, w2)
 
 
 # Turns generic type into named tuple

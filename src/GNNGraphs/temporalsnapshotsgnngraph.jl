@@ -77,7 +77,7 @@ Return a `TemporalSnapshotsGNNGraph` created starting from `tg` by adding the sn
 
 # Examples
 
-```julia-repl
+```jldoctest
 julia> using GraphNeuralNetworks
 
 julia> snapshots = [rand_graph(10, 20) for i in 1:5];
@@ -137,7 +137,7 @@ Return a [`TemporalSnapshotsGNNGraph`](@ref) created starting from `tg` by remov
 
 # Examples
 
-```julia-repl
+```jldoctest
 julia> using GraphNeuralNetworks
 
 julia> snapshots = [rand_graph(10,20), rand_graph(10,14), rand_graph(10,22)];

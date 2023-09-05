@@ -107,11 +107,40 @@ end
         @test gnew.num_edges == 5
         @test sort(inneighbors(gnew, 4)) == [1, 2]
 
+        gnew2 = add_edges(g, (snew, tnew))
+        @test gnew2 == gnew
+        @test get_edge_weight(gnew2) === nothing
+
         g = GNNGraph(s, t, edata = (e1 = rand(2, 4), e2 = rand(3, 4)), graph_type = GRAPH_T)
         # @test_throws ErrorException add_edges(g, snew, tnew)
         gnew = add_edges(g, snew, tnew, edata = (e1 = ones(2, 1), e2 = zeros(3, 1)))
         @test all(gnew.edata.e1[:, 5] .== 1)
         @test all(gnew.edata.e2[:, 5] .== 0)
+
+        @testset "adding new nodes" begin
+            g = GNNGraph()
+            g = add_edges(g, ([1,3], [2, 1]))
+            @test g.num_nodes == 3
+            @test g.num_edges == 2
+            @test sort(inneighbors(g, 1)) == [3]
+            @test sort(outneighbors(g, 1)) == [2]
+        end
+        @testset "also add weights" begin
+            s = [1, 1, 2, 3]
+            t = [2, 3, 4, 5]
+            w = [1.0, 2.0, 3.0, 4.0]
+            snew = [1]
+            tnew = [4]
+            wnew = [5.]
+
+            g = GNNGraph((s, t), graph_type = GRAPH_T)
+            gnew = add_edges(g, (snew, tnew, wnew))
+            @test get_edge_weight(gnew) == [ones(length(s)); wnew]
+            
+            g = GNNGraph((s, t, w), graph_type = GRAPH_T)
+            gnew = add_edges(g, (snew, tnew, wnew))
+            @test get_edge_weight(gnew) == [w; wnew]
+        end
 
         @testset "heterograph" begin
             hg = rand_bipartite_heterograph((2, 2), (4, 0), bidirected=false)
@@ -137,6 +166,25 @@ end
                 s, t = edge_index(hg, (:D,:rel,:F))
                 @test s == [1, 3]
                 @test t == [1, 2]
+            end
+
+            @testset "also add weights" begin
+                hg = GNNHeteroGraph((:user, :rate, :movie) => ([1,1,2,3], [7,13,5,7], [0.1, 0.2, 0.3, 0.4]))
+                hgnew = add_edges(hg, (:user, :like, :actor) => ([1, 2], [3, 4], [0.5, 0.6]))
+                @test hgnew.num_nodes[:user] == 3
+                @test hgnew.num_nodes[:movie] == 13
+                @test hgnew.num_nodes[:actor] == 4
+                @test hgnew.num_edges == Dict((:user, :rate, :movie) => 4, (:user, :like, :actor) => 2)
+                @test get_edge_weight(hgnew, (:user, :rate, :movie)) == [0.1, 0.2, 0.3, 0.4]
+                @test get_edge_weight(hgnew, (:user, :like, :actor)) == [0.5, 0.6]
+
+                hgnew2 = add_edges(hgnew, (:user, :like, :actor) => ([6, 7], [8, 10], [0.7, 0.8]))
+                @test hgnew2.num_nodes[:user] == 7
+                @test hgnew2.num_nodes[:movie] == 13
+                @test hgnew2.num_nodes[:actor] == 10
+                @test hgnew2.num_edges == Dict((:user, :rate, :movie) => 4, (:user, :like, :actor) => 4)
+                @test get_edge_weight(hgnew2, (:user, :rate, :movie)) == [0.1, 0.2, 0.3, 0.4]
+                @test get_edge_weight(hgnew2, (:user, :like, :actor)) == [0.5, 0.6, 0.7, 0.8]
             end
         end
     end 

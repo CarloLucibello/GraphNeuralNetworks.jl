@@ -74,7 +74,7 @@ and if names are given, `m[:name] == m[1]` etc.
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> using Flux, GraphNeuralNetworks
 
 julia> m = GNNChain(GCNConv(2=>5), 
@@ -199,7 +199,7 @@ returns the dot product `x_i ⋅ xj` on each edge.
 
 # Examples 
 
-```juliarepl
+```jldoctest
 julia> g = rand_graph(5, 6)
 GNNGraph:
     num_nodes = 5
