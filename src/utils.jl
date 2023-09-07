@@ -6,11 +6,25 @@ ofeltype(x, y) = convert(float(eltype(x)), y)
 For a batched graph `g`, return the graph-wise aggregation of the node
 features `x`. The aggregation operator `aggr` can be `+`, `mean`, `max`, or `min`.
 The returned array will have last dimension `g.num_graphs`.
+
+See also: [`reduce_edges`](@ref).
 """
 function reduce_nodes(aggr, g::GNNGraph, x)
     @assert size(x)[end] == g.num_nodes
     indexes = graph_indicator(g)
     return NNlib.scatter(aggr, x, indexes)
+end
+
+"""
+    reduce_nodes(aggr, indicator::AbstractVector, x)
+
+Return the graph-wise aggregation of the node features `x` given the
+graph indicator `indicator`. The aggregation operator `aggr` can be `+`, `mean`, `max`, or `min`.
+
+See also [`graph_indicator`](@ref).
+"""
+function reduce_nodes(aggr, indicator::AbstractVector, x)
+    return NNlib.scatter(aggr, x, indicator)
 end
 
 """

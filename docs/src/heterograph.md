@@ -2,7 +2,7 @@
 
 Heterogeneous graphs (also called heterographs), are graphs where each node has a type,
 that we denote with symbols such as `:user` and `:movie`.
-Also edges have a type, such as `:rate` or `:like`, and they can connect nodes of different types. We call a triplet `(source_node_type, edge_type, target_node_type)` the type of a *relation*, e.g. `(:user, :rate, :movie)`.
+Releations such as `:rate` or `:like` can connect nodes of different types. We call a triplet `(source_node_type, relation_type, target_node_type)` the type of a edge, e.g. `(:user, :rate, :movie)`.
 
 Different node/edge types can store different groups of features
 and this makes heterographs a very flexible modeling tools 
@@ -12,7 +12,7 @@ the type [`GNNHeteroGraph`](@ref).
 
 ## Creating a Heterograph
 
-A heterograph can be created by passing pairs of relation type and data to the constructor.
+A heterograph can be created by passing pairs `edge_type => data` to the constructor.
 ```jldoctest
 julia> g = GNNHeteroGraph((:user, :like, :actor) => ([1,2,2,3], [1,3,2,9]),
                           (:user, :rate, :movie) => ([1,1,2,3], [7,13,5,7]))

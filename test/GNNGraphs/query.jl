@@ -232,3 +232,19 @@ end
         @test eltype(khop_adj(g, 10, Float32)) == Float32
     end
 end
+
+if GRAPH_T == :coo
+    @testset "HeteroGraph" begin
+        @testset "graph_indicator" begin
+            gs = [rand_heterograph(Dict(:user => 10, :movie => 20, :actor => 30), 
+                                Dict((:user,:like,:movie) => 10,
+                                     (:actor,:rate,:movie)=>20)) for _ in 1:3]
+            g = MLUtils.batch(gs)
+            @test graph_indicator(g) == Dict(:user => [repeat([1], 10); repeat([2], 10); repeat([3], 10)],
+                                      :movie => [repeat([1], 20); repeat([2], 20); repeat([3], 20)],
+                                        :actor => [repeat([1], 30); repeat([2], 30); repeat([3], 30)])
+            @test graph_indicator(g, :movie) == [repeat([1], 20); repeat([2], 20); repeat([3], 20)]
+        end 
+    end
+end       
+
