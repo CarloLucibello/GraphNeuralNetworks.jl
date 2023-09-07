@@ -13,11 +13,11 @@ edge_index(g::GNNGraph{<:COO_T}) = g.graph[1:2]
 
 edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes = g.num_nodes)[1][1:2]
 
-""""
+"""
     edge_index(g::GNNHeteroGraph, [edge_t])
 
 Return a tuple containing two vectors, respectively storing the source and target nodes
-for each edges in `g` of type `edge_t = (:node1_t, :rel, :node2_t)`.
+for each edges in `g` of type `edge_t = (src_t, rel_t, trg_t)`.
 
 If `edge_t` is not provided, it will error if `g` has more than one edge type.
 """
@@ -454,12 +454,13 @@ _rand_dense_vector(A::AbstractMatrix{T}) where {T} = randn(float(T), size(A, 1))
 # https://discourse.julialang.org/t/cuda-eigenvalues-of-a-sparse-matrix/46851/5
 
 """
-    graph_indicator(g)
+    graph_indicator(g::GNNGraph; edges=false)
 
 Return a vector containing the graph membership
 (an integer from `1` to `g.num_graphs`) of each node in the graph.
+If `edges=true`, return the graph membership of each edge instead.
 """
-function graph_indicator(g; edges = false)
+function graph_indicator(g::GNNGraph; edges = false)
     if isnothing(g.graph_indicator)
         gi = ones_like(edge_index(g)[1], Int, g.num_nodes)
     else
@@ -471,6 +472,29 @@ function graph_indicator(g; edges = false)
     else
         return gi
     end
+end
+
+"""
+    graph_indicator(g::GNNHeteroGraph, [node_t])
+
+Return a Dict of vectors containing the graph membership
+(an integer from `1` to `g.num_graphs`) of each node in the graph for each node type.
+If `node_t` is provided, return the graph membership of each node of type `node_t` instead.
+
+See also [`batch`](@ref).
+"""
+function graph_indicator(g::GNNHeteroGraph)
+    return g.graph_indicator
+end
+
+function graph_indicator(g::GNNHeteroGraph, node_t::Symbol)
+    @assert node_t ∈ g.ntypes
+    if isnothing(g.graph_indicator)
+        gi = ones_like(edge_index(g, first(g.etypes))[1], Int, g.num_nodes[node_t])
+    else
+        gi = g.graph_indicator[node_t]
+    end
+    return gi
 end
 
 function node_features(g::GNNGraph)
