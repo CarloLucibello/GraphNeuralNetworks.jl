@@ -533,7 +533,16 @@ julia> g12.ndata.x
  1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
 ```
 """
-Flux.batch(gs::AbstractVector{<:GNNGraph}) = blockdiag(gs...)
+function Flux.batch(gs::AbstractVector{<:GNNGraph})
+    Told = eltype(gs)
+    # try to restrict the eltype
+    gs = [g for g in gs]
+    if eltype(gs) != Told
+        return Flux.batch(gs)
+    else
+        return blockdiag(gs...)
+    end
+end
 
 function Flux.batch(gs::AbstractVector{<:GNNGraph{T}}) where {T <: COO_T}
     v_num_nodes = [g.num_nodes for g in gs]
@@ -569,7 +578,7 @@ function Flux.batch(g::GNNGraph)
 end
 
 
-function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph{T}}) where {T <: COO_T}
+function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph})
     @assert length(gs) > 0
     ntypes = union([g.ntypes for g in gs]...)
     etypes = union([g.etypes for g in gs]...)
@@ -611,15 +620,15 @@ function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph{T}}) where {T <: COO_T}
     v_gi = Dict(node_t => [ng .+ gi for (ng, gi) in zip(graphsum, v_gi[node_t])] for node_t in ntypes)
     graph_indicator = Dict(node_t => cat_features(v_gi[node_t]) for node_t in ntypes)
 
-    GNNHeteroGraph(graph,
-             num_nodes,
-             num_edges,
-             sum(v_num_graphs),
-             graph_indicator,
-             cat_features([g.ndata for g in gs]),
-             cat_features([g.edata for g in gs]),
-             cat_features([g.gdata for g in gs]),
-             ntypes, etypes)
+    return  GNNHeteroGraph(graph,
+                num_nodes,
+                num_edges,
+                sum(v_num_graphs),
+                graph_indicator,
+                cat_features([g.ndata for g in gs]),
+                cat_features([g.edata for g in gs]),
+                cat_features([g.gdata for g in gs]),
+                ntypes, etypes)
 end
 
 """
