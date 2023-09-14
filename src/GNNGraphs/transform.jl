@@ -580,7 +580,7 @@ end
 
 function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph})
     function edge_index_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
-        xget(g.graph, edge_t, (nothing, nothing))[1:2]
+        get(g.graph, edge_t, (nothing, nothing))[1:2]
     end
 
     function get_edge_weight_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
