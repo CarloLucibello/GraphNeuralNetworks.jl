@@ -579,6 +579,20 @@ end
 
 
 function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph})
+    function edge_index_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
+        x = get(g.graph, edge_t) do
+            return nothing
+        end
+        x[1:2]
+    end
+
+    function get_edge_weight_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
+        x = get(g.graph, edge_t) do
+            return nothing
+        end
+        x[3]
+    end
+
     @assert length(gs) > 0
     ntypes = union([g.ntypes for g in gs]...)
     etypes = union([g.etypes for g in gs]...)
@@ -586,8 +600,7 @@ function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph})
     v_num_nodes = Dict(node_t => [get(g.num_nodes, node_t, 0) for g in gs] for node_t in ntypes)
     num_nodes = Dict(node_t => sum(v_num_nodes[node_t]) for node_t in ntypes)
     num_edges = Dict(edge_t => sum(get(g.num_edges, edge_t, 0) for g in gs) for edge_t in etypes)
-    
-    edge_indices = Dict(edge_t => filter(x -> x[1] !== nothing, [edge_index_safe(g, edge_t) for g in gs]) for edge_t in etypes)
+    edge_indices = Dict(edge_t => filter(x -> x !== nothing, [edge_index_nullable(g, edge_t) for g in gs]) for edge_t in etypes)
     nodesum = Dict(node_t => cumsum([0; v_num_nodes[node_t]])[1:(end - 1)] for node_t in ntypes)
     graphs = []
     for edge_t in etypes
@@ -597,9 +610,9 @@ function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph})
         #     @show ei[1]
         # end 
         # # [ei[1] for (ii, ei) in enumerate(edge_indices[edge_t])]
-        s = cat_features([ei[1] .+ nodesum[src_t][ii] for (ii, ei) in enumerate(edge_indices[edge_t])]) # src
-        t = cat_features([ei[2] .+ nodesum[dst_t][ii] for (ii, ei) in enumerate(edge_indices[edge_t])]) # tgt
-        w = cat_features(filter(x -> x !== nothing, [get_edge_weight_safe(g, edge_t) for g in gs]))
+        s = cat_features([ei[1] .+ nodesum[src_t][ii] for (ii, ei) in enumerate(edge_indices[edge_t])])
+        t = cat_features([ei[2] .+ nodesum[dst_t][ii] for (ii, ei) in enumerate(edge_indices[edge_t])])
+        w = cat_features(filter(x -> x !== nothing, [get_edge_weight_nullable(g, edge_t) for g in gs]))
         push!(graphs, edge_t => (s, t, w))
     end
     graph = Dict(graphs...)
