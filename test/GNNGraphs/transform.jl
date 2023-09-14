@@ -349,6 +349,27 @@ end
         @test g.gdata.u == fill(7, 5)        
     end
 
+    @testset "batch non-similar edge types" begin
+        gs = [rand_heterograph((:A =>10, :B => 14), ((:A, :to1, :A) => 5, (:A, :to1, :B) => 20)),
+            rand_heterograph((:A =>10, :B => 15), ((:A, :to1, :B) => 5, (:B, :to2, :B) => 16)),
+            rand_heterograph((:B => 15, :C => 5), ((:C, :to1, :B) => 5, (:B, :to2, :C) => 21)),
+        ]
+        g = Flux.batch(gs)
+
+        println(collect(keys(g.num_nodes)))
+        println(collect(keys(g.num_edges)))
+
+        @test g.num_nodes[:A] == 10 + 10
+        @test g.num_nodes[:B] == 15 + 15 + 14
+        @test g.num_nodes[:C] == 5
+        @test g.num_edges[(:A,:to1,:A)] == 5
+        @test g.num_edges[(:A,:to1,:B)] == 20 + 5
+        @test g.num_edges[(:B,:to2,:B)] == 16
+        @test g.num_edges[(:C,:to1,:B)] == 5
+        @test g.num_edges[(:B,:to2,:C)] == 21
+        @test g.num_graphs == 3
+    end
+
     @testset "add_edges" begin
         hg = rand_bipartite_heterograph((2, 2), (4, 0), bidirected=false)
         hg = add_edges(hg, (:B,:to,:A), [1, 1], [1,2])

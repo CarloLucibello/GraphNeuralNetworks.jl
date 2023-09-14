@@ -14,7 +14,20 @@ edge_index(g::GNNGraph{<:COO_T}) = g.graph[1:2]
 edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes = g.num_nodes)[1][1:2]
 
 """
-    edge_index(g::GNNHeteroGraph, [edge_t])
+    edge_index_safe(g::GNNHeteroGraph, [edge_t])
+
+Return a tuple containing two vectors, respectively storing the source and target nodes
+for each edges in `g` of type `edge_t = (src_t, rel_t, trg_t)`. If graph does not contain
+edge_t, returns nothing instead.
+
+If `edge_t` is not provided, it will error if `g` has more than one edge type.
+"""
+edge_index_safe(g::GNNHeteroGraph{<:COO_T}, edge_t::EType) = get(g.graph,edge_t, (nothing, nothing))[1:2]
+
+#edge_index(g::GNNHeteroGraph{<:COO_T}) = only(g.graph)[2][1:2]
+
+"""
+    edge_index_nullable(g::GNNHeteroGraph, [edge_t])
 
 Return a tuple containing two vectors, respectively storing the source and target nodes
 for each edges in `g` of type `edge_t = (src_t, rel_t, trg_t)`.
@@ -29,6 +42,10 @@ get_edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
 get_edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes = g.num_nodes)[1][3]
 
 get_edge_weight(g::GNNHeteroGraph{<:COO_T}, edge_t::EType) = g.graph[edge_t][3]
+
+
+# TODO: Write tidbit
+get_edge_weight_safe(g::GNNHeteroGraph{<:COO_T}, edge_t::EType) = get(g.graph, edge_t, (nothing, nothing, nothing))[3]
 
 Graphs.edges(g::GNNGraph) = Graphs.Edge.(edge_index(g)...)
 
