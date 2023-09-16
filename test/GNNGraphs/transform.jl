@@ -391,12 +391,10 @@ end
             ndata_if_key(gi, :B, :x, ones(3))
             ndata_if_key(gi, :C, :y, zeros(4))
             edata_if_key(gi, (:A,:to1,:B), :x, [0])
+            gi.gdata.u = 7
         end
 
         g = Flux.batch(gs)
-
-        println(typeof(g.ndata[:A].x))
-        println(typeof(zeros(10 + 10 + 10)))
 
         @test g.ndata[:A].x == reduce(hcat, fill(0, 10 + 10 + 10))
         @test g.ndata[:A].y == ones(2, 10 + 10 + 10)
@@ -404,6 +402,19 @@ end
         @test g.ndata[:C].y == zeros(4, 5 + 10 + 20)
 
         @test g.edata[(:A,:to1,:B)].x == reduce(hcat, fill(0, 20 + 5 + 5))
+
+        @test g.gdata.u == fill(7, 5)
+
+        # Allow for wider eltype 
+        g = Flux.batch(GNNHeteroGraph[g for g in gs])
+        @test g.ndata[:A].x == reduce(hcat, fill(0, 10 + 10 + 10))
+        @test g.ndata[:A].y == ones(2, 10 + 10 + 10)
+        @test g.ndata[:B].x == ones(3, 14 + 15 + 15 + 10)
+        @test g.ndata[:C].y == zeros(4, 5 + 10 + 20)
+
+        @test g.edata[(:A,:to1,:B)].x == reduce(hcat, fill(0, 20 + 5 + 5))
+
+        @test g.gdata.u == fill(7, 5)
     end
 
     @testset "add_edges" begin
