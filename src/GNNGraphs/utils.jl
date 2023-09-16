@@ -119,13 +119,11 @@ end
 
 function cat_features(xs::AbstractVector{<:Dict})
     _allkeys = [sort(collect(keys(x))) for x in xs]
-    _keys = _allkeys[1]
-    all(y -> y == _keys, _allkeys) ||
-        @error "cannot concatenate feature data with different keys"
+    _keys = union(_allkeys...)
     length(xs) == 1 && return xs[1]
 
     # concatenate 
-    return Dict([k => cat_features([x[k] for x in xs]) for k in _keys]...)
+    return Dict([k => cat_features([x[k] for x in filter(x->haskey(x, k),xs)]) for k in _keys]...)
 end
 
 
