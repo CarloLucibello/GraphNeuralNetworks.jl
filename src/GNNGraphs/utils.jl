@@ -123,7 +123,7 @@ function cat_features(xs::AbstractVector{<:Dict})
     length(xs) == 1 && return xs[1]
 
     # concatenate 
-    return Dict([k => cat_features([x[k] for x in filter(x->haskey(x, k),xs)]) for k in _keys]...)
+    return Dict([k => cat_features([x[k] for x in xs if haskey(x, k)]) for k in _keys]...)
 end
 
 
