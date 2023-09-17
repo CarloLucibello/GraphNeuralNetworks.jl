@@ -125,7 +125,6 @@ function Base.setproperty!(ds::DataStore, s::Symbol, x)
 end
 
 Base.getindex(ds::DataStore, s::Symbol) = getproperty(ds, s)
-Base.setindex!(ds::DataStore, s::Symbol, x) = setproperty!(ds, s, x)
 Base.setindex!(ds::DataStore, x, s::Symbol) = setproperty!(ds, s, x)
 
 function Base.show(io::IO, ds::DataStore)
