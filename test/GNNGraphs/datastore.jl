@@ -16,7 +16,7 @@ end
 @testset "getproperty / setproperty!" begin
     x = rand(10)
     ds = DataStore(10, (:x => x, :y => rand(2, 10)))
-    @test ds.x == ds[:x] == x # ds[:x] tests getindex!, not setindex!, which is called by ds[:x] = v
+    @test ds.x == ds[:x] == x
     @test_throws DimensionMismatch ds.z=rand(12)
     ds.z = [1:10;]
     @test ds.z == [1:10;]
