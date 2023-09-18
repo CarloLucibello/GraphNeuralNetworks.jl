@@ -16,7 +16,7 @@ end
 @testset "getproperty / setproperty!" begin
     x = rand(10)
     ds = DataStore(10, (:x => x, :y => rand(2, 10)))
-    @test ds.x == ds[:x] == x
+    @test ds.x == ds[:x] == x # ds[:x] tests getindex!, not setindex!, which is called by ds[:x] = v
     @test_throws DimensionMismatch ds.z=rand(12)
     ds.z = [1:10;]
     @test ds.z == [1:10;]
@@ -25,6 +25,13 @@ end
     @test_throws KeyError vec.z 
     @test vec._n == [10, 10]
     @test vec._data == [Dict(:x => x), Dict(:x => x, :y => vec[2].y)]
+end
+
+@testset "setindex!" begin
+    ds = DataStore(10)
+    x = rand(10)
+    @test (ds[:x] = x) == x # Tests setindex!
+    @test ds.x == ds[:x] == x
 end
 
 @testset "map" begin
