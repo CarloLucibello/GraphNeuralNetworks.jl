@@ -346,7 +346,75 @@ end
         @test g.ndata[:A].x == ones(2, 50)
         @test g.ndata[:A].y == zeros(50)
         @test g.edata[(:A,:to,:B)].e == fill(2, 100)
-        @test g.gdata.u == fill(7, 5)        
+        @test g.gdata.u == fill(7, 5)
+    end
+
+    @testset "batch non-similar edge types" begin
+        gs = [rand_heterograph((:A =>10, :B => 14), ((:A, :to1, :A) => 5, (:A, :to1, :B) => 20)),
+            rand_heterograph((:A => 10, :B => 15), ((:A, :to1, :B) => 5, (:B, :to2, :B) => 16)),
+            rand_heterograph((:B => 15, :C => 5), ((:C, :to1, :B) => 5, (:B, :to2, :C) => 21)),
+            rand_heterograph((:A => 10, :B => 10, :C => 10), ((:A, :to1, :C) => 5, (:A, :to1, :B) => 5)),
+            rand_heterograph((:C => 20), ((:C, :to3, :C) => 10))
+        ]
+        g = Flux.batch(gs)
+
+        @test g.num_nodes[:A] == 10 + 10 + 10
+        @test g.num_nodes[:B] == 14 + 15 + 15 + 10
+        @test g.num_nodes[:C] == 5 + 10 + 20
+        @test g.num_edges[(:A,:to1,:A)] == 5
+        @test g.num_edges[(:A,:to1,:B)] == 20 + 5 + 5
+        @test g.num_edges[(:A,:to1,:C)] == 5
+
+        @test g.num_edges[(:B,:to2,:B)] == 16
+        @test g.num_edges[(:B,:to2,:C)] == 21
+
+        @test g.num_edges[(:C,:to1,:B)] == 5
+        @test g.num_edges[(:C,:to3,:C)] == 10
+        @test length(keys(g.num_edges)) == 7
+        @test g.num_graphs == 5
+
+        function ndata_if_key(g, key, subkey, value)
+            if haskey(g.ndata, key)
+                g.ndata[key][subkey] = reduce(hcat, fill(value, g.num_nodes[key]))
+            end
+        end
+
+        function edata_if_key(g, key, subkey, value)
+            if haskey(g.edata, key)
+                g.edata[key][subkey] = reduce(hcat, fill(value, g.num_edges[key]))
+            end
+        end
+
+        for gi in gs
+            ndata_if_key(gi, :A, :x, [0])
+            ndata_if_key(gi, :A, :y, ones(2))
+            ndata_if_key(gi, :B, :x, ones(3))
+            ndata_if_key(gi, :C, :y, zeros(4))
+            edata_if_key(gi, (:A,:to1,:B), :x, [0])
+            gi.gdata.u = 7
+        end
+
+        g = Flux.batch(gs)
+
+        @test g.ndata[:A].x == reduce(hcat, fill(0, 10 + 10 + 10))
+        @test g.ndata[:A].y == ones(2, 10 + 10 + 10)
+        @test g.ndata[:B].x == ones(3, 14 + 15 + 15 + 10)
+        @test g.ndata[:C].y == zeros(4, 5 + 10 + 20)
+
+        @test g.edata[(:A,:to1,:B)].x == reduce(hcat, fill(0, 20 + 5 + 5))
+
+        @test g.gdata.u == fill(7, 5)
+
+        # Allow for wider eltype 
+        g = Flux.batch(GNNHeteroGraph[g for g in gs])
+        @test g.ndata[:A].x == reduce(hcat, fill(0, 10 + 10 + 10))
+        @test g.ndata[:A].y == ones(2, 10 + 10 + 10)
+        @test g.ndata[:B].x == ones(3, 14 + 15 + 15 + 10)
+        @test g.ndata[:C].y == zeros(4, 5 + 10 + 20)
+
+        @test g.edata[(:A,:to1,:B)].x == reduce(hcat, fill(0, 20 + 5 + 5))
+
+        @test g.gdata.u == fill(7, 5)
     end
 
     @testset "add_edges" begin

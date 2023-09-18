@@ -27,6 +27,13 @@ end
     @test vec._data == [Dict(:x => x), Dict(:x => x, :y => vec[2].y)]
 end
 
+@testset "setindex!" begin
+    ds = DataStore(10)
+    x = rand(10)
+    @test (ds[:x] = x) == x # Tests setindex!
+    @test ds.x == ds[:x] == x
+end
+
 @testset "map" begin
     ds = DataStore(10, (:x => rand(10), :y => rand(2, 10)))
     ds2 = map(x -> x .+ 1, ds)
