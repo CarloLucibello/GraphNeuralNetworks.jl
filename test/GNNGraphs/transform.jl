@@ -462,4 +462,21 @@ end
             @test get_edge_weight(hgnew2, (:user, :like, :actor)) == [0.5, 0.6, 0.7, 0.8]
         end
     end
+
+    @testset "add self-loops heterographs" begin
+        g = rand_heterograph((:A =>10, :B => 14), ((:A, :to1, :A) => 5, (:A, :to1, :B) => 20))
+        g = add_self_loops(g, (:A, :to1, :A))
+
+        @test g.num_edges[(:A, :to1, :A)] == 5 + 10
+        @test g.num_edges[(:A, :to1, :B)] == 20
+
+        # This test should not use length(keys(g.num_edges)) since that may be undefined behavior
+        @test sum(1 for k in keys(g.num_edges) if g.num_edges[k] != 0) == 2
+
+        g = GNNHeteroGraph(Dict((:A, :to1, :A) => ([1, 2, 3], [3, 2, 1], [2, 2, 2]), (:A, :to2, :B) => ([1, 4, 5], [1, 2, 3])))
+        n = g.num_nodes[:A]
+        g = add_self_loops(g, (:A, :to1, :A))
+        
+        @test g.graph[(:A, :to1, :A)][3] == vcat([2, 2, 2], fill(1, n))
+    end
 end
