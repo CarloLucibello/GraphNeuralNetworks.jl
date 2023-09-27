@@ -82,6 +82,6 @@ for epoch in 1:100
         Flux.update!(opt, model, grad[1])
     end
 
-    @info (; epoch, train_loss=loss(train_loader), test_loss=loss(test_loader))
+    @info (; epoch, train_loss=loss(model, train_loader), test_loss=loss(model, test_loader))
 end
 ```
