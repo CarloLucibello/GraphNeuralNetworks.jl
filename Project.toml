@@ -3,12 +3,6 @@ uuid = "cffab07f-9bc2-4db1-8861-388f63bf7694"
 authors = ["Carlo Lucibello and contributors"]
 version = "0.6.14"
 
-[weakdeps]
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
-
-[extensions]
-GraphNeuralNetworksCUDAExt = "CUDA"
-
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
@@ -28,6 +22,12 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
+[weakdeps]
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+
+[extensions]
+GraphNeuralNetworksCUDAExt = "CUDA"
+
 [compat]
 Adapt = "3"
 CUDA = "4"
@@ -43,14 +43,15 @@ MacroTools = "0.5"
 NNlib = "0.9"
 NearestNeighbors = "0.4"
 Reexport = "1"
+Statistics = "1"
 StatsBase = "0.34"
 cuDNN = "1"
 julia = "1.9"
 
 [extras]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-ChainRulesTestUtils = "cdddcdb0-9152-4a09-a978-84456f9df70a"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+ChainRulesTestUtils = "cdddcdb0-9152-4a09-a978-84456f9df70a"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
 InlineStrings = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
@@ -60,6 +61,4 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 cuDNN = "02a925ec-e4fe-4b08-9a7e-0d78e3d38ccd"
 
 [targets]
-test = ["Test", "Adapt", "DataFrames", "InlineStrings", "Zygote", 
-        "FiniteDifferences", "ChainRulesTestUtils", "MLDatasets",
-        "CUDA", "cuDNN"]
+test = ["Test", "Adapt", "DataFrames", "InlineStrings", "Zygote", "FiniteDifferences", "ChainRulesTestUtils", "MLDatasets", "CUDA", "cuDNN"]
