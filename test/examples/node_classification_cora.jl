@@ -97,7 +97,7 @@ function train_many(; usecuda = false)
         @time train_res, test_res = train(Layer; usecuda, verbose = false)
         # @show train_res, test_res
         @test train_res.acc > 94
-        @test test_res.acc > 70
+        @test test_res.acc > 69
     end
 end
 

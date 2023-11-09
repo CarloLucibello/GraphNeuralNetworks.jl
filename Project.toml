@@ -30,7 +30,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 Adapt = "3"
-CUDA = "4"
+CUDA = "4, 5"
 ChainRulesCore = "1"
 DataStructures = "0.18"
 Flux = "0.14"
