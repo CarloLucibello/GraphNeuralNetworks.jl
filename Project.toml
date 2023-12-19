@@ -29,7 +29,7 @@ CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 GraphNeuralNetworksCUDAExt = "CUDA"
 
 [compat]
-Adapt = "3"
+Adapt = "3, 4"
 CUDA = "4, 5"
 ChainRulesCore = "1"
 DataStructures = "0.18"
