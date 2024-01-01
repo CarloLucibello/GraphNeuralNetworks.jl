@@ -41,19 +41,20 @@ test_graphs = [g1, g_single_vertex]
     l = GCNConv(in_channel => out_channel, add_self_loops = false)
     test_layer(l, g1, rtol = RTOL_HIGH, outsize = (out_channel, g1.num_nodes))
 
-    @testset "edge weights" begin
+    @testset "edge weights & custom normalization" begin
         s = [2, 3, 1, 3, 1, 2]
         t = [1, 1, 2, 2, 3, 3]
         w = T[1, 2, 3, 4, 5, 6]
         g = GNNGraph((s, t, w), ndata = ones(T, 1, 3), graph_type = GRAPH_T)
         x = g.ndata.x
+        custom_norm_fn(d) = 1 ./ sqrt.(d)  
         l = GCNConv(1 => 1, add_self_loops = false, use_edge_weight = true)
         l.weight .= 1
         d = degree(g, dir = :in, edge_weight = true)
         y = l(g, x)
         @test y[1, 1] ≈ w[1] / √(d[1] * d[2]) + w[2] / √(d[1] * d[3])
         @test y[1, 2] ≈ w[3] / √(d[2] * d[1]) + w[4] / √(d[2] * d[3])
-        @test y ≈ l(g, x, w)
+        @test y ≈ l(g, x, w, custom_norm_fn)
 
         # test gradient with respect to edge weights
         w = rand(T, 6)
