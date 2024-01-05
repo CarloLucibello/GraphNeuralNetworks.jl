@@ -38,6 +38,9 @@ Takes as input a graph `g`,ca node feature matrix `x` of size `[in, num_nodes]`,
 and optionally an edge weight vector. Returns a node feature matrix of size 
 `[out, num_nodes]`.
 
+The `norm_fn` parameter allows for custom normalization of the graph convolution operation by passing a function as argument. 
+By default, it computes ``\frac{1}{\sqrt{d}}`` i.e the inverse square root of the degree (`d`) of each node in the graph. 
+
 # Examples
 
 ```julia
