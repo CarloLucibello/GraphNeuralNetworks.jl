@@ -127,7 +127,7 @@ function (l::GCNConv)(g::GNNGraph,
     else
         d = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
     end
-    c = normalization_fn(d)
+    c = norm_fn(d)
     x = x .* c'
     if edge_weight !== nothing
         x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
@@ -144,9 +144,9 @@ function (l::GCNConv)(g::GNNGraph,
 end
 
 function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
-                      edge_weight::AbstractVector, normalization_fn::Function)
+                      edge_weight::AbstractVector, norm_fn::Function)
     g = GNNGraph(edge_index(g)...; g.num_nodes)  # convert to COO
-    return l(g, x, edge_weight, normalization_fn)
+    return l(g, x, edge_weight, norm_fn)
 end
 
 function Base.show(io::IO, l::GCNConv)
