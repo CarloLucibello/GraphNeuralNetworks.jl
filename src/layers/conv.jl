@@ -100,7 +100,7 @@ check_gcnconv_input(g::GNNGraph, edge_weight::Nothing) = nothing
 function (l::GCNConv)(g::GNNGraph, 
                       x::AbstractMatrix{T},
                       edge_weight::EW = nothing,
-                      normalization_fn::Function = (d) -> 1 ./ sqrt.(d)  
+                      norm_fn::Function = d -> 1 ./ sqrt.(d)  
                       ) where {T, EW <: Union{Nothing, AbstractVector}}
 
     check_gcnconv_input(g, edge_weight)
