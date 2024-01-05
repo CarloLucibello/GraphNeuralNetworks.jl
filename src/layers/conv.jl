@@ -32,7 +32,7 @@ and optionally an edge weight vector.
 
 # Forward
 
-    (::GCNConv)(g::GNNGraph, x::AbstractMatrix, edge_weight = nothing, normalization_fn::Function = (d) -> 1 ./ sqrt.(d)) -> AbstractMatrix
+    (::GCNConv)(g::GNNGraph, x::AbstractMatrix, edge_weight = nothing, norm_fn::Function = d -> 1 ./ sqrt.(d)) -> AbstractMatrix
 
 Takes as input a graph `g`,ca node feature matrix `x` of size `[in, num_nodes]`,
 and optionally an edge weight vector. Returns a node feature matrix of size 
