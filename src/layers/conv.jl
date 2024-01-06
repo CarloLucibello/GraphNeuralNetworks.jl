@@ -32,11 +32,14 @@ and optionally an edge weight vector.
 
 # Forward
 
-    (::GCNConv)(g::GNNGraph, x::AbstractMatrix, edge_weight = nothing) -> AbstractMatrix
+    (::GCNConv)(g::GNNGraph, x::AbstractMatrix, edge_weight = nothing, norm_fn::Function = d -> 1 ./ sqrt.(d)) -> AbstractMatrix
 
 Takes as input a graph `g`,ca node feature matrix `x` of size `[in, num_nodes]`,
 and optionally an edge weight vector. Returns a node feature matrix of size 
 `[out, num_nodes]`.
+
+The `norm_fn` parameter allows for custom normalization of the graph convolution operation by passing a function as argument. 
+By default, it computes ``\frac{1}{\sqrt{d}}`` i.e the inverse square root of the degree (`d`) of each node in the graph. 
 
 # Examples
 
@@ -53,9 +56,10 @@ l = GCNConv(3 => 5)
 # forward pass
 y = l(g, x)       # size:  5 × num_nodes
 
-# convolution with edge weights
+# convolution with edge weights and custom normalization function
 w = [1.1, 0.1, 2.3, 0.5]
-y = l(g, x, w)
+custom_norm_fn(d) = 1 ./ sqrt.(d + 1)  # Custom normalization function
+y = l(g, x, w, custom_norm_fn)
 
 # Edge weights can also be embedded in the graph.
 g = GNNGraph(s, t, w)
@@ -98,7 +102,8 @@ check_gcnconv_input(g::GNNGraph, edge_weight::Nothing) = nothing
 
 function (l::GCNConv)(g::GNNGraph, 
                       x::AbstractMatrix{T},
-                      edge_weight::EW = nothing
+                      edge_weight::EW = nothing,
+                      norm_fn::Function = d -> 1 ./ sqrt.(d)  
                       ) where {T, EW <: Union{Nothing, AbstractVector}}
 
     check_gcnconv_input(g, edge_weight)
@@ -122,7 +127,7 @@ function (l::GCNConv)(g::GNNGraph,
     else
         d = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
     end
-    c = 1 ./ sqrt.(d)
+    c = norm_fn(d)
     x = x .* c'
     if edge_weight !== nothing
         x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
@@ -139,9 +144,9 @@ function (l::GCNConv)(g::GNNGraph,
 end
 
 function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
-                      edge_weight::AbstractVector)
+                      edge_weight::AbstractVector, norm_fn::Function)
     g = GNNGraph(edge_index(g)...; g.num_nodes)  # convert to COO
-    return l(g, x, edge_weight)
+    return l(g, x, edge_weight, norm_fn)
 end
 
 function Base.show(io::IO, l::GCNConv)
