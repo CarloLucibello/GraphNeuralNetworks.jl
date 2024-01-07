@@ -64,12 +64,10 @@ function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}, edge_t::EType) where 
     if haskey(g.graph, edge_t)
         x = g.graph[edge_t]
         s, t = x[1:2]
-        @info "had key... $T $(typeof(s))"
         nodes = convert(typeof(s), [1:n;])
         s = [s; nodes]
         t = [t; nodes]
     else
-        @info "did not have key... $T"
         nodes = convert(T, [1:n;])
         s = nodes
         t = nodes
