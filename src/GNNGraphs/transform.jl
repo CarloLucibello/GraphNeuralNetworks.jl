@@ -47,8 +47,10 @@ but also adding self-loops of the specified type, edge_t
 Nodes with already existing self-loops of type edge_t will obtain a second self-loop of type edge_t.
 
 If the graphs has edge weights for edges of type edge_t, the new edges will have weight 1.
+
+If no edges of type edge_t exist, or all existing edges have no weight, then all new self loops will have no weight.
 """
-function add_self_loops(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
+function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}, edge_t::EType) where {T <: AbstractVector{<:Integer}, V}
     function get_edge_weight_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
         get(g.graph, edge_t, (nothing, nothing, nothing))[3]
     end
@@ -59,20 +61,22 @@ function add_self_loops(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
     
     n = get(g.num_nodes, src_t, 0)
 
-    # By avoiding using haskey, this only calls ht_keyindex once instead of twice
-    if (x = get(g.graph, edge_t, nothing)) !== nothing
+    if haskey(g.graph, edge_t)
+        x = g.graph[edge_t]
         s, t = x[1:2]
+        @info "had key... $T $(typeof(s))"
         nodes = convert(typeof(s), [1:n;])
         s = [s; nodes]
         t = [t; nodes]
     else
-        nodes = [1:n;]
+        @info "did not have key... $T"
+        nodes = convert(T, [1:n;])
         s = nodes
         t = nodes
     end
 
     graph = g.graph |> copy
-    ew = get_edge_weight_nullable(g, edge_t)
+    ew = get(g.graph, edge_t, (nothing, nothing, nothing))[3]
 
     if ew !== nothing
         ew = [ew; fill!(similar(ew, n), 1)]
