@@ -100,6 +100,8 @@ end
 GNNHeteroGraph(data; kws...) = GNNHeteroGraph(Dict(data); kws...)
 GNNHeteroGraph(data::Pair...; kws...) = GNNHeteroGraph(Dict(data...); kws...)
 
+GNNHeteroGraph() = GNNHeteroGraph(Dict{Tuple{Symbol,Symbol,Symbol}, Any}())
+
 function GNNHeteroGraph(data::Dict; kws...)
     all(k -> k isa EType, keys(data)) || throw(ArgumentError("Keys of data must be tuples of the form `(source_type, edge_type, target_type)`"))
     return GNNHeteroGraph(Dict([k => v for (k, v) in pairs(data)]...); kws...)
@@ -135,10 +137,17 @@ function GNNHeteroGraph(data::EDict;
     num_graphs = !isnothing(graph_indicator) ?
                  maximum([maximum(gi) for gi in values(graph_indicator)]) : 1
 
-    ndata = normalize_heterographdata(ndata, default_name = :x, ns = num_nodes)
-    edata = normalize_heterographdata(edata, default_name = :e, ns = num_edges,
-                                      duplicate_if_needed = true)
-    gdata = normalize_graphdata(gdata, default_name = :u, n = num_graphs)
+
+    if length(keys(graph)) == 0
+        ndata = Dict{Symbol, DataStore}()
+        edata = Dict{Tuple{Symbol, Symbol, Symbol}, DataStore}()
+        gdata = DataStore()
+    else
+        ndata = normalize_heterographdata(ndata, default_name = :x, ns = num_nodes)
+        edata = normalize_heterographdata(edata, default_name = :e, ns = num_edges,
+                                          duplicate_if_needed = true)
+        gdata = normalize_graphdata(gdata, default_name = :u, n = num_graphs)
+    end
 
     return GNNHeteroGraph(graph,
                           num_nodes, num_edges, num_graphs,
