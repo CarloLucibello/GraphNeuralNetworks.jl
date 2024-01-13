@@ -4,7 +4,7 @@ function to_coo(data::EDict; num_nodes = nothing, kws...)
     graph = EDict{COO_T}()
     _num_nodes = NDict{Int}()
     num_edges = EDict{Int}()
-    if length(keys(data)) != 0
+    if !isempty(data)
         for k in keys(data)
             d = data[k]
             @assert d isa Tuple
