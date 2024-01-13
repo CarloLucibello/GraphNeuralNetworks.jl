@@ -12,8 +12,13 @@ the type [`GNNHeteroGraph`](@ref).
 
 ## Creating a Heterograph
 
-A heterograph can be created by passing pairs `edge_type => data` to the constructor.
+A heterograph can be created empty or by passing pairs `edge_type => data` to the constructor.
 ```jldoctest
+julia> g = GNNHeteroGraph()
+GNNHeteroGraph:
+  num_nodes: Dict()
+  num_edges: Dict()
+  
 julia> g = GNNHeteroGraph((:user, :like, :actor) => ([1,2,2,3], [1,3,2,9]),
                           (:user, :rate, :movie) => ([1,1,2,3], [7,13,5,7]))
 GNNHeteroGraph:
