@@ -1,4 +1,14 @@
 
+
+@testset "Empty constructor" begin
+    g = GNNHeteroGraph()
+    @test isempty(g.num_nodes)
+    g = add_edges(g, (:user, :like, :actor) => ([1,2,3,3,3], [3,5,1,9,4]))
+    @test g.num_nodes[:user] == 3
+    @test g.num_nodes[:actor] == 9
+    @test g.num_edges[(:user, :like, :actor)] == 5
+end
+
 @testset "Constructor from pairs" begin
     hg = GNNHeteroGraph((:A, :e1, :B) => ([1,2,3,4], [3,2,1,5]))
     @test hg.num_nodes == Dict(:A => 4, :B => 5)
