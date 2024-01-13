@@ -12,7 +12,7 @@ the type [`GNNHeteroGraph`](@ref).
 
 ## Creating a Heterograph
 
-A heterograph can be created using empty constructor or by passing pairs `edge_type => data` to the constructor.
+A heterograph can be created empty or by passing pairs `edge_type => data` to the constructor.
 ```jldoctest
 julia> g = GNNHeteroGraph()
 GNNHeteroGraph:
