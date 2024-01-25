@@ -159,6 +159,12 @@ end
 
                 @test grad ≈ ngrad
             end
+
+            @testset "heterognn" begin
+                g = GNNHeteroGraph((:A, :to, :B) => ([1,1,2,3], [7,13,5,7]))
+                @test length(degree(g, (:user, :rate, :movie), dir = :out)) == 3
+                @test length(degree(g, (:user, :rate, :movie), dir = :in)) == 13
+            end
         end
     end
 end

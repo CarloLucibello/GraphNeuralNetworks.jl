@@ -273,6 +273,15 @@ or a vector.
                 Default `true`.
 
 """
+function Graphs.degree(g::GNNHeteroGraph, edge::Tuple{Symbol, Symbol, Symbol}; dir = :in)   
+    coo_rep = edge_index(g, edge)
+    if dir == :in
+        return [count(==(i), coo_rep[2]) for i in 1:g.num_nodes[edge[3]]]
+    elseif dir == :out
+        return [count(==(i), coo_rep[1]) for i in 1:g.num_nodes[edge[1]]]
+    end
+end
+
 function Graphs.degree(g::GNNGraph{<:COO_T}, T::TT = nothing; dir = :out,
                        edge_weight = true) where {
                                                   TT <: Union{Nothing, Type{<:Number}}}
