@@ -194,12 +194,10 @@ end
 
 Flux.@functor TemporalGraphConv
 
-function (tgconv::TemporalGraphConv)(tsg::TemporalSnapshotsGNNGraph)
-    return TemporalSnapshotsGNNGraph(
-        tsg.num_nodes,
+function (tgc::TemporalGraphConv)(tsg::TemporalSnapshotsGNNGraph)
+    return TemporalSnapshotsGNNGraph(tsg.num_nodes,
         tsg.num_edges,
         tsg.num_snapshots,
-        tgconv.layer.(tsg.snapshots),
+        tgc.layer.(tsg.snapshots),
         tsg.tgdata)
 end
-
