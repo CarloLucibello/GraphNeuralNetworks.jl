@@ -41,7 +41,7 @@ TemporalSnapshotsGNNGraph:
   num_snapshots: 2
 ```
 
-See [`rand_temporal_radius_graph`](@ref) and ['rand_temporal_hyperbolic_graph'](@ref) for generating random temporal graphs. 
+See [`rand_temporal_radius_graph`](@ref) and [`rand_temporal_hyperbolic_graph`](@ref) for generating random temporal graphs. 
 
 ```jldoctest
 julia> tg = rand_temporal_radius_graph(10, 3, 0.1, 0.5)
