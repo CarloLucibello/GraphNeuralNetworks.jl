@@ -244,9 +244,9 @@ end
 # move temporal graph to gpu
 function Flux.gpu(tsg::TemporalSnapshotsGNNGraph)
     return TemporalSnapshotsGNNGraph(
-        gpu(tsg.num_nodes),
-        gpu(tsg.num_edges),
+        Flux.gpu(tsg.num_nodes),
+        Flux.gpu(tsg.num_edges),
         tsg.num_snapshots,
-        gpu(tsg.snapshots),
-        gpu(tsg.tgdata))
+        Flux.gpu(tsg.snapshots),
+        Flux.gpu(tsg.tgdata))
 end
