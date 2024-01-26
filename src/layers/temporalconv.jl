@@ -3,8 +3,8 @@ function (m::Flux.Recur)(g::GNNGraph, x)
     m.state, y = m.cell(m.state, g, x)
     return y
 end
-
-function (m::Flux.Recur)(g::GNNGraph, x::AbstractArray{T, 3}) where {T}
+    
+function (m::Flux.Recur)(g::GNNGraph, x::AbstractArray{T, 3}) where T
     h = [m(g, x_t) for x_t in Flux.eachlastdim(x)]
     sze = size(h[1])
     reshape(reduce(hcat, h), sze[1], sze[2], length(h))
@@ -13,7 +13,7 @@ end
 struct TGCNCell <: GNNLayer
     conv::GCNConv
     gru::Flux.GRUv3Cell
-    state0::Any
+    state0
     in::Int
     out::Int
 end
@@ -21,17 +21,17 @@ end
 Flux.@functor TGCNCell
 
 function TGCNCell(ch::Pair{Int, Int};
-        bias::Bool = true,
-        init = Flux.glorot_uniform,
-        init_state = Flux.zeros32,
-        add_self_loops = false,
-        use_edge_weight = true)
+                  bias::Bool = true,
+                  init = Flux.glorot_uniform,
+                  init_state = Flux.zeros32,
+                  add_self_loops = false,
+                  use_edge_weight = true)
     in, out = ch
     conv = GCNConv(in => out, sigmoid; init, bias, add_self_loops,
-        use_edge_weight)
+                   use_edge_weight)
     gru = Flux.GRUv3Cell(out, out)
-    state0 = init_state(out, 1)
-    return TGCNCell(conv, gru, state0, in, out)
+    state0 = init_state(out,1)
+    return TGCNCell(conv, gru, state0, in,out)
 end
 
 function (tgcn::TGCNCell)(h, g::GNNGraph, x::AbstractArray)
@@ -103,6 +103,7 @@ Flux.Recur(tgcn::TGCNCell) = Flux.Recur(tgcn, tgcn.state0)
 _applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph, x) = l(g, x)
 _applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph) = l(g)
 
+
 """
     A3TGCN(in => out; [bias, init, init_state, add_self_loops, use_edge_weight])
 
@@ -158,11 +159,11 @@ end
 Flux.@functor A3TGCN
 
 function A3TGCN(ch::Pair{Int, Int},
-        bias::Bool = true,
-        init = Flux.glorot_uniform,
-        init_state = Flux.zeros32,
-        add_self_loops = false,
-        use_edge_weight = true)
+                  bias::Bool = true,
+                  init = Flux.glorot_uniform,
+                  init_state = Flux.zeros32,
+                  add_self_loops = false,
+                  use_edge_weight = true)
     in, out = ch
     tgcn = TGCN(in => out; bias, init, init_state, add_self_loops, use_edge_weight)
     dense1 = Dense(out, out)
@@ -175,7 +176,7 @@ function (a3tgcn::A3TGCN)(g::GNNGraph, x::AbstractArray)
     e = a3tgcn.dense1(h)
     e = a3tgcn.dense2(e)
     a = softmax(e, dims = 3)
-    c = sum(a .* h, dims = 3)
+    c = sum(a .* h , dims = 3)
     if length(size(c)) == 3
         c = dropdims(c, dims = 3)
     end
@@ -184,20 +185,4 @@ end
 
 function Base.show(io::IO, a3tgcn::A3TGCN)
     print(io, "A3TGCN($(a3tgcn.in) => $(a3tgcn.out))")
-end
-
-# struct to apply convolutional layers to each snapshot of the temporal graph
-
-struct TemporalGraphConv
-    layer::GNNLayer
-end
-
-Flux.@functor TemporalGraphConv
-
-function (tgc::TemporalGraphConv)(tsg::TemporalSnapshotsGNNGraph)
-    return TemporalSnapshotsGNNGraph(tsg.num_nodes,
-        tsg.num_edges,
-        tsg.num_snapshots,
-        tgc.layer.(tsg.snapshots),
-        tsg.tgdata)
 end
