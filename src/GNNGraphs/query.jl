@@ -384,8 +384,7 @@ given `edge`.
 - `g`: A graph.
 - `edge`: An edge for calculating degree.
 - `T`: Element type of the returned vector. If `nothing`, is
-       chosen based on the graph type and will be an integer
-       if `edge_weight=false`. Default `nothing`.
+       chosen based on the graph type. Default `nothing`.
 - `dir`: For `dir=:out` the degree of a node is counted based on the outgoing edges.
          For `dir=:in`, the ingoing edges are used. If `dir=:both` we have the sum of the two.
 
