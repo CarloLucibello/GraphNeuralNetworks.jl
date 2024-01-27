@@ -966,6 +966,7 @@ function (l::CGConv)(g::AbstractGNNGraph, x,
     return m
 end
 
+
 function message(l::CGConv, xi, xj, e)
     if e !== nothing
         z = vcat(xi, xj, e)
@@ -1026,28 +1027,17 @@ function AGNNConv(; init_beta = 1.0f0, add_self_loops = true, trainable = true)
     AGNNConv([init_beta], add_self_loops, trainable)
 end
 
-function (l::AGNNConv)(g::AbstractGNNGraph, x)
-    
+function (l::AGNNConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-
-    xj, xi = expand_srcdst(g, x)
-
     if l.add_self_loops
-        if g isa GNNHeteroGraph
-            for edge_t in g.etypes
-                src_t, _, tgt_t = edge_t
-                src_t === tgt_t && add_self_loops(g, edge_t) 
-            end
-        else
-            g = add_self_loops(g)
-        end
+        g = add_self_loops(g)
     end
 
-    xn = xi ./ sqrt.(sum(xi .^ 2, dims = 1))
+    xn = x ./ sqrt.(sum(x .^ 2, dims = 1))
     cos_dist = apply_edges(xi_dot_xj, g, xi = xn, xj = xn)
     α = softmax_edge_neighbors(g, l.β .* cos_dist)
 
-    x = propagate(g, +; xj = xj, e = α) do xi, xj, α
+    x = propagate(g, +; xj = x, e = α) do xi, xj, α
         α .* xj 
     end
 
