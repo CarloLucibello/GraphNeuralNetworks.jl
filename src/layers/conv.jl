@@ -637,10 +637,14 @@ end
 
 EdgeConv(nn; aggr = max) = EdgeConv(nn, aggr)
 
-function (l::EdgeConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::EdgeConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
+    xj, xi = expand_srcdst(g, x)
+
     message(l, xi, xj, e) = l.nn(vcat(xi, xj .- xi))
-    x = propagate(message, g, l.aggr, l, xi = x, xj = x)
+
+    println("l ", l)
+    x = propagate(message, g, l.aggr, l, xi = xi, xj = xj, e = nothing)
     return x
 end
 
