@@ -110,11 +110,6 @@ function (l::GCNConv)(g::AbstractGNNGraph,
 
     xj, xi = expand_srcdst(g, x)
 
-    println("x ", x)
-
-    println("size x at the beginning: ", size(xj))
-    println("size xi at the beginning: ", size(xi))
-
     if l.add_self_loops
         if g isa GNNHeteroGraph
             for edge_t in g.etypes
@@ -133,13 +128,14 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     end
     Dout, Din = size(l.weight)
 
-    # if Dout < Din
-    #     # multiply before convolution if it is more convenient, otherwise multiply after
-    #     x = l.weight * xi
-    #     println("x size after mult with l weight: ", size(x))
-    # end
     if g isa GNNHeteroGraph
-        d = degree(g, (:B, :to, :A); dir = :in)
+        # not the best practice but this loop is 
+        # a temporary mechanism to insure matching dimensions 
+        # until it'll be possible to pass edge here
+        for e in g.etypes |> collect
+            d = degree(g, e; dir = :in)
+            length(d) == size(xi[2]) ? break : continue 
+        end
     else
         if edge_weight !== nothing
             d = degree(g; dir = :in, edge_weight)
@@ -148,8 +144,6 @@ function (l::GCNConv)(g::AbstractGNNGraph,
         end
     end
     c = norm_fn(d)
-    # x = x .* c'
-    #println("x size after mult with d/c: ", size(x))
     if edge_weight !== nothing
         x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
     elseif l.use_edge_weight
@@ -157,13 +151,8 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     else
         x = propagate(copy_xj, g, +, xj = xj)
     end
-    println("x size after propagate: ", size(x))
     x = x .* c'
-    println("x size after mult with d/c: ", size(x))
-    #if Dout >= Din
     x = l.weight * x
-    #end
-    println("x size after adding l bias: ", size(x .+ l.bias))
     return l.σ.(x .+ l.bias)    
 end
 
