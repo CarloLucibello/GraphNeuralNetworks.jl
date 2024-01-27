@@ -88,28 +88,42 @@ function GCNConv(ch::Pair{Int, Int}, σ = identity;
     GCNConv(W, b, σ, add_self_loops, use_edge_weight)
 end
 
-check_gcnconv_input(g::GNNGraph{<:ADJMAT_T}, edge_weight::AbstractVector) = 
+check_gcnconv_input(g::AbstractGNNGraph{<:ADJMAT_T}, edge_weight::AbstractVector) = 
     throw(ArgumentError("Providing external edge_weight is not yet supported for adjacency matrix graphs"))
 
-function check_gcnconv_input(g::GNNGraph, edge_weight::AbstractVector)
+function check_gcnconv_input(g::AbstractGNNGraph, edge_weight::AbstractVector)
     if length(edge_weight) !== g.num_edges 
         throw(ArgumentError("Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"))
     end
 end
 
-check_gcnconv_input(g::GNNGraph, edge_weight::Nothing) = nothing
+check_gcnconv_input(g::AbstractGNNGraph, edge_weight::Nothing) = nothing
 
 
-function (l::GCNConv)(g::GNNGraph, 
-                      x::AbstractMatrix{T},
+function (l::GCNConv)(g::AbstractGNNGraph, 
+                      x,
                       edge_weight::EW = nothing,
                       norm_fn::Function = d -> 1 ./ sqrt.(d)  
-                      ) where {T, EW <: Union{Nothing, AbstractVector}}
+                      ) where {EW <: Union{Nothing, AbstractVector}}
 
     check_gcnconv_input(g, edge_weight)
 
+    xj, xi = expand_srcdst(g, x)
+
+    println("x ", x)
+
+    println("size x at the beginning: ", size(xj))
+    println("size xi at the beginning: ", size(xi))
+
     if l.add_self_loops
-        g = add_self_loops(g)
+        if g isa GNNHeteroGraph
+            for edge_t in g.etypes
+                src_t, _, tgt_t = edge_t
+                src_t === tgt_t && add_self_loops(g, edge_t) 
+            end
+        else
+            g = add_self_loops(g)
+        end
         if edge_weight !== nothing
             # Pad weights with ones
             # TODO for ADJMAT_T the new edges are not generally at the end
@@ -118,29 +132,39 @@ function (l::GCNConv)(g::GNNGraph,
         end
     end
     Dout, Din = size(l.weight)
-    if Dout < Din
-        # multiply before convolution if it is more convenient, otherwise multiply after
-        x = l.weight * x
-    end
-    if edge_weight !== nothing
-        d = degree(g, T; dir = :in, edge_weight)
+
+    # if Dout < Din
+    #     # multiply before convolution if it is more convenient, otherwise multiply after
+    #     x = l.weight * xi
+    #     println("x size after mult with l weight: ", size(x))
+    # end
+    if g isa GNNHeteroGraph
+        d = degree(g, (:B, :to, :A); dir = :in)
     else
-        d = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
+        if edge_weight !== nothing
+            d = degree(g; dir = :in, edge_weight)
+        else
+            d = degree(g; dir = :in, edge_weight = l.use_edge_weight)
+        end
     end
     c = norm_fn(d)
-    x = x .* c'
+    # x = x .* c'
+    #println("x size after mult with d/c: ", size(x))
     if edge_weight !== nothing
-        x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
+        x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
     elseif l.use_edge_weight
-        x = propagate(w_mul_xj, g, +, xj = x)
+        x = propagate(w_mul_xj, g, +, xj = xj)
     else
-        x = propagate(copy_xj, g, +, xj = x)
+        x = propagate(copy_xj, g, +, xj = xj)
     end
+    println("x size after propagate: ", size(x))
     x = x .* c'
-    if Dout >= Din
-        x = l.weight * x
-    end
-    return l.σ.(x .+ l.bias)
+    println("x size after mult with d/c: ", size(x))
+    #if Dout >= Din
+    x = l.weight * x
+    #end
+    println("x size after adding l bias: ", size(x .+ l.bias))
+    return l.σ.(x .+ l.bias)    
 end
 
 function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
