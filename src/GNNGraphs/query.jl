@@ -273,15 +273,6 @@ or a vector.
                 Default `true`.
 
 """
-function Graphs.degree(g::GNNHeteroGraph, edge::Tuple{Symbol, Symbol, Symbol}; dir = :in)   
-    coo_rep = edge_index(g, edge)
-    if dir == :in
-        return [count(==(i), coo_rep[2]) for i in 1:g.num_nodes[edge[3]]]
-    elseif dir == :out
-        return [count(==(i), coo_rep[1]) for i in 1:g.num_nodes[edge[1]]]
-    end
-end
-
 function Graphs.degree(g::GNNGraph{<:COO_T}, T::TT = nothing; dir = :out,
                        edge_weight = true) where {
                                                   TT <: Union{Nothing, Type{<:Number}}}
@@ -382,6 +373,39 @@ function ChainRulesCore.rrule(::typeof(_degree), A::ADJMAT_T, T, dir, edge_weigh
     end
 end
 
+"""
+    degree(g::GNNHeteroGraph, edge::Tuple{Symbol, Symbol, Symbol}; dir = :in) 
+
+Return a vector containing the degrees of the nodes in `g` GNNHeteroGraph
+given `edge`.
+
+# Arguments
+
+- `g`: A graph.
+- `edge`: An edge for calculating degree.
+- `T`: Element type of the returned vector. If `nothing`, is
+       chosen based on the graph type and will be an integer
+       if `edge_weight=false`. Default `nothing`.
+- `dir`: For `dir=:out` the degree of a node is counted based on the outgoing edges.
+         For `dir=:in`, the ingoing edges are used. If `dir=:both` we have the sum of the two.
+
+"""
+function Graphs.degree(g::GNNHeteroGraph, edge::Tuple{Symbol, Symbol, Symbol}, 
+                       T::TT = nothing; dir = :in) where {
+                                                         TT <: Union{Nothing, Type{<:Number}}}  
+
+    s, t = edge_index(g, edge)
+
+    T = if isnothing(T)
+            eltype(s)
+        else 
+            T
+        end
+
+        n_type = dir == :in ? g.ntypes[2] : g.ntypes[1]
+
+    return _degree((s, t), T, dir, nothing, g.num_nodes[n_type])
+end
 
 """
     has_isolated_nodes(g::GNNGraph; dir=:out)

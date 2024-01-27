@@ -160,10 +160,11 @@ end
                 @test grad ≈ ngrad
             end
 
-            @testset "heterognn" begin
+            @testset "heterognn, degree" begin
                 g = GNNHeteroGraph((:A, :to, :B) => ([1,1,2,3], [7,13,5,7]))
-                @test length(degree(g, (:user, :rate, :movie), dir = :out)) == 3
-                @test length(degree(g, (:user, :rate, :movie), dir = :in)) == 13
+                @test degree(g, (:A, :to, :B), dir = :out) == [2, 1, 1]
+                @test degree(g, (:A, :to, :B), dir = :in) == [0,  0,  0,  0,  1,  0,  2,  0,  0,  0,  0,  0,  1]
+                @test degree(g, (:A, :to, :B)) == [0,  0,  0,  0,  1,  0,  2,  0,  0,  0,  0,  0,  1]
             end
         end
     end
