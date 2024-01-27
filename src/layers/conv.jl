@@ -944,14 +944,16 @@ function CGConv(ch::Pair{NTuple{2, Int}, Int}, act = identity; residual = false,
     return CGConv(ch, dense_f, dense_s, residual)
 end
 
-function (l::CGConv)(g::GNNGraph, x::AbstractMatrix,
+function (l::CGConv)(g::AbstractGNNGraph, x,
                      e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
+    xj, xi = expand_srcdst(g, x)
+    
     if e !== nothing
         check_num_edges(g, e)
     end
 
-    m = propagate(message, g, +, l, xi = x, xj = x, e = e)
+    m = propagate(message, g, +, l, xi = xi, xj = xj, e = e)
 
     if l.residual
         if size(x, 1) == size(m, 1)
@@ -1024,17 +1026,28 @@ function AGNNConv(; init_beta = 1.0f0, add_self_loops = true, trainable = true)
     AGNNConv([init_beta], add_self_loops, trainable)
 end
 
-function (l::AGNNConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::AGNNConv)(g::AbstractGNNGraph, x)
+    
     check_num_nodes(g, x)
+
+    xj, xi = expand_srcdst(g, x)
+
     if l.add_self_loops
-        g = add_self_loops(g)
+        if g isa GNNHeteroGraph
+            for edge_t in g.etypes
+                src_t, _, tgt_t = edge_t
+                src_t === tgt_t && add_self_loops(g, edge_t) 
+            end
+        else
+            g = add_self_loops(g)
+        end
     end
 
-    xn = x ./ sqrt.(sum(x .^ 2, dims = 1))
+    xn = xi ./ sqrt.(sum(xi .^ 2, dims = 1))
     cos_dist = apply_edges(xi_dot_xj, g, xi = xn, xj = xn)
     α = softmax_edge_neighbors(g, l.β .* cos_dist)
 
-    x = propagate(g, +; xj = x, e = α) do xi, xj, α
+    x = propagate(g, +; xj = xj, e = α) do xi, xj, α
         α .* xj 
     end
 
