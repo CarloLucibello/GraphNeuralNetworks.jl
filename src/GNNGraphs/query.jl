@@ -342,7 +342,7 @@ function Graphs.degree(g::GNNHeteroGraph, edge::Tuple{Symbol, Symbol, Symbol},
             T
         end
 
-        n_type = dir == :in ? g.ntypes[2] : g.ntypes[1]
+   n_type = dir == :in ? g.ntypes[2] : g.ntypes[1]
 
     return _degree((s, t), T, dir, nothing, g.num_nodes[n_type])
 end
