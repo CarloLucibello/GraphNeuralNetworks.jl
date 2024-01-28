@@ -332,7 +332,7 @@ given `edge_type`.
 
 """
 function Graphs.degree(g::GNNHeteroGraph, edge::Tuple{Symbol, Symbol, Symbol}, 
-                       T::TT = nothing; dir = :in) where {
+                       T::TT = nothing; dir = :out) where {
                                                          TT <: Union{Nothing, Type{<:Number}}}  
 
     s, t = edge_index(g, edge)
