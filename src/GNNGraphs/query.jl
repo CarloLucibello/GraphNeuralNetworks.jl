@@ -315,7 +315,7 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT = nothing; dir = :out,
 end
 
 """
-    degree(g::GNNHeteroGraph, edge::Tuple{Symbol, Symbol, Symbol}; dir = :in) 
+    degree(g::GNNHeteroGraph, edge_type::EType; dir = :in) 
 
 Return a vector containing the degrees of the nodes in `g` GNNHeteroGraph
 given `edge`.
