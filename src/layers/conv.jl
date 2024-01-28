@@ -944,14 +944,16 @@ function CGConv(ch::Pair{NTuple{2, Int}, Int}, act = identity; residual = false,
     return CGConv(ch, dense_f, dense_s, residual)
 end
 
-function (l::CGConv)(g::GNNGraph, x::AbstractMatrix,
+function (l::CGConv)(g::AbstractGNNGraph, x,
                      e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
+    xj, xi = expand_srcdst(g, x)
+    
     if e !== nothing
         check_num_edges(g, e)
     end
 
-    m = propagate(message, g, +, l, xi = x, xj = x, e = e)
+    m = propagate(message, g, +, l, xi = xi, xj = xj, e = e)
 
     if l.residual
         if size(x, 1) == size(m, 1)
@@ -963,6 +965,7 @@ function (l::CGConv)(g::GNNGraph, x::AbstractMatrix,
 
     return m
 end
+
 
 function message(l::CGConv, xi, xj, e)
     if e !== nothing

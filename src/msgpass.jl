@@ -87,11 +87,11 @@ end
 # https://github.com/JuliaLang/julia/issues/15276
 ## and zygote issues
 # https://github.com/FluxML/Zygote.jl/issues/1317
-function propagate(f, g::GNNGraph, aggr, l::GNNLayer; xi = nothing, xj = nothing,
+function propagate(f, g::AbstractGNNGraph, aggr, l::GNNLayer; xi = nothing, xj = nothing,
                    e = nothing)
     propagate((xi, xj, e) -> f(l, xi, xj, e), g, aggr, xi, xj, e)
 end
-function propagate(f, g::GNNGraph, aggr, l::GNNLayer, xi, xj, e = nothing)
+function propagate(f, g::AbstractGNNGraph, aggr, l::GNNLayer, xi, xj, e = nothing)
     propagate((xi, xj, e) -> f(l, xi, xj, e), g, aggr, xi, xj, e)
 end
 
