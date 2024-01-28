@@ -92,7 +92,7 @@
         @test expected ≈ output
     end
 
-    @testset "EdgeConv" begin
+    @testset "CGConv" begin
         g = rand_bipartite_heterograph((2,3), 6)
         x = (A = rand(Float32, 4,2), B = rand(Float32, 4, 3))
         layers = HeteroGraphConv( (:A, :to, :B) => CGConv(4 => 2, relu),
@@ -100,9 +100,8 @@
         y = layers(g, x); 
         @test size(y.A) == (2,2) && size(y.B) == (2,3)
     end
-end
 
-@testset "EdgeConv" begin
+    @testset "EdgeConv" begin
         g = rand_bipartite_heterograph((2,3), 6)
         x = (A = rand(Float32, 4,2), B = rand(Float32, 4, 3))
         layers = HeteroGraphConv( (:A, :to, :B) => EdgeConv(Dense(2 * 4, 2), aggr = +),
@@ -110,4 +109,5 @@ end
         y = layers(g, x); 
         @test size(y.A) == (2,2) && size(y.B) == (2,3)
     end
+
 end
