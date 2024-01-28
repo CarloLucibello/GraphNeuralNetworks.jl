@@ -327,7 +327,8 @@ given `edge_type`.
 - `T`: Element type of the returned vector. If `nothing`, is
        chosen based on the graph type. Default `nothing`.
 - `dir`: For `dir=:out` the degree of a node is counted based on the outgoing edges.
-         For `dir=:in`, the ingoing edges are used. If `dir=:both` we have the sum of the two.
+         For `dir = :in`, the ingoing edges are used. If `dir = :both` we have the sum of the two.
+         Default `dir = :out`.
 
 """
 function Graphs.degree(g::GNNHeteroGraph, edge::Tuple{Symbol, Symbol, Symbol}, 
