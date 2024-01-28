@@ -186,3 +186,25 @@ end
 function Base.show(io::IO, a3tgcn::A3TGCN)
     print(io, "A3TGCN($(a3tgcn.in) => $(a3tgcn.out))")
 end
+
+
+# struct to apply convolutional layers to each snapshot of the temporal graph
+
+struct TemporalGraphConv
+    layer::GNNLayer
+end
+
+Flux.@functor TemporalGraphConv
+
+function (tgconv::TemporalGraphConv)(tsg::TemporalSnapshotsGNNGraph)
+    return TemporalSnapshotsGNNGraph(
+        tsg.num_nodes,
+        tsg.num_edges,
+        tsg.num_snapshots,
+        tgconv.layer.(tsg.snapshots),
+        tsg.tgdata)
+end
+
+function (tgconv::TemporalGraphConv)(tsg::TemporalSnapshotsGNNGraph, x)
+        return tgconv.layer.(tsg.snapshots, x)
+end
