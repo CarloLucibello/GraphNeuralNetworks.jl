@@ -407,7 +407,7 @@ end
     has_isolated_nodes(g::GNNGraph; dir=:out)
 
 Return true if the graph `g` contains nodes with out-degree (if `dir=:out`)
-or in-degree (if `dir =:in`) equal to zero.
+or in-degree (if `dir = :in`) equal to zero.
 """
 function has_isolated_nodes(g::GNNGraph; dir = :out)
     return any(iszero, degree(g; dir))
