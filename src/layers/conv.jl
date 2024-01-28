@@ -643,7 +643,6 @@ function (l::EdgeConv)(g::AbstractGNNGraph, x)
 
     message(l, xi, xj, e) = l.nn(vcat(xi, xj .- xi))
 
-    println("l ", l)
     x = propagate(message, g, l.aggr, l, xi = xi, xj = xj, e = nothing)
     return x
 end
