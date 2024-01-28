@@ -262,9 +262,9 @@ or a vector.
 - `g`: A graph.
 - `T`: Element type of the returned vector. If `nothing`, is
        chosen based on the graph type and will be an integer
-       if `edge_weight=false`. Default `nothing`.
-- `dir`: For `dir=:out` the degree of a node is counted based on the outgoing edges.
-         For `dir=:in`, the ingoing edges are used. If `dir=:both` we have the sum of the two.
+       if `edge_weight = false`. Default `nothing`.
+- `dir`: For `dir = :out` the degree of a node is counted based on the outgoing edges.
+         For `dir = :in`, the ingoing edges are used. If `dir = :both` we have the sum of the two.
 - `edge_weight`: If `true` and the graph contains weighted edges, the degree will 
                 be weighted. Set to `false` instead to just count the number of
                 outgoing/ingoing edges. 
@@ -326,12 +326,12 @@ given `edge_type`.
 - `edge_type`: A tuple of symbols `(source_t, edge_t, target_t)` representing the edge type.
 - `T`: Element type of the returned vector. If `nothing`, is
        chosen based on the graph type. Default `nothing`.
-- `dir`: For `dir=:out` the degree of a node is counted based on the outgoing edges.
+- `dir`: For `dir = :out` the degree of a node is counted based on the outgoing edges.
          For `dir = :in`, the ingoing edges are used. If `dir = :both` we have the sum of the two.
          Default `dir = :out`.
 
 """
-function Graphs.degree(g::GNNHeteroGraph, edge::Tuple{Symbol, Symbol, Symbol}, 
+function Graphs.degree(g::GNNHeteroGraph, edge::EType, 
                        T::TT = nothing; dir = :out) where {
                                                          TT <: Union{Nothing, Type{<:Number}}}  
 
@@ -339,7 +339,7 @@ function Graphs.degree(g::GNNHeteroGraph, edge::Tuple{Symbol, Symbol, Symbol},
 
     T = isnothing(T) ? eltype(s) : T
 
-   n_type = dir == :in ? g.ntypes[2] : g.ntypes[1]
+    n_type = dir == :in ? g.ntypes[2] : g.ntypes[1]
 
     return _degree((s, t), T, dir, nothing, g.num_nodes[n_type])
 end
@@ -407,7 +407,7 @@ end
     has_isolated_nodes(g::GNNGraph; dir=:out)
 
 Return true if the graph `g` contains nodes with out-degree (if `dir=:out`)
-or in-degree (if `dir=:in`) equal to zero.
+or in-degree (if `dir =:in`) equal to zero.
 """
 function has_isolated_nodes(g::GNNGraph; dir = :out)
     return any(iszero, degree(g; dir))
