@@ -240,3 +240,5 @@ function print_feature_t(io::IO, feature)
         print(io, "no")
     end
 end
+
+@functor TemporalSnapshotsGNNGraph
