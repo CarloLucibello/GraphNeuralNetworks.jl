@@ -881,7 +881,7 @@ function Base.show(io::IO, l::ResGatedGraphConv)
 end
 
 @doc raw"""
-    CGConv((in, ein) => out, f, act=identity; bias=true, init=glorot_uniform, residual=false)
+    CGConv((in, ein) => out, act=identity; bias=true, init=glorot_uniform, residual=false)
     CGConv(in => out, ...)
 
 The crystal graph convolutional layer from the paper
