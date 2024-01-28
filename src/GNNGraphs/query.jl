@@ -318,7 +318,7 @@ end
     degree(g::GNNHeteroGraph, edge_type::EType; dir = :in) 
 
 Return a vector containing the degrees of the nodes in `g` GNNHeteroGraph
-given `edge`.
+given `edge_type`.
 
 # Arguments
 
