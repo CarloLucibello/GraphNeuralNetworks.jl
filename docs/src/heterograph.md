@@ -2,7 +2,7 @@
 
 Heterogeneous graphs (also called heterographs), are graphs where each node has a type,
 that we denote with symbols such as `:user` and `:movie`.
-Releations such as `:rate` or `:like` can connect nodes of different types. We call a triplet `(source_node_type, relation_type, target_node_type)` the type of a edge, e.g. `(:user, :rate, :movie)`.
+Relations such as `:rate` or `:like` can connect nodes of different types. We call a triplet `(source_node_type, relation_type, target_node_type)` the type of a edge, e.g. `(:user, :rate, :movie)`.
 
 Different node/edge types can store different groups of features
 and this makes heterographs a very flexible modeling tools 

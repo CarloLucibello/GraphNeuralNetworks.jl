@@ -9,7 +9,7 @@ Some of the most commonly used layers are the [`GCNConv`](@ref) and the [`GATv2C
 (see [`GNNChain`](@ref)).
 
 The table below lists all graph convolutional layers implemented in the *GraphNeuralNetworks.jl*. It also highlights the presence of some additional capabilities with respect to basic message passing:
-- *Sparse Ops*: implements message passing as multiplication by sparse adjacency matrix instead of the gather/scatter mechanism. This can lead to better cpu performances but it is not supported on gpu yet. 
+- *Sparse Ops*: implements message passing as multiplication by sparse adjacency matrix instead of the gather/scatter mechanism. This can lead to better CPU performances but it is not supported on GPU yet. 
 - *Edge Weight*: supports scalar weights (or equivalently scalar features) on edges. 
 - *Edge Features*: supports feature vectors on edges.
 - *Heterograph*: supports heterogeneous graphs (see [`GNNHeteroGraphs`](@ref)).
