@@ -12,6 +12,7 @@ using NNlib: scatter, gather
 using ChainRulesCore
 using Reexport
 using SparseArrays, Graphs # not needed but if removed Documenter will complain
+using SimpleWeightedGraphs
 
 include("GNNGraphs/GNNGraphs.jl")
 @reexport using .GNNGraphs

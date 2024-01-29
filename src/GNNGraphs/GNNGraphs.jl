@@ -16,6 +16,7 @@ using LinearAlgebra, Random, Statistics
 import MLUtils
 using MLUtils: getobs, numobs, ones_like, zeros_like
 import Functors
+import SimpleWeightedGraphs
 
 include("chainrules.jl") # hacks for differentiability
 
