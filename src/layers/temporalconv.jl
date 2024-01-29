@@ -188,7 +188,25 @@ function Base.show(io::IO, a3tgcn::A3TGCN)
 end
 
 
-# struct to apply convolutional layers to each snapshot of the temporal graph
+@doc raw"""
+    TemporalGraphConv(layer)
+
+A constructor for applying to each snapshot of the `TemporalSnapshotsGNNGraph` a convolutional homogeneous graph `layer`.
+
+# Examples 
+
+```jldoctest
+julia> snapshots = [rand_graph(20,40; ndata = rand(3,20)), rand_graph(20,14; ndata = rand(3,20)), rand_graph(20,20; ndata = rand(3,20))];
+
+julia> tsg = TemporalSnapshotsGNNGraph(snapshots);
+
+julia> temp_gcn = TemporalGraphConv(GCNConv(3 => 5, relu))
+TemporalGraphConv(GCNConv(3 => 5, relu))
+
+julia> size(temp_gcn(tsg).ndata.x[1])
+(5, 20)
+```
+"""
 
 struct TemporalGraphConv
     layer::GNNLayer
