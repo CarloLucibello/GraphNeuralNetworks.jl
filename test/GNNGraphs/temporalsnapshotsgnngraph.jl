@@ -102,15 +102,16 @@ end
     @test sprint(show,tsg) == "TemporalSnapshotsGNNGraph(5) with x: 4-element data"
 end
 
-@testset "gpu" begin
-    snapshots = [rand_graph(10, 20; ndata = rand(5,10)) for i in 1:5]
-    tsg = TemporalSnapshotsGNNGraph(snapshots)
-    tsg.tgdata.x = rand(5)
-    tsg = Flux.gpu(tsg)
-    @test tsg.snapshots[1].ndata.x isa CuArray
-    @test tsg.snapshots[end].ndata.x isa CuArray
-    @test tsg.tgdata.x isa CuArray
-    @test tsg.num_nodes isa CuArray
-    @test tsg.num_edges isa CuArray
-end;
-    
+if TEST_GPU
+    @testset "gpu" begin
+        snapshots = [rand_graph(10, 20; ndata = rand(5,10)) for i in 1:5]
+        tsg = TemporalSnapshotsGNNGraph(snapshots)
+        tsg.tgdata.x = rand(5)
+        tsg = Flux.gpu(tsg)
+        @test tsg.snapshots[1].ndata.x isa CuArray
+        @test tsg.snapshots[end].ndata.x isa CuArray
+        @test tsg.tgdata.x isa CuArray
+        @test tsg.num_nodes isa CuArray
+        @test tsg.num_edges isa CuArray
+    end
+end
