@@ -36,10 +36,10 @@ TemporalSnapshotsGNNGraph:
 ```
 """
 struct TemporalSnapshotsGNNGraph
-    num_nodes::Vector{Int}   
-    num_edges::Vector{Int}
+    num_nodes::AbstractVector{Int}   
+    num_edges::AbstractVector{Int}
     num_snapshots::Int
-    snapshots::Vector{<:GNNGraph}
+    snapshots::AbstractVector{<:GNNGraph}
     tgdata::DataStore   
 end
 
@@ -240,3 +240,5 @@ function print_feature_t(io::IO, feature)
         print(io, "no")
     end
 end
+
+@functor TemporalSnapshotsGNNGraph
