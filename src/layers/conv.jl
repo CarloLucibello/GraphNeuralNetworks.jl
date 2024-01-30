@@ -109,13 +109,12 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     check_gcnconv_input(g, edge_weight)
 
     xj, xi = expand_srcdst(g, x)
+    edge_t = g.etypes[1]
 
     if l.add_self_loops
         if g isa GNNHeteroGraph
-            for edge_t in g.etypes
-                src_t, _, tgt_t = edge_t
-                src_t === tgt_t && add_self_loops(g, edge_t) 
-            end
+            src_t, _, tgt_t = edge_t
+            g = src_t === tgt_t ? add_self_loops(g, edge_t) : g 
         else
             g = add_self_loops(g)
         end
@@ -129,7 +128,7 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     Dout, Din = size(l.weight)
 
     if g isa GNNHeteroGraph
-        d = degree(g, g.etypes[1]; dir = :in)
+        d = degree(g, edge_t; dir = :in)
     else
         if edge_weight !== nothing
             d = degree(g; dir = :in, edge_weight)
