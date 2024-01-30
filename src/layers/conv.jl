@@ -109,7 +109,7 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     check_gcnconv_input(g, edge_weight)
 
     xj, xi = expand_srcdst(g, x)
-    edge_t = g isa GNNHeteroGraph ? g.etypes[1] : ""
+    edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
 
     if l.add_self_loops
         g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
