@@ -112,15 +112,7 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     edge_t = g isa GNNHeteroGraph ? g.etypes[1] : ""
 
     if l.add_self_loops
-        if g isa GNNHeteroGraph
-            src_t, _, tgt_t = edge_t
-            g = src_t === tgt_t ? add_self_loops(g, edge_t) : g 
-            ### TODO
-            # in the future it should look like 
-            # g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
-        else
-            g = add_self_loops(g)
-        end
+        g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
         if edge_weight !== nothing
             # Pad weights with ones
             # TODO for ADJMAT_T the new edges are not generally at the end
