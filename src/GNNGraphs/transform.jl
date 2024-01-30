@@ -57,7 +57,7 @@ function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}, edge_t::EType) where 
 
     src_t, _, tgt_t = edge_t
     (src_t === tgt_t) ||
-        @error "cannot add a self-loop with different source and target types"
+        return g
     
     n = get(g.num_nodes, src_t, 0)
 
