@@ -206,7 +206,6 @@ julia> size(temp_gcn(tsg).ndata.x[1])
 (5, 20)
 ```
 """
-
 struct TemporalGraphConv
     layer::GNNLayer
 end
