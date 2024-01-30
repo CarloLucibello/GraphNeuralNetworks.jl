@@ -183,7 +183,7 @@ end
     @test g2.num_edges[(:A, :to, :B)] === g1.num_edges[(:A, :to, :B)]
     g1 = GNNHeteroGraph((:A, :to, :A) => ([1,2,3,4], [3,2,1,5]))
     g2 = add_self_loops(g1, (:A, :to, :A))
-    @test g2.num_edges[(:A, :to, :A)] === g1.num_edges[(:A, :to, :A)] + g.num_nodes[(:A)]
+    @test g2.num_edges[(:A, :to, :A)] === g1.num_edges[(:A, :to, :A)] + g1.num_nodes[(:A)]
 end
 
 ## Cannot test this because DataStore is not an ordered collection
