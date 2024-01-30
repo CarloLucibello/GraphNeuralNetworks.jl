@@ -129,13 +129,7 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     Dout, Din = size(l.weight)
 
     if g isa GNNHeteroGraph
-        # not the best practice but this loop is 
-        # a temporary mechanism to insure matching dimensions 
-        # until it'll be possible to pass edge here
-        for e in g.etypes |> collect
-            d = degree(g, e; dir = :in)
-            length(d) == size(xi[2]) ? break : continue 
-        end
+        d = degree(g, g.etypes[1]; dir = :in)
     else
         if edge_weight !== nothing
             d = degree(g; dir = :in, edge_weight)
