@@ -41,14 +41,17 @@ end
 """
     add_self_loops(g::GNNHeteroGraph, edge_t::EType)
 
-Return a graph with the same features as `g`
-but also adding self-loops of the specified type, edge_t
+If the source node type is the same as destination node type in `edge_t`,
+return a graph with the same features as `g` but also adding self-loops 
+of the specified type, `edge_t`. Otherwise it returns `g` unchanged.
 
-Nodes with already existing self-loops of type edge_t will obtain a second self-loop of type edge_t.
+Nodes with already existing self-loops of type edge_t will obtain 
+a second self-loop of type edge_t.
 
 If the graphs has edge weights for edges of type edge_t, the new edges will have weight 1.
 
-If no edges of type edge_t exist, or all existing edges have no weight, then all new self loops will have no weight.
+If no edges of type edge_t exist, or all existing edges have no weight, 
+then all new self loops will have no weight.
 """
 function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}, edge_t::EType) where {T <: AbstractVector{<:Integer}, V}
     function get_edge_weight_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
@@ -57,7 +60,7 @@ function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}, edge_t::EType) where 
 
     src_t, _, tgt_t = edge_t
     (src_t === tgt_t) ||
-        @error "cannot add a self-loop with different source and target types"
+        return g
     
     n = get(g.num_nodes, src_t, 0)
 
