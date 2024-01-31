@@ -99,7 +99,6 @@ end
 
 check_gcnconv_input(g::AbstractGNNGraph, edge_weight::Nothing) = nothing
 
-
 function (l::GCNConv)(g::AbstractGNNGraph, 
                       x,
                       edge_weight::EW = nothing,
@@ -110,6 +109,7 @@ function (l::GCNConv)(g::AbstractGNNGraph,
 
     xj, xi = expand_srcdst(g, x)
     edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
+    T = eltype(x)
 
     if l.add_self_loops
         g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
@@ -121,27 +121,31 @@ function (l::GCNConv)(g::AbstractGNNGraph,
         end
     end
     Dout, Din = size(l.weight)
-
+    if Dout < Din
+        # multiply before convolution if it is more convenient, otherwise multiply after
+        x = l.weight * x
+    end
     if g isa GNNHeteroGraph
-        d = degree(g, edge_t; dir = :in)
+        d = degree(g, edge_t, T; dir = :in)
     else
         if edge_weight !== nothing
-            d = degree(g; dir = :in, edge_weight)
+            d = degree(g, T; dir = :in, edge_weight)
         else
-            d = degree(g; dir = :in, edge_weight = l.use_edge_weight)
+            d = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
         end
     end
     c = norm_fn(d)
+    x = xj .* c'
     if edge_weight !== nothing
-        x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
+        x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
     elseif l.use_edge_weight
-        x = propagate(w_mul_xj, g, +, xj = xj)
+        x = propagate(w_mul_xj, g, +, xj = x)
     else
-        x = propagate(copy_xj, g, +, xj = xj)
+        x = propagate(copy_xj, g, +, xj = x)
     end
     x = x .* c'
     x = l.weight * x
-    return l.σ.(x .+ l.bias)    
+    return l.σ.(x .+ l.bias)
 end
 
 function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
