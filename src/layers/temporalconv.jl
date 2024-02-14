@@ -186,3 +186,7 @@ end
 function Base.show(io::IO, a3tgcn::A3TGCN)
     print(io, "A3TGCN($(a3tgcn.in) => $(a3tgcn.out))")
 end
+
+function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
