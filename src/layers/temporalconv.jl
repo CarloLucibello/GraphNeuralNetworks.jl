@@ -190,3 +190,19 @@ end
 function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
     return l.(tg.snapshots, x)
 end
+
+function (l::GCNConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::ResGatedGraphConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::SAGEConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::GraphConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
