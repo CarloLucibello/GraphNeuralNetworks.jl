@@ -133,9 +133,9 @@ julia> snapshots = [rand_graph(10,20; ndata = rand(3,10)), rand_graph(10,14; nda
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots);
 
-julia> convolution = GINConv(Dense(3=>1),0.4);
+julia> m = GINConv(Dense(3 => 1), 0.4);
 
-julia> output = convolution(tg, tg.ndata.x);
+julia> output = m(tg, tg.ndata.x);
 
 julia> size(output[1])
 (1, 10)
