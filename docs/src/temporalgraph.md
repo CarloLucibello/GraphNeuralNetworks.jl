@@ -129,7 +129,7 @@ A graph convolutional layer can be applied to each snapshot independently, in th
 ```jldoctest
 julia> using GraphNeuralNetworks, Flux
 
-julia> snapshots = [rand_graph(10,20; ndata = rand(3,10)), rand_graph(10,14; ndata = rand(3,10))];
+julia> snapshots = [rand_graph(10, 20; ndata = rand(3, 10)), rand_graph(10, 14; ndata = rand(3, 10))];
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots);
 
