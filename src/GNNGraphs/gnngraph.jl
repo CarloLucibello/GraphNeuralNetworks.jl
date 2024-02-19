@@ -95,7 +95,7 @@ g.edata.z = rand(16, g.num_edges)
 g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_edges))
 
 g.ndata.x # or just g.x
-g.ndata.e # or just g.e
+g.edata.e # or just g.e
 
 # Send to gpu
 g = g |> gpu
