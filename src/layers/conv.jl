@@ -1304,8 +1304,7 @@ end
 
 function (l::SGConv)(g::AbstractGNNGraph, 
                      x,
-                     edge_weight::EW = nothing) 
-                     where{T, EW <: Union{Nothing, AbstractVector}}
+                     edge_weight = nothing) 
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
 
     xj, xi = expand_srcdst(g, x)

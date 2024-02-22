@@ -58,9 +58,13 @@ function (hgc::HeteroGraphConv)(g::GNNHeteroGraph, x::Union{NamedTuple,Dict})
     function forw(l, et)
         sg = edge_type_subgraph(g, et)
         node1_t, _, node2_t = et
+        print("this is node1_t: ", node1_t, x[node1_t], x[node2_t], "\n\n\n")
+        print(l, "\n\n\n")
         return l(sg, (x[node1_t], x[node2_t]))
     end
+    print("this is x: ", x, "\n\n\n")
     outs = [forw(l, et) for (l, et) in zip(hgc.layers, hgc.etypes)]
+    print("this is outs: ", outs, "\n\n\n")
     dst_ntypes = [et[3] for et in hgc.etypes]
     return _reduceby_node_t(hgc.aggr, outs, dst_ntypes)
 end
