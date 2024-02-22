@@ -65,6 +65,27 @@ function (hgc::HeteroGraphConv)(g::GNNHeteroGraph, x::Union{NamedTuple,Dict})
     return _reduceby_node_t(hgc.aggr, outs, dst_ntypes)
 end
 
+
+function (hgc::HeteroGraphConv)(g::GNNHeteroGraph, x::NamedTuple, h::AbstractMatrix)
+    function forw(l, et)
+        sg = edge_type_subgraph(g, et)
+        node1_t, _, node2_t = et
+
+        print(x,"\n\n", h,"before\n\n\n")
+
+        x_features = (x[node1_t], x[node2_t])
+        h_features = h # temporary
+
+        return l(sg, h_features, x_features)
+
+    end
+    outs = [forw(l, et) for (l, et) in zip(hgc.layers, hgc.etypes)]
+    dst_ntypes = [et[3] for et in hgc.etypes]
+    return _reduceby_node_t(hgc.aggr, outs, dst_ntypes)
+end
+
+
+
 function _reduceby_node_t(aggr, outs, ntypes)
     function _reduce(node_t)
         idxs = findall(x -> x == node_t, ntypes)
