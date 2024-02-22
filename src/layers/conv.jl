@@ -1359,8 +1359,8 @@ function Base.show(io::IO, l::SGConv)
 end
 
 @doc raw"""
-    EdgeConv((in, ein) => out; hidden_size=2in, residual=false)
-    EdgeConv(in => out; hidden_size=2in, residual=false)
+    EGNNConv((in, ein) => out; hidden_size=2in, residual=false)
+    EGNNConv(in => out; hidden_size=2in, residual=false)
 
 Equivariant Graph Convolutional Layer from [E(n) Equivariant Graph
 Neural Networks](https://arxiv.org/abs/2102.09844).
