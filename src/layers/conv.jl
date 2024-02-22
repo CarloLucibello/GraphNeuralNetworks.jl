@@ -803,9 +803,9 @@ end
 
 function (l::SAGEConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
-    xj, _ = expand_srcdst(g, x)
+    xj, xi = expand_srcdst(g, x)
     m = propagate(copy_xj, g, l.aggr, xj = xj)
-    x = l.σ.(l.weight * vcat(x, m) .+ l.bias)
+    x = l.σ.(l.weight * vcat(xi, m) .+ l.bias)
     return x
 end
 
