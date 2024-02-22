@@ -109,4 +109,14 @@
         @test size(y.A) == (2,2) && size(y.B) == (2,3)
     end
 
+    @testset "GINConv" begin
+        g = rand_bipartite_heterograph((2, 5), 10)
+        x = (A = rand(Float32, 4, 2), B = rand(Float32, 4, 5));
+        layer = HeteroGraphConv((:A, :to, :B) => GraphConv(4 => 2, relu),
+                                (:B, :to, :A) => GraphConv(4 => 2, relu)); #just temporary
+        y = layer(g, x); 
+        out = GINConv(y, 1e-5) # not sure how to use it exactly
+        # continue test
+    end
+
 end
