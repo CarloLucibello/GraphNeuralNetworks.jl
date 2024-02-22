@@ -111,8 +111,8 @@
 
     @testset "SAGEConv" begin
         x = (A = rand(Float32, 4, 2), B = rand(Float32, 4, 3))
-        layers = HeteroGraphConv((:A, :to, :B) => EdgeConv(Dense(2 * 4, 2), aggr = +),
-                                 (:B, :to, :A) => EdgeConv(Dense(2 * 4, 2), aggr = +));
+        layers = HeteroGraphConv((:A, :to, :B) => SAGEConv(Dense(2 * 4, 2), relu, aggr = +),
+                                 (:B, :to, :A) => SAGEConv(Dense(2 * 4, 2), relu, aggr = +));
         y = layers(hg, x); 
         @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
     end
