@@ -10,3 +10,4 @@ Manifest.toml
 LocalPreferences.toml
 .DS_Store
 /test.jl
+try.jl
