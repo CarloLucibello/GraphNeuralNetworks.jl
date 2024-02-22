@@ -1457,7 +1457,6 @@ function (l::EGNNConv)(g::AbstractGNNGraph, h, x, e = nothing)
     end
     
     @assert size(h, 1)==l.num_features.in "Input features must match layer input size."
-    print("\n\n\n\nPANG\n\n\n\n")
     xj, xi = expand_srcdst(g, x)
     #hj, hi = expand_srcdst(g, h) not needed since its invariant node features
     
