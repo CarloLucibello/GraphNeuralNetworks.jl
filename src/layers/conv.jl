@@ -801,10 +801,11 @@ function SAGEConv(ch::Pair{Int, Int}, σ = identity; aggr = mean,
     SAGEConv(W, b, σ, aggr)
 end
 
-function (l::SAGEConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::SAGEConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
-    m = propagate(copy_xj, g, l.aggr, xj = x)
-    x = l.σ.(l.weight * vcat(x, m) .+ l.bias)
+    xj, xi = expand_srcdst(g, x)
+    m = propagate(copy_xj, g, l.aggr, xj = xj)
+    x = l.σ.(l.weight * vcat(xi, m) .+ l.bias)
     return x
 end
 
