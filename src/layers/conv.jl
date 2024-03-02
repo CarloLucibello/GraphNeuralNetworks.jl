@@ -682,10 +682,15 @@ GINConv(nn, ϵ; aggr = +) = GINConv(nn, ϵ, aggr)
 
 function (l::GINConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
-    xj, _ = expand_srcdst(g, x) # hetero graphs
-
+    xj, xi = expand_srcdst(g, x) 
+ 
     m = propagate(copy_xj, g, l.aggr, xj = xj)
-    l.nn((1 + ofeltype(x, l.ϵ)) * x + m)
+    
+    if g isa GNNHeteroGraph
+        #
+    else
+        l.nn((1 + ofeltype(x, l.ϵ)) * x + m)
+    end
 end
 
 function Base.show(io::IO, l::GINConv)
