@@ -863,18 +863,19 @@ function ResGatedGraphConv(ch::Pair{Int, Int}, σ = identity;
     return ResGatedGraphConv(A, B, U, V, b, σ)
 end
 
-function (l::ResGatedGraphConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::ResGatedGraphConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
+    xj, xi = expand_srcdst(g, x)
 
     message(xi, xj, e) = sigmoid.(xi.Ax .+ xj.Bx) .* xj.Vx
 
-    Ax = l.A * x
-    Bx = l.B * x
-    Vx = l.V * x
+    Ax = l.A * xi
+    Bx = l.B * xj
+    Vx = l.V * xj
 
     m = propagate(message, g, +, xi = (; Ax), xj = (; Bx, Vx))
 
-    return l.σ.(l.U * x .+ m .+ l.bias)
+    return l.σ.(l.U * xi .+ m .+ l.bias)
 end
 
 function Base.show(io::IO, l::ResGatedGraphConv)
