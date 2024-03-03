@@ -643,6 +643,23 @@ where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing throu
 - `num_layers`: The number of gated recurrent unit.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `init`: Weight initialization function.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+out_channel = 5
+num_layers = 3
+g = GNNGraph(s, t)
+
+# create layer
+l = GatedGraphConv(out_channel, num_layers)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct GatedGraphConv{W <: AbstractArray{<:Number, 3}, R, A} <: GNNLayer
     weight::W
