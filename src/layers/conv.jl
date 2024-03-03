@@ -1758,12 +1758,6 @@ can be performed.
 - `ff_channels`: If positive, a feed-forward NN is appended, with the first having the given
     number of hidden nodes; this NN also gets a skip connection and batch normalization 
     if the respective parameters are set. Default: `0`.
-
-# Examples:
-
-```julia
-
-```        
 """
 struct TransformerConv{TW1, TW2, TW3, TW4, TW5, TW6, TFF, TBN1, TBN2} <: GNNLayer
     W1::TW1
