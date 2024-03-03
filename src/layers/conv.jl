@@ -719,6 +719,23 @@ where `nn` generally denotes a learnable function, e.g. a linear layer or a mult
 
 - `nn`: A (possibly learnable) function. 
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create layer
+l = EdgeConv(Dense(2 * in_channel, out_channel), aggr = +)
+
+# forward pass
+y = l(g, x)
+```
 """
 struct EdgeConv{NN, A} <: GNNLayer
     nn::NN
@@ -760,6 +777,26 @@ where ``f_\Theta`` typically denotes a learnable function, e.g. a linear layer o
 
 - `f`: A (possibly learnable) function acting on node features. 
 - `ϵ`: Weighting factor.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create dense layer
+nn = Dense(in_channel, out_channel)
+
+# create layer
+l = GINConv(nn, 0.01f0, aggr = mean)
+
+# forward pass
+y = l(g, x)  
+```
 """
 struct GINConv{R <: Real, NN, A} <: GNNLayer
     nn::NN
@@ -812,6 +849,27 @@ For convenience, also functions returning a single `(out*in, num_edges)` matrix 
 - `σ`: Activation function.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+edim = 10
+g = GNNGraph(s, t)
+
+# create dense layer
+nn = Dense(edim, out_channel * in_channel)
+
+# create layer
+l = NNConv(in_channel => out_channel, nn, tanh, bias = true, aggr = +)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct NNConv{W, B, NN, F, A} <: GNNLayer
     weight::W
@@ -875,6 +933,23 @@ where the aggregation type is selected by `aggr`.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create layer
+l = SAGEConv(in_channel => out_channel, tanh, bias = false, aggr = +)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct SAGEConv{W <: AbstractMatrix, B, F, A} <: GNNLayer
     weight::W
@@ -932,6 +1007,23 @@ where the edge gates ``\eta_{ij}`` are given by
 - `act`: Activation function.
 - `init`: Weight matrices' initializing function. 
 - `bias`: Learn an additive bias if true.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create layer
+l = ResGatedGraphConv(in_channel => out_channel, tanh, bias = true)
+
+# forward pass
+y = l(g, x)  
+```
 """
 struct ResGatedGraphConv{W, B, F} <: GNNLayer
     A::W
@@ -1108,6 +1200,21 @@ and ``\beta`` a trainable parameter if `trainable=true`.
 - `init_beta`: The initial value of ``\beta``. Default 1.0f0.
 - `trainable`: If true, ``\beta`` is trainable. Default `true`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+
+# create layer
+l = AGNNConv(init_beta=2.0f0)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct AGNNConv{A <: AbstractVector} <: GNNLayer
     β::A
@@ -1651,6 +1758,12 @@ can be performed.
 - `ff_channels`: If positive, a feed-forward NN is appended, with the first having the given
     number of hidden nodes; this NN also gets a skip connection and batch normalization 
     if the respective parameters are set. Default: `0`.
+
+# Examples:
+
+```julia
+
+```        
 """
 struct TransformerConv{TW1, TW2, TW3, TW4, TW5, TW6, TFF, TBN1, TBN2} <: GNNLayer
     W1::TW1
