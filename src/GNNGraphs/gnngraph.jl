@@ -170,20 +170,14 @@ GNNGraph((s, t)::NTuple{2}; kws...) = GNNGraph((s, t, nothing); kws...)
 
 # GNNGraph(g::AbstractGraph; kws...) = GNNGraph(adjacency_matrix(g, dir=:out); kws...)
 
-function GNNGraph(g::T; edge_weight = nothing, kws...) where 
-                 {T <: Union{SimpleWeightedGraph, SimpleWeightedDiGraph, 
-                      AbstractGraph}}
+function GNNGraph(g::AbstractGraph; edge_weight = nothing, kws...)
     s = Graphs.src.(Graphs.edges(g))
     t = Graphs.dst.(Graphs.edges(g))
-    if g isa Union{SimpleWeightedGraph, SimpleWeightedDiGraph}
-        w = filter(!iszero, g.weights |> vec) |> collect
-    else
-        w = edge_weight
-    end
+    w = edge_weight
     if !Graphs.is_directed(g)
         # add reverse edges since GNNGraph is directed
         s, t = [s; t], [t; s]
-        if !isnothing(w) & !(g isa Union{SimpleWeightedGraph, SimpleWeightedDiGraph})
+        if !isnothing(w)
             @assert length(w) == Graphs.ne(g) "edge_weight must have length equal to the number of undirected edges"
             w = [w; w]
         end

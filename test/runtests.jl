@@ -15,7 +15,6 @@ using Zygote
 using Test
 using MLDatasets
 using InlineStrings  # not used but with the import we test #98 and #104
-using SimpleWeightedGraphs
 
 CUDA.allowscalar(false)
 
