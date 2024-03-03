@@ -1311,7 +1311,6 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
 
     xj, xi = expand_srcdst(g, x)
     edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
-    println(edge_t)
 
     T = eltype(xi)
 
@@ -1327,9 +1326,6 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
         end
     end
     Dout, Din = size(l.weight)
-    if Dout < Din
-        x = l.weight * xi
-    end
     if g isa GNNHeteroGraph
         d = degree(g, edge_t, T; dir = :in)
     else
@@ -1351,9 +1347,7 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
         end
         x = x .* c'
     end
-    if Dout >= Din
-        x = l.weight * x
-    end
+    x = l.weight * x
     return (x .+ l.bias)
 end
 

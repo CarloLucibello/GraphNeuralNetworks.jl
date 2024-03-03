@@ -116,4 +116,12 @@
         y = layers(hg, x); 
         @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
     end
+    
+    @testset "SGConv" begin
+        x = (A = rand(Float32, 4, 2), B = rand(Float32, 4, 3))
+        layers = HeteroGraphConv((:A, :to, :B) => SGConv(4 => 2),
+                                 (:B, :to, :A) => SGConv(4 => 2));
+        y = layers(hg, x); 
+        @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
+    end
 end
