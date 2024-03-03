@@ -187,6 +187,23 @@ with ``\hat{L}`` the [`scaled_laplacian`](@ref).
 - `k`: The order of Chebyshev polynomial.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples
+
+```julia
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+x = randn(3, g.num_nodes)
+
+# create layer
+l = ChebConv(3 => 5, 5) 
+
+# forward pass
+y = l(g, x)       # size:  5 × num_nodes
+```
 """
 struct ChebConv{W <: AbstractArray{<:Number, 3}, B} <: GNNLayer
     weight::W
@@ -248,6 +265,24 @@ where the aggregation type is selected by `aggr`.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = randn(3, g.num_nodes)
+
+# create layer
+l = GraphConv(in_channel => out_channel, relu, bias = false, aggr = mean)
+
+# forward pass
+y = l(g, x)       
+```
 """
 struct GraphConv{W <: AbstractMatrix, B, F, A} <: GNNLayer
     weight1::W
@@ -318,6 +353,25 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+
+
+# Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = randn(3, g.num_nodes)
+
+# create layer
+l = GATConv(in_channel => out_channel, add_self_loops = false, bias = false; heads=2, concat=true)
+
+# forward pass
+y = l(g, x)       
+```
 """
 struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix, F, B} <:
        GNNLayer
@@ -446,6 +500,27 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+
+# Examples
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+ein = 3
+g = GNNGraph(s, t)
+x = randn(3, g.num_nodes)
+
+# create layer
+l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
+
+# edge features
+e = randn(ein, length(s))
+
+# forward pass
+y = l(g, x, e)    
+```
 """
 struct GATv2Conv{T, A1, A2, A3, B, C <: AbstractMatrix, F} <: GNNLayer
     dense_i::A1
