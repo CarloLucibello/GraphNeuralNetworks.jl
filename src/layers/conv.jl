@@ -686,11 +686,7 @@ function (l::GINConv)(g::AbstractGNNGraph, x)
  
     m = propagate(copy_xj, g, l.aggr, xj = xj)
     
-    if g isa GNNHeteroGraph
-        l.nn((1 .+ ofeltype(xi, l.ϵ)) .* xi .+ m)
-    else
-        l.nn((1 + ofeltype(x, l.ϵ)) * x + m)
-    end
+    l.nn((1 .+ ofeltype(xi, l.ϵ)) .* xi .+ m)
 end
 
 function Base.show(io::IO, l::GINConv)
