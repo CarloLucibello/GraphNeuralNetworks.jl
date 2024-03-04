@@ -190,3 +190,51 @@ end
 function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
     return l.(tg.snapshots, x)
 end
+
+function (l::ChebConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::GATConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::GATv2Conv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::GatedGraphConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::CGConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::SGConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::TransformerConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::GCNConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::ResGatedGraphConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::SAGEConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
+
+function (l::GraphConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
+    return l.(tg.snapshots, x)
+end
