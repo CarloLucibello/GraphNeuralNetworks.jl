@@ -41,6 +41,56 @@ end
     @test length(Flux.gradient(x ->sum(sum(ginconv(tg, x))), tg.ndata.x)[1]) == S    
 end
 
+
+@testset "ChebConv" begin
+    chebconv = ChebConv(in_channel => out_channel, 5)
+    @test length(chebconv(tg, tg.ndata.x)) == S
+    @test size(chebconv(tg, tg.ndata.x)[1]) == (out_channel, N) 
+    @test length(Flux.gradient(x ->sum(sum(chebconv(tg, x))), tg.ndata.x)[1]) == S
+end
+
+@testset "GATConv" begin
+    gatconv = GATConv(in_channel => out_channel)
+    @test length(gatconv(tg, tg.ndata.x)) == S
+    @test size(gatconv(tg, tg.ndata.x)[1]) == (out_channel, N) 
+    @test length(Flux.gradient(x ->sum(sum(gatconv(tg, x))), tg.ndata.x)[1]) == S
+end
+
+@testset "GATv2Conv" begin
+    gatv2conv = GATv2Conv(in_channel => out_channel)
+    @test length(gatv2conv(tg, tg.ndata.x)) == S
+    @test size(gatv2conv(tg, tg.ndata.x)[1]) == (out_channel, N) 
+    @test length(Flux.gradient(x ->sum(sum(gatv2conv(tg, x))), tg.ndata.x)[1]) == S
+end
+
+@testset "GatedGraphConv" begin
+    gatedgraphconv = GatedGraphConv(5, 5)
+    @test length(gatedgraphconv(tg, tg.ndata.x)) == S
+    @test size(gatedgraphconv(tg, tg.ndata.x)[1]) == (out_channel, N) 
+    @test length(Flux.gradient(x ->sum(sum(gatedgraphconv(tg, x))), tg.ndata.x)[1]) == S
+end
+
+@testset "CGConv" begin
+    cgconv = CGConv(in_channel => out_channel)
+    @test length(cgconv(tg, tg.ndata.x)) == S
+    @test size(cgconv(tg, tg.ndata.x)[1]) == (out_channel, N) 
+    @test length(Flux.gradient(x ->sum(sum(cgconv(tg, x))), tg.ndata.x)[1]) == S
+end
+
+@testset "SGConv" begin
+    sgconv = SGConv(in_channel => out_channel)
+    @test length(sgconv(tg, tg.ndata.x)) == S
+    @test size(sgconv(tg, tg.ndata.x)[1]) == (out_channel, N) 
+    @test length(Flux.gradient(x ->sum(sum(sgconv(tg, x))), tg.ndata.x)[1]) == S
+end
+
+@testset "TransformerConv" begin
+    transformerconv = TransformerConv(in_channel => out_channel)
+    @test length(transformerconv(tg, tg.ndata.x)) == S
+    @test size(transformerconv(tg, tg.ndata.x)[1]) == (out_channel, N) 
+    @test length(Flux.gradient(x ->sum(sum(transformerconv(tg, x))), tg.ndata.x)[1]) == S
+end
+
 @testset "GCNConv" begin
     gcnconv = GCNConv(in_channel => out_channel)
     @test length(gcnconv(tg, tg.ndata.x)) == S
@@ -68,3 +118,4 @@ end
     @test size(graphconv(tg, tg.ndata.x)[1]) == (out_channel, N) 
     @test length(Flux.gradient(x ->sum(sum(graphconv(tg, x))), tg.ndata.x)[1]) == S    
 end
+
