@@ -1302,9 +1302,9 @@ function SGConv(ch::Pair{Int, Int}, k = 1;
     SGConv(W, b, k, add_self_loops, use_edge_weight)
 end
 
-function (l::SGConv)(g::AbstractGNNGraph, 
-                     x,
-                     edge_weight = nothing) 
+function (l::SGConv)(g::AbstractGNNGraph, x,
+                     edge_weight::EW = nothing) where
+                     {EW <: Union{Nothing, AbstractVector}}
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
 
     xj, xi = expand_srcdst(g, x)
@@ -1323,9 +1323,6 @@ function (l::SGConv)(g::AbstractGNNGraph,
         end
     end
     Dout, Din = size(l.weight)
-    if Dout < Din
-        x = l.weight * x
-    end
     if g isa GNNHeteroGraph
         d = degree(g, edge_t, T; dir = :in)
     else
@@ -1347,9 +1344,7 @@ function (l::SGConv)(g::AbstractGNNGraph,
         end
         x = x .* c'
     end
-    if Dout >= Din
-        x = l.weight * x
-    end
+    x = l.weight * x
     return (x .+ l.bias)
 end
 
