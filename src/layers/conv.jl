@@ -48,7 +48,7 @@ By default, it computes ``\frac{1}{\sqrt{d}}`` i.e the inverse square root of th
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s, t)
-x = randn(3, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = GCNConv(3 => 5) 
@@ -196,7 +196,7 @@ with ``\hat{L}`` the [`scaled_laplacian`](@ref).
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s, t)
-x = randn(3, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = ChebConv(3 => 5, 5) 
@@ -275,7 +275,7 @@ t = [2,3,1,1]
 in_channel = 3
 out_channel = 5
 g = GNNGraph(s, t)
-x = randn(3, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = GraphConv(in_channel => out_channel, relu, bias = false, aggr = mean)
@@ -364,7 +364,7 @@ t = [2,3,1,1]
 in_channel = 3
 out_channel = 5
 g = GNNGraph(s, t)
-x = randn(3, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = GATConv(in_channel => out_channel, add_self_loops = false, bias = false; heads=2, concat=true)
@@ -510,13 +510,13 @@ in_channel = 3
 out_channel = 5
 ein = 3
 g = GNNGraph(s, t)
-x = randn(3, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
 
 # edge features
-e = randn(ein, length(s))
+e = randn(Float32, ein, length(s))
 
 # forward pass
 y = l(g, x, e)    
@@ -1272,8 +1272,8 @@ activations.
 
 ```julia
 g = rand_graph(10, 30)
-x = randn(3, 10)
-e = randn(3, 30)
+x = randn(Float32, 3, 10)
+e = randn(Float32, 3, 30)
 m = MEGNetConv(3 => 3)
 x′, e′ = m(g, x, e)
 ```
@@ -1463,7 +1463,7 @@ where ``\tilde{A}`` is ``A + I``.
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s, t)
-x = randn(3, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = SGConv(3 => 5; add_self_loops = true) 
