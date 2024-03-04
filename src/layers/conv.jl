@@ -1236,28 +1236,21 @@ end
 
 function (l::AGNNConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
-    xj, xi = expand_srcdst(g, x)
+    xi, xj = expand_srcdst(g, x)
     edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
-
-    print(edge_t)
 
     if l.add_self_loops
         g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
     end
 
-    xi_n = xi ./ sqrt.(sum(xi .^ 2, dims = 1))
-    xj_n = xj ./ sqrt.(sum(xj .^ 2, dims = 1))
-    
-    print("\n\n\ng types:", length(g.etypes))
+    xi_n = xi ./ sqrt.(sum(xi .^ 2, dims = 2))
+    xj_n = xj ./ sqrt.(sum(xj .^ 2, dims = 2))
+
     cos_dist = apply_edges(xi_dot_xj, g, xi = xi_n, xj = xj_n)
-
-    print("\n\n\nCos Distances: ", cos_dist)
-    print("\n\n\nMultiplication: ", l.β .* cos_dist, "\n\n")
-
     α = softmax_edge_neighbors(g, l.β .* cos_dist)
 
     x = propagate(g, +; xj = xj_n, e = α) do xi, xj, α
-        α .* xj .* xi
+        α .* xj
     end
 
     return x
