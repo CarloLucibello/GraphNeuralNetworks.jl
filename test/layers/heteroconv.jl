@@ -125,6 +125,17 @@
         @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
     end
 
+    @testset "AGNNConv" begin
+        num_nodes_A, num_nodes_B = 5, 3
+        feature_dim = 4 
+        hg = rand_bipartite_heterograph((num_nodes_A, num_nodes_B), 15)    
+        x = (A=rand(Float32, feature_dim, num_nodes_A), 
+             B=rand(Float32, feature_dim, num_nodes_B))
+        layers = HeteroGraphConv( (:A, :to, :B) => AGNNConv(init_beta = 1.0f0, add_self_loops = false, trainable = true));
+        size(y[:A]) == (feature_dim, num_nodes_A)
+        size(y[:B]) == (feature_dim, num_nodes_B)
+    end
+
     @testset "GINConv" begin
         x = (A = rand(4, 2), B = rand(4, 3))
         layers = HeteroGraphConv((:A, :to, :B) => GINConv(Dense(4, 2), 0.4),
