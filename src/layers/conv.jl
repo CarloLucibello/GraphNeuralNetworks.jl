@@ -1502,46 +1502,49 @@ function SGConv(ch::Pair{Int, Int}, k = 1;
     SGConv(W, b, k, add_self_loops, use_edge_weight)
 end
 
-function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T},
+function (l::SGConv)(g::AbstractGNNGraph, x,
                      edge_weight::EW = nothing) where
-    {T, EW <: Union{Nothing, AbstractVector}}
+                     {EW <: Union{Nothing, AbstractVector}}
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+
+    xj, xi = expand_srcdst(g, x)
+    edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
+    T = eltype(xi)
 
     if edge_weight !== nothing
         @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
     end
 
     if l.add_self_loops
-        g = add_self_loops(g)
+        g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
         if edge_weight !== nothing
             edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
             @assert length(edge_weight) == g.num_edges
         end
     end
     Dout, Din = size(l.weight)
-    if Dout < Din
-        x = l.weight * x
-    end
-    if edge_weight !== nothing
-        d = degree(g, T; dir = :in, edge_weight)
+    if g isa GNNHeteroGraph
+        d = degree(g, edge_t, T; dir = :in)
     else
-        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+        if edge_weight !== nothing
+            d = degree(g, T; dir = :in, edge_weight)
+        else
+            d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+        end
     end
     c = 1 ./ sqrt.(d)
     for iter in 1:(l.k)
         x = x .* c'
         if edge_weight !== nothing
-            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
+            x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
         elseif l.use_edge_weight
-            x = propagate(w_mul_xj, g, +, xj = x)
+            x = propagate(w_mul_xj, g, +, xj = xj)
         else
-            x = propagate(copy_xj, g, +, xj = x)
+            x = propagate(copy_xj, g, +, xj = xj)
         end
         x = x .* c'
     end
-    if Dout >= Din
-        x = l.weight * x
-    end
+    x = l.weight * x
     return (x .+ l.bias)
 end
 
