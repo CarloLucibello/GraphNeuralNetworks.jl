@@ -116,10 +116,19 @@
         y = layers(hg, x); 
         @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
     end
+
     @testset "GINConv" begin
         x = (A = rand(4, 2), B = rand(4, 3))
         layers = HeteroGraphConv((:A, :to, :B) => GINConv(Dense(4, 2), 0.4),
                                     (:B, :to, :A) => GINConv(Dense(4, 2), 0.4));
+        y = layers(hg, x); 
+        @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
+    end
+
+    @testset "ResGatedGraphConv" begin   
+        x = (A = rand(Float32, 4, 2), B = rand(Float32, 4, 3))
+        layers = HeteroGraphConv((:A, :to, :B) => ResGatedGraphConv(4 => 2),
+                                 (:B, :to, :A) => ResGatedGraphConv(4 => 2));
         y = layers(hg, x); 
         @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
     end
