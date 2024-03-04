@@ -191,7 +191,6 @@ with ``\hat{L}`` the [`scaled_laplacian`](@ref).
 # Examples
 
 ```julia
-
 # create data
 s = [1,1,2,3]
 t = [2,3,1,1]
