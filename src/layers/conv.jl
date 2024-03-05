@@ -433,8 +433,10 @@ function (l::GATConv)(g::AbstractGNNGraph, x,
     Wxj = l.dense_x(xj)
     Wxj = reshape(Wxj, chout, heads, :)                   
 
-    Wxi = l.dense_x(xi)
-    Wxi = reshape(Wxi, chout, heads, :)                   
+    if xi !== xj
+        Wxi = l.dense_x(xi)
+        Wxi = reshape(Wxi, chout, heads, :)                   
+    end
 
     # a hand-written message passing
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
