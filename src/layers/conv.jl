@@ -416,7 +416,6 @@ function (l::GATConv)(g::AbstractGNNGraph, x,
     @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"
 
     xj, xi = expand_srcdst(g, x)
-    edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
 
     if l.add_self_loops
         @assert e===nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
