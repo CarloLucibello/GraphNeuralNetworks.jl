@@ -40,19 +40,23 @@ end
 
 """
     add_self_loops(g::GNNHeteroGraph, edge_t::EType)
+    add_self_loops(g::GNNHeteroGraph)
 
-If the source node type is the same as destination node type in `edge_t`,
-return a graph with the same features as `g` but also adding self-loops 
-of the specified type, `edge_t`. Otherwise it returns `g` unchanged.
+- For a specific edge type (`edge_t`):
+    If the source node type is the same as the destination node type in `edge_t`, return a graph with the same features as `g` but also adding self-loops of the specified type, `edge_t`. Otherwise, it returns `g` unchanged.
+    
+    Nodes with already existing self-loops of type `edge_t` will obtain a second self-loop of type `edge_t`.
+    
+    If the graph has edge weights for edges of type `edge_t`, the new edges will have weight 1.
+    
+    If no edges of type `edge_t` exist, or all existing edges have no weight, then all new self-loops will have no weight.
 
-Nodes with already existing self-loops of type edge_t will obtain 
-a second self-loop of type edge_t.
+- For the entire graph (without specifying `edge_t`):
+    Adds a self-loop to each node for every edge type in the graph where the source and destination node types are the same. This variant of the function iterates over all edge types present in the graph, applying the self-loop addition logic to each applicable edge type.
 
-If the graphs has edge weights for edges of type edge_t, the new edges will have weight 1.
-
-If no edges of type edge_t exist, or all existing edges have no weight, 
-then all new self loops will have no weight.
+The first variant of the function targets a specific edge type, enhancing fine-grained control over graph modification, while the second variant applies this enhancement across all edge types in the graph, offering a broad and automatic way to enrich the graph's structure.
 """
+
 function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}, edge_t::EType) where {T <: AbstractVector{<:Integer}, V}
     function get_edge_weight_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
         get(g.graph, edge_t, (nothing, nothing, nothing))[3]
@@ -99,63 +103,11 @@ function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}, edge_t::EType) where 
              ntypes, etypes)
 end
 
-"""
-    add_self_loops(g::GNNHeteroGraph)
-
-Adds a self-loop to each node for every edge type in the graph `g` where the source and destination node types are the same. 
-
-- Self-loops are added for edge types where the source and destination node types match.
-- Nodes with existing self-loops of a specific type will receive an additional self-loop of the same type.
-- For edge types with weights, newly added self-loops will have a weight of 1. If an edge type has no weights or does not exist, new self-loops will not have weights.
-- The function returns a new `GNNHeteroGraph` with updated edges, preserving all original graph features, including node data, edge data, and graph data.
-
-This operation is performed across all edge types, enhancing the graph's structure without altering its original attributes or the properties of existing edges beyond the addition of self-loops.
-"""
-function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}) where {T <: AbstractVector{<:Integer}, V}
-    function get_edge_weight_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
-        get(g.graph, edge_t, (nothing, nothing, nothing))[3]
+function add_self_loops(g::GNNHeteroGraph)
+    for edge_t in keys(g.graph)
+        g = add_self_loops(g, edge_t)
     end
-
-    graph = g.graph |> copy
-    edata = g.edata |> copy
-    ndata = g.ndata |> copy
-    ntypes = g.ntypes |> copy
-    etypes = g.etypes |> copy
-    num_nodes = g.num_nodes |> copy
-    num_edges = g.num_edges |> copy
-
-    for edge_t in keys(graph)
-        src_t, _, tgt_t = edge_t
-        if src_t === tgt_t
-            n = get(num_nodes, src_t, 0)
-
-            if haskey(graph, edge_t)
-                x = graph[edge_t]
-                s, t = x[1:2]
-                nodes = convert(typeof(s), [1:n;])
-                s = [s; nodes]
-                t = [t; nodes]
-            else
-                nodes = convert(T, [1:n;])
-                s = nodes
-                t = nodes
-            end
-
-            ew = get(graph, edge_t, (nothing, nothing, nothing))[3]
-            if ew !== nothing
-                ew = [ew; fill!(similar(ew, n), 1)]
-            end
-
-            graph[edge_t] = (s, t, ew)
-            num_edges[edge_t] = length(get(graph, edge_t, ([],[]))[1])
-        end
-    end
-
-    return GNNHeteroGraph(graph,
-             num_nodes, num_edges, g.num_graphs,
-             g.graph_indicator,
-             ndata, edata, g.gdata,
-             ntypes, etypes)
+    return g
 end
 
 """
