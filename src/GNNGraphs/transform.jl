@@ -56,7 +56,6 @@ end
 
 The first variant of the function targets a specific edge type, enhancing fine-grained control over graph modification, while the second variant applies this enhancement across all edge types in the graph, offering a broad and automatic way to enrich the graph's structure.
 """
-
 function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}, edge_t::EType) where {T <: AbstractVector{<:Integer}, V}
     function get_edge_weight_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
         get(g.graph, edge_t, (nothing, nothing, nothing))[3]
