@@ -125,6 +125,31 @@
         @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
     end
 
+    @testset "EGNNConv with Heterogeneous Graphs" begin
+        # Tests are work in progress
+        hin_A, hout_A, hidden_A = 5, 5, 10
+        hin_B, hout_B, hidden_B = 3, 3, 6
+        num_nodes_A, num_nodes_B = 5, 3  
+
+        hg = rand_bipartite_heterograph((num_nodes_A, num_nodes_B), 15) 
+
+        layers = HeteroGraphConv([
+            (:A, :to, :B) => EGNNConv((hin_A, 0) => hout_B; hidden_size = hidden_A, residual = false),
+            (:B, :to, :A) => EGNNConv((hin_B, 0) => hout_A; hidden_size = hidden_B, residual = false)
+        ])
+
+        T = Float32  
+        h = (A = randn(T, hin_A, num_nodes_A), B = randn(T, hin_B, num_nodes_B))
+        x = (A = rand(T, 3, num_nodes_A), B = rand(T, 3, num_nodes_B)) 
+
+        y = layers(hg, x, h)
+
+        @test size(y[:A].h) == (hout_A, num_nodes_A)
+        @test size(y[:B].h) == (hout_B, num_nodes_B)
+        @test size(y[:A].x) == (3, num_nodes_A) 
+        @test size(y[:B].x) == (3, num_nodes_B)
+    end
+
     @testset "GINConv" begin
         x = (A = rand(4, 2), B = rand(4, 3))
         layers = HeteroGraphConv((:A, :to, :B) => GINConv(Dense(4, 2), 0.4),
