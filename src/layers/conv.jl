@@ -430,8 +430,8 @@ function (l::GATConv)(g::AbstractGNNGraph, x,
     _, chout = l.channel
     heads = l.heads
 
-    Wxj = l.dense_x(xj)
-    Wxj = reshape(Wxj, chout, heads, :)                   
+    Wxi = Wxj = l.dense_x(xj)
+    Wxi = Wxj = reshape(Wxj, chout, heads, :)                   
 
     if xi !== xj
         Wxi = l.dense_x(xi)
