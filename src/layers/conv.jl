@@ -1519,7 +1519,7 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
     end
 
     if l.add_self_loops
-        g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
+        g = add_self_loops(g)
         if edge_weight !== nothing
             edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
             @assert length(edge_weight) == g.num_edges
