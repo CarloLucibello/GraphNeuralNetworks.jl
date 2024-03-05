@@ -48,7 +48,7 @@ By default, it computes ``\frac{1}{\sqrt{d}}`` i.e the inverse square root of th
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s, t)
-x = randn(3, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = GCNConv(3 => 5) 
@@ -187,6 +187,22 @@ with ``\hat{L}`` the [`scaled_laplacian`](@ref).
 - `k`: The order of Chebyshev polynomial.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+x = randn(Float32, 3, g.num_nodes)
+
+# create layer
+l = ChebConv(3 => 5, 5) 
+
+# forward pass
+y = l(g, x)       # size:  5 × num_nodes
+```
 """
 struct ChebConv{W <: AbstractArray{<:Number, 3}, B} <: GNNLayer
     weight::W
@@ -248,6 +264,24 @@ where the aggregation type is selected by `aggr`.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = randn(Float32, 3, g.num_nodes)
+
+# create layer
+l = GraphConv(in_channel => out_channel, relu, bias = false, aggr = mean)
+
+# forward pass
+y = l(g, x)       
+```
 """
 struct GraphConv{W <: AbstractMatrix, B, F, A} <: GNNLayer
     weight1::W
@@ -318,6 +352,25 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+
+
+# Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = randn(Float32, 3, g.num_nodes)
+
+# create layer
+l = GATConv(in_channel => out_channel, add_self_loops = false, bias = false; heads=2, concat=true)
+
+# forward pass
+y = l(g, x)       
+```
 """
 struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix, F, B} <:
        GNNLayer
@@ -446,6 +499,27 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+
+# Examples
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+ein = 3
+g = GNNGraph(s, t)
+x = randn(Float32, 3, g.num_nodes)
+
+# create layer
+l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
+
+# edge features
+e = randn(Float32, ein, length(s))
+
+# forward pass
+y = l(g, x, e)    
+```
 """
 struct GATv2Conv{T, A1, A2, A3, B, C <: AbstractMatrix, F} <: GNNLayer
     dense_i::A1
@@ -568,6 +642,23 @@ where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing throu
 - `num_layers`: The number of gated recurrent unit.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `init`: Weight initialization function.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+out_channel = 5
+num_layers = 3
+g = GNNGraph(s, t)
+
+# create layer
+l = GatedGraphConv(out_channel, num_layers)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct GatedGraphConv{W <: AbstractArray{<:Number, 3}, R, A} <: GNNLayer
     weight::W
@@ -627,6 +718,23 @@ where `nn` generally denotes a learnable function, e.g. a linear layer or a mult
 
 - `nn`: A (possibly learnable) function. 
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create layer
+l = EdgeConv(Dense(2 * in_channel, out_channel), aggr = +)
+
+# forward pass
+y = l(g, x)
+```
 """
 struct EdgeConv{NN, A} <: GNNLayer
     nn::NN
@@ -668,6 +776,26 @@ where ``f_\Theta`` typically denotes a learnable function, e.g. a linear layer o
 
 - `f`: A (possibly learnable) function acting on node features. 
 - `ϵ`: Weighting factor.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create dense layer
+nn = Dense(in_channel, out_channel)
+
+# create layer
+l = GINConv(nn, 0.01f0, aggr = mean)
+
+# forward pass
+y = l(g, x)  
+```
 """
 struct GINConv{R <: Real, NN, A} <: GNNLayer
     nn::NN
@@ -680,10 +808,13 @@ Flux.trainable(l::GINConv) = (nn = l.nn,)
 
 GINConv(nn, ϵ; aggr = +) = GINConv(nn, ϵ, aggr)
 
-function (l::GINConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::GINConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
-    m = propagate(copy_xj, g, l.aggr, xj = x)
-    l.nn((1 + ofeltype(x, l.ϵ)) * x + m)
+    xj, xi = expand_srcdst(g, x) 
+ 
+    m = propagate(copy_xj, g, l.aggr, xj = xj)
+    
+    l.nn((1 .+ ofeltype(xi, l.ϵ)) .* xi .+ m)
 end
 
 function Base.show(io::IO, l::GINConv)
@@ -720,6 +851,27 @@ For convenience, also functions returning a single `(out*in, num_edges)` matrix 
 - `σ`: Activation function.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+edim = 10
+g = GNNGraph(s, t)
+
+# create dense layer
+nn = Dense(edim, out_channel * in_channel)
+
+# create layer
+l = NNConv(in_channel => out_channel, nn, tanh, bias = true, aggr = +)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct NNConv{W, B, NN, F, A} <: GNNLayer
     weight::W
@@ -783,6 +935,23 @@ where the aggregation type is selected by `aggr`.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create layer
+l = SAGEConv(in_channel => out_channel, tanh, bias = false, aggr = +)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct SAGEConv{W <: AbstractMatrix, B, F, A} <: GNNLayer
     weight::W
@@ -840,6 +1009,23 @@ where the edge gates ``\eta_{ij}`` are given by
 - `act`: Activation function.
 - `init`: Weight matrices' initializing function. 
 - `bias`: Learn an additive bias if true.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create layer
+l = ResGatedGraphConv(in_channel => out_channel, tanh, bias = true)
+
+# forward pass
+y = l(g, x)  
+```
 """
 struct ResGatedGraphConv{W, B, F} <: GNNLayer
     A::W
@@ -863,18 +1049,19 @@ function ResGatedGraphConv(ch::Pair{Int, Int}, σ = identity;
     return ResGatedGraphConv(A, B, U, V, b, σ)
 end
 
-function (l::ResGatedGraphConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::ResGatedGraphConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
+    xj, xi = expand_srcdst(g, x)
 
     message(xi, xj, e) = sigmoid.(xi.Ax .+ xj.Bx) .* xj.Vx
 
-    Ax = l.A * x
-    Bx = l.B * x
-    Vx = l.V * x
+    Ax = l.A * xi
+    Bx = l.B * xj
+    Vx = l.V * xj
 
     m = propagate(message, g, +, xi = (; Ax), xj = (; Bx, Vx))
 
-    return l.σ.(l.U * x .+ m .+ l.bias)
+    return l.σ.(l.U * xi .+ m .+ l.bias)
 end
 
 function Base.show(io::IO, l::ResGatedGraphConv)
@@ -1016,6 +1203,21 @@ and ``\beta`` a trainable parameter if `trainable=true`.
 - `init_beta`: The initial value of ``\beta``. Default 1.0f0.
 - `trainable`: If true, ``\beta`` is trainable. Default `true`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+
+# create layer
+l = AGNNConv(init_beta=2.0f0)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct AGNNConv{A <: AbstractVector} <: GNNLayer
     β::A
@@ -1073,8 +1275,8 @@ activations.
 
 ```julia
 g = rand_graph(10, 30)
-x = randn(3, 10)
-e = randn(3, 30)
+x = randn(Float32, 3, 10)
+e = randn(Float32, 3, 30)
 m = MEGNetConv(3 => 3)
 x′, e′ = m(g, x, e)
 ```
@@ -1264,7 +1466,7 @@ where ``\tilde{A}`` is ``A + I``.
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s, t)
-x = randn(3, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = SGConv(3 => 5; add_self_loops = true) 
@@ -1303,46 +1505,49 @@ function SGConv(ch::Pair{Int, Int}, k = 1;
     SGConv(W, b, k, add_self_loops, use_edge_weight)
 end
 
-function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T},
+function (l::SGConv)(g::AbstractGNNGraph, x,
                      edge_weight::EW = nothing) where
-    {T, EW <: Union{Nothing, AbstractVector}}
+                     {EW <: Union{Nothing, AbstractVector}}
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+
+    xj, xi = expand_srcdst(g, x)
+    edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
+    T = eltype(xi)
 
     if edge_weight !== nothing
         @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
     end
 
     if l.add_self_loops
-        g = add_self_loops(g)
+        g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
         if edge_weight !== nothing
             edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
             @assert length(edge_weight) == g.num_edges
         end
     end
     Dout, Din = size(l.weight)
-    if Dout < Din
-        x = l.weight * x
-    end
-    if edge_weight !== nothing
-        d = degree(g, T; dir = :in, edge_weight)
+    if g isa GNNHeteroGraph
+        d = degree(g, edge_t, T; dir = :in)
     else
-        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+        if edge_weight !== nothing
+            d = degree(g, T; dir = :in, edge_weight)
+        else
+            d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+        end
     end
     c = 1 ./ sqrt.(d)
     for iter in 1:(l.k)
         x = x .* c'
         if edge_weight !== nothing
-            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
+            x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
         elseif l.use_edge_weight
-            x = propagate(w_mul_xj, g, +, xj = x)
+            x = propagate(w_mul_xj, g, +, xj = xj)
         else
-            x = propagate(copy_xj, g, +, xj = x)
+            x = propagate(copy_xj, g, +, xj = xj)
         end
         x = x .* c'
     end
-    if Dout >= Din
-        x = l.weight * x
-    end
+    x = l.weight * x
     return (x .+ l.bias)
 end
 
