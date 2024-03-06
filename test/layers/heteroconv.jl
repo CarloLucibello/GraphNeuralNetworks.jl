@@ -125,6 +125,14 @@
         @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
     end
 
+    @testset "GATConv" begin
+        x = (A = rand(Float32, 4, 2), B = rand(Float32, 4, 3))
+        layers = HeteroGraphConv((:A, :to, :B) => GATConv(4 => 2),
+                                 (:B, :to, :A) => GATConv(4 => 2));
+        y = layers(hg, x); 
+        @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
+    end
+
     @testset "GINConv" begin
         x = (A = rand(4, 2), B = rand(4, 3))
         layers = HeteroGraphConv((:A, :to, :B) => GINConv(Dense(4, 2), 0.4),
