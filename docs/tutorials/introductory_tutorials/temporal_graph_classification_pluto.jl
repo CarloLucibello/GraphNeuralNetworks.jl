@@ -1,6 +1,7 @@
 ### A Pluto.jl notebook ###
 # v0.19.39
 
+#> [frontmatter]
 #> author = "[Aurora Rossi](https://github.com/aurorarossi)"
 #> title = "Temporal Graph classification with Graph Neural Networks"
 #> date = "2024-03-06"
