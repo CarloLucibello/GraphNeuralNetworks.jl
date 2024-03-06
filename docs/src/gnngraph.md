@@ -164,13 +164,13 @@ gall = Flux.batch(data)
 # gall is a GNNGraph containing many graphs
 @assert gall.num_graphs == 160 
 @assert gall.num_nodes == 1600   # 10 nodes x 160 graphs
-@assert gall.num_edges == 9600  # 30 undirected edges x 2 directions x 160 graphs
+@assert gall.num_edges == 4800  # 30 undirected edges x 160 graphs
 
 # Let's create a mini-batch from gall
-g23, _ = getgraph(gall, 2:3)
+g23 = getgraph(gall, 2:3)
 @assert g23.num_graphs == 2
-@assert g23.num_nodes == 20   # 10 nodes x 160 graphs
-@assert g23.num_edges == 120  # 30 undirected edges x 2 directions x 2 graphs x
+@assert g23.num_nodes == 20   # 10 nodes x 2 graphs
+@assert g23.num_edges == 60  # 30 undirected edges X 2 graphs
 
 # We can pass a GNNGraph to Flux's DataLoader
 train_loader = DataLoader(gall, batchsize=16, shuffle=true)
