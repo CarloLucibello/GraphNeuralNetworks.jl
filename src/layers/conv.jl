@@ -585,6 +585,8 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix,
     @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
     @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"
 
+    xj, xi = expand_srcdst(g, x)
+
     if l.add_self_loops
         @assert e===nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
         g = add_self_loops(g)
@@ -592,8 +594,8 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix,
     _, out = l.channel
     heads = l.heads
 
-    Wxi = reshape(l.dense_i(x), out, heads, :)                                  # out × heads × nnodes
-    Wxj = reshape(l.dense_j(x), out, heads, :)                                  # out × heads × nnodes
+    Wxi = reshape(l.dense_i(xi), out, heads, :)                                  # out × heads × nnodes
+    Wxj = reshape(l.dense_j(xj), out, heads, :)                                  # out × heads × nnodes
 
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
