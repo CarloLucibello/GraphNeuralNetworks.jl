@@ -62,10 +62,10 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
 InlineStrings = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
+SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 cuDNN = "02a925ec-e4fe-4b08-9a7e-0d78e3d38ccd"
-SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 
 [targets]
-test = ["Test", "Adapt", "DataFrames", "InlineStrings", "Zygote", "FiniteDifferences", "ChainRulesTestUtils", "MLDatasets", "CUDA", "cuDNN"]
+test = ["Test", "Adapt", "DataFrames", "InlineStrings", "SimpleWeightedGraphs", "Zygote", "FiniteDifferences", "ChainRulesTestUtils", "MLDatasets", "CUDA", "cuDNN"]

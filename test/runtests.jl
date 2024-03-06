@@ -46,8 +46,8 @@ tests = [
     "layers/pool",
     "mldatasets",
     "examples/node_classification_cora",
-    "deprecations"
-    "ext/GraphNeuralNetworksSimpleWeightedGraphsExt",
+    "deprecations",
+    "ext/GraphNeuralNetworksSimpleWeightedGraphsExt/GraphNeuralNetworksSimpleWeightedGraphsExt"
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
