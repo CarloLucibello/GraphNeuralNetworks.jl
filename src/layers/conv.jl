@@ -352,6 +352,7 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+- `dropout_value`: Adding a dropout functionality in the layer itself. Default `nothing`
 
 
 # Examples
@@ -367,6 +368,9 @@ x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = GATConv(in_channel => out_channel, add_self_loops = false, bias = false; heads=2, concat=true)
+
+# create layer with dropout_value
+l = GATConv(in_channel => out_channel, add_self_loops = false, bias = false; heads=2, concat=true, dropout_value=0.6)
 
 # forward pass
 y = l(g, x)       
@@ -384,6 +388,7 @@ struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix,
     heads::Int
     concat::Bool
     add_self_loops::Bool
+    dropout_value::Union{Float64, Nothing}
 end
 
 @functor GATConv
@@ -393,7 +398,7 @@ GATConv(ch::Pair{Int, Int}, args...; kws...) = GATConv((ch[1], 0) => ch[2], args
 
 function GATConv(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
                  heads::Int = 1, concat::Bool = true, negative_slope = 0.2,
-                 init = glorot_uniform, bias::Bool = true, add_self_loops = true)
+                 init = glorot_uniform, bias::Bool = true, add_self_loops = true, dropout_value=nothing)
     (in, ein), out = ch
     if add_self_loops
         @assert ein==0 "Using edge features and setting add_self_loops=true at the same time is not yet supported."
@@ -404,7 +409,7 @@ function GATConv(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
     b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out * heads : out) : false
     a = init(ein > 0 ? 3out : 2out, heads)
     negative_slope = convert(Float32, negative_slope)
-    GATConv(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops)
+    GATConv(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops, dropout_value)
 end
 
 (l::GATConv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
@@ -429,6 +434,9 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix,
     # a hand-written message passing
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wx, Wx, e)
     α = softmax_edge_neighbors(g, m.logα)
+    if l.dropout_value !== nothing
+        α = dropout(α, l.dropout_value)
+    end
     β = α .* m.Wxj
     x = aggregate_neighbors(g, +, β)
 
