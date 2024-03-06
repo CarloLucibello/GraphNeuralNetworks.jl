@@ -419,11 +419,7 @@ function (l::GATConv)(g::AbstractGNNGraph, x,
 
     if l.add_self_loops
         @assert e===nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
-       if g isa GNNHeteroGraph
-           g = add_self_loops(g,  g.etypes[1])
-       else
-          g = add_self_loops(g)
-       end
+        g = add_self_loops(g)
     end
 
     _, chout = l.channel
