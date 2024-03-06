@@ -1663,14 +1663,14 @@ function (l::EGNNConv)(g::AbstractGNNGraph, h, x, e = nothing)
     
     @assert size(h, 1)==l.num_features.in "Input features must match layer input size."
     xj, xi = expand_srcdst(g, x)
-    #hj, hi = expand_srcdst(g, h) not needed since its invariant node features
+    hj, hi = expand_srcdst(g, h) #not needed since its invariant node features
     
     x_diff = apply_edges(xi_sub_xj, g, xi, xj)
     sqnorm_xdiff = sum(x_diff .^ 2, dims = 1)
     x_diff = x_diff ./ (sqrt.(sqnorm_xdiff) .+ 1.0f-6)
 
     msg = apply_edges(message, g, l,
-                      xi = (; h), xj = (; h), e = (; e, x_diff, sqnorm_xdiff))
+                      xi = (; hi), xj = (; hj), e = (; e, x_diff, sqnorm_xdiff))
     h_aggr = aggregate_neighbors(g, +, msg.h)
     x_aggr = aggregate_neighbors(g, mean, msg.x)
 
