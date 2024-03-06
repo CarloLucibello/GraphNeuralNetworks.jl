@@ -75,9 +75,9 @@ end
 
 # ╔═╡ d4732340-9179-4ada-b82e-a04291d745c2
 md"
-The first part of the `data_loader` function calls the `mlgraph2gnngraph` function for each snapshot, which takes the graph and converts it into a `GNNGraph`. The vector of `GNNGraph`s is then rewritten to a `TemporalSnapshotsGNNGraph`.
+The first part of the `data_loader` function calls the `mlgraph2gnngraph` function for each snapshot, which takes the graph and converts it to a `GNNGraph`. The vector of `GNNGraph`s is then rewritten to a `TemporalSnapshotsGNNGraph`.
 
-The second part adds the graph and node feature to the temporal graphs, in particular adding the onehot encoding of the label of the graph and appending the mean activation of the node in the snapshot. For the graph frature, it adds the onehot encoding of the gender.
+The second part adds the graph and node features to the temporal graphs, in particular it adds the onehot encoding of the label of the graph and appends the mean activation of the node in the snapshot. For the graph feature, it adds the onehot encoding of the gender.
 
 The last part splits the dataset.
 "
@@ -90,7 +90,7 @@ md"
 We now implement a simple model that takes a `TemporalSnapshotsGNNGraph` as input.
 It consists of a `GINConv` applied independently to each snapshot, a `GlobalPool` to get an embedding for each snapshot, a pooling on the time dimension to get an embedding for the whole temporal graph, and finally a `Dense` layer.
 
-First, we start by adapting the GlobalPool to the `TemporalSnapshotsGNNGraphs`.
+First, we start by adapting the `GlobalPool` to the `TemporalSnapshotsGNNGraphs`.
 "
 
 # ╔═╡ 5ea98df9-4920-4c94-9472-3ef475af89fd
@@ -194,10 +194,10 @@ train(brain_dataset.graphs)
 # ╠═b8df1800-c69d-4e18-8a0a-097381b62a4c
 # ╟─2544d468-1430-4986-88a9-be4df2a7cf27
 # ╠═f2dbc66d-b8b7-46ae-ad5b-cbba1af86467
-# ╠═d9e4722d-6f02-4d41-955c-8bb3e411e404
+# ╟─d9e4722d-6f02-4d41-955c-8bb3e411e404
 # ╠═bb36237a-5545-47d0-a873-7ddff3efe8ba
 # ╟─d4732340-9179-4ada-b82e-a04291d745c2
-# ╟─ec088a59-2fc2-426a-a406-f8f8d6784128
+# ╠═ec088a59-2fc2-426a-a406-f8f8d6784128
 # ╠═5ea98df9-4920-4c94-9472-3ef475af89fd
 # ╟─cfda2cf4-d08b-4f46-bd39-02ae3ed53369
 # ╠═2eedd408-67ee-47b2-be6f-2caec94e95b5
