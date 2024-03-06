@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.26
+# v0.19.39
 
 using Markdown
 using InteractiveUtils
@@ -69,7 +69,7 @@ end
 md"
 The first part of the `data_loader` function calls the `mlgraph2gnngraph` function for each snapshot, which takes the graph and converts it to a `GNNGraph`. The vector of `GNNGraph`s is then rewritten to a `TemporalSnapshotsGNNGraph`.
 
-The second part adds the graph and node features to the temporal graphs, in particular it adds the onehot encoding of the label of the graph and appends the mean activation of the node in the snapshot. For the graph feature, it adds the onehot encoding of the gender.
+The second part adds the graph and node features to the temporal graphs, in particular it adds the one-hot encoding of the label of the graph and appends the mean activation of the node of the snapshot. For the graph feature, it adds the one-hot encoding of the gender.
 
 The last part splits the dataset.
 "
@@ -131,7 +131,7 @@ end
 md"
 ## Training
 
-We train the model for 200 epochs, using the Adam optimizer with a learning rate of 0.001. We use the `logitbinarycrossentropy' as the loss function, which is typically used as the loss in two-class classification, where the labels are given in a one-hot format.
+We train the model for 200 epochs, using the Adam optimizer with a learning rate of 0.001. We use the `logitbinarycrossentropy` as the loss function, which is typically used as the loss in two-class classification, where the labels are given in a one-hot format.
 The accuracy expresses the number of correct classifications. 
 "
 
@@ -184,15 +184,15 @@ train(brain_dataset.graphs)
 
 # ╔═╡ b4a3059a-db7d-47f1-9ae5-b8c3d896c5e5
 md"
-Training the whole dataset takes a lot of time, especially since we are working on CPU in this tutorial, so we only train on 100 subjects.
+Training the whole dataset takes a lot of time, especially since we are working on CPU, so we only train on 100 subjects.
 To speed up the training, you can see the linked example that inspired this tutorial [here](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/master/examples/graph_classification_temporalbrains.jl), where the training can also be done on the GPU with the whole dataset.
 "
 
 # ╔═╡ cb4eed19-2658-411d-886c-e0c9c2b44219
 md"
-Conclusions
+## Conclusions
 
-In this tutorial, we learned how to implement a very simple architecture to classify temporal graphs in the context of gender classification using brain data. We then trained the model for 200 epochs on a small subset of the TemporalBrains dataset. The accuracy of the model is better than chance, but can be improved by training on more data and fine-tuning the parameters.
+In this tutorial, we implemented a very simple architecture to classify temporal graphs in the context of gender classification using brain data. We then trained the model for 200 epochs on a small subset of the TemporalBrains dataset. The accuracy of the model is better than chance, but can be improved by training on more data and fine-tuning the parameters.
 "
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1545,10 +1545,10 @@ version = "17.4.0+0"
 # ╠═5ea98df9-4920-4c94-9472-3ef475af89fd
 # ╟─cfda2cf4-d08b-4f46-bd39-02ae3ed53369
 # ╠═2eedd408-67ee-47b2-be6f-2caec94e95b5
-# ╠═76780020-406d-4803-9af0-d928e54fc18c
+# ╟─76780020-406d-4803-9af0-d928e54fc18c
 # ╠═d64be72e-8c1f-4551-b4f2-28c8b78466c0
 # ╠═483f17ba-871c-4769-88bd-8ec781d1909d
-# ╠═b4a3059a-db7d-47f1-9ae5-b8c3d896c5e5
-# ╠═cb4eed19-2658-411d-886c-e0c9c2b44219
+# ╟─b4a3059a-db7d-47f1-9ae5-b8c3d896c5e5
+# ╟─cb4eed19-2658-411d-886c-e0c9c2b44219
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
