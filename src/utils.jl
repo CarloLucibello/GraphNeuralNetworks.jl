@@ -81,8 +81,14 @@ Softmax over each node's neighborhood of the edge features `e`.
                     {\sum_{j'\in N(i)} e^{\mathbf{e}_{j'\to i}}}.
 ```
 """
-function softmax_edge_neighbors(g::GNNGraph, e)
-    @assert size(e)[end] == g.num_edges
+function softmax_edge_neighbors(g::AbstractGNNGraph, e)
+    if g isa GNNHeteroGraph
+        for (key, value) in g.num_edges
+            @assert size(e)[end] == value
+        end
+    else
+        @assert size(e)[end] == g.num_edges
+    end
     s, t = edge_index(g)
     max_ = gather(scatter(max, e, t), t)
     num = exp.(e .- max_)

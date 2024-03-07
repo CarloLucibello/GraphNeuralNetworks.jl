@@ -414,11 +414,13 @@ end
 
 (l::GATConv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
 
-function (l::GATConv)(g::GNNGraph, x::AbstractMatrix,
+function (l::GATConv)(g::AbstractGNNGraph, x,
                       e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
     @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
     @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"
+
+    xj, xi = expand_srcdst(g, x)
 
     if l.add_self_loops
         @assert e===nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
@@ -428,11 +430,16 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix,
     _, chout = l.channel
     heads = l.heads
 
-    Wx = l.dense_x(x)
-    Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
+    Wxi = Wxj = l.dense_x(xj)
+    Wxi = Wxj = reshape(Wxj, chout, heads, :)                   
+
+    if xi !== xj
+        Wxi = l.dense_x(xi)
+        Wxi = reshape(Wxi, chout, heads, :)                   
+    end
 
     # a hand-written message passing
-    m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wx, Wx, e)
+    m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
     if l.dropout_value !== nothing
         α = dropout(α, l.dropout_value)
@@ -580,11 +587,13 @@ end
 
 (l::GATv2Conv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
 
-function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix,
+function (l::GATv2Conv)(g::AbstractGNNGraph, x,
                         e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
     @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
     @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"
+
+    xj, xi = expand_srcdst(g, x)
 
     if l.add_self_loops
         @assert e===nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
@@ -593,8 +602,8 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix,
     _, out = l.channel
     heads = l.heads
 
-    Wxi = reshape(l.dense_i(x), out, heads, :)                                  # out × heads × nnodes
-    Wxj = reshape(l.dense_j(x), out, heads, :)                                  # out × heads × nnodes
+    Wxi = reshape(l.dense_i(xi), out, heads, :)                                  # out × heads × nnodes
+    Wxj = reshape(l.dense_j(xj), out, heads, :)                                  # out × heads × nnodes
 
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
@@ -1527,7 +1536,7 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
     end
 
     if l.add_self_loops
-        g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
+        g = add_self_loops(g)
         if edge_weight !== nothing
             edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
             @assert length(edge_weight) == g.num_edges

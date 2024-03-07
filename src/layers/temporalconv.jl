@@ -207,10 +207,6 @@ function (l::GatedGraphConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
     return l.(tg.snapshots, x)
 end
 
-function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
 function (l::CGConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
     return l.(tg.snapshots, x)
 end
