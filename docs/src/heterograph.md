@@ -115,7 +115,7 @@ GNNHeteroGraph:
   num_edges: Dict((:A, :to, :B) => 640, (:B, :to, :A) => 640)
   num_graphs: 32
 ```
-Batching is automatically performed by the [`DataLoader`](https://fluxml.ai/Flux.jl/previews/PR1786/data/dataloader/) iterator
+Batching is automatically performed by the [`DataLoader`](https://fluxml.ai/Flux.jl/stable/data/mlutils/#MLUtils.DataLoader) iterator
 when the `collate` option is set to `true`.
 
 ```jldoctest
