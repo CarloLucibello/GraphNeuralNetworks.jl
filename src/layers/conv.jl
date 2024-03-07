@@ -579,7 +579,7 @@ end
 
 (l::GATv2Conv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
 
-function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix,
+function (l::GATv2Conv)(g::AbstractGNNGraph, x,
                         e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
     @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
