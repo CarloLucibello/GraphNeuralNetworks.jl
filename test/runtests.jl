@@ -15,7 +15,6 @@ using Zygote
 using Test
 using MLDatasets
 using InlineStrings  # not used but with the import we test #98 and #104
-using SimpleWeightedGraphs
 
 CUDA.allowscalar(false)
 
@@ -47,7 +46,6 @@ tests = [
     "mldatasets",
     "examples/node_classification_cora",
     "deprecations",
-    "ext/GraphNeuralNetworksSimpleWeightedGraphsExt/GraphNeuralNetworksSimpleWeightedGraphsExt"
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")

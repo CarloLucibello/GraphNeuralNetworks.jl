@@ -1519,10 +1519,6 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
                      {EW <: Union{Nothing, AbstractVector}}
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
 
-    xj, xi = expand_srcdst(g, x)
-    edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
-    T = eltype(xi)
-
     if edge_weight !== nothing
         @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
     end
@@ -1535,8 +1531,17 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
         end
     end
     Dout, Din = size(l.weight)
+    if Dout < Din && !(g isa GNNHeteroGraph)
+        # multiply before convolution if it is more convenient, otherwise multiply after
+        # (this works only for homogenous graph)
+        x = l.weight * x
+    end
+
+    xj, xi = expand_srcdst(g, x) # expand only after potential multiplication
+    T = eltype(xi)
+
     if g isa GNNHeteroGraph
-        d = degree(g, edge_t, T; dir = :in)
+        d = degree(g, g.etypes[1], T; dir = :in)
     else
         if edge_weight !== nothing
             d = degree(g, T; dir = :in, edge_weight)
@@ -1546,7 +1551,7 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
     end
     c = 1 ./ sqrt.(d)
     for iter in 1:(l.k)
-        x = x .* c'
+        !(g isa GNNHeteroGraph) ? xj = xj .* c' : Nothing
         if edge_weight !== nothing
             x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
         elseif l.use_edge_weight
@@ -1556,7 +1561,9 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
         end
         x = x .* c'
     end
-    x = l.weight * x
+    if Dout >= Din || g isa GNNHeteroGraph
+        x = l.weight * x
+    end
     return (x .+ l.bias)
 end
 
