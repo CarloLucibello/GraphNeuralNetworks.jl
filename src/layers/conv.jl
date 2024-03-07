@@ -109,7 +109,7 @@ function (l::GCNConv)(g::AbstractGNNGraph,
 
     xj, xi = expand_srcdst(g, x)
     edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
-    T = eltype(x)
+    T = eltype(xi)
 
     if l.add_self_loops
         g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
@@ -123,7 +123,7 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     Dout, Din = size(l.weight)
     if Dout < Din
         # multiply before convolution if it is more convenient, otherwise multiply after
-        x = l.weight * x
+        xj = l.weight * xj
     end
     if g isa GNNHeteroGraph
         d = degree(g, edge_t, T; dir = :in)
@@ -144,7 +144,9 @@ function (l::GCNConv)(g::AbstractGNNGraph,
         x = propagate(copy_xj, g, +, xj = x)
     end
     x = x .* c'
-    x = l.weight * x
+    if Dout >= Din
+        x = l.weight * x
+    end
     return l.σ.(x .+ l.bias)
 end
 
