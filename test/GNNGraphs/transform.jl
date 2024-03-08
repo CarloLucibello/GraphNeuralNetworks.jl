@@ -105,7 +105,7 @@ end
     if GRAPH_T == :coo
         s = [1, 1, 2, 3]
         t = [2, 3, 4, 5]
-        g = GNNGraph(s, t)
+        g = GNNGraph(s, t, graph_type = GRAPH_T)
         snew = [1, 3]
         tnew = [4, 3]
         gnew = add_edges(g, snew, tnew)
