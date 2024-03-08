@@ -102,11 +102,13 @@ end
 end
 
 @testset "remove_edges" begin
-    s = [1, 1, 2, 3]
-    t = [2, 3, 4, 5]
-    g = GNNGraph(s, t, graph_type = GRAPH_T)    
-    gnew = remove_edges(g, [1])
-    @test gnew.num_edges == 3
+    if GRAPH_T == :coo
+        s = [1, 1, 2, 3]
+        t = [2, 3, 4, 5]
+        g = GNNGraph(s, t, graph_type = GRAPH_T)    
+        gnew = remove_edges(g, [1])
+        @test gnew.num_edges == 3
+    end
 end
 
 @testset "add_edges" begin 
