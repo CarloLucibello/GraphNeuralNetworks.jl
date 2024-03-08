@@ -101,17 +101,22 @@ end
     @test nodemap == 1:(g1.num_nodes)
 end
 
+@testset "remove_edges" begin
+    s = [1, 1, 2, 3]
+    t = [2, 3, 4, 5]
+    g = GNNGraph(s, t, graph_type = GRAPH_T)    
+    gnew = remove_edges(g, [1])
+    @test gnew.num_edges == 3
+end
+
 @testset "add_edges" begin 
     if GRAPH_T == :coo
         s = [1, 1, 2, 3]
         t = [2, 3, 4, 5]
         g = GNNGraph(s, t, graph_type = GRAPH_T)
-        snew = [1, 3]
-        tnew = [4, 3]
+        snew = [1]
+        tnew = [4]
         gnew = add_edges(g, snew, tnew)
-        @test gnew.num_edges == 6
-
-        gnew = remove_edges(gnew, [1])
         @test gnew.num_edges == 5
         @test sort(inneighbors(gnew, 4)) == [1, 2]
 
