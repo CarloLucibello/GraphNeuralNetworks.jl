@@ -106,11 +106,11 @@ end
 end
 
 @testset "GATConv" begin
-    for heads in (1, 2), concat in (true, false)
-        l = GATConv(in_channel => out_channel; heads, concat)
+    for heads in (1, 2), concat in (true, false), dropout_value in (0.0,0.4)
+        l = GATConv(in_channel => out_channel; heads, concat,dropout_value=dropout_value)
         for g in test_graphs
             test_layer(l, g, rtol = RTOL_LOW,
-                        exclude_grad_fields = [:negative_slope],
+                        exclude_grad_fields = [:negative_slope, :dropout_value],
                         outsize = (concat ? heads * out_channel : out_channel,
                                     g.num_nodes))
         end
@@ -121,7 +121,7 @@ end
         l = GATConv((in_channel, ein) => out_channel, add_self_loops = false)
         g = GNNGraph(g1, edata = rand(T, ein, g1.num_edges))
         test_layer(l, g, rtol = RTOL_LOW,
-                    exclude_grad_fields = [:negative_slope],
+                    exclude_grad_fields = [:negative_slope, :dropout_value],
                     outsize = (out_channel, g.num_nodes))
     end
 
@@ -136,11 +136,11 @@ end
 end
 
 @testset "GATv2Conv" begin
-    for heads in (1, 2), concat in (true, false)
-        l = GATv2Conv(in_channel => out_channel, tanh; heads, concat)
+    for heads in (1, 2), concat in (true, false), dropout_value in (0.0,0.4)
+        l = GATv2Conv(in_channel => out_channel, tanh; heads, concat, dropout_value=dropout_value)
         for g in test_graphs
             test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
-                        exclude_grad_fields = [:negative_slope],
+                        exclude_grad_fields = [:negative_slope, :dropout_value],
                         outsize = (concat ? heads * out_channel : out_channel,
                                     g.num_nodes))
         end
@@ -151,7 +151,7 @@ end
         l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
         g = GNNGraph(g1, edata = rand(T, ein, g1.num_edges))
         test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
-                    exclude_grad_fields = [:negative_slope],
+                    exclude_grad_fields = [:negative_slope, :dropout_value],
                     outsize = (out_channel, g.num_nodes))
     end
 
@@ -169,7 +169,7 @@ end
         l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
         g = GNNGraph(g1, edata = rand(T, ein, g1.num_edges))
         test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
-                    exclude_grad_fields = [:negative_slope],
+                    exclude_grad_fields = [:negative_slope, :dropout_value],
                     outsize = (out_channel, g.num_nodes))
     end
 end
