@@ -111,7 +111,7 @@ end
         gnew = add_edges(g, snew, tnew)
         @test gnew.num_edges == 6
 
-        gnew = remove_edge(gnew, [1])
+        gnew = remove_edges(gnew, [1])
         @test gnew.num_edges == 5
         @test sort(inneighbors(gnew, 4)) == [1, 2]
 
