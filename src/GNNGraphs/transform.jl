@@ -174,7 +174,7 @@ g_new = remove_edges(g, [2])
 println(g_new)
 ```
 """
-function remove_edges(g::GNNGraph, edges_to_remove)
+function remove_edges(g::GNNGraph{<:COO_T}, edges_to_remove)
     s, t = edge_index(g)
     w = get_edge_weight(g)
     edata = g.edata
