@@ -121,9 +121,8 @@ function (l::GCNConv)(g::AbstractGNNGraph,
         end
     end
     Dout, Din = size(l.weight)
-    if Dout < Din
-        # multiply before convolution if it is more convenient, otherwise multiply after
-        xj = l.weight * xj
+    if Dout < Din && !(g isa GNNHeteroGraph)
+        x = l.weight * x
     end
     if g isa GNNHeteroGraph
         d = degree(g, edge_t, T; dir = :in)
@@ -135,16 +134,27 @@ function (l::GCNConv)(g::AbstractGNNGraph,
         end
     end
     c = norm_fn(d)
-    x = xj .* c'
-    if edge_weight !== nothing
-        x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
-    elseif l.use_edge_weight
-        x = propagate(w_mul_xj, g, +, xj = x)
+    if xi != xj
+        x = xi .* c' # multiplying xj gives dimension mismatch
+        if edge_weight !== nothing
+            x = propagate(e_mul_xj, g, +, xi = xi, xj = xj, e = edge_weight)
+        elseif l.use_edge_weight
+            x = propagate(w_mul_xj, g, +, xi = xi, xj = xj)
+        else
+            x = propagate(copy_xj, g, +, xi = xi, xj = xj)
+        end
     else
-        x = propagate(copy_xj, g, +, xj = x)
-    end
+        x = x .* c' # xj should be same but x = xj .* c' test for conv.jl failing
+        if edge_weight !== nothing
+            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
+        elseif l.use_edge_weight
+            x = propagate(w_mul_xj, g, +, xj = x)
+        else
+            x = propagate(copy_xj, g, +, xj = x)
+        end
+    end  
     x = x .* c'
-    if Dout >= Din
+    if Dout >= Din || g isa GNNHeteroGraph
         x = l.weight * x
     end
     return l.σ.(x .+ l.bias)
