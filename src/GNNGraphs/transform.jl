@@ -150,6 +150,54 @@ function remove_self_loops(g::GNNGraph{<:ADJMAT_T})
 end
 
 """
+    remove_edges(g::GNNGraph, edges_to_remove::Vector{Int})
+
+Remove specified edges from a GNNGraph.
+
+# Arguments
+- `g`: The input graph from which edges will be removed.
+- `edges_to_remove`: Vector of edge indices to be removed.
+
+# Returns
+A new GNNGraph with the specified edges removed.
+
+# Example
+```julia
+using GraphNeuralNetworks
+
+# Construct a GNNGraph
+g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
+
+# Remove the second edge
+g_new = remove_edges(g, [2])
+
+println(g_new)
+```
+"""
+function remove_edges(g::GNNGraph, edges_to_remove)
+    s, t = edge_index(g)
+    w = get_edge_weight(g)
+    edata = g.edata
+
+    mask_to_keep = trues(length(s))
+
+    for edge_index in edges_to_remove
+        mask_to_keep[edge_index] = false
+    end
+
+    s = s[mask_to_keep]
+    t = t[mask_to_keep]
+    edata = getobs(edata, mask_to_keep)
+    println(edata)
+    w = isnothing(w) ? nothing : getobs(w, mask_to_keep)
+
+    GNNGraph((s, t, w),
+             g.num_nodes, length(s), g.num_graphs,
+             g.graph_indicator,
+             g.ndata, edata, g.gdata)
+end
+
+"""
     remove_multi_edges(g::GNNGraph; aggr=+)
 
 Remove multiple edges (also called parallel edges or repeated edges) from graph `g`.
