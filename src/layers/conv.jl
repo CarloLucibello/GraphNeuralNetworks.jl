@@ -352,7 +352,7 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
-- `dropout_value`: Dropout probability on the normalized attention coefficient. Default `0.0`.
+- `dropout`: Dropout probability on the normalized attention coefficient. Default `0.0`.
 
 # Examples
 
@@ -508,7 +508,7 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
-- `dropout_value`: Dropout probability on the normalized attention coefficient. Default `0.0`.
+- `dropout`: Dropout probability on the normalized attention coefficient. Default `0.0`.
 
 # Examples
 ```julia
