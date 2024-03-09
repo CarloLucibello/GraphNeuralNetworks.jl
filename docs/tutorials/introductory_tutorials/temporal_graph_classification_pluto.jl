@@ -18,6 +18,7 @@ begin
 	using Statistics, Random
 	using LinearAlgebra
 	using MLDatasets: TemporalBrains
+	using CUDA
 end
 
 # ╔═╡ 69d00ec8-da47-11ee-1bba-13a14e8a6db2
@@ -61,10 +62,10 @@ function data_loader(graphs)
         dataset[i] = TemporalSnapshotsGNNGraph(GraphNeuralNetworks.mlgraph2gnngraph.(graph.snapshots))
 		# Add graph and node features
         for t in 1:27
-            dataset[i].snapshots[t].ndata.x = reduce(
-                vcat, [I(102), dataset[i].snapshots[t].ndata.x'])
+			s = dataset[i].snapshots[t]
+            s.ndata.x = [I(102); s.ndata.x']
         end
-        dataset[i].tgdata.g = Float32.(Array(Flux.onehot(graph.graph_data.g, ["F", "M"])))
+        dataset[i].tgdata.g = Float32.(Flux.onehot(graph.graph_data.g, ["F", "M"]))
     end
     # Split the dataset into a 80% training set and a 20% test set
     train_loader = dataset[1:80]
@@ -126,10 +127,10 @@ begin
 	end
 	
 	function (m::GenderPredictionModel)(g::TemporalSnapshotsGNNGraph)
-    h = m.gin(g, g.ndata.x)
-    h = m.globalpool(g, h)
-    h = m.f(h)
-    m.dense(h)
+		h = m.gin(g, g.ndata.x)
+		h = m.globalpool(g, h)
+		h = m.f(h)
+		m.dense(h)
 	end
 	
 end
@@ -142,12 +143,11 @@ We train the model for 200 epochs, using the Adam optimizer with a learning rate
 The accuracy expresses the number of correct classifications. 
 "
 
-# ╔═╡ d64be72e-8c1f-4551-b4f2-28c8b78466c0
-function train(graphs; kws...)
-	
-    lossfunction(ŷ, y) = Flux.logitbinarycrossentropy(ŷ, y) 
+# ╔═╡ 0a1e07b0-a4f3-4a4b-bcd1-7fe200967cf8
+lossfunction(ŷ, y) = Flux.logitbinarycrossentropy(ŷ, y)
 
-    function eval_loss_accuracy(model, data_loader)
+# ╔═╡ cc2ebdcf-72de-4a3b-af46-5bddab6689cc
+function eval_loss_accuracy(model, data_loader)
         error = mean([lossfunction(model(g), g.tgdata.g) for g in data_loader])
         acc = mean([round(
                         100 *
@@ -156,6 +156,9 @@ function train(graphs; kws...)
         return (loss = error, acc = acc)
     end
 
+# ╔═╡ d64be72e-8c1f-4551-b4f2-28c8b78466c0
+function train(graphs; kws...)
+	
     function report(epoch)
         train_loss, train_acc = eval_loss_accuracy(model, train_loader)
         test_loss, test_acc = eval_loss_accuracy(model, test_loader)
@@ -167,7 +170,7 @@ function train(graphs; kws...)
 
     opt = Flux.setup(Adam(1.0f-3), model)
 
-    train_loader, test_loader = data_loader(graphs) # it takes a while to load the data
+    train_loader, test_loader = data_loader(graphs)
 
     report(0)
     for epoch in 1:200
@@ -205,6 +208,7 @@ In this tutorial, we implemented a very simple architecture to classify temporal
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 GraphNeuralNetworks = "cffab07f-9bc2-4db1-8861-388f63bf7694"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -213,6 +217,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
+CUDA = "~5.2.0"
 Flux = "~0.14.12"
 GraphNeuralNetworks = "~0.6.17"
 MLDatasets = "~0.7.14"
@@ -224,7 +229,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.2"
 manifest_format = "2.0"
-project_hash = "8d2024cec69f31a5b3aa8e6f1f428251d7f0593f"
+project_hash = "04cba1aff578ba316e7651fcb3c634bbcd843c14"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -331,6 +336,35 @@ deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers
 git-tree-sha1 = "a44910ceb69b0d44fe262dd451ab11ead3ed0be8"
 uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 version = "0.10.13"
+
+[[deps.CUDA]]
+deps = ["AbstractFFTs", "Adapt", "BFloat16s", "CEnum", "CUDA_Driver_jll", "CUDA_Runtime_Discovery", "CUDA_Runtime_jll", "Crayons", "DataFrames", "ExprTools", "GPUArrays", "GPUCompiler", "KernelAbstractions", "LLVM", "LLVMLoopInfo", "LazyArtifacts", "Libdl", "LinearAlgebra", "Logging", "NVTX", "Preferences", "PrettyTables", "Printf", "Random", "Random123", "RandomNumbers", "Reexport", "Requires", "SparseArrays", "StaticArrays", "Statistics"]
+git-tree-sha1 = "baa8ea7a1ea63316fa3feb454635215773c9c845"
+uuid = "052768ef-5323-5732-b1bb-66c8b64840ba"
+version = "5.2.0"
+weakdeps = ["ChainRulesCore", "SpecialFunctions"]
+
+    [deps.CUDA.extensions]
+    ChainRulesCoreExt = "ChainRulesCore"
+    SpecialFunctionsExt = "SpecialFunctions"
+
+[[deps.CUDA_Driver_jll]]
+deps = ["Artifacts", "JLLWrappers", "LazyArtifacts", "Libdl", "Pkg"]
+git-tree-sha1 = "d01bfc999768f0a31ed36f5d22a76161fc63079c"
+uuid = "4ee394cb-3365-5eb0-8335-949819d2adfc"
+version = "0.7.0+1"
+
+[[deps.CUDA_Runtime_Discovery]]
+deps = ["Libdl"]
+git-tree-sha1 = "2cb12f6b2209f40a4b8967697689a47c50485490"
+uuid = "1af6417a-86b4-443c-805f-a4643ffb695f"
+version = "0.2.3"
+
+[[deps.CUDA_Runtime_jll]]
+deps = ["Artifacts", "CUDA_Driver_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
+git-tree-sha1 = "8e25c009d2bf16c2c31a70a6e9e8939f7325cc84"
+uuid = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
+version = "0.11.1+0"
 
 [[deps.ChainRules]]
 deps = ["Adapt", "ChainRulesCore", "Compat", "Distributed", "GPUArraysCore", "IrrationalConstants", "LinearAlgebra", "Random", "RealDot", "SparseArrays", "SparseInverseSubset", "Statistics", "StructArrays", "SuiteSparse"]
@@ -544,6 +578,11 @@ git-tree-sha1 = "dcb08a0d93ec0b1cdc4af184b26b591e9695423a"
 uuid = "460bff9d-24e4-43bc-9d9f-a8973cb893f4"
 version = "0.1.10"
 
+[[deps.ExprTools]]
+git-tree-sha1 = "27415f162e6028e81c72b82ef756bf321213b6ec"
+uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
+version = "0.1.10"
+
 [[deps.FLoops]]
 deps = ["BangBang", "Compat", "FLoopsBase", "InitialValues", "JuliaVariables", "MLStyle", "Serialization", "Setfield", "Transducers"]
 git-tree-sha1 = "ffb97765602e3cbe59a0589d237bf07f245a8576"
@@ -643,6 +682,12 @@ git-tree-sha1 = "ec632f177c0d990e64d955ccc1b8c04c485a0950"
 uuid = "46192b85-c4d5-4398-a991-12ede77f4527"
 version = "0.1.6"
 
+[[deps.GPUCompiler]]
+deps = ["ExprTools", "InteractiveUtils", "LLVM", "Libdl", "Logging", "Scratch", "TimerOutputs", "UUIDs"]
+git-tree-sha1 = "a846f297ce9d09ccba02ead0cae70690e072a119"
+uuid = "61eb1bfa-7361-4325-ad38-22787b887f55"
+version = "0.25.0"
+
 [[deps.GZip]]
 deps = ["Libdl", "Zlib_jll"]
 git-tree-sha1 = "0085ccd5ec327c077ec5b91a5f937b759810ba62"
@@ -659,12 +704,10 @@ deps = ["Adapt", "ChainRulesCore", "DataStructures", "Flux", "Functors", "Graphs
 git-tree-sha1 = "c2c372f348d79c71498df4a490f0996b4c8565d8"
 uuid = "cffab07f-9bc2-4db1-8861-388f63bf7694"
 version = "0.6.17"
+weakdeps = ["CUDA"]
 
     [deps.GraphNeuralNetworks.extensions]
     GraphNeuralNetworksCUDAExt = "CUDA"
-
-    [deps.GraphNeuralNetworks.weakdeps]
-    CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 
 [[deps.Graphs]]
 deps = ["ArnoldiMethod", "Compat", "DataStructures", "Distributed", "Inflate", "LinearAlgebra", "Random", "SharedArrays", "SimpleTraits", "SparseArrays", "Statistics"]
@@ -791,6 +834,12 @@ version = "1.14.0"
     [deps.JSON3.weakdeps]
     ArrowTypes = "31f734f8-188a-4ce0-8406-c8a06bd891cd"
 
+[[deps.JuliaNVTXCallbacks_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "af433a10f3942e882d3c671aacb203e006a5808f"
+uuid = "9c1d0b0a-7046-5b2e-a33f-ea22f176ac7e"
+version = "0.2.1+0"
+
 [[deps.JuliaVariables]]
 deps = ["MLStyle", "NameResolution"]
 git-tree-sha1 = "49fb3cb53362ddadb4415e9b73926d6b40709e70"
@@ -830,6 +879,11 @@ deps = ["Artifacts", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
 git-tree-sha1 = "88b916503aac4fb7f701bb625cd84ca5dd1677bc"
 uuid = "dad2f222-ce93-54a1-a47d-0025e8a3acab"
 version = "0.0.29+0"
+
+[[deps.LLVMLoopInfo]]
+git-tree-sha1 = "2e5c102cfc41f48ae4740c7eca7743cc7e7b75ea"
+uuid = "8b046642-f1f6-4319-8d3c-209ddc03c586"
+version = "1.0.0"
 
 [[deps.LaTeXStrings]]
 git-tree-sha1 = "50901ebc375ed41dbf8058da26f9de442febbbec"
@@ -1024,6 +1078,18 @@ git-tree-sha1 = "60a8e272fe0c5079363b28b0953831e2dd7b7e6f"
 uuid = "15e1cf62-19b3-5cfa-8e77-841668bca605"
 version = "0.4.3"
 
+[[deps.NVTX]]
+deps = ["Colors", "JuliaNVTXCallbacks_jll", "Libdl", "NVTX_jll"]
+git-tree-sha1 = "53046f0483375e3ed78e49190f1154fa0a4083a1"
+uuid = "5da4648a-3479-48b8-97b9-01cb529c0a1f"
+version = "0.3.4"
+
+[[deps.NVTX_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "ce3269ed42816bf18d500c9f63418d4b0d9f5a3b"
+uuid = "e98f9f5b-d649-5603-91fd-7774390e6439"
+version = "3.1.0+2"
+
 [[deps.NaNMath]]
 deps = ["OpenLibm_jll"]
 git-tree-sha1 = "0877504529a3e5c3343c6f8b4c0381e57e4387e4"
@@ -1181,6 +1247,18 @@ uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 [[deps.Random]]
 deps = ["SHA", "Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
+[[deps.Random123]]
+deps = ["Random", "RandomNumbers"]
+git-tree-sha1 = "4743b43e5a9c4a2ede372de7061eed81795b12e7"
+uuid = "74087812-796a-5b5d-8853-05524746bad3"
+version = "1.7.0"
+
+[[deps.RandomNumbers]]
+deps = ["Random", "Requires"]
+git-tree-sha1 = "043da614cc7e95c703498a491e2c21f58a2b8111"
+uuid = "e6cf234a-135c-5ec9-84dd-332b85af5143"
+version = "1.5.3"
 
 [[deps.RealDot]]
 deps = ["LinearAlgebra"]
@@ -1396,6 +1474,12 @@ version = "0.1.1"
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[[deps.TimerOutputs]]
+deps = ["ExprTools", "Printf"]
+git-tree-sha1 = "f548a9e9c490030e545f72074a41edfd0e5bcdd7"
+uuid = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
+version = "0.5.23"
+
 [[deps.TranscodingStreams]]
 git-tree-sha1 = "3caa21522e7efac1ba21834a03734c57b4611c7e"
 uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
@@ -1553,6 +1637,8 @@ version = "17.4.0+0"
 # ╟─cfda2cf4-d08b-4f46-bd39-02ae3ed53369
 # ╠═2eedd408-67ee-47b2-be6f-2caec94e95b5
 # ╟─76780020-406d-4803-9af0-d928e54fc18c
+# ╠═0a1e07b0-a4f3-4a4b-bcd1-7fe200967cf8
+# ╠═cc2ebdcf-72de-4a3b-af46-5bddab6689cc
 # ╠═d64be72e-8c1f-4551-b4f2-28c8b78466c0
 # ╠═483f17ba-871c-4769-88bd-8ec781d1909d
 # ╟─b4a3059a-db7d-47f1-9ae5-b8c3d896c5e5
