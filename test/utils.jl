@@ -10,6 +10,9 @@ e = g.edata.e
     r = reduce_nodes(mean, g, x)
     @test size(r) == (Dx, g.num_graphs)
     @test r[:, 2] ≈ mean(getgraph(g, 2).ndata.x, dims = 2)
+
+    r2 = reduce_nodes(mean, graph_indicator(g), x)
+    @test r2 == r
 end
 
 @testset "reduce_edges" begin

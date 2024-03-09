@@ -39,6 +39,9 @@ end
     g = G(10)
     @test g.num_nodes == 10
     @test g.num_edges == 0
+
+    g = GNNGraph(graph_type = GRAPH_T)
+    @test g.num_nodes == 0
 end
 
 @testset "symmetric graph" begin
@@ -338,7 +341,7 @@ end
     @test g1 !== g2
 end
 
-## Cannot test this because DataStore is not an oredered collection
+## Cannot test this because DataStore is not an ordered collection
 ## Uncomment when/if it will be based on OrderedDict
 # @testset "show" begin
 #     @test sprint(show, rand_graph(10, 20)) == "GNNGraph(10, 20) with no data"

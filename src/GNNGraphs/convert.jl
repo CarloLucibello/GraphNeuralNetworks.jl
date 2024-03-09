@@ -1,27 +1,30 @@
 ### CONVERT_TO_COO REPRESENTATION ########
 
 function to_coo(data::EDict; num_nodes = nothing, kws...)
-    graph = EDict{Any}()
+    graph = EDict{COO_T}()
     _num_nodes = NDict{Int}()
     num_edges = EDict{Int}()
-    for k in keys(data)
-        d = data[k]
-        @assert d isa Tuple
-        if length(d) == 2
-            d = (d..., nothing)
+    if !isempty(data)
+        for k in keys(data)
+            d = data[k]
+            @assert d isa Tuple
+            if length(d) == 2
+                d = (d..., nothing)
+            end
+            if num_nodes !== nothing
+                n1 = get(num_nodes, k[1], nothing)
+                n2 = get(num_nodes, k[3], nothing)
+            else
+                n1 = nothing
+                n2 = nothing
+            end
+            g, nnodes, nedges = to_coo(d; hetero = true, num_nodes = (n1, n2), kws...)
+            graph[k] = g
+            num_edges[k] = nedges
+            _num_nodes[k[1]] = max(get(_num_nodes, k[1], 0), nnodes[1])
+            _num_nodes[k[3]] = max(get(_num_nodes, k[3], 0), nnodes[2])
         end
-        if num_nodes !== nothing
-            n1 = get(num_nodes, k[1], nothing)
-            n2 = get(num_nodes, k[3], nothing)
-        else
-            n1 = nothing
-            n2 = nothing
-        end
-        g, nnodes, nedges = to_coo(d; hetero = true, num_nodes = (n1, n2), kws...)
-        graph[k] = g
-        num_edges[k] = nedges
-        _num_nodes[k[1]] = max(get(_num_nodes, k[1], 0), nnodes[1])
-        _num_nodes[k[3]] = max(get(_num_nodes, k[3], 0), nnodes[2])
+        graph = Dict([k => v for (k, v) in pairs(graph)]...) # try to restrict the key/value types
     end
     return graph, _num_nodes, num_edges
 end

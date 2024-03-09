@@ -8,7 +8,7 @@ A container for feature arrays. The optional argument `n` enforces that
 At construction time, the `data` can be provided as any iterables of pairs
 of symbols and arrays or as keyword arguments:
 
-```julia-repl
+```jldoctest
 julia> ds = DataStore(3, x = rand(2, 3), y = rand(3))
 DataStore(3) with 2 elements:
   y = 3-element Vector{Float64}
@@ -35,7 +35,7 @@ DataStore() with 2 elements:
 The `DataStore` has an interface similar to both dictionaries and named tuples.
 Arrays can be accessed and added using either the indexing or the property syntax:
 
-```julia-repl
+```jldoctest
 julia> ds = DataStore(x = ones(2, 3), y = zeros(3))
 DataStore() with 2 elements:
   y = 3-element Vector{Float64}
@@ -57,7 +57,7 @@ The `DataStore` can be iterated over, and the keys and values can be accessed
 using `keys(ds)` and `values(ds)`. `map(f, ds)` applies the function `f`
 to each feature array:
 
-```julia-repl
+```jldoctest
 julia> ds = DataStore(a = zeros(2), b = zeros(2));
 
 julia> ds2 = map(x -> x .+ 1, ds)
@@ -105,17 +105,27 @@ function Base.getproperty(ds::DataStore, s::Symbol)
     end
 end
 
+function Base.getproperty(vds::Vector{DataStore}, s::Symbol)
+    if s === :_n
+        return [getn(ds) for ds in vds]
+    elseif s === :_data
+        return [getdata(ds) for ds in vds]
+    else
+        return [getdata(ds)[s] for ds in vds]
+    end
+end
+
 function Base.setproperty!(ds::DataStore, s::Symbol, x)
-    @assert s!=:_n "cannot set _n directly"
-    @assert s!=:_data "cannot set _data directly"
-    if getn(ds) > 0
-        @assert numobs(x)==getn(ds) "expected (numobs(x) == getn(ds)) but got $(numobs(x)) != $(getn(ds))"
+    @assert s != :_n "cannot set _n directly"
+    @assert s != :_data "cannot set _data directly"
+    if getn(ds) >= 0
+        numobs(x) == getn(ds) || throw(DimensionMismatch("expected $(getn(ds)) object features but got $(numobs(x))."))
     end
     return getdata(ds)[s] = x
 end
 
 Base.getindex(ds::DataStore, s::Symbol) = getproperty(ds, s)
-Base.setindex!(ds::DataStore, s::Symbol, x) = setproperty!(ds, s, x)
+Base.setindex!(ds::DataStore, x, s::Symbol) = setproperty!(ds, s, x)
 
 function Base.show(io::IO, ds::DataStore)
     len = length(ds)
@@ -132,6 +142,8 @@ function Base.show(io::IO, ds::DataStore)
         for (k, v) in getdata(ds)
             print(io, "\n  $(k) = $(summary(v))")
         end
+    else
+        print(io, " with no elements")
     end
 end
 
@@ -164,7 +176,7 @@ function MLUtils.getobs(ds::DataStore,
                         i::AbstractVector{T}) where {T <: Union{Integer, Bool}}
     newdata = getobs(getdata(ds), i)
     n = getn(ds)
-    if n > -1
+    if n >= 0
         if length(ds) > 0
             n = numobs(newdata)
         else
@@ -180,14 +192,14 @@ end
 
 function cat_features(ds1::DataStore, ds2::DataStore)
     n1, n2 = getn(ds1), getn(ds2)
-    n1 = n1 > 0 ? n1 : 1
-    n2 = n2 > 0 ? n2 : 1
+    n1 = n1 >= 0 ? n1 : 1
+    n2 = n2 >= 0 ? n2 : 1
     return DataStore(n1 + n2, cat_features(getdata(ds1), getdata(ds2)))
 end
 
 function cat_features(dss::AbstractVector{DataStore}; kws...)
     ns = getn.(dss)
-    ns = map(n -> n > 0 ? n : 1, ns)
+    ns = map(n -> n >= 0 ? n : 1, ns)
     return DataStore(sum(ns), cat_features(getdata.(dss); kws...))
 end
 

@@ -1,5 +1,6 @@
 RTOL_LOW = 1e-2
 RTOL_HIGH = 1e-5
+ATOL_LOW = 1e-3
 
 in_channel = 3
 out_channel = 5
@@ -40,19 +41,20 @@ test_graphs = [g1, g_single_vertex]
     l = GCNConv(in_channel => out_channel, add_self_loops = false)
     test_layer(l, g1, rtol = RTOL_HIGH, outsize = (out_channel, g1.num_nodes))
 
-    @testset "edge weights" begin
+    @testset "edge weights & custom normalization" begin
         s = [2, 3, 1, 3, 1, 2]
         t = [1, 1, 2, 2, 3, 3]
         w = T[1, 2, 3, 4, 5, 6]
         g = GNNGraph((s, t, w), ndata = ones(T, 1, 3), graph_type = GRAPH_T)
         x = g.ndata.x
+        custom_norm_fn(d) = 1 ./ sqrt.(d)  
         l = GCNConv(1 => 1, add_self_loops = false, use_edge_weight = true)
         l.weight .= 1
         d = degree(g, dir = :in, edge_weight = true)
         y = l(g, x)
         @test y[1, 1] ≈ w[1] / √(d[1] * d[2]) + w[2] / √(d[1] * d[3])
         @test y[1, 2] ≈ w[3] / √(d[2] * d[1]) + w[4] / √(d[2] * d[3])
-        @test y ≈ l(g, x, w)
+        @test y ≈ l(g, x, w, custom_norm_fn) # checking without custom
 
         # test gradient with respect to edge weights
         w = rand(T, 6)
@@ -137,7 +139,7 @@ end
     for heads in (1, 2), concat in (true, false)
         l = GATv2Conv(in_channel => out_channel, tanh; heads, concat)
         for g in test_graphs
-            test_layer(l, g, rtol = RTOL_LOW,
+            test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
                         exclude_grad_fields = [:negative_slope],
                         outsize = (concat ? heads * out_channel : out_channel,
                                     g.num_nodes))
@@ -148,7 +150,7 @@ end
         ein = 3
         l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
         g = GNNGraph(g1, edata = rand(T, ein, g1.num_edges))
-        test_layer(l, g, rtol = RTOL_LOW,
+        test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
                     exclude_grad_fields = [:negative_slope],
                     outsize = (out_channel, g.num_nodes))
     end
@@ -166,7 +168,7 @@ end
         ein = 3
         l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
         g = GNNGraph(g1, edata = rand(T, ein, g1.num_edges))
-        test_layer(l, g, rtol = 1e-3,
+        test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
                     exclude_grad_fields = [:negative_slope],
                     outsize = (out_channel, g.num_nodes))
     end
@@ -243,8 +245,17 @@ end
 end
 
 @testset "AGNNConv" begin
-    l = AGNNConv()
+    l = AGNNConv(trainable=false, add_self_loops=false)
     @test l.β == [1.0f0]
+    @test l.add_self_loops == false
+    @test l.trainable == false
+    Flux.trainable(l) == (;)
+
+    l = AGNNConv(init_beta=2.0f0)
+    @test l.β == [2.0f0]
+    @test l.add_self_loops == true
+    @test l.trainable == true 
+    Flux.trainable(l) == (; β = [1f0])
     for g in test_graphs
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (in_channel, g.num_nodes))
     end

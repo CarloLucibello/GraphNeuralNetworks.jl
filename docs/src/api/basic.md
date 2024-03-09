@@ -7,7 +7,6 @@ CurrentModule = GraphNeuralNetworks
 ## Index
 
 ```@index
-Order = [:type, :function]
 Modules = [GraphNeuralNetworks]
 Pages = ["basic.md"]
 ```

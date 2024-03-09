@@ -2,7 +2,6 @@ module GNNGraphs
 
 using SparseArrays
 using Functors: @functor
-using CUDA
 import Graphs
 using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree,
               has_self_loops, is_directed
@@ -15,11 +14,16 @@ import KrylovKit
 using ChainRulesCore
 using LinearAlgebra, Random, Statistics
 import MLUtils
-using MLUtils: getobs, numobs
+using MLUtils: getobs, numobs, ones_like, zeros_like
 import Functors
+
+include("chainrules.jl") # hacks for differentiability
 
 include("datastore.jl")
 export DataStore
+
+include("abstracttypes.jl")
+export AbstractGNNGraph
 
 include("gnngraph.jl")
 export GNNGraph,
@@ -28,7 +32,17 @@ export GNNGraph,
        graph_features
 
 include("gnnheterograph.jl")
-export GNNHeteroGraph
+export GNNHeteroGraph,
+       num_edge_types,
+       num_node_types,
+       edge_type_subgraph
+
+include("temporalsnapshotsgnngraph.jl")
+export TemporalSnapshotsGNNGraph,
+       add_snapshot,
+       # add_snapshot!,
+       remove_snapshot
+       # remove_snapshot!
 
 include("query.jl")
 export adjacency_list,
@@ -72,8 +86,11 @@ export add_nodes,
 include("generate.jl")
 export rand_graph,
        rand_heterograph,
+       rand_bipartite_heterograph,
        knn_graph,
-       radius_graph
+       radius_graph,
+       rand_temporal_radius_graph,
+       rand_temporal_hyperbolic_graph
 
 include("sampling.jl")
 export sample_neighbors

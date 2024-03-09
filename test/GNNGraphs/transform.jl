@@ -29,6 +29,11 @@ end
     g123 = Flux.batch([g1, g2, g3])
     @test g123.graph_indicator == [fill(1, 10); fill(2, 4); fill(3, 7)]
 
+    # Allow wider eltype
+    g123 = Flux.batch(GNNGraph[g1, g2, g3])
+    @test g123.graph_indicator == [fill(1, 10); fill(2, 4); fill(3, 7)]
+
+
     s, t = edge_index(g123)
     @test s == [edge_index(g1)[1]; 10 .+ edge_index(g2)[1]; 14 .+ edge_index(g3)[1]]
     @test t == [edge_index(g1)[2]; 10 .+ edge_index(g2)[2]; 14 .+ edge_index(g3)[2]]
@@ -96,22 +101,54 @@ end
     @test nodemap == 1:(g1.num_nodes)
 end
 
-@testset "add_edges" begin if GRAPH_T == :coo
-    s = [1, 1, 2, 3]
-    t = [2, 3, 4, 5]
-    g = GNNGraph(s, t, graph_type = GRAPH_T)
-    snew = [1]
-    tnew = [4]
-    gnew = add_edges(g, snew, tnew)
-    @test gnew.num_edges == 5
-    @test sort(inneighbors(gnew, 4)) == [1, 2]
+@testset "add_edges" begin 
+    if GRAPH_T == :coo
+        s = [1, 1, 2, 3]
+        t = [2, 3, 4, 5]
+        g = GNNGraph(s, t, graph_type = GRAPH_T)
+        snew = [1]
+        tnew = [4]
+        gnew = add_edges(g, snew, tnew)
+        @test gnew.num_edges == 5
+        @test sort(inneighbors(gnew, 4)) == [1, 2]
 
-    g = GNNGraph(s, t, edata = (e1 = rand(2, 4), e2 = rand(3, 4)), graph_type = GRAPH_T)
-    # @test_throws ErrorException add_edges(g, snew, tnew)
-    gnew = add_edges(g, snew, tnew, edata = (e1 = ones(2, 1), e2 = zeros(3, 1)))
-    @test all(gnew.edata.e1[:, 5] .== 1)
-    @test all(gnew.edata.e2[:, 5] .== 0)
-end end
+        gnew2 = add_edges(g, (snew, tnew))
+        @test gnew2 == gnew
+        @test get_edge_weight(gnew2) === nothing
+
+        g = GNNGraph(s, t, edata = (e1 = rand(2, 4), e2 = rand(3, 4)), graph_type = GRAPH_T)
+        # @test_throws ErrorException add_edges(g, snew, tnew)
+        gnew = add_edges(g, snew, tnew, edata = (e1 = ones(2, 1), e2 = zeros(3, 1)))
+        @test all(gnew.edata.e1[:, 5] .== 1)
+        @test all(gnew.edata.e2[:, 5] .== 0)
+
+        @testset "adding new nodes" begin
+            g = GNNGraph()
+            g = add_edges(g, ([1,3], [2, 1]))
+            @test g.num_nodes == 3
+            @test g.num_edges == 2
+            @test sort(inneighbors(g, 1)) == [3]
+            @test sort(outneighbors(g, 1)) == [2]
+        end
+        @testset "also add weights" begin
+            s = [1, 1, 2, 3]
+            t = [2, 3, 4, 5]
+            w = [1.0, 2.0, 3.0, 4.0]
+            snew = [1]
+            tnew = [4]
+            wnew = [5.]
+
+            g = GNNGraph((s, t), graph_type = GRAPH_T)
+            gnew = add_edges(g, (snew, tnew, wnew))
+            @test get_edge_weight(gnew) == [ones(length(s)); wnew]
+            
+            g = GNNGraph((s, t, w), graph_type = GRAPH_T)
+            gnew = add_edges(g, (snew, tnew, wnew))
+            @test get_edge_weight(gnew) == [w; wnew]
+        end
+    end 
+end
+
 
 @testset "add_nodes" begin if GRAPH_T == :coo
     g = rand_graph(6, 4, ndata = rand(2, 6), graph_type = GRAPH_T)
@@ -278,4 +315,177 @@ end
     @test output == [0.0 0.0 0.0
                      0.5 1.0 0.5
                      0.0 0.0 0.0]
+end
+
+@testset "HeteroGraphs" begin
+    @testset "batch" begin
+        gs = [rand_bipartite_heterograph((10, 15), 20) for _ in 1:5]
+        g = Flux.batch(gs)
+        @test g.num_nodes[:A] == 50
+        @test g.num_nodes[:B] == 75
+        @test g.num_edges[(:A,:to,:B)] == 100
+        @test g.num_edges[(:B,:to,:A)] == 100
+        @test g.num_graphs == 5
+        @test g.graph_indicator == Dict(:A => vcat([fill(i, 10) for i in 1:5]...),
+                                        :B => vcat([fill(i, 15) for i in 1:5]...))
+
+        for gi in gs
+            gi.ndata[:A].x = ones(2, 10)
+            gi.ndata[:A].y = zeros(10)
+            gi.edata[(:A,:to,:B)].e = fill(2, 20)
+            gi.gdata.u = 7
+        end
+        g = Flux.batch(gs)
+        @test g.ndata[:A].x == ones(2, 50)
+        @test g.ndata[:A].y == zeros(50)
+        @test g.edata[(:A,:to,:B)].e == fill(2, 100)
+        @test g.gdata.u == fill(7, 5)
+
+        # Allow for wider eltype 
+        g = Flux.batch(GNNHeteroGraph[g for g in gs])
+        @test g.ndata[:A].x == ones(2, 50)
+        @test g.ndata[:A].y == zeros(50)
+        @test g.edata[(:A,:to,:B)].e == fill(2, 100)
+        @test g.gdata.u == fill(7, 5)
+    end
+
+    @testset "batch non-similar edge types" begin
+        gs = [rand_heterograph((:A =>10, :B => 14), ((:A, :to1, :A) => 5, (:A, :to1, :B) => 20)),
+            rand_heterograph((:A => 10, :B => 15), ((:A, :to1, :B) => 5, (:B, :to2, :B) => 16)),
+            rand_heterograph((:B => 15, :C => 5), ((:C, :to1, :B) => 5, (:B, :to2, :C) => 21)),
+            rand_heterograph((:A => 10, :B => 10, :C => 10), ((:A, :to1, :C) => 5, (:A, :to1, :B) => 5)),
+            rand_heterograph((:C => 20), ((:C, :to3, :C) => 10))
+        ]
+        g = Flux.batch(gs)
+
+        @test g.num_nodes[:A] == 10 + 10 + 10
+        @test g.num_nodes[:B] == 14 + 15 + 15 + 10
+        @test g.num_nodes[:C] == 5 + 10 + 20
+        @test g.num_edges[(:A,:to1,:A)] == 5
+        @test g.num_edges[(:A,:to1,:B)] == 20 + 5 + 5
+        @test g.num_edges[(:A,:to1,:C)] == 5
+
+        @test g.num_edges[(:B,:to2,:B)] == 16
+        @test g.num_edges[(:B,:to2,:C)] == 21
+
+        @test g.num_edges[(:C,:to1,:B)] == 5
+        @test g.num_edges[(:C,:to3,:C)] == 10
+        @test length(keys(g.num_edges)) == 7
+        @test g.num_graphs == 5
+
+        function ndata_if_key(g, key, subkey, value)
+            if haskey(g.ndata, key)
+                g.ndata[key][subkey] = reduce(hcat, fill(value, g.num_nodes[key]))
+            end
+        end
+
+        function edata_if_key(g, key, subkey, value)
+            if haskey(g.edata, key)
+                g.edata[key][subkey] = reduce(hcat, fill(value, g.num_edges[key]))
+            end
+        end
+
+        for gi in gs
+            ndata_if_key(gi, :A, :x, [0])
+            ndata_if_key(gi, :A, :y, ones(2))
+            ndata_if_key(gi, :B, :x, ones(3))
+            ndata_if_key(gi, :C, :y, zeros(4))
+            edata_if_key(gi, (:A,:to1,:B), :x, [0])
+            gi.gdata.u = 7
+        end
+
+        g = Flux.batch(gs)
+
+        @test g.ndata[:A].x == reduce(hcat, fill(0, 10 + 10 + 10))
+        @test g.ndata[:A].y == ones(2, 10 + 10 + 10)
+        @test g.ndata[:B].x == ones(3, 14 + 15 + 15 + 10)
+        @test g.ndata[:C].y == zeros(4, 5 + 10 + 20)
+
+        @test g.edata[(:A,:to1,:B)].x == reduce(hcat, fill(0, 20 + 5 + 5))
+
+        @test g.gdata.u == fill(7, 5)
+
+        # Allow for wider eltype 
+        g = Flux.batch(GNNHeteroGraph[g for g in gs])
+        @test g.ndata[:A].x == reduce(hcat, fill(0, 10 + 10 + 10))
+        @test g.ndata[:A].y == ones(2, 10 + 10 + 10)
+        @test g.ndata[:B].x == ones(3, 14 + 15 + 15 + 10)
+        @test g.ndata[:C].y == zeros(4, 5 + 10 + 20)
+
+        @test g.edata[(:A,:to1,:B)].x == reduce(hcat, fill(0, 20 + 5 + 5))
+
+        @test g.gdata.u == fill(7, 5)
+    end
+
+    @testset "add_edges" begin
+        hg = rand_bipartite_heterograph((2, 2), (4, 0), bidirected=false)
+        hg = add_edges(hg, (:B,:to,:A), [1, 1], [1,2])
+        @test hg.num_edges == Dict((:A,:to,:B) => 4, (:B,:to,:A) => 2)
+        @test has_edge(hg, (:B,:to,:A), 1, 1)
+        @test has_edge(hg, (:B,:to,:A), 1, 2)
+        @test !has_edge(hg, (:B,:to,:A), 2, 1)
+        @test !has_edge(hg, (:B,:to,:A), 2, 2)
+
+        @testset "new nodes" begin
+            hg = rand_bipartite_heterograph((2, 2), 3)
+            hg = add_edges(hg, (:C,:rel,:B) => ([1, 3], [1,2]))
+            @test hg.num_nodes == Dict(:A => 2, :B => 2, :C => 3)
+            @test hg.num_edges == Dict((:A,:to,:B) => 3, (:B,:to,:A) => 3, (:C,:rel,:B) => 2)
+            s, t = edge_index(hg, (:C,:rel,:B))
+            @test s == [1, 3]
+            @test t == [1, 2]
+
+            hg = add_edges(hg, (:D,:rel,:F) => ([1, 3], [1,2]))
+            @test hg.num_nodes == Dict(:A => 2, :B => 2, :C => 3, :D => 3, :F => 2)
+            @test hg.num_edges == Dict((:A,:to,:B) => 3, (:B,:to,:A) => 3, (:C,:rel,:B) => 2, (:D,:rel,:F) => 2)
+            s, t = edge_index(hg, (:D,:rel,:F))
+            @test s == [1, 3]
+            @test t == [1, 2]
+        end
+
+        @testset "also add weights" begin
+            hg = GNNHeteroGraph((:user, :rate, :movie) => ([1,1,2,3], [7,13,5,7], [0.1, 0.2, 0.3, 0.4]))
+            hgnew = add_edges(hg, (:user, :like, :actor) => ([1, 2], [3, 4], [0.5, 0.6]))
+            @test hgnew.num_nodes[:user] == 3
+            @test hgnew.num_nodes[:movie] == 13
+            @test hgnew.num_nodes[:actor] == 4
+            @test hgnew.num_edges == Dict((:user, :rate, :movie) => 4, (:user, :like, :actor) => 2)
+            @test get_edge_weight(hgnew, (:user, :rate, :movie)) == [0.1, 0.2, 0.3, 0.4]
+            @test get_edge_weight(hgnew, (:user, :like, :actor)) == [0.5, 0.6]
+
+            hgnew2 = add_edges(hgnew, (:user, :like, :actor) => ([6, 7], [8, 10], [0.7, 0.8]))
+            @test hgnew2.num_nodes[:user] == 7
+            @test hgnew2.num_nodes[:movie] == 13
+            @test hgnew2.num_nodes[:actor] == 10
+            @test hgnew2.num_edges == Dict((:user, :rate, :movie) => 4, (:user, :like, :actor) => 4)
+            @test get_edge_weight(hgnew2, (:user, :rate, :movie)) == [0.1, 0.2, 0.3, 0.4]
+            @test get_edge_weight(hgnew2, (:user, :like, :actor)) == [0.5, 0.6, 0.7, 0.8]
+        end
+    end
+
+    @testset "add self-loops heterographs" begin
+        g = rand_heterograph((:A =>10, :B => 14), ((:A, :to1, :A) => 5, (:A, :to1, :B) => 20))
+        # Case in which haskey(g.graph, edge_t) passes
+        g = add_self_loops(g, (:A, :to1, :A))
+
+        @test g.num_edges[(:A, :to1, :A)] == 5 + 10
+        @test g.num_edges[(:A, :to1, :B)] == 20
+        # This test should not use length(keys(g.num_edges)) since that may be undefined behavior
+        @test sum(1 for k in keys(g.num_edges) if g.num_edges[k] != 0) == 2
+
+        # Case in which haskey(g.graph, edge_t) fails
+        g = add_self_loops(g, (:A, :to3, :A))
+
+        @test g.num_edges[(:A, :to1, :A)] == 5 + 10
+        @test g.num_edges[(:A, :to1, :B)] == 20
+        @test g.num_edges[(:A, :to3, :A)] == 10
+        @test sum(1 for k in keys(g.num_edges) if g.num_edges[k] != 0) == 3
+
+        # Case with edge weights
+        g = GNNHeteroGraph(Dict((:A, :to1, :A) => ([1, 2, 3], [3, 2, 1], [2, 2, 2]), (:A, :to2, :B) => ([1, 4, 5], [1, 2, 3])))
+        n = g.num_nodes[:A]
+        g = add_self_loops(g, (:A, :to1, :A))
+        
+        @test g.graph[(:A, :to1, :A)][3] == vcat([2, 2, 2], fill(1, n))
+    end
 end

@@ -6,11 +6,25 @@ ofeltype(x, y) = convert(float(eltype(x)), y)
 For a batched graph `g`, return the graph-wise aggregation of the node
 features `x`. The aggregation operator `aggr` can be `+`, `mean`, `max`, or `min`.
 The returned array will have last dimension `g.num_graphs`.
+
+See also: [`reduce_edges`](@ref).
 """
 function reduce_nodes(aggr, g::GNNGraph, x)
     @assert size(x)[end] == g.num_nodes
     indexes = graph_indicator(g)
     return NNlib.scatter(aggr, x, indexes)
+end
+
+"""
+    reduce_nodes(aggr, indicator::AbstractVector, x)
+
+Return the graph-wise aggregation of the node features `x` given the
+graph indicator `indicator`. The aggregation operator `aggr` can be `+`, `mean`, `max`, or `min`.
+
+See also [`graph_indicator`](@ref).
+"""
+function reduce_nodes(aggr, indicator::AbstractVector, x)
+    return NNlib.scatter(aggr, x, indicator)
 end
 
 """
@@ -67,8 +81,14 @@ Softmax over each node's neighborhood of the edge features `e`.
                     {\sum_{j'\in N(i)} e^{\mathbf{e}_{j'\to i}}}.
 ```
 """
-function softmax_edge_neighbors(g::GNNGraph, e)
-    @assert size(e)[end] == g.num_edges
+function softmax_edge_neighbors(g::AbstractGNNGraph, e)
+    if g isa GNNHeteroGraph
+        for (key, value) in g.num_edges
+            @assert size(e)[end] == value
+        end
+    else
+        @assert size(e)[end] == g.num_edges
+    end
     s, t = edge_index(g)
     max_ = gather(scatter(max, e, t), t)
     num = exp.(e .- max_)
@@ -175,3 +195,7 @@ function topk_feature(g::GNNGraph, x::AbstractArray, k::Int; rev::Bool = true,
         return _topk_batch(matrices, k; rev, sortby)
     end
 end
+
+expand_srcdst(g::AbstractGNNGraph, x) = throw(ArgumentError("Invalid input type, expected matrix or tuple of matrices."))
+expand_srcdst(g::AbstractGNNGraph, x::AbstractMatrix) = (x, x)
+expand_srcdst(g::AbstractGNNGraph, x::Tuple{<:AbstractMatrix, <:AbstractMatrix}) = x

@@ -32,11 +32,14 @@ and optionally an edge weight vector.
 
 # Forward
 
-    (::GCNConv)(g::GNNGraph, x::AbstractMatrix, edge_weight = nothing) -> AbstractMatrix
+    (::GCNConv)(g::GNNGraph, x::AbstractMatrix, edge_weight = nothing, norm_fn::Function = d -> 1 ./ sqrt.(d)) -> AbstractMatrix
 
 Takes as input a graph `g`,ca node feature matrix `x` of size `[in, num_nodes]`,
 and optionally an edge weight vector. Returns a node feature matrix of size 
 `[out, num_nodes]`.
+
+The `norm_fn` parameter allows for custom normalization of the graph convolution operation by passing a function as argument. 
+By default, it computes ``\frac{1}{\sqrt{d}}`` i.e the inverse square root of the degree (`d`) of each node in the graph. 
 
 # Examples
 
@@ -45,7 +48,7 @@ and optionally an edge weight vector. Returns a node feature matrix of size
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s, t)
-x = randn(3, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = GCNConv(3 => 5) 
@@ -53,9 +56,10 @@ l = GCNConv(3 => 5)
 # forward pass
 y = l(g, x)       # size:  5 × num_nodes
 
-# convolution with edge weights
+# convolution with edge weights and custom normalization function
 w = [1.1, 0.1, 2.3, 0.5]
-y = l(g, x, w)
+custom_norm_fn(d) = 1 ./ sqrt.(d + 1)  # Custom normalization function
+y = l(g, x, w, custom_norm_fn)
 
 # Edge weights can also be embedded in the graph.
 g = GNNGraph(s, t, w)
@@ -98,7 +102,8 @@ check_gcnconv_input(g::GNNGraph, edge_weight::Nothing) = nothing
 
 function (l::GCNConv)(g::GNNGraph, 
                       x::AbstractMatrix{T},
-                      edge_weight::EW = nothing
+                      edge_weight::EW = nothing,
+                      norm_fn::Function = d -> 1 ./ sqrt.(d)  
                       ) where {T, EW <: Union{Nothing, AbstractVector}}
 
     check_gcnconv_input(g, edge_weight)
@@ -122,7 +127,7 @@ function (l::GCNConv)(g::GNNGraph,
     else
         d = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
     end
-    c = 1 ./ sqrt.(d)
+    c = norm_fn(d)
     x = x .* c'
     if edge_weight !== nothing
         x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
@@ -139,9 +144,9 @@ function (l::GCNConv)(g::GNNGraph,
 end
 
 function (l::GCNConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
-                      edge_weight::AbstractVector)
+                      edge_weight::AbstractVector, norm_fn::Function)
     g = GNNGraph(edge_index(g)...; g.num_nodes)  # convert to COO
-    return l(g, x, edge_weight)
+    return l(g, x, edge_weight, norm_fn)
 end
 
 function Base.show(io::IO, l::GCNConv)
@@ -182,6 +187,22 @@ with ``\hat{L}`` the [`scaled_laplacian`](@ref).
 - `k`: The order of Chebyshev polynomial.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+x = randn(Float32, 3, g.num_nodes)
+
+# create layer
+l = ChebConv(3 => 5, 5) 
+
+# forward pass
+y = l(g, x)       # size:  5 × num_nodes
+```
 """
 struct ChebConv{W <: AbstractArray{<:Number, 3}, B} <: GNNLayer
     weight::W
@@ -243,6 +264,24 @@ where the aggregation type is selected by `aggr`.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = randn(Float32, 3, g.num_nodes)
+
+# create layer
+l = GraphConv(in_channel => out_channel, relu, bias = false, aggr = mean)
+
+# forward pass
+y = l(g, x)       
+```
 """
 struct GraphConv{W <: AbstractMatrix, B, F, A} <: GNNLayer
     weight1::W
@@ -263,10 +302,11 @@ function GraphConv(ch::Pair{Int, Int}, σ = identity; aggr = +,
     GraphConv(W1, W2, b, σ, aggr)
 end
 
-function (l::GraphConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::GraphConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
-    m = propagate(copy_xj, g, l.aggr, xj = x)
-    x = l.σ.(l.weight1 * x .+ l.weight2 * m .+ l.bias)
+    xj, xi = expand_srcdst(g, x)
+    m = propagate(copy_xj, g, l.aggr, xj = xj)
+    x = l.σ.(l.weight1 * xi .+ l.weight2 * m .+ l.bias)
     return x
 end
 
@@ -312,6 +352,25 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+
+
+# Examples
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = randn(Float32, 3, g.num_nodes)
+
+# create layer
+l = GATConv(in_channel => out_channel, add_self_loops = false, bias = false; heads=2, concat=true)
+
+# forward pass
+y = l(g, x)       
+```
 """
 struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix, F, B} <:
        GNNLayer
@@ -328,7 +387,7 @@ struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix,
 end
 
 @functor GATConv
-Flux.trainable(l::GATConv) = (l.dense_x, l.dense_e, l.bias, l.a)
+Flux.trainable(l::GATConv) = (dense_x = l.dense_x, dense_e = l.dense_e, bias = l.bias, a = l.a)
 
 GATConv(ch::Pair{Int, Int}, args...; kws...) = GATConv((ch[1], 0) => ch[2], args...; kws...)
 
@@ -350,11 +409,13 @@ end
 
 (l::GATConv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
 
-function (l::GATConv)(g::GNNGraph, x::AbstractMatrix,
+function (l::GATConv)(g::AbstractGNNGraph, x,
                       e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
     @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
     @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"
+
+    xj, xi = expand_srcdst(g, x)
 
     if l.add_self_loops
         @assert e===nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
@@ -364,11 +425,16 @@ function (l::GATConv)(g::GNNGraph, x::AbstractMatrix,
     _, chout = l.channel
     heads = l.heads
 
-    Wx = l.dense_x(x)
-    Wx = reshape(Wx, chout, heads, :)                   # chout × nheads × nnodes
+    Wxi = Wxj = l.dense_x(xj)
+    Wxi = Wxj = reshape(Wxj, chout, heads, :)                   
+
+    if xi !== xj
+        Wxi = l.dense_x(xi)
+        Wxi = reshape(Wxi, chout, heads, :)                   
+    end
 
     # a hand-written message passing
-    m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wx, Wx, e)
+    m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
     β = α .* m.Wxj
     x = aggregate_neighbors(g, +, β)
@@ -440,6 +506,27 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+
+# Examples
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+ein = 3
+g = GNNGraph(s, t)
+x = randn(Float32, 3, g.num_nodes)
+
+# create layer
+l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
+
+# edge features
+e = randn(Float32, ein, length(s))
+
+# forward pass
+y = l(g, x, e)    
+```
 """
 struct GATv2Conv{T, A1, A2, A3, B, C <: AbstractMatrix, F} <: GNNLayer
     dense_i::A1
@@ -456,7 +543,7 @@ struct GATv2Conv{T, A1, A2, A3, B, C <: AbstractMatrix, F} <: GNNLayer
 end
 
 @functor GATv2Conv
-Flux.trainable(l::GATv2Conv) = (l.dense_i, l.dense_j, l.dense_e, l.bias, l.a)
+Flux.trainable(l::GATv2Conv) = (dense_i = l.dense_i, dense_j = l.dense_j, dense_e = l.dense_e, bias = l.bias, a = l.a)
 
 function GATv2Conv(ch::Pair{Int, Int}, args...; kws...)
     GATv2Conv((ch[1], 0) => ch[2], args...; kws...)
@@ -492,11 +579,13 @@ end
 
 (l::GATv2Conv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
 
-function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix,
+function (l::GATv2Conv)(g::AbstractGNNGraph, x,
                         e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
     @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
     @assert !((e !== nothing) && (l.dense_e === nothing)) "Input edge features were not specified in the layer constructor"
+
+    xj, xi = expand_srcdst(g, x)
 
     if l.add_self_loops
         @assert e===nothing "Using edge features and setting add_self_loops=true at the same time is not yet supported."
@@ -505,8 +594,8 @@ function (l::GATv2Conv)(g::GNNGraph, x::AbstractMatrix,
     _, out = l.channel
     heads = l.heads
 
-    Wxi = reshape(l.dense_i(x), out, heads, :)                                  # out × heads × nnodes
-    Wxj = reshape(l.dense_j(x), out, heads, :)                                  # out × heads × nnodes
+    Wxi = reshape(l.dense_i(xi), out, heads, :)                                  # out × heads × nnodes
+    Wxj = reshape(l.dense_j(xj), out, heads, :)                                  # out × heads × nnodes
 
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
@@ -562,6 +651,23 @@ where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing throu
 - `num_layers`: The number of gated recurrent unit.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `init`: Weight initialization function.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+out_channel = 5
+num_layers = 3
+g = GNNGraph(s, t)
+
+# create layer
+l = GatedGraphConv(out_channel, num_layers)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct GatedGraphConv{W <: AbstractArray{<:Number, 3}, R, A} <: GNNLayer
     weight::W
@@ -621,6 +727,23 @@ where `nn` generally denotes a learnable function, e.g. a linear layer or a mult
 
 - `nn`: A (possibly learnable) function. 
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create layer
+l = EdgeConv(Dense(2 * in_channel, out_channel), aggr = +)
+
+# forward pass
+y = l(g, x)
+```
 """
 struct EdgeConv{NN, A} <: GNNLayer
     nn::NN
@@ -631,10 +754,13 @@ end
 
 EdgeConv(nn; aggr = max) = EdgeConv(nn, aggr)
 
-function (l::EdgeConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::EdgeConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
+    xj, xi = expand_srcdst(g, x)
+
     message(l, xi, xj, e) = l.nn(vcat(xi, xj .- xi))
-    x = propagate(message, g, l.aggr, l, xi = x, xj = x)
+
+    x = propagate(message, g, l.aggr, l, xi = xi, xj = xj, e = nothing)
     return x
 end
 
@@ -659,6 +785,26 @@ where ``f_\Theta`` typically denotes a learnable function, e.g. a linear layer o
 
 - `f`: A (possibly learnable) function acting on node features. 
 - `ϵ`: Weighting factor.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create dense layer
+nn = Dense(in_channel, out_channel)
+
+# create layer
+l = GINConv(nn, 0.01f0, aggr = mean)
+
+# forward pass
+y = l(g, x)  
+```
 """
 struct GINConv{R <: Real, NN, A} <: GNNLayer
     nn::NN
@@ -667,14 +813,17 @@ struct GINConv{R <: Real, NN, A} <: GNNLayer
 end
 
 @functor GINConv
-Flux.trainable(l::GINConv) = (l.nn,)
+Flux.trainable(l::GINConv) = (nn = l.nn,)
 
 GINConv(nn, ϵ; aggr = +) = GINConv(nn, ϵ, aggr)
 
-function (l::GINConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::GINConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
-    m = propagate(copy_xj, g, l.aggr, xj = x)
-    l.nn((1 + ofeltype(x, l.ϵ)) * x + m)
+    xj, xi = expand_srcdst(g, x) 
+ 
+    m = propagate(copy_xj, g, l.aggr, xj = xj)
+    
+    l.nn((1 .+ ofeltype(xi, l.ϵ)) .* xi .+ m)
 end
 
 function Base.show(io::IO, l::GINConv)
@@ -711,6 +860,27 @@ For convenience, also functions returning a single `(out*in, num_edges)` matrix 
 - `σ`: Activation function.
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+edim = 10
+g = GNNGraph(s, t)
+
+# create dense layer
+nn = Dense(edim, out_channel * in_channel)
+
+# create layer
+l = NNConv(in_channel => out_channel, nn, tanh, bias = true, aggr = +)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct NNConv{W, B, NN, F, A} <: GNNLayer
     weight::W
@@ -774,6 +944,23 @@ where the aggregation type is selected by `aggr`.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `bias`: Add learnable bias.
 - `init`: Weights' initializer.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create layer
+l = SAGEConv(in_channel => out_channel, tanh, bias = false, aggr = +)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct SAGEConv{W <: AbstractMatrix, B, F, A} <: GNNLayer
     weight::W
@@ -792,10 +979,11 @@ function SAGEConv(ch::Pair{Int, Int}, σ = identity; aggr = mean,
     SAGEConv(W, b, σ, aggr)
 end
 
-function (l::SAGEConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::SAGEConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
-    m = propagate(copy_xj, g, l.aggr, xj = x)
-    x = l.σ.(l.weight * vcat(x, m) .+ l.bias)
+    xj, xi = expand_srcdst(g, x)
+    m = propagate(copy_xj, g, l.aggr, xj = xj)
+    x = l.σ.(l.weight * vcat(xi, m) .+ l.bias)
     return x
 end
 
@@ -830,6 +1018,23 @@ where the edge gates ``\eta_{ij}`` are given by
 - `act`: Activation function.
 - `init`: Weight matrices' initializing function. 
 - `bias`: Learn an additive bias if true.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+
+# create layer
+l = ResGatedGraphConv(in_channel => out_channel, tanh, bias = true)
+
+# forward pass
+y = l(g, x)  
+```
 """
 struct ResGatedGraphConv{W, B, F} <: GNNLayer
     A::W
@@ -853,18 +1058,19 @@ function ResGatedGraphConv(ch::Pair{Int, Int}, σ = identity;
     return ResGatedGraphConv(A, B, U, V, b, σ)
 end
 
-function (l::ResGatedGraphConv)(g::GNNGraph, x::AbstractMatrix)
+function (l::ResGatedGraphConv)(g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
+    xj, xi = expand_srcdst(g, x)
 
     message(xi, xj, e) = sigmoid.(xi.Ax .+ xj.Bx) .* xj.Vx
 
-    Ax = l.A * x
-    Bx = l.B * x
-    Vx = l.V * x
+    Ax = l.A * xi
+    Bx = l.B * xj
+    Vx = l.V * xj
 
     m = propagate(message, g, +, xi = (; Ax), xj = (; Bx, Vx))
 
-    return l.σ.(l.U * x .+ m .+ l.bias)
+    return l.σ.(l.U * xi .+ m .+ l.bias)
 end
 
 function Base.show(io::IO, l::ResGatedGraphConv)
@@ -875,7 +1081,7 @@ function Base.show(io::IO, l::ResGatedGraphConv)
 end
 
 @doc raw"""
-    CGConv((in, ein) => out, f, act=identity; bias=true, init=glorot_uniform, residual=false)
+    CGConv((in, ein) => out, act=identity; bias=true, init=glorot_uniform, residual=false)
     CGConv(in => out, ...)
 
 The crystal graph convolutional layer from the paper
@@ -938,14 +1144,16 @@ function CGConv(ch::Pair{NTuple{2, Int}, Int}, act = identity; residual = false,
     return CGConv(ch, dense_f, dense_s, residual)
 end
 
-function (l::CGConv)(g::GNNGraph, x::AbstractMatrix,
+function (l::CGConv)(g::AbstractGNNGraph, x,
                      e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
+    xj, xi = expand_srcdst(g, x)
+    
     if e !== nothing
         check_num_edges(g, e)
     end
 
-    m = propagate(message, g, +, l, xi = x, xj = x, e = e)
+    m = propagate(message, g, +, l, xi = xi, xj = xj, e = e)
 
     if l.residual
         if size(x, 1) == size(m, 1)
@@ -957,6 +1165,7 @@ function (l::CGConv)(g::GNNGraph, x::AbstractMatrix,
 
     return m
 end
+
 
 function message(l::CGConv, xi, xj, e)
     if e !== nothing
@@ -977,14 +1186,14 @@ function Base.show(io::IO, l::CGConv)
 end
 
 @doc raw"""
-    AGNNConv(init_beta=1f0)
+    AGNNConv(; init_beta=1.0f0, trainable=true, add_self_loops=true)
 
 Attention-based Graph Neural Network layer from paper [Attention-based
 Graph Neural Network for Semi-Supervised Learning](https://arxiv.org/abs/1803.03735).
 
 The forward pass is given by
 ```math
-\mathbf{x}_i' = \sum_{j \in {N(i) \cup \{i\}}} \alpha_{ij} W \mathbf{x}_j
+\mathbf{x}_i' = \sum_{j \in N(i)} \alpha_{ij} \mathbf{x}_j
 ```
 where the attention coefficients ``\alpha_{ij}`` are given by
 ```math
@@ -996,32 +1205,55 @@ with the cosine distance defined by
 \cos(\mathbf{x}_i, \mathbf{x}_j) = 
   \frac{\mathbf{x}_i \cdot \mathbf{x}_j}{\lVert\mathbf{x}_i\rVert \lVert\mathbf{x}_j\rVert}
 ```
-and ``\beta`` a trainable parameter.
+and ``\beta`` a trainable parameter if `trainable=true`.
 
 # Arguments
 
-- `init_beta`: The initial value of ``\beta``.
+- `init_beta`: The initial value of ``\beta``. Default 1.0f0.
+- `trainable`: If true, ``\beta`` is trainable. Default `true`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+
+# Examples:
+
+```julia
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+
+# create layer
+l = AGNNConv(init_beta=2.0f0)
+
+# forward pass
+y = l(g, x)   
+```
 """
 struct AGNNConv{A <: AbstractVector} <: GNNLayer
     β::A
+    add_self_loops::Bool
+    trainable::Bool
 end
 
 @functor AGNNConv
 
-function AGNNConv(init_beta = 1.0f0)
-    AGNNConv([init_beta])
+Flux.trainable(l::AGNNConv) = l.trainable ? (; l.β) : (;)
+
+function AGNNConv(; init_beta = 1.0f0, add_self_loops = true, trainable = true)
+    AGNNConv([init_beta], add_self_loops, trainable)
 end
 
 function (l::AGNNConv)(g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
-    g = add_self_loops(g)
+    if l.add_self_loops
+        g = add_self_loops(g)
+    end
 
     xn = x ./ sqrt.(sum(x .^ 2, dims = 1))
     cos_dist = apply_edges(xi_dot_xj, g, xi = xn, xj = xn)
     α = softmax_edge_neighbors(g, l.β .* cos_dist)
 
     x = propagate(g, +; xj = x, e = α) do xi, xj, α
-        α .* xj
+        α .* xj 
     end
 
     return x
@@ -1052,8 +1284,8 @@ activations.
 
 ```julia
 g = rand_graph(10, 30)
-x = randn(3, 10)
-e = randn(3, 30)
+x = randn(Float32, 3, 10)
+e = randn(Float32, 3, 30)
 m = MEGNetConv(3 => 3)
 x′, e′ = m(g, x, e)
 ```
@@ -1243,7 +1475,7 @@ where ``\tilde{A}`` is ``A + I``.
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s, t)
-x = randn(3, g.num_nodes)
+x = randn(Float32, 3, g.num_nodes)
 
 # create layer
 l = SGConv(3 => 5; add_self_loops = true) 
@@ -1282,10 +1514,14 @@ function SGConv(ch::Pair{Int, Int}, k = 1;
     SGConv(W, b, k, add_self_loops, use_edge_weight)
 end
 
-function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T},
+function (l::SGConv)(g::AbstractGNNGraph, x,
                      edge_weight::EW = nothing) where
-    {T, EW <: Union{Nothing, AbstractVector}}
+                     {EW <: Union{Nothing, AbstractVector}}
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+
+    xj, xi = expand_srcdst(g, x)
+    edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
+    T = eltype(xi)
 
     if edge_weight !== nothing
         @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
@@ -1299,29 +1535,28 @@ function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T},
         end
     end
     Dout, Din = size(l.weight)
-    if Dout < Din
-        x = l.weight * x
-    end
-    if edge_weight !== nothing
-        d = degree(g, T; dir = :in, edge_weight)
+    if g isa GNNHeteroGraph
+        d = degree(g, edge_t, T; dir = :in)
     else
-        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+        if edge_weight !== nothing
+            d = degree(g, T; dir = :in, edge_weight)
+        else
+            d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+        end
     end
     c = 1 ./ sqrt.(d)
     for iter in 1:(l.k)
         x = x .* c'
         if edge_weight !== nothing
-            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
+            x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
         elseif l.use_edge_weight
-            x = propagate(w_mul_xj, g, +, xj = x)
+            x = propagate(w_mul_xj, g, +, xj = xj)
         else
-            x = propagate(copy_xj, g, +, xj = x)
+            x = propagate(copy_xj, g, +, xj = xj)
         end
         x = x .* c'
     end
-    if Dout >= Din
-        x = l.weight * x
-    end
+    x = l.weight * x
     return (x .+ l.bias)
 end
 
@@ -1339,8 +1574,8 @@ function Base.show(io::IO, l::SGConv)
 end
 
 @doc raw"""
-    EdgeConv((in, ein) => out; hidden_size=2in, residual=false)
-    EdgeConv(in => out; hidden_size=2in, residual=false)
+    EGNNConv((in, ein) => out; hidden_size=2in, residual=false)
+    EGNNConv(in => out; hidden_size=2in, residual=false)
 
 Equivariant Graph Convolutional Layer from [E(n) Equivariant Graph
 Neural Networks](https://arxiv.org/abs/2102.09844).
@@ -1560,7 +1795,7 @@ end
 @functor TransformerConv
 
 function Flux.trainable(l::TransformerConv)
-    (l.W1, l.W2, l.W3, l.W4, l.W5, l.W6, l.FF, l.BN1, l.BN2)
+    (W1 = l.W1, W2 = l.W2, W3 = l.W3, W4 = l.W4, W5 = l.W5, W6 = l.W6, FF = l.FF, BN1 = l.BN1, BN2 = l.BN2)
 end
 
 function TransformerConv(ch::Pair{Int, Int}, args...; kws...)

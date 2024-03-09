@@ -9,16 +9,43 @@ end
 
 check_num_nodes(::GNNGraph, ::Nothing) = true
 
+function check_num_nodes(g::GNNGraph, x::Tuple)
+    @assert length(x) == 2
+    check_num_nodes(g, x[1])
+    check_num_nodes(g, x[2])
+    return true
+end
+
+# x = (Xsrc, Xdst) = (Xj, Xi)
+function check_num_nodes(g::GNNHeteroGraph, x::Tuple)
+    @assert length(x) == 2
+    @assert length(g.etypes) == 1
+    nt1, _, nt2 = only(g.etypes)
+    if x[1] isa AbstractArray
+        @assert size(x[1], ndims(x[1])) == g.num_nodes[nt1]
+    end
+    if x[2] isa AbstractArray
+        @assert size(x[2], ndims(x[2])) == g.num_nodes[nt2] 
+    end
+    return true
+end
+
 function check_num_edges(g::GNNGraph, e::AbstractArray)
     @assert g.num_edges==size(e, ndims(e)) "Got $(size(e, ndims(e))) as last dimension size instead of num_edges=$(g.num_edges)"
     return true
 end
-function check_num_edges(g::GNNGraph, x::Union{Tuple, NamedTuple})
+function check_num_edges(g::AbstractGNNGraph, x::Union{Tuple, NamedTuple})
     map(x -> check_num_edges(g, x), x)
     return true
 end
 
-check_num_edges(::GNNGraph, ::Nothing) = true
+check_num_edges(::AbstractGNNGraph, ::Nothing) = true
+
+function check_num_edges(g::GNNHeteroGraph, e::AbstractArray)
+    num_edgs = only(g.num_edges)[2]
+    @assert only(num_edgs)==size(e, ndims(e)) "Got $(size(e, ndims(e))) as last dimension size instead of num_edges=$(num_edgs)"
+    return true
+end
 
 sort_edge_index(eindex::Tuple) = sort_edge_index(eindex...)
 
@@ -28,10 +55,7 @@ function sort_edge_index(u, v)
     return u[p], v[p]
 end
 
-function sort_edge_index(u::AnyCuArray, v::AnyCuArray)
-    #TODO proper cuda friendly implementation
-    sort_edge_index(u |> Flux.cpu, v |> Flux.cpu) |> Flux.gpu
-end
+
 
 cat_features(x1::Nothing, x2::Nothing) = nothing
 cat_features(x1::AbstractArray, x2::AbstractArray) = cat(x1, x2, dims = ndims(x1))
@@ -56,8 +80,13 @@ function cat_features(x1::Dict{Symbol, T}, x2::Dict{Symbol, T}) where {T}
     sort(collect(keys(x1))) == sort(collect(keys(x2))) ||
         @error "cannot concatenate feature data with different keys"
 
-    return Dict{Symbol, T}(k => cat_features(x1[k], x2[k]) for k in keys(x1))
+    return Dict{Symbol, T}([k => cat_features(x1[k], x2[k]) for k in keys(x1)]...)
 end
+
+function cat_features(x::Dict)
+    return Dict([k => cat_features(v) for (k, v) in pairs(x)]...)
+end
+
 
 function cat_features(xs::AbstractVector{<:AbstractArray{T, N}}) where {T <: Number, N}
     cat(xs...; dims = N)
@@ -77,16 +106,33 @@ function cat_features(xs::AbstractVector{<:NamedTuple})
     NamedTuple(k => cat_features([x[k] for x in xs]) for k in syms)
 end
 
-function cat_features(xs::AbstractVector{Dict{Symbol, T}}) where {T}
-    symbols = [sort(collect(keys(x))) for x in xs]
-    all(y -> y == symbols[1], symbols) ||
-        @error "cannot concatenate feature data with different keys"
+# function cat_features(xs::AbstractVector{Dict{Symbol, T}}) where {T}
+#     symbols = [sort(collect(keys(x))) for x in xs]
+#     all(y -> y == symbols[1], symbols) ||
+#         @error "cannot concatenate feature data with different keys"
+#     length(xs) == 1 && return xs[1]
+
+#     # concatenate 
+#     syms = symbols[1]
+#     return Dict{Symbol, T}([k => cat_features([x[k] for x in xs]) for k in syms]...)
+# end
+
+function cat_features(xs::AbstractVector{<:Dict})
+    _allkeys = [sort(collect(keys(x))) for x in xs]
+    _keys = union(_allkeys...)
     length(xs) == 1 && return xs[1]
 
     # concatenate 
-    syms = symbols[1]
-    return Dict{Symbol, T}(k => cat_features([x[k] for x in xs]) for k in syms)
+    return Dict([k => cat_features([x[k] for x in xs if haskey(x, k)]) for k in _keys]...)
 end
+
+
+# Used to concatenate edge weights
+cat_features(w1::Nothing, w2::Nothing, n1::Int, n2::Int) = nothing
+cat_features(w1::AbstractVector, w2::Nothing, n1::Int, n2::Int) = cat_features(w1, ones_like(w1, n2))
+cat_features(w1::Nothing, w2::AbstractVector, n1::Int, n2::Int) = cat_features(ones_like(w2, n1), w2)
+cat_features(w1::AbstractVector, w2::AbstractVector, n1::Int, n2::Int) = cat_features(w1, w2)
+
 
 # Turns generic type into named tuple
 normalize_graphdata(data::Nothing; n, kws...) = DataStore(n)
@@ -136,18 +182,17 @@ function normalize_graphdata(data::NamedTuple; default_name, n, duplicate_if_nee
 end
 
 # For heterogeneous graphs
-normalize_heterographdata(data; kws...) = normalize_heterographdata(Dict(data); kws...)
-
-function normalize_heterographdata(data::Dict; default_name::Symbol, n::Dict, kws...)
-    isempty(data) && return data
-    Dict(k => normalize_graphdata(v; default_name = default_name, n = n[k], kws...)
-         for (k, v) in data)
+function normalize_heterographdata(data::Nothing; default_name::Symbol, ns::Dict, kws...)
+    Dict([k => normalize_graphdata(nothing; default_name = default_name, n, kws...)
+         for (k, n) in ns]...)
 end
 
-ones_like(x::AbstractArray, T::Type, sz = size(x)) = fill!(similar(x, T, sz), 1)
-ones_like(x::SparseMatrixCSC, T::Type, sz = size(x)) = ones(T, sz)
-ones_like(x::CUMAT_T, T::Type, sz = size(x)) = CUDA.ones(T, sz)
-ones_like(x, sz = size(x)) = ones_like(x, eltype(x), sz)
+normalize_heterographdata(data; kws...) = normalize_heterographdata(Dict(data); kws...)
+
+function normalize_heterographdata(data::Dict; default_name::Symbol, ns::Dict, kws...)
+    Dict([k => normalize_graphdata(get(data, k, nothing); default_name = default_name, n, kws...)
+         for (k, n) in ns]...)
+end
 
 numnonzeros(a::AbstractSparseMatrix) = nnz(a)
 numnonzeros(a::AbstractMatrix) = count(!=(0), a)
@@ -254,3 +299,6 @@ end
 
 @non_differentiable normalize_graphdata(::NamedTuple{(), Tuple{}})
 @non_differentiable normalize_graphdata(::Nothing)
+
+iscuarray(x::AbstractArray) = false 
+@non_differentiable iscuarray(::Any)

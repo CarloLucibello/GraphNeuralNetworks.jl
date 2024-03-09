@@ -3,11 +3,11 @@ module GraphNeuralNetworks
 using Statistics: mean
 using LinearAlgebra, Random
 using Base: tail
-using CUDA
 using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, @functor, batch
 using MacroTools: @forward
-using NNlib, NNlibCUDA
+using MLUtils
+using NNlib
 using NNlib: scatter, gather
 using ChainRulesCore
 using Reexport
@@ -16,7 +16,8 @@ using SparseArrays, Graphs # not needed but if removed Documenter will complain
 include("GNNGraphs/GNNGraphs.jl")
 @reexport using .GNNGraphs
 using .GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
-                  check_num_nodes, check_num_edges
+                  check_num_nodes, check_num_edges,
+                  EType, NType # for heteroconvs
 
 export
 # utils
@@ -67,9 +68,17 @@ export
       SGConv,
       TransformerConv,
 
+# layers/heteroconv
+      HeteroGraphConv,
+
+# layers/temporalconv
+      TGCN,
+      A3TGCN,
+
 # layers/pool
       GlobalPool,
       GlobalAttentionPool,
+      Set2Set,
       TopKPool,
       topk_index,
 
@@ -79,6 +88,8 @@ export
 include("utils.jl")
 include("layers/basic.jl")
 include("layers/conv.jl")
+include("layers/heteroconv.jl")
+include("layers/temporalconv.jl")
 include("layers/pool.jl")
 include("msgpass.jl")
 include("mldatasets.jl")

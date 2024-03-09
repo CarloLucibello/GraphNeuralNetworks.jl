@@ -16,7 +16,7 @@ Additional keyword arguments will be passed to the [`GNNGraph`](@ref) constructo
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> g = rand_graph(5, 4, bidirected=false)
 GNNGraph:
     num_nodes = 5
@@ -48,21 +48,23 @@ function rand_graph(n::Integer, m::Integer; bidirected = true, seed = -1, edge_w
 end
 
 """
-    rand_heterograph(n, m; seed=-1, kws...)
+    rand_heterograph(n, m; seed=-1, bidirected=false, kws...)
 
 Construct an [`GNNHeteroGraph`](@ref) with number of nodes and edges 
-specified by `n` and `m` respectively.
-`n` and `m` can be any iterable of pairs.
+specified by `n` and `m` respectively. `n` and `m` can be any iterable of pairs
+specifing node/edge types and their numbers.
 
 Use a `seed > 0` for reproducibility.
+
+Setting `bidirected=true` will generate a bidirected graph, i.e. each edge will have a reverse edge.
+Therefore, for each edge type `(:A, :rel, :B)` a corresponding reverse edge type `(:B, :rel, :A)`
+will be generated.
 
 Additional keyword arguments will be passed to the [`GNNHeteroGraph`](@ref) constructor.
 
 # Examples
 
-```juliarepl
-
-
+```jldoctest
 julia> g = rand_heterograph((:user => 10, :movie => 20),
                             (:user, :rate, :movie) => 30)
 GNNHeteroGraph:
@@ -70,15 +72,35 @@ GNNHeteroGraph:
   num_edges: ((:user, :rate, :movie) => 30,)
 ```
 """
-function rand_heteropraph end
+function rand_heterograph end
 
 # for generic iterators of pairs
 rand_heterograph(n, m; kws...) = rand_heterograph(Dict(n), Dict(m); kws...)
 
 function rand_heterograph(n::NDict, m::EDict; bidirected = false, seed = -1, kws...)
-    @assert !bidirected "Bidirected graphs not supported yet."
     rng = seed > 0 ? MersenneTwister(seed) : Random.GLOBAL_RNG
+    if bidirected
+        return _rand_bidirected_heterograph(rng, n, m; kws...)
+    end
     graphs = Dict(k => _rand_edges(rng, (n[k[1]], n[k[3]]), m[k]) for k in keys(m))
+    return GNNHeteroGraph(graphs; num_nodes = n, kws...)
+end
+
+function _rand_bidirected_heterograph(rng, n::NDict, m::EDict; kws...)
+    for k in keys(m)
+        if reverse(k) ∈ keys(m)
+            @assert m[k] == m[reverse(k)] "Number of edges must be the same in reverse edge types for bidirected graphs."
+        else
+            m[reverse(k)] = m[k]
+        end
+    end
+    graphs = Dict{EType, Tuple{Vector{Int}, Vector{Int}, Nothing}}()
+    for k in keys(m)
+        reverse(k) ∈ keys(graphs) && continue
+        s, t, val =  _rand_edges(rng, (n[k[1]], n[k[3]]), m[k])
+        graphs[k] = s, t, val
+        graphs[reverse(k)] = t, s, val
+    end
     return GNNHeteroGraph(graphs; num_nodes = n, kws...)
 end
 
@@ -87,6 +109,39 @@ function _rand_edges(rng, (n1, n2), m)
     s, t = edge_decoding(idx, n1, n2)
     val = nothing
     return s, t, val
+end
+
+"""
+    rand_bipartite_heterograph(n1, n2, m; [bidirected, seed, node_t, edge_t, kws...])
+    rand_bipartite_heterograph((n1, n2), m; ...)
+    rand_bipartite_heterograph((n1, n2), (m1, m2); ...)
+
+Construct an [`GNNHeteroGraph`](@ref) with number of nodes and edges
+specified by `n1`, `n2` and `m1` and `m2` respectively.
+
+See [`rand_heterograph`](@ref) for a more general version.
+
+# Keyword arguments
+
+- `bidirected`: whether to generate a bidirected graph. Default is `true`.
+- `seed`: random seed. Default is `-1` (no seed).
+- `node_t`: node types. If `bipartite=true`, this should be a tuple of two node types, otherwise it should be a single node type.
+- `edge_t`: edge types. If `bipartite=true`, this should be a tuple of two edge types, otherwise it should be a single edge type.
+"""
+function rand_bipartite_heterograph end
+
+rand_bipartite_heterograph(n1::Int, n2::Int, m::Int; kws...) = rand_bipartite_heterograph((n1, n2), (m, m); kws...)
+
+rand_bipartite_heterograph((n1, n2)::NTuple{2,Int}, m::Int; kws...) = rand_bipartite_heterograph((n1, n2), (m, m); kws...)
+
+function rand_bipartite_heterograph((n1, n2)::NTuple{2,Int}, (m1, m2)::NTuple{2,Int}; bidirected=true, 
+                        node_t = (:A, :B), edge_t = :to, kws...)
+    if edge_t isa Symbol
+        edge_t = (edge_t, edge_t)
+    end
+    return rand_heterograph(Dict(node_t[1] => n1, node_t[2] => n2), 
+                            Dict((node_t[1], edge_t[1], node_t[2]) => m1, (node_t[2], edge_t[2], node_t[1]) => m2); 
+                            bidirected, kws...)
 end
 
 """
@@ -115,7 +170,7 @@ to its `k` closest `points`.
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> n, k = 10, 3;
 
 julia> x = rand(3, n);
@@ -196,7 +251,7 @@ to its neighbors within a given distance `r`.
 
 # Examples
 
-```juliarepl
+```jldoctest
 julia> n, r = 10, 0.75;
 
 julia> x = rand(3, n);
@@ -215,6 +270,8 @@ GNNGraph:
     num_graphs = 2
 
 ```
+# References
+Section B paragraphs 1 and 2 of the paper [Dynamic Hidden-Variable Network Models](https://arxiv.org/pdf/2101.00414.pdf)
 """
 function radius_graph(points::AbstractMatrix, r::AbstractFloat;
                       graph_indicator = nothing,
@@ -242,4 +299,162 @@ function radius_graph(points::AbstractMatrix, r::AbstractFloat;
         g = remove_self_loops(g)
     end
     return g
+end
+
+"""
+    rand_temporal_radius_graph(number_nodes::Int, 
+                               number_snapshots::Int,
+                               speed::AbstractFloat,
+                               r::AbstractFloat;
+                               self_loops = false,
+                               dir = :in,
+                               kws...)
+
+Create a random temporal graph given `number_nodes` nodes and `number_snapshots` snapshots.
+First, the positions of the nodes are randomly generated in the unit square. Two nodes are connected if their distance is less than a given radius `r`.
+Each following snapshot is obtained by applying the same construction to new positions obtained as follows.
+For each snapshot, the new positions of the points are determined by applying random independent displacement vectors to the previous positions. The direction of the displacement is chosen uniformly at random and its length is chosen uniformly in `[0, speed]`. Then the connections are recomputed.
+If a point happens to move outside the boundary, its position is updated as if it had bounced off the boundary.
+
+# Arguments
+
+- `number_nodes`: The number of nodes of each snapshot.
+- `number_snapshots`: The number of snapshots.
+- `speed`: The speed to update the nodes.
+- `r`: The radius of connection.
+- `self_loops`: If `true`, consider the node itself among its neighbors, in which
+                case the graph will contain self-loops. 
+- `dir`: The direction of the edges. If `dir=:in` edges go from the
+         neighbors to the central node. If `dir=:out` we have the opposite
+         direction.
+- `kws`: Further keyword arguments will be passed to the [`GNNGraph`](@ref) constructor of each snapshot.
+
+# Example
+
+```jldoctest
+julia> n, snaps, s, r = 10, 5, 0.1, 1.5;
+
+julia> tg = rand_temporal_radius_graph(n,snaps,s,r) # complete graph at each snapshot
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10, 10, 10, 10]
+  num_edges: [90, 90, 90, 90, 90]
+  num_snapshots: 5
+```  
+
+"""
+function rand_temporal_radius_graph(number_nodes::Int, 
+                                    number_snapshots::Int,
+                                    speed::AbstractFloat,
+                                    r::AbstractFloat;
+                                    self_loops = false,
+                                    dir = :in,
+                                    kws...)
+    points=rand(2, number_nodes)
+    tg = Vector{GNNGraph}(undef, number_snapshots)
+    for t in 1:number_snapshots
+        tg[t] = radius_graph(points, r; graph_indicator = nothing, self_loops, dir, kws...)
+        for i in 1:number_nodes
+            ρ = 2 * speed * rand() - speed
+            theta=2*pi*rand()
+            points[1,i]=1-abs(1-(abs(points[1,i]+ρ*cos(theta))))
+            points[2,i]=1-abs(1-(abs(points[2,i]+ρ*sin(theta))))
+        end
+    end
+    return TemporalSnapshotsGNNGraph(tg)
+end
+
+
+function _hyperbolic_distance(nodeA::Array{Float64, 1},nodeB::Array{Float64, 1}; ζ::Real)
+    if nodeA != nodeB
+        a = cosh(ζ * nodeA[1]) * cosh(ζ * nodeB[1])
+        b = sinh(ζ * nodeA[1]) * sinh(ζ * nodeB[1])
+        c = cos(pi - abs(pi - abs(nodeA[2] - nodeB[2])))
+        d = acosh(a - (b * c)) / ζ
+    else
+        d = 0.0
+    end
+    return d
+end
+
+"""
+    rand_temporal_hyperbolic_graph(number_nodes::Int, 
+                                   number_snapshots::Int;
+                                   α::Real,
+                                   R::Real,
+                                   speed::Real,
+                                   ζ::Real=1,
+                                   self_loop = false,
+                                   kws...)
+
+Create a random temporal graph given `number_nodes` nodes and `number_snapshots` snapshots.
+First, the positions of the nodes are generated with a quasi-uniform distribution (depending on the parameter `α`) in hyperbolic space within a disk of radius `R`. Two nodes are connected if their hyperbolic distance is less than `R`. Each following snapshot is created in order to keep the same initial distribution.
+
+# Arguments
+
+- `number_nodes`: The number of nodes of each snapshot.
+- `number_snapshots`: The number of snapshots.
+- `α`: The parameter that controls the position of the points. If `α=ζ`, the points are uniformly distributed on the disk of radius `R`. If `α>ζ`, the points are more concentrated in the center of the disk. If `α<ζ`, the points are more concentrated at the boundary of the disk.
+- `R`: The radius of the disk and of connection.
+- `speed`: The speed to update the nodes.
+- `ζ`: The parameter that controls the curvature of the disk.
+- `self_loops`: If `true`, consider the node itself among its neighbors, in which
+                case the graph will contain self-loops.
+- `kws`: Further keyword arguments will be passed to the [`GNNGraph`](@ref) constructor of each snapshot.
+
+# Example
+
+```jldoctest
+julia> n, snaps, α, R, speed, ζ = 10, 5, 1.0, 4.0, 0.1, 1.0;
+
+julia> thg = rand_temporal_hyperbolic_graph(n, snaps; α, R, speed, ζ)
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10, 10, 10, 10]
+  num_edges: [44, 46, 48, 42, 38]
+  num_snapshots: 5
+```
+
+# References
+Section D of the paper [Dynamic Hidden-Variable Network Models](https://arxiv.org/pdf/2101.00414.pdf) and the paper 
+[Hyperbolic Geometry of Complex Networks](https://arxiv.org/pdf/1006.5169.pdf)
+"""
+function rand_temporal_hyperbolic_graph(number_nodes::Int,
+                                        number_snapshots::Int;
+                                        α::Real,
+                                        R::Real,
+                                        speed::Real,
+                                        ζ::Real=1,
+                                        self_loop = false,
+                                        kws...)
+        @assert number_snapshots > 1 "The number of snapshots must be greater than 1"
+        @assert α > 0 "α must be greater than 0"
+
+        probabilities = rand(number_nodes)
+
+        points = Array{Float64}(undef,2,number_nodes)
+        points[1,:].= (1/α) * acosh.(1 .+ (cosh(α * R) - 1) * probabilities)
+        points[2,:].= 2 * pi * rand(number_nodes)
+
+        tg = Vector{GNNGraph}(undef, number_snapshots)
+
+        for time in 1:number_snapshots
+            adj = zeros(number_nodes,number_nodes)
+            for i in 1:number_nodes
+                for j in 1:number_nodes
+                    if !self_loop && i==j
+                        continue
+                    elseif _hyperbolic_distance(points[:,i],points[:,j]; ζ) <= R
+                        adj[i,j] = adj[j,i] = 1
+                    end
+                end
+            end
+            tg[time] = GNNGraph(adj)
+            
+            probabilities .= probabilities .+ (2 * speed * rand(number_nodes) .- speed)
+            probabilities[probabilities.>1] .=  1 .- (probabilities[probabilities .> 1] .% 1)
+            probabilities[probabilities.<0] .= abs.(probabilities[probabilities .< 0])
+
+            points[1,:].= (1/α) * acosh.(1 .+ (cosh(α * R) - 1) * probabilities)
+            points[2,:].= points[2,:] .+ (2 * speed * rand(number_nodes) .- speed)
+        end
+    return TemporalSnapshotsGNNGraph(tg)
 end

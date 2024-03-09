@@ -1,4 +1,4 @@
-# Graphs
+# Working with GNNGraph 
 
 The fundamental graph type in GraphNeuralNetworks.jl is the [`GNNGraph`](@ref).
 A GNNGraph `g` is a directed graph with nodes labeled from 1 to `g.num_nodes`.
@@ -164,13 +164,13 @@ gall = Flux.batch(data)
 # gall is a GNNGraph containing many graphs
 @assert gall.num_graphs == 160 
 @assert gall.num_nodes == 1600   # 10 nodes x 160 graphs
-@assert gall.num_edges == 9600  # 30 undirected edges x 2 directions x 160 graphs
+@assert gall.num_edges == 4800  # 30 undirected edges x 160 graphs
 
 # Let's create a mini-batch from gall
-g23, _ = getgraph(gall, 2:3)
+g23 = getgraph(gall, 2:3)
 @assert g23.num_graphs == 2
-@assert g23.num_nodes == 20   # 10 nodes x 160 graphs
-@assert g23.num_edges == 120  # 30 undirected edges x 2 directions x 2 graphs x
+@assert g23.num_nodes == 20   # 10 nodes x 2 graphs
+@assert g23.num_edges == 60  # 30 undirected edges X 2 graphs
 
 # We can pass a GNNGraph to Flux's DataLoader
 train_loader = DataLoader(gall, batchsize=16, shuffle=true)
@@ -189,15 +189,15 @@ graph_indicator(gall)
 ## DataLoader and mini-batch iteration
 
 While constructing a batched graph and passing it to the `DataLoader` is always 
-an option for mini-batch iteration, the recommended way is
-to pass an array of graphs directly:
+an option for mini-batch iteration, the recommended way for better performance is
+to pass an array of graphs directly and set the `collate` option to `true`:
 
 ```julia
 using Flux: DataLoader
 
 data = [rand_graph(10, 30, ndata=rand(Float32, 3, 10)) for _ in 1:320]
 
-train_loader = DataLoader(data, batchsize=16, shuffle=true)
+train_loader = DataLoader(data, batchsize=16, shuffle=true, collate=true)
 
 for g in train_loader
     @assert g.num_graphs == 16
@@ -220,9 +220,9 @@ g′ = add_edges(g, [1, 2], [2, 3]) # add edges 1->2 and 2->3
 Move a `GNNGraph` to a CUDA device using `Flux.gpu` method. 
 
 ```julia
-using Flux: gpu
+using CUDA, Flux
 
-g_gpu = g |> gpu
+g_gpu = g |> Flux.gpu
 ```
 
 ## Integration with Graphs.jl

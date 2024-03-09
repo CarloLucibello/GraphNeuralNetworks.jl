@@ -1,17 +1,9 @@
 #===================================
-Define GNNGraph type as a subtype of Graphs' AbstractGraph.
+Define GNNGraph type as a subtype of Graphs.AbstractGraph.
 For the core methods to be implemented by any AbstractGraph, see
 https://juliagraphs.org/Graphs.jl/latest/types/#AbstractGraph-Type
 https://juliagraphs.org/Graphs.jl/latest/developing/#Developing-Alternate-Graph-Types
 =============================================#
-
-const COO_T = Tuple{T, T, V} where {T <: AbstractVector{<:Integer}, V}
-const ADJLIST_T = AbstractVector{T} where {T <: AbstractVector{<:Integer}}
-const ADJMAT_T = AbstractMatrix
-const SPARSE_T = AbstractSparseMatrix # subset of ADJMAT_T
-const CUMAT_T = Union{CUDA.AnyCuMatrix, CUDA.CUSPARSE.CuSparseMatrix}
-
-const AVecI = AbstractVector{<:Integer}
 
 """
     GNNGraph(data; [graph_type, ndata, edata, gdata, num_nodes, graph_indicator, dir])
@@ -74,7 +66,7 @@ functionality from that library.
 # Examples
 
 ```julia
-using Flux, GraphNeuralNetworks
+using Flux, GraphNeuralNetworks, CUDA
 
 # Construct from adjacency list representation
 data = [[2,3], [1,4,5], [1], [2,5], [2,4]]
@@ -103,7 +95,7 @@ g.edata.z = rand(16, g.num_edges)
 g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_edges))
 
 g.ndata.x # or just g.x
-g.ndata.e # or just g.e
+g.edata.e # or just g.e
 
 # Send to gpu
 g = g |> gpu
@@ -113,7 +105,7 @@ g = g |> gpu
 source, target = edge_index(g)
 ```
 """
-struct GNNGraph{T <: Union{COO_T, ADJMAT_T}} <: AbstractGraph{Int}
+struct GNNGraph{T <: Union{COO_T, ADJMAT_T}} <: AbstractGNNGraph{T}
     graph::T
     num_nodes::Int
     num_edges::Int
@@ -160,6 +152,8 @@ function GNNGraph(data::D;
              graph_indicator,
              ndata, edata, gdata)
 end
+
+GNNGraph(; kws...) = GNNGraph(0; kws...)
 
 function (::Type{<:GNNGraph})(num_nodes::T; kws...) where {T <: Integer}
     s, t = T[], T[]

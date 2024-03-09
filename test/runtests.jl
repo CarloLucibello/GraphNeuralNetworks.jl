@@ -1,9 +1,9 @@
+using CUDA
 using GraphNeuralNetworks
 using GraphNeuralNetworks.GNNGraphs: sort_edge_index
 using GraphNeuralNetworks.GNNGraphs: getn, getdata
 using Functors
 using Flux
-using CUDA
 using Flux: gpu, @functor
 using LinearAlgebra, Statistics, Random
 using NNlib
@@ -15,6 +15,7 @@ using Zygote
 using Test
 using MLDatasets
 using InlineStrings  # not used but with the import we test #98 and #104
+using SimpleWeightedGraphs
 
 CUDA.allowscalar(false)
 
@@ -25,6 +26,7 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
+    "GNNGraphs/chainrules",
     "GNNGraphs/datastore",
     "GNNGraphs/gnngraph",
     "GNNGraphs/convert",
@@ -34,14 +36,18 @@ tests = [
     "GNNGraphs/query",
     "GNNGraphs/sampling",
     "GNNGraphs/gnnheterograph",
+    "GNNGraphs/temporalsnapshotsgnngraph",
     "utils",
     "msgpass",
     "layers/basic",
     "layers/conv",
+    "layers/heteroconv",
+    "layers/temporalconv",
     "layers/pool",
     "mldatasets",
     "examples/node_classification_cora",
     "deprecations",
+    "ext/GraphNeuralNetworksSimpleWeightedGraphsExt/GraphNeuralNetworksSimpleWeightedGraphsExt"
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")

@@ -1,4 +1,5 @@
 using Flux, NNlib, GraphNeuralNetworks, Graphs, SparseArrays
+using Pluto, PlutoStaticHTML # for tutorials
 using Documenter, DemoCards
 
 tutorials, tutorials_cb, tutorial_assets = makedemos("tutorials")
@@ -20,11 +21,10 @@ makedocs(;
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets),
          sitename = "GraphNeuralNetworks.jl",
          pages = ["Home" => "index.md",
-             "Graphs" => "gnngraph.md",
+             "Graphs" => ["gnngraph.md", "heterograph.md", "temporalgraph.md"],
              "Message Passing" => "messagepassing.md",
              "Model Building" => "models.md",
              "Datasets" => "datasets.md",
-             "HeteroGraphs" => "gnnheterograph.md",
              "Tutorials" => tutorials,
              "API Reference" => [
                  "GNNGraph" => "api/gnngraph.md",
@@ -32,6 +32,8 @@ makedocs(;
                  "Convolutional Layers" => "api/conv.md",
                  "Pooling Layers" => "api/pool.md",
                  "Message Passing" => "api/messagepassing.md",
+                 "Heterogeneous Graphs" => "api/heterograph.md",
+                 "Temporal Graphs" => "api/temporalgraph.md",
                  "Utils" => "api/utils.md",
              ],
              "Developer Notes" => "dev.md",

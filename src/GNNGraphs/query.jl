@@ -13,9 +13,22 @@ edge_index(g::GNNGraph{<:COO_T}) = g.graph[1:2]
 
 edge_index(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes = g.num_nodes)[1][1:2]
 
+"""
+    edge_index(g::GNNHeteroGraph, [edge_t])
+
+Return a tuple containing two vectors, respectively storing the source and target nodes
+for each edges in `g` of type `edge_t = (src_t, rel_t, trg_t)`.
+
+If `edge_t` is not provided, it will error if `g` has more than one edge type.
+"""
+edge_index(g::GNNHeteroGraph{<:COO_T}, edge_t::EType) = g.graph[edge_t][1:2]
+edge_index(g::GNNHeteroGraph{<:COO_T}) = only(g.graph)[2][1:2]
+
 get_edge_weight(g::GNNGraph{<:COO_T}) = g.graph[3]
 
 get_edge_weight(g::GNNGraph{<:ADJMAT_T}) = to_coo(g.graph, num_nodes = g.num_nodes)[1][3]
+
+get_edge_weight(g::GNNHeteroGraph{<:COO_T}, edge_t::EType) = g.graph[edge_t][3]
 
 Graphs.edges(g::GNNGraph) = Graphs.Edge.(edge_index(g)...)
 
@@ -41,6 +54,31 @@ function Graphs.has_edge(g::GNNGraph{<:COO_T}, i::Integer, j::Integer)
 end
 
 Graphs.has_edge(g::GNNGraph{<:ADJMAT_T}, i::Integer, j::Integer) = g.graph[i, j] != 0
+
+"""
+    has_edge(g::GNNHeteroGraph, edge_t, i, j)
+
+Return `true` if there is an edge of type `edge_t` from node `i` to node `j` in `g`.
+
+# Examples
+
+```jldoctest
+julia> g = rand_bipartite_heterograph((2, 2), (4, 0), bidirected=false)
+GNNHeteroGraph:
+  num_nodes: (:A => 2, :B => 2)
+  num_edges: ((:A, :to, :B) => 4, (:B, :to, :A) => 0)
+
+julia> has_edge(g, (:A,:to,:B), 1, 1)
+true
+
+julia> has_edge(g, (:B,:to,:A), 1, 1)
+false
+```
+"""
+function Graphs.has_edge(g::GNNHeteroGraph, edge_t::EType, i::Integer, j::Integer)
+    s, t = edge_index(g, edge_t)
+    return any((s .== i) .& (t .== j))
+end
 
 graph_type_symbol(::GNNGraph{<:COO_T}) = :coo
 graph_type_symbol(::GNNGraph{<:SPARSE_T}) = :sparse
@@ -143,7 +181,7 @@ If `weighted=true`, the `A` will contain the edge weights if any, otherwise the 
 """
 function Graphs.adjacency_matrix(g::GNNGraph{<:COO_T}, T::DataType = eltype(g); dir = :out,
                                  weighted = true)
-    if g.graph[1] isa CuVector
+    if iscuarray(g.graph[1])
         # Revisit after 
         # https://github.com/JuliaGPU/CUDA.jl/issues/1113
         A, n, m = to_dense(g.graph, T; num_nodes = g.num_nodes, weighted)
@@ -224,9 +262,9 @@ or a vector.
 - `g`: A graph.
 - `T`: Element type of the returned vector. If `nothing`, is
        chosen based on the graph type and will be an integer
-       if `edge_weight=false`. Default `nothing`.
-- `dir`: For `dir=:out` the degree of a node is counted based on the outgoing edges.
-         For `dir=:in`, the ingoing edges are used. If `dir=:both` we have the sum of the two.
+       if `edge_weight = false`. Default `nothing`.
+- `dir`: For `dir = :out` the degree of a node is counted based on the outgoing edges.
+         For `dir = :in`, the ingoing edges are used. If `dir = :both` we have the sum of the two.
 - `edge_weight`: If `true` and the graph contains weighted edges, the degree will 
                 be weighted. Set to `false` instead to just count the number of
                 outgoing/ingoing edges. 
@@ -274,6 +312,36 @@ function Graphs.degree(g::GNNGraph{<:ADJMAT_T}, T::TT = nothing; dir = :out,
     end
     A = adjacency_matrix(g)
     return _degree(A, T, dir, edge_weight, g.num_nodes)
+end
+
+"""
+    degree(g::GNNHeteroGraph, edge_type::EType; dir = :in) 
+
+Return a vector containing the degrees of the nodes in `g` GNNHeteroGraph
+given `edge_type`.
+
+# Arguments
+
+- `g`: A graph.
+- `edge_type`: A tuple of symbols `(source_t, edge_t, target_t)` representing the edge type.
+- `T`: Element type of the returned vector. If `nothing`, is
+       chosen based on the graph type. Default `nothing`.
+- `dir`: For `dir = :out` the degree of a node is counted based on the outgoing edges.
+         For `dir = :in`, the ingoing edges are used. If `dir = :both` we have the sum of the two.
+         Default `dir = :out`.
+
+"""
+function Graphs.degree(g::GNNHeteroGraph, edge::EType, 
+                       T::TT = nothing; dir = :out) where {
+                                                         TT <: Union{Nothing, Type{<:Number}}}  
+
+    s, t = edge_index(g, edge)
+
+    T = isnothing(T) ? eltype(s) : T
+
+    n_type = dir == :in ? g.ntypes[2] : g.ntypes[1]
+
+    return _degree((s, t), T, dir, nothing, g.num_nodes[n_type])
 end
 
 function _degree((s, t)::Tuple, T::Type, dir::Symbol, edge_weight::Nothing, num_nodes::Int)
@@ -335,12 +403,11 @@ function ChainRulesCore.rrule(::typeof(_degree), A::ADJMAT_T, T, dir, edge_weigh
     end
 end
 
-
 """
     has_isolated_nodes(g::GNNGraph; dir=:out)
 
 Return true if the graph `g` contains nodes with out-degree (if `dir=:out`)
-or in-degree (if `dir=:in`) equal to zero.
+or in-degree (if `dir = :in`) equal to zero.
 """
 function has_isolated_nodes(g::GNNGraph; dir = :out)
     return any(iszero, degree(g; dir))
@@ -410,19 +477,19 @@ function _eigmax(A)
 end
 
 _rand_dense_vector(A::AbstractMatrix{T}) where {T} = randn(float(T), size(A, 1))
-_rand_dense_vector(A::CUMAT_T) = CUDA.randn(size(A, 1))
 
 # Eigenvalues for cuarray don't seem to be well supported. 
 # https://github.com/JuliaGPU/CUDA.jl/issues/154
 # https://discourse.julialang.org/t/cuda-eigenvalues-of-a-sparse-matrix/46851/5
 
 """
-    graph_indicator(g)
+    graph_indicator(g::GNNGraph; edges=false)
 
 Return a vector containing the graph membership
 (an integer from `1` to `g.num_graphs`) of each node in the graph.
+If `edges=true`, return the graph membership of each edge instead.
 """
-function graph_indicator(g; edges = false)
+function graph_indicator(g::GNNGraph; edges = false)
     if isnothing(g.graph_indicator)
         gi = ones_like(edge_index(g)[1], Int, g.num_nodes)
     else
@@ -434,6 +501,29 @@ function graph_indicator(g; edges = false)
     else
         return gi
     end
+end
+
+"""
+    graph_indicator(g::GNNHeteroGraph, [node_t])
+
+Return a Dict of vectors containing the graph membership
+(an integer from `1` to `g.num_graphs`) of each node in the graph for each node type.
+If `node_t` is provided, return the graph membership of each node of type `node_t` instead.
+
+See also [`batch`](@ref).
+"""
+function graph_indicator(g::GNNHeteroGraph)
+    return g.graph_indicator
+end
+
+function graph_indicator(g::GNNHeteroGraph, node_t::Symbol)
+    @assert node_t ∈ g.ntypes
+    if isnothing(g.graph_indicator)
+        gi = ones_like(edge_index(g, first(g.etypes))[1], Int, g.num_nodes[node_t])
+    else
+        gi = g.graph_indicator[node_t]
+    end
+    return gi
 end
 
 function node_features(g::GNNGraph)
