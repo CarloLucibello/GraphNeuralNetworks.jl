@@ -107,11 +107,8 @@ function (l::GCNConv)(g::AbstractGNNGraph,
 
     check_gcnconv_input(g, edge_weight)
 
-    xj, xi = expand_srcdst(g, x)
-    T = eltype(xi)
-
     if l.add_self_loops
-        g = g isa GNNHeteroGraph ? add_self_loops(g, edge_t) : add_self_loops(g)
+        g = add_self_loops(g)
         if edge_weight !== nothing
             # Pad weights with ones
             # TODO for ADJMAT_T the new edges are not generally at the end
@@ -121,10 +118,16 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     end
     Dout, Din = size(l.weight)
     if Dout < Din && !(g isa GNNHeteroGraph)
+        # multiply before convolution if it is more convenient, otherwise multiply after
+        # (this works only for homogenous graph)
         x = l.weight * x
     end
+
+    xj, xi = expand_srcdst(g, x) # expand only after potential multiplication
+    T = eltype(xi)
+
     if g isa GNNHeteroGraph
-        d = degree(g, eg.etypes[1], T; dir = :in)
+        d = degree(g, g.etypes[1], T; dir = :in)
     else
         if edge_weight !== nothing
             d = degree(g, T; dir = :in, edge_weight)
@@ -133,25 +136,14 @@ function (l::GCNConv)(g::AbstractGNNGraph,
         end
     end
     c = norm_fn(d)
-    if xi != xj
-        x = xi .* c' # multiplying xj gives dimension mismatch
-        if edge_weight !== nothing
-            x = propagate(e_mul_xj, g, +, xi = xi, xj = xj, e = edge_weight)
-        elseif l.use_edge_weight
-            x = propagate(w_mul_xj, g, +, xi = xi, xj = xj)
-        else
-            x = propagate(copy_xj, g, +, xi = xi, xj = xj)
-        end
+    !(g isa GNNHeteroGraph) ? xj = xj .* c' : Nothing
+    if edge_weight !== nothing
+        x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
+    elseif l.use_edge_weight
+        x = propagate(w_mul_xj, g, +, xj = xj)
     else
-        x = x .* c' # xj should be same but x = xj .* c' test for conv.jl failing
-        if edge_weight !== nothing
-            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
-        elseif l.use_edge_weight
-            x = propagate(w_mul_xj, g, +, xj = x)
-        else
-            x = propagate(copy_xj, g, +, xj = x)
-        end
-    end  
+        x = propagate(copy_xj, g, +, xj = xj)
+    end
     x = x .* c'
     if Dout >= Din || g isa GNNHeteroGraph
         x = l.weight * x
