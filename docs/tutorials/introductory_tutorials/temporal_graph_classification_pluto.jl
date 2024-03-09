@@ -55,7 +55,8 @@ So we create a function called `data_loader` that implements the latter and spli
 "
 
 # ╔═╡ bb36237a-5545-47d0-a873-7ddff3efe8ba
-function data_loader(graphs)
+function data_loader(brain_dataset)
+	graphs = brain_dataset.graphs
     dataset = Vector{TemporalSnapshotsGNNGraph}(undef, length(graphs))
     for i in 1:length(graphs)
         graph = graphs[i]
@@ -190,7 +191,7 @@ end
 
 
 # ╔═╡ 483f17ba-871c-4769-88bd-8ec781d1909d
-train(brain_dataset.graphs)
+train(brain_dataset)
 
 # ╔═╡ b4a3059a-db7d-47f1-9ae5-b8c3d896c5e5
 md"
