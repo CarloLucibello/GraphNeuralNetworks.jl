@@ -26,29 +26,28 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
-    # "GNNGraphs/chainrules",
-    # "GNNGraphs/datastore",
-    # "GNNGraphs/gnngraph",
-    # "GNNGraphs/convert",
-    # "GNNGraphs/transform",
-    # "GNNGraphs/operators",
-    # "GNNGraphs/generate",
-    # "GNNGraphs/query",
-    # "GNNGraphs/sampling",
-    # "GNNGraphs/gnnheterograph",
-    # "GNNGraphs/temporalsnapshotsgnngraph",
-    # "utils",
-    # "msgpass",
-    # "layers/basic",
-    # "layers/conv",
-    "layers/heteroconv"
-    #,
-    # "layers/temporalconv",
-    # "layers/pool",
-    # "mldatasets",
-    # "examples/node_classification_cora",
-    # "deprecations",
-    # "ext/GraphNeuralNetworksSimpleWeightedGraphsExt/GraphNeuralNetworksSimpleWeightedGraphsExt"
+    "GNNGraphs/chainrules",
+    "GNNGraphs/datastore",
+    "GNNGraphs/gnngraph",
+    "GNNGraphs/convert",
+    "GNNGraphs/transform",
+    "GNNGraphs/operators",
+    "GNNGraphs/generate",
+    "GNNGraphs/query",
+    "GNNGraphs/sampling",
+    "GNNGraphs/gnnheterograph",
+    "GNNGraphs/temporalsnapshotsgnngraph",
+    "utils",
+    "msgpass",
+    "layers/basic",
+    "layers/conv",
+    "layers/heteroconv",
+    "layers/temporalconv",
+    "layers/pool",
+    "mldatasets",
+    "examples/node_classification_cora",
+    "deprecations",
+    "ext/GraphNeuralNetworksSimpleWeightedGraphsExt/GraphNeuralNetworksSimpleWeightedGraphsExt"
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
