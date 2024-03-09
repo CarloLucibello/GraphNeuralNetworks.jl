@@ -73,7 +73,7 @@ function data_loader(brain_dataset)
     train_loader = dataset[1:200]
     test_loader = dataset[201:250]
     return train_loader, test_loader
-end
+end;
 
 # ╔═╡ d4732340-9179-4ada-b82e-a04291d745c2
 md"
@@ -146,14 +146,14 @@ The accuracy expresses the number of correct classifications.
 "
 
 # ╔═╡ 0a1e07b0-a4f3-4a4b-bcd1-7fe200967cf8
-lossfunction(ŷ, y) = Flux.logitbinarycrossentropy(ŷ, y)
+lossfunction(ŷ, y) = Flux.logitbinarycrossentropy(ŷ, y);
 
 # ╔═╡ cc2ebdcf-72de-4a3b-af46-5bddab6689cc
 function eval_loss_accuracy(model, data_loader)
-        error = mean([lossfunction(model(g), g.tgdata.g) for g in data_loader])
-        acc = mean([round(100 * mean(Flux.onecold(model(g)) .==     Flux.onecold(g.tgdata.g)); digits = 2) for g in data_loader])
-        return (loss = error, acc = acc)
-    end
+    error = mean([lossfunction(model(g), g.tgdata.g) for g in data_loader])
+    acc = mean([round(100 * mean(Flux.onecold(model(g)) .==     Flux.onecold(g.tgdata.g)); digits = 2) for g in data_loader])
+    return (loss = error, acc = acc)
+end;
 
 # ╔═╡ d64be72e-8c1f-4551-b4f2-28c8b78466c0
 function train(dataset; usecuda::Bool, kws...)
@@ -195,7 +195,7 @@ function train(dataset; usecuda::Bool, kws...)
         end
     end
     return model
-end
+end;
 
 
 # ╔═╡ 483f17ba-871c-4769-88bd-8ec781d1909d
@@ -203,7 +203,7 @@ train(brain_dataset; usecuda = true)
 
 # ╔═╡ b4a3059a-db7d-47f1-9ae5-b8c3d896c5e5
 md"
-We set up the training on the GPU because training the whole dataset takes a lot of time, especially when working on the CPU.
+We set up the training on the GPU because training takes a lot of time, especially when working on the CPU.
 "
 
 # ╔═╡ cb4eed19-2658-411d-886c-e0c9c2b44219

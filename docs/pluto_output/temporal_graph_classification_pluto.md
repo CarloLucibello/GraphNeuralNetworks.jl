@@ -25,11 +25,11 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "411661b8fb1a015632f9502cfb6cc4c62cb05f97512ef1815db2462d98662fb0"
+    input_sha = "d90c787ba47953887e638f9c1a1d0446ad07c5f4b8a640ef5b0c846f0ead6598"
     julia_version = "1.9.1"
 -->
 
-<div class="markdown"><p>In this tutorial, we will learn how to extend the graph classification task to the case of temporal graphs, i.e., graphs whose topology and features are time-varying.</p><p>We will design and train a simple temporal graph neural network architecture to classify subjects' gender (female or male) using the temporal graphs extracted from their brain fMRI scan signals.</p></div>
+<div class="markdown"><p>In this tutorial, we will learn how to extend the graph classification task to the case of temporal graphs, i.e., graphs whose topology and features are time-varying.</p><p>We will design and train a simple temporal graph neural network architecture to classify subjects' gender (female or male) using the temporal graphs extracted from their brain fMRI scan signals. Given the large amount of data, we will implement the training so that it can also run on the GPU.</p></div>
 
 
 ```
@@ -44,6 +44,8 @@
     using Statistics, Random
     using LinearAlgebra
     using MLDatasets: TemporalBrains
+    using CUDA
+    using cuDNN
 end</code></pre>
 
 
@@ -61,27 +63,28 @@ end</code></pre>
 
 <div class="markdown"><p>After loading the dataset from the MLDatasets.jl package, we see that there are 1000 graphs and we need to convert them to the <code>TemporalSnapshotsGNNGraph</code> format. So we create a function called <code>data_loader</code> that implements the latter and splits the dataset into the training set that will be used to train the model and the test set that will be used to test the performance of the model.</p></div>
 
-<pre class='language-julia'><code class='language-julia'>function data_loader(graphs)
+<pre class='language-julia'><code class='language-julia'>function data_loader(brain_dataset)
+    graphs = brain_dataset.graphs
     dataset = Vector{TemporalSnapshotsGNNGraph}(undef, length(graphs))
     for i in 1:length(graphs)
         graph = graphs[i]
         dataset[i] = TemporalSnapshotsGNNGraph(GraphNeuralNetworks.mlgraph2gnngraph.(graph.snapshots))
         # Add graph and node features
         for t in 1:27
-            dataset[i].snapshots[t].ndata.x = reduce(
-                vcat, [I(102), dataset[i].snapshots[t].ndata.x'])
+            s = dataset[i].snapshots[t]
+            s.ndata.x = [I(102); s.ndata.x']
         end
-        dataset[i].tgdata.g = Float32.(Array(Flux.onehot(graph.graph_data.g, ["F", "M"])))
+        dataset[i].tgdata.g = Float32.(Flux.onehot(graph.graph_data.g, ["F", "M"]))
     end
     # Split the dataset into a 80% training set and a 20% test set
-    train_loader = dataset[1:80]
-    test_loader = dataset[81:100]
+    train_loader = dataset[1:200]
+    test_loader = dataset[201:250]
     return train_loader, test_loader
-end</code></pre>
-<pre class="code-output documenter-example-output" id="var-data_loader">data_loader (generic function with 1 method)</pre>
+end;</code></pre>
 
 
-<div class="markdown"><p>The first part of the <code>data_loader</code> function calls the <code>mlgraph2gnngraph</code> function for each snapshot, which takes the graph and converts it to a <code>GNNGraph</code>. The vector of <code>GNNGraph</code>s is then rewritten to a <code>TemporalSnapshotsGNNGraph</code>.</p><p>The second part adds the graph and node features to the temporal graphs, in particular it adds the one-hot encoding of the label of the graph and appends the mean activation of the node of the snapshot. For the graph feature, it adds the one-hot encoding of the gender.</p><p>The last part splits the dataset.</p></div>
+
+<div class="markdown"><p>The first part of the <code>data_loader</code> function calls the <code>mlgraph2gnngraph</code> function for each snapshot, which takes the graph and converts it to a <code>GNNGraph</code>. The vector of <code>GNNGraph</code>s is then rewritten to a <code>TemporalSnapshotsGNNGraph</code>.</p><p>The second part adds the graph and node features to the temporal graphs, in particular it adds the one-hot encoding of the label of the graph (in this case we directly use the identity matrix) and appends the mean activation of the node of the snapshot (which is contained in the vector <code>dataset[i].snapshots[t].ndata.x</code>, where <code>i</code> is the index indicating the subject and <code>t</code> is the snapshot). For the graph feature, it adds the one-hot encoding of gender.</p><p>The last part splits the dataset.</p></div>
 
 
 ```
@@ -121,10 +124,10 @@ end</code></pre>
     end
     
     function (m::GenderPredictionModel)(g::TemporalSnapshotsGNNGraph)
-    h = m.gin(g, g.ndata.x)
-    h = m.globalpool(g, h)
-    h = m.f(h)
-    m.dense(h)
+        h = m.gin(g, g.ndata.x)
+        h = m.globalpool(g, h)
+        h = m.f(h)
+        m.dense(h)
     end
     
 end</code></pre>
@@ -135,21 +138,28 @@ end</code></pre>
 ## Training
 ```@raw html
 <div class="markdown">
-<p>We train the model for 200 epochs, using the Adam optimizer with a learning rate of 0.001. We use the <code>logitbinarycrossentropy</code> as the loss function, which is typically used as the loss in two-class classification, where the labels are given in a one-hot format. The accuracy expresses the number of correct classifications. </p></div>
+<p>We train the model for 100 epochs, using the Adam optimizer with a learning rate of 0.001. We use the <code>logitbinarycrossentropy</code> as the loss function, which is typically used as the loss in two-class classification, where the labels are given in a one-hot format. The accuracy expresses the number of correct classifications. </p></div>
 
-<pre class='language-julia'><code class='language-julia'>function train(graphs; kws...)
-    
-    lossfunction(ŷ, y) = Flux.logitbinarycrossentropy(ŷ, y) 
+<pre class='language-julia'><code class='language-julia'>lossfunction(ŷ, y) = Flux.logitbinarycrossentropy(ŷ, y);</code></pre>
 
-    function eval_loss_accuracy(model, data_loader)
-        error = mean([lossfunction(model(g), g.tgdata.g) for g in data_loader])
-        acc = mean([round(
-                        100 *
-                        mean(Flux.onecold(model(g)) .== Flux.onecold(g.tgdata.g));
-                        digits = 2) for g in data_loader])
-        return (loss = error, acc = acc)
+
+<pre class='language-julia'><code class='language-julia'>function eval_loss_accuracy(model, data_loader)
+    error = mean([lossfunction(model(g), g.tgdata.g) for g in data_loader])
+    acc = mean([round(100 * mean(Flux.onecold(model(g)) .==     Flux.onecold(g.tgdata.g)); digits = 2) for g in data_loader])
+    return (loss = error, acc = acc)
+end;</code></pre>
+
+
+<pre class='language-julia'><code class='language-julia'>function train(dataset; usecuda::Bool, kws...)
+
+    if usecuda && CUDA.functional() #check if GPU is available 
+        my_device = gpu
+        @info "Training on GPU"
+    else
+        my_device = cpu
+        @info "Training on CPU"
     end
-
+    
     function report(epoch)
         train_loss, train_acc = eval_loss_accuracy(model, train_loader)
         test_loss, test_acc = eval_loss_accuracy(model, test_loader)
@@ -157,14 +167,16 @@ end</code></pre>
         return (train_loss, train_acc, test_loss, test_acc)
     end
 
-    model = GenderPredictionModel() 
+    model = GenderPredictionModel() |&gt; my_device
 
     opt = Flux.setup(Adam(1.0f-3), model)
 
-    train_loader, test_loader = data_loader(graphs) # it takes a while to load the data
+    train_loader, test_loader = data_loader(dataset)
+    train_loader = train_loader |&gt; my_device
+    test_loader = test_loader |&gt; my_device
 
     report(0)
-    for epoch in 1:200
+    for epoch in 1:100
         for g in train_loader
             grads = Flux.gradient(model) do model
                 ŷ = model(g)
@@ -177,22 +189,22 @@ end</code></pre>
         end
     end
     return model
-end
+end;
 </code></pre>
-<pre class="code-output documenter-example-output" id="var-train">train (generic function with 1 method)</pre>
-
-<pre class='language-julia'><code class='language-julia'>train(brain_dataset.graphs)</code></pre>
-<pre class="code-output documenter-example-output" id="var-hash171497">GenderPredictionModel(GINConv(Chain(Dense(103 =&gt; 128, relu), Dense(128 =&gt; 128, relu)), 0.5), Chain(Dense(103 =&gt; 128, relu), Dense(128 =&gt; 128, relu)), GlobalPool{typeof(mean)}(Statistics.mean), var"#4#5"(), Dense(128 =&gt; 2))</pre>
 
 
-<div class="markdown"><p>Training the whole dataset takes a lot of time, especially since we are working on CPU, so we only train on 100 subjects. To speed up the training, you can see the linked example that inspired this tutorial <a href="https://github.com/CarloLucibello/GraphNeuralNetworks.jl/blob/master/examples/graph_classification_temporalbrains.jl">here</a>, where the training can also be done on the GPU with the whole dataset.</p></div>
+<pre class='language-julia'><code class='language-julia'>train(brain_dataset; usecuda = true)</code></pre>
+<pre class="code-output documenter-example-output" id="var-hash305203">GenderPredictionModel(GINConv(Chain(Dense(103 =&gt; 128, relu), Dense(128 =&gt; 128, relu)), 0.5), Chain(Dense(103 =&gt; 128, relu), Dense(128 =&gt; 128, relu)), GlobalPool{typeof(mean)}(Statistics.mean), var"#4#5"(), Dense(128 =&gt; 2))</pre>
+
+
+<div class="markdown"><p>We set up the training on the GPU because training takes a lot of time, especially when working on the CPU.</p></div>
 
 
 ```
 ## Conclusions
 ```@raw html
 <div class="markdown">
-<p>In this tutorial, we implemented a very simple architecture to classify temporal graphs in the context of gender classification using brain data. We then trained the model for 200 epochs on a small subset of the TemporalBrains dataset. The accuracy of the model is better than chance, but can be improved by training on more data and fine-tuning the parameters.</p></div>
+<p>In this tutorial, we implemented a very simple architecture to classify temporal graphs in the context of gender classification using brain data. We then trained the model on the GPU for 100 epochs on the TemporalBrains dataset. The accuracy of the model is approximately 75-80%, but can be improved by fine-tuning the parameters and training on more data.</p></div>
 
 <!-- PlutoStaticHTML.End -->
 ```
