@@ -108,7 +108,6 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     check_gcnconv_input(g, edge_weight)
 
     xj, xi = expand_srcdst(g, x)
-    edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
     T = eltype(xi)
 
     if l.add_self_loops
@@ -125,7 +124,7 @@ function (l::GCNConv)(g::AbstractGNNGraph,
         x = l.weight * x
     end
     if g isa GNNHeteroGraph
-        d = degree(g, edge_t, T; dir = :in)
+        d = degree(g, eg.etypes[1], T; dir = :in)
     else
         if edge_weight !== nothing
             d = degree(g, T; dir = :in, edge_weight)
