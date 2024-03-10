@@ -226,7 +226,8 @@ GNNGraph:
 julia> add_edges(g, [1,2], [2,3])
 GNNGraph:
     num_nodes: 3
-    num_edges: 2    
+    num_edges: 2
+```
 """
 add_edges(g::GNNGraph{<:COO_T}, snew::AbstractVector, tnew::AbstractVector; kws...) = add_edges(g, (snew, tnew, nothing); kws...)
 add_edges(g, data::Tuple{<:AbstractVector, <:AbstractVector}; kws...) = add_edges(g, (data..., nothing); kws...)
