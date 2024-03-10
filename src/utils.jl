@@ -161,7 +161,7 @@ Returns a tuple of the top-`k` features and their indices.
 # Arguments
 
 - `g`: a `GNNGraph``.
-- `x`: a feature array of size `(number_features, g.num_nodes)` or `(number_features, g.num_edges)` of the graph `g`.
+- `feat`: a feature array of size `(number_features, g.num_nodes)` or `(number_features, g.num_edges)` of the graph `g`.
 - `k`: the number of top features to return.
 - `rev`: if `true`, sort in descending order otherwise returns the `k` smallest elements.
 - `sortby`: the index of the feature to sort by. If `nothing`, every row independently.
@@ -186,12 +186,12 @@ julia> topk_feature(g, g.ndata.x, 2; sortby=3)
 ```
 
 """
-function topk_feature(g::GNNGraph, x::AbstractArray, k::Int; rev::Bool = true,
+function topk_feature(g::GNNGraph, feat::AbstractArray, k::Int; rev::Bool = true,
                       sortby::Union{Nothing, Int} = nothing)
     if g.num_graphs == 1
-        return _topk_matrix(x, k; rev, sortby)
+        return _topk_matrix(feat, k; rev, sortby)
     else
-        matrices = [x[:, g.graph_indicator .== i] for i in 1:(g.num_graphs)]
+        matrices = [feat[:, g.graph_indicator .== i] for i in 1:(g.num_graphs)]
         return _topk_batch(matrices, k; rev, sortby)
     end
 end
