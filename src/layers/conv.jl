@@ -1514,14 +1514,12 @@ function SGConv(ch::Pair{Int, Int}, k = 1;
     SGConv(W, b, k, add_self_loops, use_edge_weight)
 end
 
-function (l::SGConv)(g::AbstractGNNGraph, x,
+# this layer is not stable enough to be supported by GNNHeteroGraph type
+# due to it's looping mechanism
+function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T},
                      edge_weight::EW = nothing) where
-                     {EW <: Union{Nothing, AbstractVector}}
+    {T, EW <: Union{Nothing, AbstractVector}}
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
-
-    xj, xi = expand_srcdst(g, x)
-    edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
-    T = eltype(xi)
 
     if edge_weight !== nothing
         @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
@@ -1535,28 +1533,29 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
         end
     end
     Dout, Din = size(l.weight)
-    if g isa GNNHeteroGraph
-        d = degree(g, edge_t, T; dir = :in)
+    if Dout < Din
+        x = l.weight * x
+    end
+    if edge_weight !== nothing
+        d = degree(g, T; dir = :in, edge_weight)
     else
-        if edge_weight !== nothing
-            d = degree(g, T; dir = :in, edge_weight)
-        else
-            d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
-        end
+        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
     end
     c = 1 ./ sqrt.(d)
     for iter in 1:(l.k)
         x = x .* c'
         if edge_weight !== nothing
-            x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
+            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
         elseif l.use_edge_weight
-            x = propagate(w_mul_xj, g, +, xj = xj)
+            x = propagate(w_mul_xj, g, +, xj = x)
         else
-            x = propagate(copy_xj, g, +, xj = xj)
+            x = propagate(copy_xj, g, +, xj = x)
         end
         x = x .* c'
     end
-    x = l.weight * x
+    if Dout >= Din
+        x = l.weight * x
+    end
     return (x .+ l.bias)
 end
 
