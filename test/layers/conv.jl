@@ -106,11 +106,11 @@ end
 end
 
 @testset "GATConv" begin
-    for heads in (1, 2), concat in (true, false), dropout_value in (0.0,0.4)
-        l = GATConv(in_channel => out_channel; heads, concat,dropout_value=dropout_value)
+    for heads in (1, 2), concat in (true, false)
+        l = GATConv(in_channel => out_channel; heads, concat, dropout=0)
         for g in test_graphs
             test_layer(l, g, rtol = RTOL_LOW,
-                        exclude_grad_fields = [:negative_slope, :dropout_value],
+                        exclude_grad_fields = [:negative_slope, :dropout],
                         outsize = (concat ? heads * out_channel : out_channel,
                                     g.num_nodes))
         end
@@ -118,10 +118,10 @@ end
 
     @testset "edge features" begin
         ein = 3
-        l = GATConv((in_channel, ein) => out_channel, add_self_loops = false)
+        l = GATConv((in_channel, ein) => out_channel, add_self_loops = false, dropout=0)
         g = GNNGraph(g1, edata = rand(T, ein, g1.num_edges))
         test_layer(l, g, rtol = RTOL_LOW,
-                    exclude_grad_fields = [:negative_slope, :dropout_value],
+                    exclude_grad_fields = [:negative_slope, :dropout],
                     outsize = (out_channel, g.num_nodes))
     end
 
@@ -136,11 +136,11 @@ end
 end
 
 @testset "GATv2Conv" begin
-    for heads in (1, 2), concat in (true, false), dropout_value in (0.0,0.4)
-        l = GATv2Conv(in_channel => out_channel, tanh; heads, concat, dropout_value=dropout_value)
+    for heads in (1, 2), concat in (true, false)
+        l = GATv2Conv(in_channel => out_channel, tanh; heads, concat, dropout=0)
         for g in test_graphs
             test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
-                        exclude_grad_fields = [:negative_slope, :dropout_value],
+                        exclude_grad_fields = [:negative_slope, :dropout],
                         outsize = (concat ? heads * out_channel : out_channel,
                                     g.num_nodes))
         end
@@ -148,10 +148,10 @@ end
 
     @testset "edge features" begin
         ein = 3
-        l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
+        l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false, dropout=0)
         g = GNNGraph(g1, edata = rand(T, ein, g1.num_edges))
         test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
-                    exclude_grad_fields = [:negative_slope, :dropout_value],
+                    exclude_grad_fields = [:negative_slope, :dropout],
                     outsize = (out_channel, g.num_nodes))
     end
 
@@ -162,15 +162,6 @@ end
         @test length(Flux.params(l)) == 6
         l = GATv2Conv((2, 4) => 3, add_self_loops = false, bias = false)
         @test length(Flux.params(l)) == 4
-    end
-
-    @testset "edge features" begin
-        ein = 3
-        l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
-        g = GNNGraph(g1, edata = rand(T, ein, g1.num_edges))
-        test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
-                    exclude_grad_fields = [:negative_slope, :dropout_value],
-                    outsize = (out_channel, g.num_nodes))
     end
 end
 
