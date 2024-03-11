@@ -384,7 +384,7 @@ struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, DV, T, A <: AbstractMat
     heads::Int
     concat::Bool
     add_self_loops::Bool
-    dropout_value::DV
+    dropout::DV
 end
 
 @functor GATConv
@@ -394,7 +394,7 @@ GATConv(ch::Pair{Int, Int}, args...; kws...) = GATConv((ch[1], 0) => ch[2], args
 
 function GATConv(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
                  heads::Int = 1, concat::Bool = true, negative_slope = 0.2,
-                 init = glorot_uniform, bias::Bool = true, add_self_loops = true, dropout_value=0.0)
+                 init = glorot_uniform, bias::Bool = true, add_self_loops = true, dropout=0.0)
     (in, ein), out = ch
     if add_self_loops
         @assert ein==0 "Using edge features and setting add_self_loops=true at the same time is not yet supported."
@@ -405,7 +405,7 @@ function GATConv(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
     b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out * heads : out) : false
     a = init(ein > 0 ? 3out : 2out, heads)
     negative_slope = convert(Float32, negative_slope)
-    GATConv(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops, dropout_value)
+    GATConv(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops, dropout)
 end
 
 (l::GATConv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
@@ -437,7 +437,7 @@ function (l::GATConv)(g::AbstractGNNGraph, x,
     # a hand-written message passing
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
-    α = dropout(α, l.dropout_value)
+    α = dropout(α, l.dropout)
     β = α .* m.Wxj
     x = aggregate_neighbors(g, +, β)
 
@@ -531,7 +531,7 @@ e = randn(Float32, ein, length(s))
 y = l(g, x, e)    
 ```
 """
-struct GATv2Conv{T, A1, A2, A3, DV , B, C <: AbstractMatrix, F} <: GNNLayer
+struct GATv2Conv{T, A1, A2, A3, DV, B, C <: AbstractMatrix, F} <: GNNLayer
     dense_i::A1
     dense_j::A2
     dense_e::A3
@@ -543,7 +543,7 @@ struct GATv2Conv{T, A1, A2, A3, DV , B, C <: AbstractMatrix, F} <: GNNLayer
     heads::Int
     concat::Bool
     add_self_loops::Bool
-    dropout_value::DV
+    dropout::DV
 end
 
 @functor GATv2Conv
@@ -561,7 +561,7 @@ function GATv2Conv(ch::Pair{NTuple{2, Int}, Int},
                    init = glorot_uniform,
                    bias::Bool = true,
                    add_self_loops = true,
-                   dropout_value=0.0)
+                   dropout=0.0)
     (in, ein), out = ch
 
     if add_self_loops
@@ -579,7 +579,7 @@ function GATv2Conv(ch::Pair{NTuple{2, Int}, Int},
     a = init(out, heads)
     negative_slope = convert(eltype(dense_i.weight), negative_slope)
     GATv2Conv(dense_i, dense_j, dense_e, b, a, σ, negative_slope, ch, heads, concat,
-              add_self_loops,dropout_value)
+              add_self_loops, dropout)
 end
 
 (l::GATv2Conv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
@@ -604,7 +604,7 @@ function (l::GATv2Conv)(g::AbstractGNNGraph, x,
 
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
-    α = dropout(α, l.dropout_value)
+    α = dropout(α, l.dropout)
     β = α .* m.Wxj
     x = aggregate_neighbors(g, +, β)
 
