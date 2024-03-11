@@ -181,7 +181,7 @@ function remove_edges(g::GNNGraph{<:COO_T}, edges_to_remove)
 
     mask_to_keep = trues(length(s))
 
-mask_to_keep[edges_to_remove] .= false
+    mask_to_keep[edges_to_remove] .= false
 
     s = s[mask_to_keep]
     t = t[mask_to_keep]
