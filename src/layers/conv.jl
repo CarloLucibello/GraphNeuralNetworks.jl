@@ -1249,8 +1249,8 @@ function (l::AGNNConv)(g::AbstractGNNGraph, x)
     cos_dist = apply_edges(xi_dot_xj, g, xi = xi_n, xj = xj_n)
     α = softmax_edge_neighbors(g, l.β .* cos_dist)
 
-    x = propagate(g, +; xj = xj_n, e = α) do xi, xj, α
-        α .* xj
+    x = propagate(g, +; xi = xi_n, xj = xj_n, e = α) do xi, xj, α
+        α .* xj .* xi
     end
 
     return x
