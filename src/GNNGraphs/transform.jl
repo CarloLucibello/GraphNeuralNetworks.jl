@@ -188,7 +188,6 @@ function remove_edges(g::GNNGraph{<:COO_T}, edges_to_remove)
     s = s[mask_to_keep]
     t = t[mask_to_keep]
     edata = getobs(edata, mask_to_keep)
-    println(edata)
     w = isnothing(w) ? nothing : getobs(w, mask_to_keep)
 
     GNNGraph((s, t, w),
