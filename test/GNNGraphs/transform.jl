@@ -149,6 +149,19 @@ end
     end 
 end
 
+@testset "remove_nodes" begin if GRAPH_T == :coo
+    s = [1, 1, 2, 3]
+    t = [2, 3, 4, 5]
+    g = GNNGraph(s, t, graph_type = GRAPH_T)    
+    gnew = remove_nodes(g, [1])
+    snew = [1, 2]
+    tnew = [3, 4]
+    stest, ttest = edge_index(gnew)
+    @test gnew.num_edges == 2
+    @test gnew.num_nodes == 4
+    @test snew == stest
+    @test tnew == ttest
+end end
 
 @testset "add_nodes" begin if GRAPH_T == :coo
     g = rand_graph(6, 4, ndata = rand(2, 6), graph_type = GRAPH_T)

@@ -189,6 +189,61 @@ function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr = +)
 end
 
 """
+    remove_nodes(g::GNNGraph, nodes_to_remove::Vector{Int})
+
+Remove specified nodes, and their associated edges, from a GNNGraph.
+
+# Arguments
+- `g`: The input graph from which nodes (and their edges) will be removed.
+- `nodes_to_remove`: Vector of node indices to be removed.
+
+# Returns
+A new GNNGraph with the specified nodes and all edges associated with these nodes removed. The node and edge indices in the returned graph are updated accordingly to reflect the removal.
+
+# Example
+```julia
+using GraphNeuralNetworks
+
+g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
+
+# Remove nodes with indices 2 and 3, for example
+g_new = remove_nodes(g, [2, 3])
+
+# g_new now does not contain nodes 2 and 3, and any edges that were connected to these nodes.
+# All node and edge indices have been adjusted accordingly.
+println(g_new)
+```
+"""
+function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove)
+    s, t = edge_index(g)
+    w = get_edge_weight(g)
+    edata = g.edata
+    ndata = g.ndata
+
+    edges_to_remove = findall(x -> x in nodes_to_remove, s) ∪ findall(x -> x in nodes_to_remove, t)
+
+    mask_edges_to_keep = trues(length(s))
+    mask_edges_to_keep[edges_to_remove] .= false
+    s = s[mask_edges_to_keep]
+    t = t[mask_edges_to_keep]
+    edata = getobs(edata, mask_edges_to_keep)
+    w = isnothing(w) ? nothing : getobs(w, mask_edges_to_keep)
+
+    # Adjust node indices in edges, we sort in reverse to avoid index shifting issues
+    for node in sort(nodes_to_remove, rev=true) 
+        s[s .> node] .-= 1
+        t[t .> node] .-= 1
+    end
+
+    num_nodes = g.num_nodes - length(nodes_to_remove)
+
+    GNNGraph((s, t, w),
+             num_nodes, length(s), g.num_graphs,
+             g.graph_indicator,
+             ndata, edata, g.gdata)
+end
+
+"""
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
     add_edges(g::GNNGraph, (s, t); [edata])
     add_edges(g::GNNGraph, (s, t, w); [edata])
