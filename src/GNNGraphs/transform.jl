@@ -198,7 +198,7 @@ Remove specified nodes, and their associated edges, from a GNNGraph.
 - `nodes_to_remove`: Vector of node indices to be removed.
 
 # Returns
-A new GNNGraph with the specified nodes and all edges associated with these nodes removed. The node and edge indices in the returned graph are updated accordingly to reflect the removal.
+A new GNNGraph with the specified nodes and all edges associated with these nodes removed. 
 
 # Example
 ```julia
@@ -210,7 +210,6 @@ g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
 g_new = remove_nodes(g, [2, 3])
 
 # g_new now does not contain nodes 2 and 3, and any edges that were connected to these nodes.
-# All node and edge indices have been adjusted accordingly.
 println(g_new)
 ```
 """
