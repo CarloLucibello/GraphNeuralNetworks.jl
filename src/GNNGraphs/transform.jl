@@ -236,7 +236,7 @@ function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove)
 
     num_nodes = g.num_nodes - length(nodes_to_remove)
 
-    GNNGraph((s, t, w),
+    return GNNGraph((s, t, w),
              num_nodes, length(s), g.num_graphs,
              g.graph_indicator,
              ndata, edata, g.gdata)
