@@ -129,15 +129,17 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     if g isa GNNHeteroGraph
         din = degree(g, g.etypes[1], T; dir = :in)
         dout = degree(g, g.etypes[1], T; dir = :out)
+
+        cout = norm_fn(dout)
+        cin = norm_fn(din)
     else
         if edge_weight !== nothing
-            din = dout = degree(g, T; dir = :in, edge_weight)
+            d = degree(g, T; dir = :in, edge_weight)
         else
-            din = dout = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
+            d = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
         end
+        cin = cout = norm_fn(d)
     end
-    cout = norm_fn(dout)
-    cin = norm_fn(din)
     xj = xj .* cout'
     if edge_weight !== nothing
         x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
