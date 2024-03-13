@@ -189,9 +189,9 @@ function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr = +)
 end
 
 """
-    remove_nodes(g::GNNGraph, nodes_to_remove::Vector{Int})
+    remove_nodes(g::GNNGraph, nodes_to_remove::AbstractVector)
 
-Remove specified nodes, and their associated edges, from a GNNGraph.
+Remove specified nodes, and their associated edges, from a GNNGraph. This operation reindexes the remaining nodes to maintain a continuous sequence of node indices, starting from 1. Similarly, edges are reindexed to account for the removal of edges connected to the removed nodes.
 
 # Arguments
 - `g`: The input graph from which nodes (and their edges) will be removed.
@@ -213,7 +213,8 @@ g_new = remove_nodes(g, [2, 3])
 println(g_new)
 ```
 """
-function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove)
+function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove::AbstractVector)
+    nodes_to_remove = sort(union(nodes_to_remove))
     s, t = edge_index(g)
     w = get_edge_weight(g)
     edata = g.edata
@@ -228,7 +229,6 @@ function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove)
     edata = getobs(edata, mask_edges_to_keep)
     w = isnothing(w) ? nothing : getobs(w, mask_edges_to_keep)
 
-    # Adjust node indices in edges, we sort in reverse to avoid index shifting issues
     for node in sort(nodes_to_remove, rev=true) 
         s[s .> node] .-= 1
         t[t .> node] .-= 1
