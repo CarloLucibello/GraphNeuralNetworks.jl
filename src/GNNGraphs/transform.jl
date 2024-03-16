@@ -163,18 +163,18 @@ A new GNNGraph with the specified edges removed.
 
 # Example
 ```julia
-using GraphNeuralNetworks
+julia> using GraphNeuralNetworks
 
 # Construct a GNNGraph
-g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
+julia> g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
 
 # Remove the second edge
-g_new = remove_edges(g, [2])
+julia> g_new = remove_edges(g, [2])
 
-println(g_new)
+julia> g_new
 ```
 """
-function remove_edges(g::GNNGraph{<:COO_T}, edges_to_remove)
+function remove_edges(g::GNNGraph{<:COO_T}, edges_to_remove::AbstractVector{<:Integer})
     s, t = edge_index(g)
     w = get_edge_weight(g)
     edata = g.edata

@@ -106,11 +106,20 @@ end
         s = [1, 1, 2, 3]
         t = [2, 3, 4, 5]
         g = GNNGraph(s, t, graph_type = GRAPH_T)    
+
+        # single edge removal
         gnew = remove_edges(g, [1])
         new_s, new_t = edge_index(gnew)
         @test gnew.num_edges == 3
         @test new_s == s[2:end]
         @test new_t == t[2:end]
+        
+        # multiple edge removal
+        gnew = remove_edges(g, [1,2,3])
+        new_s, new_t = edge_index(gnew)
+        @test gnew.num_edges == 1
+        @test new_s == s[4:end]
+        @test new_t == t[4:end]
     end
 end
 
