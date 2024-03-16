@@ -1793,7 +1793,7 @@ heads = 3
 s = [1,1,2,4]
 t = [2,3,1,1]
 g = GNNGraph(s, t, ndata = rand(Float32, in_channel, N), 
-                    edata = rand(T, ein, g.num_edges))
+                edata = rand(Float32, ein, g.num_edges))
 
 l = TransformerConv((in_channel, ein) => in_channel; heads, gating = true,
                         bias_qkv = true)
