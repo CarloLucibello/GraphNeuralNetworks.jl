@@ -220,7 +220,9 @@ function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove::AbstractVector)
     edata = g.edata
     ndata = g.ndata
 
-    edges_to_remove = findall(x -> x in nodes_to_remove, s) ∪ findall(x -> x in nodes_to_remove, t)
+    edges_to_remove_s = findall(x -> nodes_to_remove[searchsortedlast(nodes_to_remove, x)] == x, s)
+    edges_to_remove_t = findall(x -> nodes_to_remove[searchsortedlast(nodes_to_remove, x)] == x, t)
+    edges_to_remove = union(edges_to_remove_s, edges_to_remove_t)
 
     mask_edges_to_keep = trues(length(s))
     mask_edges_to_keep[edges_to_remove] .= false
