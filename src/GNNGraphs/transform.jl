@@ -150,7 +150,7 @@ function remove_self_loops(g::GNNGraph{<:ADJMAT_T})
 end
 
 """
-    remove_edges(g::GNNGraph, edges_to_remove::Vector{Int})
+    remove_edges(g::GNNGraph, edges_to_remove::AbstractVector{<:Integer})
 
 Remove specified edges from a GNNGraph.
 
