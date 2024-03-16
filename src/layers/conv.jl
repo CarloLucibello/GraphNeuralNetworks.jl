@@ -1780,6 +1780,28 @@ can be performed.
 - `ff_channels`: If positive, a feed-forward NN is appended, with the first having the given
     number of hidden nodes; this NN also gets a skip connection and batch normalization 
     if the respective parameters are set. Default: `0`.
+
+# Examples
+
+```julia
+N = 4
+in_channel = 3
+out_channel = 5
+ein = 2
+heads = 3
+
+s = [1,1,2,4]
+t = [2,3,1,1]
+g = GNNGraph(s, t, ndata = rand(Float32, in_channel, N), 
+                    edata = rand(T, ein, g.num_edges))
+
+l = TransformerConv((in_channel, ein) => in_channel; heads, gating = true,
+                        bias_qkv = true)
+x = node_features(g)
+e = edge_features(g)
+
+l(g, x, e)
+```        
 """
 struct TransformerConv{TW1, TW2, TW3, TW4, TW5, TW6, TFF, TBN1, TBN2} <: GNNLayer
     W1::TW1
