@@ -240,6 +240,66 @@ function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr = +)
 end
 
 """
+    remove_nodes(g::GNNGraph, nodes_to_remove::AbstractVector)
+
+Remove specified nodes, and their associated edges, from a GNNGraph. This operation reindexes the remaining nodes to maintain a continuous sequence of node indices, starting from 1. Similarly, edges are reindexed to account for the removal of edges connected to the removed nodes.
+
+# Arguments
+- `g`: The input graph from which nodes (and their edges) will be removed.
+- `nodes_to_remove`: Vector of node indices to be removed.
+
+# Returns
+A new GNNGraph with the specified nodes and all edges associated with these nodes removed. 
+
+# Example
+```julia
+using GraphNeuralNetworks
+
+g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
+
+# Remove nodes with indices 2 and 3, for example
+g_new = remove_nodes(g, [2, 3])
+
+# g_new now does not contain nodes 2 and 3, and any edges that were connected to these nodes.
+println(g_new)
+```
+"""
+function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove::AbstractVector)
+    nodes_to_remove = sort(union(nodes_to_remove))
+    s, t = edge_index(g)
+    w = get_edge_weight(g)
+    edata = g.edata
+    ndata = g.ndata
+
+    edges_to_remove_s = findall(x -> nodes_to_remove[searchsortedlast(nodes_to_remove, x)] == x, s)
+    edges_to_remove_t = findall(x -> nodes_to_remove[searchsortedlast(nodes_to_remove, x)] == x, t)
+    edges_to_remove = union(edges_to_remove_s, edges_to_remove_t)
+
+    mask_edges_to_keep = trues(length(s))
+    mask_edges_to_keep[edges_to_remove] .= false
+    s = s[mask_edges_to_keep]
+    t = t[mask_edges_to_keep]
+
+    w = isnothing(w) ? nothing : getobs(w, mask_edges_to_keep)
+
+    for node in sort(nodes_to_remove, rev=true) 
+        s[s .> node] .-= 1
+        t[t .> node] .-= 1
+    end
+
+    nodes_to_keep = setdiff(1:g.num_nodes, nodes_to_remove)
+    ndata = getobs(ndata, nodes_to_keep)
+    edata = getobs(edata, mask_edges_to_keep)
+
+    num_nodes = g.num_nodes - length(nodes_to_remove)
+    
+    return GNNGraph((s, t, w),
+             num_nodes, length(s), g.num_graphs,
+             g.graph_indicator,
+             ndata, edata, g.gdata)
+end
+
+"""
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
     add_edges(g::GNNGraph, (s, t); [edata])
     add_edges(g::GNNGraph, (s, t, w); [edata])
@@ -277,7 +337,8 @@ GNNGraph:
 julia> add_edges(g, [1,2], [2,3])
 GNNGraph:
     num_nodes: 3
-    num_edges: 2    
+    num_edges: 2
+```
 """
 add_edges(g::GNNGraph{<:COO_T}, snew::AbstractVector, tnew::AbstractVector; kws...) = add_edges(g, (snew, tnew, nothing); kws...)
 add_edges(g, data::Tuple{<:AbstractVector, <:AbstractVector}; kws...) = add_edges(g, (data..., nothing); kws...)

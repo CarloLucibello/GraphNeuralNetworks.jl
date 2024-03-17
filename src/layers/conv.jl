@@ -88,23 +88,22 @@ function GCNConv(ch::Pair{Int, Int}, σ = identity;
     GCNConv(W, b, σ, add_self_loops, use_edge_weight)
 end
 
-check_gcnconv_input(g::GNNGraph{<:ADJMAT_T}, edge_weight::AbstractVector) = 
+check_gcnconv_input(g::AbstractGNNGraph{<:ADJMAT_T}, edge_weight::AbstractVector) = 
     throw(ArgumentError("Providing external edge_weight is not yet supported for adjacency matrix graphs"))
 
-function check_gcnconv_input(g::GNNGraph, edge_weight::AbstractVector)
+function check_gcnconv_input(g::AbstractGNNGraph, edge_weight::AbstractVector)
     if length(edge_weight) !== g.num_edges 
         throw(ArgumentError("Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"))
     end
 end
 
-check_gcnconv_input(g::GNNGraph, edge_weight::Nothing) = nothing
+check_gcnconv_input(g::AbstractGNNGraph, edge_weight::Nothing) = nothing
 
-
-function (l::GCNConv)(g::GNNGraph, 
-                      x::AbstractMatrix{T},
+function (l::GCNConv)(g::AbstractGNNGraph, 
+                      x,
                       edge_weight::EW = nothing,
                       norm_fn::Function = d -> 1 ./ sqrt.(d)  
-                      ) where {T, EW <: Union{Nothing, AbstractVector}}
+                      ) where {EW <: Union{Nothing, AbstractVector}}
 
     check_gcnconv_input(g, edge_weight)
 
@@ -118,26 +117,39 @@ function (l::GCNConv)(g::GNNGraph,
         end
     end
     Dout, Din = size(l.weight)
-    if Dout < Din
+    if Dout < Din && !(g isa GNNHeteroGraph)
         # multiply before convolution if it is more convenient, otherwise multiply after
+        # (this works only for homogenous graph)
         x = l.weight * x
     end
-    if edge_weight !== nothing
-        d = degree(g, T; dir = :in, edge_weight)
+
+    xj, xi = expand_srcdst(g, x) # expand only after potential multiplication
+    T = eltype(xi)
+
+    if g isa GNNHeteroGraph
+        din = degree(g, g.etypes[1], T; dir = :in)
+        dout = degree(g, g.etypes[1], T; dir = :out)
+
+        cout = norm_fn(dout)
+        cin = norm_fn(din)
     else
-        d = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
+        if edge_weight !== nothing
+            d = degree(g, T; dir = :in, edge_weight)
+        else
+            d = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
+        end
+        cin = cout = norm_fn(d)
     end
-    c = norm_fn(d)
-    x = x .* c'
+    xj = xj .* cout'
     if edge_weight !== nothing
-        x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
+        x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
     elseif l.use_edge_weight
-        x = propagate(w_mul_xj, g, +, xj = x)
+        x = propagate(w_mul_xj, g, +, xj = xj)
     else
-        x = propagate(copy_xj, g, +, xj = x)
+        x = propagate(copy_xj, g, +, xj = xj)
     end
-    x = x .* c'
-    if Dout >= Din
+    x = x .* cin'
+    if Dout >= Din || g isa GNNHeteroGraph
         x = l.weight * x
     end
     return l.σ.(x .+ l.bias)
@@ -352,7 +364,7 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
-
+- `dropout`: Dropout probability on the normalized attention coefficient. Default `0.0`.
 
 # Examples
 
@@ -372,7 +384,7 @@ l = GATConv(in_channel => out_channel, add_self_loops = false, bias = false; hea
 y = l(g, x)       
 ```
 """
-struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix, F, B} <:
+struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, DV, T, A <: AbstractMatrix, F, B} <:
        GNNLayer
     dense_x::DX
     dense_e::DE
@@ -384,6 +396,7 @@ struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, T, A <: AbstractMatrix,
     heads::Int
     concat::Bool
     add_self_loops::Bool
+    dropout::DV
 end
 
 @functor GATConv
@@ -393,7 +406,7 @@ GATConv(ch::Pair{Int, Int}, args...; kws...) = GATConv((ch[1], 0) => ch[2], args
 
 function GATConv(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
                  heads::Int = 1, concat::Bool = true, negative_slope = 0.2,
-                 init = glorot_uniform, bias::Bool = true, add_self_loops = true)
+                 init = glorot_uniform, bias::Bool = true, add_self_loops = true, dropout=0.0)
     (in, ein), out = ch
     if add_self_loops
         @assert ein==0 "Using edge features and setting add_self_loops=true at the same time is not yet supported."
@@ -404,7 +417,7 @@ function GATConv(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
     b = bias ? Flux.create_bias(dense_x.weight, true, concat ? out * heads : out) : false
     a = init(ein > 0 ? 3out : 2out, heads)
     negative_slope = convert(Float32, negative_slope)
-    GATConv(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops)
+    GATConv(dense_x, dense_e, b, a, σ, negative_slope, ch, heads, concat, add_self_loops, dropout)
 end
 
 (l::GATConv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
@@ -436,6 +449,7 @@ function (l::GATConv)(g::AbstractGNNGraph, x,
     # a hand-written message passing
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
+    α = dropout(α, l.dropout)
     β = α .* m.Wxj
     x = aggregate_neighbors(g, +, β)
 
@@ -506,6 +520,7 @@ and the attention coefficients will be calculated as
 - `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
 - `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+- `dropout`: Dropout probability on the normalized attention coefficient. Default `0.0`.
 
 # Examples
 ```julia
@@ -528,7 +543,7 @@ e = randn(Float32, ein, length(s))
 y = l(g, x, e)    
 ```
 """
-struct GATv2Conv{T, A1, A2, A3, B, C <: AbstractMatrix, F} <: GNNLayer
+struct GATv2Conv{T, A1, A2, A3, DV, B, C <: AbstractMatrix, F} <: GNNLayer
     dense_i::A1
     dense_j::A2
     dense_e::A3
@@ -540,6 +555,7 @@ struct GATv2Conv{T, A1, A2, A3, B, C <: AbstractMatrix, F} <: GNNLayer
     heads::Int
     concat::Bool
     add_self_loops::Bool
+    dropout::DV
 end
 
 @functor GATv2Conv
@@ -556,7 +572,8 @@ function GATv2Conv(ch::Pair{NTuple{2, Int}, Int},
                    negative_slope = 0.2,
                    init = glorot_uniform,
                    bias::Bool = true,
-                   add_self_loops = true)
+                   add_self_loops = true,
+                   dropout=0.0)
     (in, ein), out = ch
 
     if add_self_loops
@@ -574,7 +591,7 @@ function GATv2Conv(ch::Pair{NTuple{2, Int}, Int},
     a = init(out, heads)
     negative_slope = convert(eltype(dense_i.weight), negative_slope)
     GATv2Conv(dense_i, dense_j, dense_e, b, a, σ, negative_slope, ch, heads, concat,
-              add_self_loops)
+              add_self_loops, dropout)
 end
 
 (l::GATv2Conv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
@@ -599,6 +616,7 @@ function (l::GATv2Conv)(g::AbstractGNNGraph, x,
 
     m = apply_edges((xi, xj, e) -> message(l, xi, xj, e), g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
+    α = dropout(α, l.dropout)
     β = α .* m.Wxj
     x = aggregate_neighbors(g, +, β)
 
@@ -1514,14 +1532,12 @@ function SGConv(ch::Pair{Int, Int}, k = 1;
     SGConv(W, b, k, add_self_loops, use_edge_weight)
 end
 
-function (l::SGConv)(g::AbstractGNNGraph, x,
+# this layer is not stable enough to be supported by GNNHeteroGraph type
+# due to it's looping mechanism
+function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T},
                      edge_weight::EW = nothing) where
-                     {EW <: Union{Nothing, AbstractVector}}
+    {T, EW <: Union{Nothing, AbstractVector}}
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
-
-    xj, xi = expand_srcdst(g, x)
-    edge_t = g isa GNNHeteroGraph ? g.etypes[1] : nothing
-    T = eltype(xi)
 
     if edge_weight !== nothing
         @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
@@ -1535,28 +1551,29 @@ function (l::SGConv)(g::AbstractGNNGraph, x,
         end
     end
     Dout, Din = size(l.weight)
-    if g isa GNNHeteroGraph
-        d = degree(g, edge_t, T; dir = :in)
+    if Dout < Din
+        x = l.weight * x
+    end
+    if edge_weight !== nothing
+        d = degree(g, T; dir = :in, edge_weight)
     else
-        if edge_weight !== nothing
-            d = degree(g, T; dir = :in, edge_weight)
-        else
-            d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
-        end
+        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
     end
     c = 1 ./ sqrt.(d)
     for iter in 1:(l.k)
         x = x .* c'
         if edge_weight !== nothing
-            x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
+            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
         elseif l.use_edge_weight
-            x = propagate(w_mul_xj, g, +, xj = xj)
+            x = propagate(w_mul_xj, g, +, xj = x)
         else
-            x = propagate(copy_xj, g, +, xj = xj)
+            x = propagate(copy_xj, g, +, xj = x)
         end
         x = x .* c'
     end
-    x = l.weight * x
+    if Dout >= Din
+        x = l.weight * x
+    end
     return (x .+ l.bias)
 end
 
