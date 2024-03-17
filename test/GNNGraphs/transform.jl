@@ -179,6 +179,7 @@ end
     @test snew == stest
     @test tnew == ttest
     @test eweights_new == eweightstest
+    @test ndata_new == ndatatest
     @test edata_new == edatatest
 end end
 
