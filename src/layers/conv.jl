@@ -1784,22 +1784,12 @@ can be performed.
 # Examples
 
 ```julia
-N = 4
-in_channel = 3
-out_channel = 5
-ein = 2
-heads = 3
-
-s = [1,1,2,4]
-t = [2,3,1,1]
-g = GNNGraph(s, t, ndata = rand(Float32, in_channel, N), 
-                edata = rand(Float32, ein, g.num_edges))
-
-l = TransformerConv((in_channel, ein) => in_channel; heads, gating = true,
-                        bias_qkv = true)
-x = node_features(g)
-e = edge_features(g)
-
+N, in_channel, out_channel = 4, 3, 5
+ein, heads = 2, 3
+g = GNNGraph([1,1,2,4], [2,3,1,1])
+l = TransformerConv((in_channel, ein) => in_channel; heads, gating = true, bias_qkv = true)
+x = rand(Float32, in_channel, N)
+e = rand(Float32, ein, g.num_edges)
 l(g, x, e)
 ```        
 """
