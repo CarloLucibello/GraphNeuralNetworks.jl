@@ -269,7 +269,7 @@ g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1], num_nodes=3)
 # Drop nodes with a probability of 0.5
 g_new = drop_node(g, 0.5)
 println(g_new)
-
+```
 """
 function drop_nodes(g::GNNGraph{<:COO_T}, p::Float32 = 0.5f)
     num_nodes = g.num_nodes
