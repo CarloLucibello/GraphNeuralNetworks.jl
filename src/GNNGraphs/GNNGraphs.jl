@@ -78,6 +78,7 @@ export add_nodes,
        to_unidirected,
        random_walk_pe,
        perturb_edges,
+       remove_nodes,
 # from Flux
        batch,
        unbatch,
