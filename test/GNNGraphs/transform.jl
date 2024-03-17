@@ -149,6 +149,13 @@ end
     end 
 end
 
+@testset "perturb_edges" begin if GRAPH_T == :coo
+    s, t = [1, 2, 3, 3, 4], [2, 3, 4, 4, 4];
+    w = Float32[1.0, 2.0, 3.0, 4.0, 5.0];
+    g = GNNGraph((s, t, w))
+    g_per = perturb_edges(g, 0.5, seed = 42)
+    @assert g_per.num_edges == 8
+end end
 
 @testset "add_nodes" begin if GRAPH_T == :coo
     g = rand_graph(6, 4, ndata = rand(2, 6), graph_type = GRAPH_T)

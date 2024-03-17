@@ -352,6 +352,65 @@ function add_edges(g::GNNHeteroGraph{<:COO_T},
              ntypes, etypes)
 end
 
+"""
+    perturb_edges(g::GNNGraph{<:COO_T}, perturb_ratio::Float64; seed::Int=42)
+
+Perturb the graph `g` by adding random edges, based on a specified `perturb_ratio`. The `perturb_ratio` determines the fraction of new edges to add relative to the current number of edges in the graph. These new edges are added without creating self-loops. Optionally, a random `seed` can be provided to ensure reproducible perturbations.
+
+The function returns a new `GNNGraph` instance that shares some of the underlying data with `g` but includes the additional edges. The nodes for the new edges are selected randomly, and no edge data (`edata`) or weights (`w`) are assigned to these new edges.
+
+# Parameters
+- `g::GNNGraph`: The graph to be perturbed.
+- `perturb_ratio::Float64`: The ratio of the number of new edges to add relative to the current number of edges in the graph. For example, a `perturb_ratio` of 0.1 means that 10% of the current number of edges will be added as new random edges.
+- `seed=123`: An optional seed for the random number generator to ensure reproducible results.
+
+# Examples
+
+```julia
+julia> g = GNNGraph((s, t, w))
+GNNGraph:
+  num_nodes: 4
+  num_edges: 5
+
+julia> perturbed_g = perturb_edges(g, 0.2)
+GNNGraph:
+  num_nodes: 4
+  num_edges: 6 # One new edge added if the original graph had 5 edges, as 0.2 of 5 is 1.
+
+julia> perturbed_g = perturb_edges(g, 0.5, seed=42)
+GNNGraph:
+  num_nodes: 4
+  num_edges: 7 # Two new edges added if the original graph had 5 edges, as 0.5 of 5 rounds to 2.
+```
+"""
+function perturb_edges(g::GNNGraph{<:COO_T}, perturb_ratio::Float64; seed::Int = Random.default_rng())
+    @assert perturb_ratio >= 0 && perturb_ratio <= 1 "perturb_ratio must be between 0 and 1"
+
+    Random.seed!(seed)
+
+    num_current_edges = g.num_edges
+    num_edges_to_add = ceil(Int, num_current_edges * perturb_ratio)
+
+    if num_edges_to_add == 0
+        return g
+    end
+
+    num_nodes = g.num_nodes
+    @assert num_nodes > 1 "Graph must contain at least 2 nodes to add edges"
+
+    snew = Int[]
+    tnew = Int[]
+    while length(snew) < num_edges_to_add
+        s_candidate = rand(1:num_nodes)
+        t_candidate = rand(1:num_nodes)
+        if s_candidate != t_candidate
+            push!(snew, s_candidate)
+            push!(tnew, t_candidate)
+        end
+    end
+
+    return add_edges(g, (snew, tnew, nothing))
+end
 
 
 ### TODO Cannot implement this since GNNGraph is immutable (cannot change num_edges). make it mutable
