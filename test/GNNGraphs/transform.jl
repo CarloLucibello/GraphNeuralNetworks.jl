@@ -181,6 +181,20 @@ end
     @test edata_new == edatatest
 end end
 
+@testset "drop_nodes" begin
+    if GRAPH_T == :coo
+        s = [1, 1, 2, 3]
+        t = [2, 3, 4, 5]
+        g = GNNGraph(s, t, graph_type = GRAPH_T)    
+
+        gnew = drop_edges(g, 1.0f)
+        @test gnew.num_edges == 0
+
+        gnew = drop_edges(g, 0.0f)
+        @test gnew.num_edges == g.num_edges
+    end
+end
+
 @testset "add_nodes" begin if GRAPH_T == :coo
     g = rand_graph(6, 4, ndata = rand(2, 6), graph_type = GRAPH_T)
     gnew = add_nodes(g, 5, ndata = ones(2, 5))

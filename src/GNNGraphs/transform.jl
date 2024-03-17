@@ -249,6 +249,38 @@ function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove::AbstractVector)
 end
 
 """
+    drop_node(g::GNNGraph{<:COO_T}, p::Float32)
+
+Randomly drop nodes (and their associated edges) from a GNNGraph based on a given probability. 
+Dropping nodes is a technique that can be used for graph data augmentation, refering paper [DropNode](https://arxiv.org/pdf/2008.12578.pdf).
+
+# Arguments
+- `g`: The input graph from which nodes (and their associated edges) will be dropped.
+- `p`: The probability of dropping each node. Default value is `0.5`.
+
+# Returns
+A modified GNNGraph with nodes (and their associated edges) dropped based on the given probability.
+
+# Example
+```julia
+using GraphNeuralNetworks
+# Construct a GNNGraph
+g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1], num_nodes=3)
+# Drop nodes with a probability of 0.5
+g_new = drop_node(g, 0.5)
+println(g_new)
+
+"""
+function drop_nodes(g::GNNGraph{<:COO_T}, p::Float32 = 0.5f)
+    num_nodes = g.num_nodes
+    nodes_to_remove = filter(_ -> rand() < p, 1:num_nodes)
+    
+    new_g = remove_nodes(g, nodes_to_remove)
+    
+    return new_g
+end
+
+"""
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
     add_edges(g::GNNGraph, (s, t); [edata])
     add_edges(g::GNNGraph, (s, t, w); [edata])
