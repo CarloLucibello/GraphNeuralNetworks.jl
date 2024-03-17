@@ -167,11 +167,17 @@ julia> using GraphNeuralNetworks
 
 # Construct a GNNGraph
 julia> g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
-
+GNNGraph:
+  num_nodes: 3
+  num_edges: 5
+  
 # Remove the second edge
-julia> g_new = remove_edges(g, [2])
+julia> g_new = remove_edges(g, [2]);
 
 julia> g_new
+GNNGraph:
+  num_nodes: 3
+  num_edges: 4
 ```
 """
 function remove_edges(g::GNNGraph{<:COO_T}, edges_to_remove::AbstractVector{<:Integer})
@@ -188,7 +194,7 @@ function remove_edges(g::GNNGraph{<:COO_T}, edges_to_remove::AbstractVector{<:In
     edata = getobs(edata, mask_to_keep)
     w = isnothing(w) ? nothing : getobs(w, mask_to_keep)
 
-    GNNGraph((s, t, w),
+    return GNNGraph((s, t, w),
              g.num_nodes, length(s), g.num_graphs,
              g.graph_indicator,
              g.ndata, edata, g.gdata)

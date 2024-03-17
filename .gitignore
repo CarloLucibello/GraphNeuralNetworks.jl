@@ -9,4 +9,3 @@ Manifest.toml
 .vscode
 LocalPreferences.toml
 .DS_Store
-try.jl
