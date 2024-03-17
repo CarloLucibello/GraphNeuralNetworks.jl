@@ -219,7 +219,8 @@ function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove::AbstractVector)
     w = get_edge_weight(g)
     edata = g.edata
     ndata = g.ndata
-
+    
+    #fix
     edges_to_remove_s = findall(x -> nodes_to_remove[searchsortedlast(nodes_to_remove, x)] == x, s)
     edges_to_remove_t = findall(x -> nodes_to_remove[searchsortedlast(nodes_to_remove, x)] == x, t)
     edges_to_remove = union(edges_to_remove_s, edges_to_remove_t)
