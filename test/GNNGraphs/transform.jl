@@ -171,8 +171,6 @@ end
     ndatatest = gnew.ndata.x
     edatatest = gnew.edata.e
 
-    println(ndata_new)
-    println(ndatatest)
 
     @test gnew.num_edges == 2
     @test gnew.num_nodes == 4
