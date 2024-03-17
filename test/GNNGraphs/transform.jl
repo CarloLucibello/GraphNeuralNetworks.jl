@@ -149,6 +149,37 @@ end
     end 
 end
 
+@testset "remove_nodes" begin if GRAPH_T == :coo
+    s = [1, 1, 2, 3]
+    t = [2, 3, 4, 5]
+    eweights = [0.1, 0.2, 0.3, 0.4]
+    ndata = [1.0, 2.0, 3.0, 4.0, 5.0]
+    edata = ['a', 'b', 'c', 'd']
+
+    g = GNNGraph(s, t, eweights, ndata = ndata, edata = edata, graph_type = GRAPH_T)
+
+    gnew = remove_nodes(g, [1])
+
+    snew = [1, 2]
+    tnew = [3, 4]
+    eweights_new = [0.3, 0.4]
+    ndata_new = [2.0, 3.0, 4.0, 5.0]
+    edata_new = ['c', 'd']
+
+    stest, ttest = edge_index(gnew)
+    eweightstest = get_edge_weight(gnew)
+    ndatatest = gnew.ndata.x
+    edatatest = gnew.edata.e
+
+
+    @test gnew.num_edges == 2
+    @test gnew.num_nodes == 4
+    @test snew == stest
+    @test tnew == ttest
+    @test eweights_new == eweightstest
+    @test ndata_new == ndatatest
+    @test edata_new == edatatest
+end end
 
 @testset "add_nodes" begin if GRAPH_T == :coo
     g = rand_graph(6, 4, ndata = rand(2, 6), graph_type = GRAPH_T)
