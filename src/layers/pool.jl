@@ -144,6 +144,47 @@ end
 
 topk_index(y::Adjoint, k::Int) = topk_index(y', k)
 
+"""
+    WeigthAndSumPool(in_feats)
+
+WeigthAndSum sum pooling layer.
+Takes a graph and the node features as inputs, computes the weights for each node and perform a weighted sum.
+
+# Example
+
+```julia
+n = 3
+chin = 5
+
+ws = WeigthAndSumPool(chin)
+g = GNNGraph(rand_graph(30, 50), ndata = rand(Float32, chin, 30)) 
+
+u = ws(g, g.ndata.x)
+```
+"""
+struct WeigthAndSumPool
+    in_feats::Int
+    dense_layer::Dense
+end
+
+@functor WeigthAndSumPool
+
+function WeigthAndSumPool(in_feats::Int)
+    dense_layer = Dense(in_feats, 1, sigmoid; bias = true)
+    WeigthAndSumPool(in_feats, dense_layer)
+end
+
+function (ws::WeigthAndSumPool)(g::GNNGraph, x::AbstractArray)
+    atom_weighting = ws.dense_layer
+    return reduce_nodes(+, g, atom_weighting(x) .* x)
+end
+
+function (ws::WeigthAndSumPool)(g::GNNGraph, x::CuArray)
+    atom_weighting = ws.dense_layer |> gpu
+    return reduce_nodes(+, g, atom_weighting(x) .* x)
+end
+
+(ws::WeigthAndSumPool)(g::GNNGraph) = GNNGraph(g, gdata = ws(g, node_features(g)))
 
 @doc raw"""
     Set2Set(n_in, n_iters, n_layers = 1)

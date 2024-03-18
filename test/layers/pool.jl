@@ -53,6 +53,22 @@ end
         y = p(X)
         @test size(y) == (in_channel, k)
     end
+
+    @testset "WeigthAndSumPool" begin
+        n = 3
+        chin = 5
+        ng = 3
+
+        ws = WeigthAndSumPool(chin)
+        g = GNNGraph(rand_graph(n, 4), ndata = rand(Float32, chin, n), graph_type = GRAPH_T)
+                        
+        test_layer(ws, g, rtol = 1e-5, outtype = :graph,outsize = (chin, 1))
+        g_batch = Flux.batch([GNNGraph(rand_graph(n, 4),
+                                       ndata = rand(Float32, chin, n),
+                                       graph_type = GRAPH_T)
+                              for i in 1:ng])
+        test_layer(ws, g_batch, rtol = 1e-5,outtype = :graph, outsize = (chin, ng))
+    end
 end
 
 @testset "topk_index" begin
