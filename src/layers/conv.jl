@@ -1691,13 +1691,13 @@ function (l::TAGConv)(g::GNNGraph, x::AbstractMatrix{T},
         # On subsequent iterations, accumulate propagated features
         if iter == 1
             sum_pow = x
+            sum_total = l.weight * sum_pow
         else
-            sum_pow += x
+            sum_pow += x            
+            # Weighted sum of features for each power of adjacency matrix
+            # This applies the weight matrix to the accumulated sum of propagated features
+            sum_total += l.weight * sum_pow
         end
-
-        # Weighted sum of features for each power of adjacency matrix
-        # This applies the weight matrix to the accumulated sum of propagated features
-        sum_total += l.weight * sum_pow
     end
 
     return (sum_total .+ l.bias)
