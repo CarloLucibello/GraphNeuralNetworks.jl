@@ -412,6 +412,49 @@ function add_edges(g::GNNHeteroGraph{<:COO_T},
              ntypes, etypes)
 end
 
+"""
+    add_edges_augment(g::GNNGraph{<:COO_T}, ratio::Float32=0.5f0; weight_func::Function=()->mean(get_edge_weight(g)))
+
+Augment the given GNNGraph by adding randomly generated edges.
+
+# Arguments
+- `g`: The input graph represented as a COO_T GNNGraph.
+- `ratio`: The ratio of new edges to add relative to the existing edges. Default is 0.5.
+- `weight_func`: A function to generate weights for the new edges. Default is the mean of existing edge weights.
+
+# Returns
+- `new_g::GNNGraph`: The augmented GNNGraph with additional edges.
+
+# References
+- Graph Contrastive Learning with Augmentations (https://arxiv.org/abs/2010.13902)
+"""
+function add_edges_augment(g::GNNGraph{<:COO_T}, ratio::Float32=0.5f0; weight_func::Function=()->mean(get_edge_weight(g)))
+    s, t = edge_index(g)
+    N = g.num_nodes
+    current_num_edges = length(s)
+
+    num_new_edges = floor(Int, current_num_edges * ratio)
+
+    new_s = Int[]
+    new_t = Int[]
+    for _ in 1:num_new_edges
+        push!(new_s, rand(1:N))
+        push!(new_t, rand(1:N))
+    end
+
+    s_combined = [s; new_s]
+    t_combined = [t; new_t]
+
+    old_w = get_edge_weight(g)
+    new_w = [old_w; [weight_func() for _ in 1:num_new_edges]]
+
+    new_g = GNNGraph((s_combined, t_combined, new_w),
+                     N, length(s_combined), g.num_graphs,
+                     g.graph_indicator,
+                     g.ndata, g.edata, g.gdata)
+
+    return new_g
+end
 
 
 ### TODO Cannot implement this since GNNGraph is immutable (cannot change num_edges). make it mutable

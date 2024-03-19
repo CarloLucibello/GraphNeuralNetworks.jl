@@ -149,6 +149,23 @@ end
     end 
 end
 
+@testset "add_edges_augment" begin if GRAPH_T == :coo
+    Random.seed!(42)
+    s = [1, 1, 2, 3]
+    t = [2, 3, 4, 5]
+    eweights = [0.1, 0.2, 0.3, 0.4]
+
+    g = GNNGraph(s,t,eweights)
+
+    g_new = add_edges_randomly(g, weight_func=()->0.8)
+    @test g_new.num_edges == 6
+
+    w_new = get_edge_weight(g_new)
+    w_test = [0.8,0.8]
+
+    @test isequal(w_new[5:end], w_test)
+end end
+
 @testset "remove_nodes" begin if GRAPH_T == :coo
     s = [1, 1, 2, 3]
     t = [2, 3, 4, 5]
