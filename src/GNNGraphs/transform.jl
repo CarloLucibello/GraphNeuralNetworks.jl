@@ -1081,7 +1081,8 @@ ci2t(ci::AbstractVector{<:CartesianIndex}, dims) = ntuple(i -> map(x -> x[i], ci
 """
     ppr_diffusion(g::GNNGraph{<:COO_T}; alpha_f32::Float32=0.85f0) -> GNNGraph
 
-Calculates the Personalized PageRank (PPR) diffusion based on the edge weight matrix of a GNNGraph and updates the graph with new edge weights derived from the PPR matrix.
+Calculates the Personalized PageRank (PPR) diffusion based on the edge weight matrix of a GNNGraph and updates the graph with new edge weights derived from the PPR matrix as introduced in the paper [The pagerank citation ranking: Bringing order to the web](http://ilpubs.stanford.edu:8090/422)
+
 
 The function performs the following steps:
 1. Constructs a modified adjacency matrix `A` using the graph's edge weights, where `A` is adjusted by `(α - 1) * A + I`, with `α` being the damping factor (`alpha_f32`) and `I` the identity matrix.
