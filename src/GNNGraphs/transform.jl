@@ -1079,7 +1079,7 @@ ci2t(ci::AbstractVector{<:CartesianIndex}, dims) = ntuple(i -> map(x -> x[i], ci
 @non_differentiable dense_zeros_like(x...)
 
 """
-    ppr_diffusion(g::GNNGraph; alpha_f32::Float32=0.85f0) -> GNNGraph
+    ppr_diffusion(g::GNNGraph{<:COO_T}; alpha_f32::Float32=0.85f0) -> GNNGraph
 
 Calculates the Personalized PageRank (PPR) diffusion based on the edge weight matrix of a GNNGraph and updates the graph with new edge weights derived from the PPR matrix.
 
@@ -1096,7 +1096,7 @@ The function performs the following steps:
 # Returns
 - A new `GNNGraph` instance with the same structure as `g` but with updated edge weights according to the PPR diffusion calculation.
 """
-function ppr_diffusion(g::GNNGraph; alpha_f32::Float32=0.85f0)
+function ppr_diffusion(g::GNNGraph{<:COO_T}; alpha_f32::Float32=0.85f0)
     s, t = edge_index(g)
     w = get_edge_weight(g)  
 
