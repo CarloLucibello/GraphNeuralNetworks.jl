@@ -1647,7 +1647,7 @@ function TAGConv(ch::Pair{Int, Int}, k = 3;
     in, out = ch
     W = init(out, in)
     b = bias ? Flux.create_bias(W, true, out) : false
-    TagConv2(W, b, k, add_self_loops, use_edge_weight)
+    TagConv(W, b, k, add_self_loops, use_edge_weight)
 end
 
 function (l::TAGConv)(g::GNNGraph, x::AbstractMatrix{T},
