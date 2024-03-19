@@ -190,6 +190,14 @@ end end
     @test all(gnew.ndata.x[:, 7:11] .== 1)
 end end
 
+@testset "node_shuffle" begin if GRAPH_T == :coo
+    g = rand_graph(5, 4, ndata = rand(2, 5), graph_type = GRAPH_T)
+    g_new = node_shuffle(g)
+
+    @test g_new.num_edges == 4
+    @test g_new.num_nodes == 5
+end end
+
 @testset "remove_self_loops" begin if GRAPH_T == :coo # add_edges and set_edge_weight only implemented for coo
     g = rand_graph(10, 20, graph_type = GRAPH_T)
     g1 = add_edges(g, [1:5;], [1:5;])

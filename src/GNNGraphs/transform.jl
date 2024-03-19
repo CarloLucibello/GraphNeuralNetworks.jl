@@ -249,6 +249,28 @@ function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove::AbstractVector)
 end
 
 """
+    node_shuffle(g::GNNGraph{<:COO_T})
+
+Shuffle the node features in the given GNNGraph as shown in paper [On Node Features for Graph Neural Networks](https://arxiv.org/ftp/arxiv/papers/1911/1911.08795.pdf)
+
+# Arguments
+- `g::GNNGraph`: The input graph represented as a GNNGraph.
+
+# Returns
+- `g::GNNGraph`: The GNNGraph with shuffled node features.
+"""
+function node_shuffle(g::GNNGraph{<:COO_T})
+    features = g.ndata.x
+    num_nodes = size(features, 1) 
+
+    shuffled_indices = randperm(num_nodes)
+    shuffled_features = features[shuffled_indices, :]
+
+    g.ndata.x = shuffled_features
+    return g  
+end
+
+"""
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
     add_edges(g::GNNGraph, (s, t); [edata])
     add_edges(g::GNNGraph, (s, t, w); [edata])
