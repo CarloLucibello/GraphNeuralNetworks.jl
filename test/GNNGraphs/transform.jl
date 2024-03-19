@@ -157,7 +157,7 @@ end
 
     g = GNNGraph(s,t,eweights)
 
-    g_new = add_edges_randomly(g, weight_func=()->0.8)
+    g_new = add_edges_augment(g, weight_func=()->0.8)
     @test g_new.num_edges == 6
 
     w_new = get_edge_weight(g_new)
