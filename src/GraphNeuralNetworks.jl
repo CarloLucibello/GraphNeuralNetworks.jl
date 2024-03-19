@@ -65,6 +65,7 @@ export
       ResGatedGraphConv,
       SAGEConv,
       SGConv,
+      TAGConv,
       TransformerConv,
 
 # layers/heteroconv
