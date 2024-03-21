@@ -223,7 +223,7 @@ function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove::AbstractVector)
     function find_edges_to_remove(nodes, nodes_to_remove)
         return findall(node_id -> begin
             idx = searchsortedlast(nodes_to_remove, node_id)
-            idx >= 1 && idx <= length(nodes_to_remove) && nodes_to_remove[idx] == node_id
+            idx >= 1 && idx <= length(nodes_to_remove)
         end, nodes)
     end
     
