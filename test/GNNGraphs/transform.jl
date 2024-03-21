@@ -101,6 +101,34 @@ end
     @test nodemap == 1:(g1.num_nodes)
 end
 
+@testset "remove_edges" begin
+    if GRAPH_T == :coo
+        s = [1, 1, 2, 3]
+        t = [2, 3, 4, 5]
+        w = [0.1, 0.2, 0.3, 0.4]
+        edata = ['a', 'b', 'c', 'd']
+        g = GNNGraph(s, t, w, edata = edata, graph_type = GRAPH_T)    
+
+        # single edge removal
+        gnew = remove_edges(g, [1])
+        new_s, new_t = edge_index(gnew)
+        @test gnew.num_edges == 3
+        @test new_s == s[2:end]
+        @test new_t == t[2:end]
+        
+        # multiple edge removal
+        gnew = remove_edges(g, [1,2,4])
+        new_s, new_t = edge_index(gnew)
+        new_w = get_edge_weight(gnew)
+        new_edata = gnew.edata.e
+        @test gnew.num_edges == 1
+        @test new_s == [2]
+        @test new_t == [4]
+        @test new_w == [0.3]
+        @test new_edata == ['c']
+    end
+end
+
 @testset "add_edges" begin 
     if GRAPH_T == :coo
         s = [1, 1, 2, 3]
