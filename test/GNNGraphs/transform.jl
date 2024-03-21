@@ -150,6 +150,7 @@ end
 end
 
 @testset "remove_nodes" begin if GRAPH_T == :coo
+    #single node
     s = [1, 1, 2, 3]
     t = [2, 3, 4, 5]
     eweights = [0.1, 0.2, 0.3, 0.4]
@@ -174,6 +175,35 @@ end
 
     @test gnew.num_edges == 2
     @test gnew.num_nodes == 4
+    @test snew == stest
+    @test tnew == ttest
+    @test eweights_new == eweightstest
+    @test ndata_new == ndatatest
+    @test edata_new == edatatest
+
+    # multiple nodes
+    s = [1, 5, 2, 3]
+    t = [2, 3, 4, 5]
+    eweights = [0.1, 0.2, 0.3, 0.4]
+    ndata = [1.0, 2.0, 3.0, 4.0, 5.0]
+    edata = ['a', 'b', 'c', 'd']
+
+    g = GNNGraph(s, t, eweights, ndata = ndata, edata = edata, graph_type = GRAPH_T)
+
+    gnew = remove_nodes(g, [1,4])
+    snew = [3,2]
+    tnew = [2,3]
+    eweights_new = [0.2,0.4]
+    ndata_new = [2.0,3.0,5.0]
+    edata_new = ['b','d']
+
+    stest, ttest = edge_index(gnew)
+    eweightstest = get_edge_weight(gnew)
+    ndatatest = gnew.ndata.x
+    edatatest = gnew.edata.e
+
+    @test gnew.num_edges == 2
+    @test gnew.num_nodes == 3
     @test snew == stest
     @test tnew == ttest
     @test eweights_new == eweightstest
