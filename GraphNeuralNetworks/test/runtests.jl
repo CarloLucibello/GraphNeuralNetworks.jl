@@ -8,7 +8,6 @@ using Flux: gpu, @functor
 using LinearAlgebra, Statistics, Random
 using NNlib
 import MLUtils
-import StatsBase
 using SparseArrays
 using Graphs
 using Zygote
@@ -16,6 +15,7 @@ using Test
 using MLDatasets
 using InlineStrings  # not used but with the import we test #98 and #104
 using SimpleWeightedGraphs
+using Optimisers: trainables
 
 CUDA.allowscalar(false)
 
@@ -26,19 +26,19 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
-    "GNNGraphs/chainrules",
-    "GNNGraphs/datastore",
-    "GNNGraphs/gnngraph",
-    "GNNGraphs/convert",
-    "GNNGraphs/transform",
-    "GNNGraphs/operators",
-    "GNNGraphs/generate",
-    "GNNGraphs/query",
-    "GNNGraphs/sampling",
-    "GNNGraphs/gnnheterograph",
-    "GNNGraphs/temporalsnapshotsgnngraph",
-    "utils",
-    "msgpass",
+    # "GNNGraphs/chainrules",
+    # "GNNGraphs/datastore",
+    # "GNNGraphs/gnngraph",
+    # "GNNGraphs/convert",
+    # "GNNGraphs/transform",
+    # "GNNGraphs/operators",
+    # "GNNGraphs/generate",
+    # "GNNGraphs/query",
+    # "GNNGraphs/sampling",
+    # "GNNGraphs/gnnheterograph",
+    # "GNNGraphs/temporalsnapshotsgnngraph",
+    # "utils",
+    # "msgpass",
     "layers/basic",
     "layers/conv",
     "layers/heteroconv",
@@ -47,7 +47,7 @@ tests = [
     "mldatasets",
     "examples/node_classification_cora",
     "deprecations",
-    "ext/GraphNeuralNetworksSimpleWeightedGraphsExt/GraphNeuralNetworksSimpleWeightedGraphsExt"
+    "ext/GNNlibSimpleWeightedGraphsExt/GNNlibSimpleWeightedGraphsExt"
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")

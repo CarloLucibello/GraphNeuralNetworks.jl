@@ -122,7 +122,7 @@ function gat_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} =
     end
 
     # a hand-written message passing
-    message = Base.Fix1(gat_message, l)
+    message = Fix1(gat_message, l)
     m = apply_edges(message, g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
     α = dropout(α, l.dropout)
@@ -171,7 +171,7 @@ function gatv2_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix}
     Wxi = reshape(l.dense_i(xi), out, heads, :)                                  # out × heads × nnodes
     Wxj = reshape(l.dense_j(xj), out, heads, :)                                  # out × heads × nnodes
 
-    message = Base.Fix1(gatv2_message, l)
+    message = Fix1(gatv2_message, l)
     m = apply_edges(message, g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
     α = dropout(α, l.dropout)
@@ -202,7 +202,7 @@ end
 # TODO remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
 @non_differentiable fill!(x...)
 
-function gated_graph_conv(g::GNNGraph, H::AbstractMatrix{S}) where {S <: Real}
+function gated_graph_conv(l, g::GNNGraph, H::AbstractMatrix{S}) where {S <: Real}
     check_num_nodes(g, H)
     m, n = size(H)
     @assert (m<=l.out_ch) "number of input features must less or equals to output features."
@@ -222,7 +222,7 @@ function edge_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
 
-    message = Base.Fix1(edge_conv_message, l)
+    message = Fix1(edge_conv_message, l)
     x = propagate(message, g, l.aggr, xi = xi, xj = xj, e = nothing)
     return x
 end
@@ -241,7 +241,7 @@ end
 
 function nn_conv(l, g::GNNGraph, x::AbstractMatrix, e)
     check_num_nodes(g, x)
-    message = Base.Fix1(nn_conv_message, l)
+    message = Fix1(nn_conv_message, l)
     m = propagate(message, g, l.aggr, xj = x, e = e)
     return l.σ.(l.weight * x .+ m .+ l.bias)
 end
@@ -277,7 +277,7 @@ function res_gated_graph_conv(l, g::AbstractGNNGraph, x)
     return l.σ.(l.U * xi .+ m .+ l.bias)
 end
 
-function cgc_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} = nothing)
+function cg_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
     
@@ -285,7 +285,7 @@ function cgc_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} =
         check_num_edges(g, e)
     end
 
-    message = Base.Fix1(cgc_message, l)
+    message = Fix1(cg_message, l)
     m = propagate(message, g, +, xi = xi, xj = xj, e = e)
 
     if l.residual
@@ -299,7 +299,7 @@ function cgc_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} =
     return m
 end
 
-function cgc_message(l, xi, xj, e)
+function cg_message(l, xi, xj, e)
     if e !== nothing
         z = vcat(xi, xj, e)
     else
@@ -340,7 +340,7 @@ function megnet_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     return x̄, ē
 end
 
-function gmm_conv(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
+function gmm_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     (nin, ein), out = l.ch #Notational Simplicity
 
     @assert (ein == size(e)[1]&&g.num_edges == size(e)[2]) "Pseudo-cordinate dimension is not equal to (ein,num_edge)"
@@ -422,7 +422,7 @@ function sgc_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
     return sgc_conv(l, g, x, edge_weight)
 end
 
-function egnn_conv(g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e = nothing)
+function egnn_conv(l, g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e = nothing)
     if l.num_features.edge > 0
         @assert e!==nothing "Edge features must be provided."
     end
@@ -432,7 +432,7 @@ function egnn_conv(g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e = nothin
     sqnorm_xdiff = sum(x_diff .^ 2, dims = 1)
     x_diff = x_diff ./ (sqrt.(sqnorm_xdiff) .+ 1.0f-6)
 
-    message = Base.Fix1(egnn_message, l)
+    message = Fix1(egnn_message, l)
     msg = apply_edges(message, g,
                       xi = (; h), xj = (; h), e = (; e, x_diff, sqnorm_xdiff))
     h_aggr = aggregate_neighbors(g, +, msg.h)
@@ -460,6 +460,57 @@ function egnn_message(l, xi, xj, e)
     return (; x = msg_x, h = msg_h)
 end
 
+# this layer is not stable enough to be supported by GNNHeteroGraph type
+# due to it's looping mechanism
+function sg_conv(l, g::GNNGraph, x::AbstractMatrix{T},
+                edge_weight::EW = nothing) where
+                {T, EW <: Union{Nothing, AbstractVector}}
+    @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+
+    if edge_weight !== nothing
+        @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
+    end
+
+    if l.add_self_loops
+        g = add_self_loops(g)
+        if edge_weight !== nothing
+            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            @assert length(edge_weight) == g.num_edges
+        end
+    end
+    Dout, Din = size(l.weight)
+    if Dout < Din
+        x = l.weight * x
+    end
+    if edge_weight !== nothing
+        d = degree(g, T; dir = :in, edge_weight)
+    else
+        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+    end
+    c = 1 ./ sqrt.(d)
+    for iter in 1:(l.k)
+        x = x .* c'
+        if edge_weight !== nothing
+            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
+        elseif l.use_edge_weight
+            x = propagate(w_mul_xj, g, +, xj = x)
+        else
+            x = propagate(copy_xj, g, +, xj = x)
+        end
+        x = x .* c'
+    end
+    if Dout >= Din
+        x = l.weight * x
+    end
+    return (x .+ l.bias)
+end
+
+function sg_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
+                     edge_weight::AbstractVector)
+    g = GNNGraph(edge_index(g)...; g.num_nodes)
+    return sg_conv(l, g, x, edge_weight)
+end
+
 function transformer_conv(l, g::GNNGraph, x::AbstractMatrix,  e::Union{AbstractMatrix, Nothing} = nothing)
     check_num_nodes(g, x)
 
@@ -475,7 +526,7 @@ function transformer_conv(l, g::GNNGraph, x::AbstractMatrix,  e::Union{AbstractM
     W4x = reshape(l.W4(x), out, heads, :)
     W6e = !isnothing(l.W6) ? reshape(l.W6(e), out, heads, :) : nothing
 
-    message_uij = Base.Fix1(transformer_message_uij, l)
+    message_uij = Fix1(transformer_message_uij, l)
     m = apply_edges(message_uij, g; xi = (; W3x), xj = (; W4x), e = (; W6e))
     α = softmax_edge_neighbors(g, m)
     α_val = propagate(transformer_message_main, g, +; 

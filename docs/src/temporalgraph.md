@@ -95,11 +95,11 @@ GNNGraph:
 Node, edge, and graph features can be added at construction time or later using:
 
 ```jldoctest
-julia> snapshots = [rand_graph(10,20; ndata = rand(3,10)), rand_graph(10,14; ndata = rand(4,10)), rand_graph(10,22; ndata = rand(5,10))]; # node features at construction time
+julia> snapshots = [rand_graph(10,20; ndata = rand(Float32,3,10)), rand_graph(10,14; ndata = rand(Float32,4,10)), rand_graph(10,22; ndata = rand(Float32,5,10))]; # node features at construction time
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots);
 
-julia> tg.tgdata.y = rand(3,1); # graph features after construction
+julia> tg.tgdata.y = rand(Float32,3,1); # graph features after construction
 
 julia> tg
 TemporalSnapshotsGNNGraph:
@@ -107,19 +107,19 @@ TemporalSnapshotsGNNGraph:
   num_edges: [20, 14, 22]
   num_snapshots: 3
   tgdata:
-        y = 3×1 Matrix{Float64}
+        y = 3×1 Matrix{Float32}
 
 julia> tg.ndata # vector of Datastore for node features
 3-element Vector{DataStore}:
  DataStore(10) with 1 element:
-  x = 3×10 Matrix{Float64}
+  x = 3×10 Matrix{Float32}
  DataStore(10) with 1 element:
-  x = 4×10 Matrix{Float64}
+  x = 4×10 Matrix{Float32}
  DataStore(10) with 1 element:
-  x = 5×10 Matrix{Float64}
+  x = 5×10 Matrix{Float32}
 
 julia> typeof(tg.ndata.x) # vector containing the x feature of each snapshot
-Vector{Matrix{Float64}}
+Vector{Matrix{Float32}}
 ```
 
 ## Graph convolutions on TemporalSnapshotsGNNGraph
@@ -129,7 +129,7 @@ A graph convolutional layer can be applied to each snapshot independently, in th
 ```jldoctest
 julia> using GraphNeuralNetworks, Flux
 
-julia> snapshots = [rand_graph(10, 20; ndata = rand(3, 10)), rand_graph(10, 14; ndata = rand(3, 10))];
+julia> snapshots = [rand_graph(10, 20; ndata = rand(Float32,3,10)), rand_graph(10, 14; ndata = rand(Float32,3,10))];
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots);
 

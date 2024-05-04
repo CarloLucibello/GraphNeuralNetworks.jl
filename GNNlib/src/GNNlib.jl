@@ -44,45 +44,44 @@ export
       e_mul_xj,
       w_mul_xj,
 
-# layers/basic
-      dot_encoder,
-
-# layers/conv
-    agnn_conv,
-    cgc_conv,
-    cheb_conv,
-    edge_conv,
-    egnn_conv,
-    gat_conv,
-    gatv2_conv,
-    gated_graph_conv,
-    gcn_conv,
-    gin_conv,
-    gmm_conv,
-    graph_conv,
-    megnet_conv,
-    nn_conv,
-    res_gated_graph_conv,
-    sage_conv,
-    sg_conv,
-    transformer_conv,
-
-# # layers/heteroconv
-#       HeteroGraphConv,
-
-# layers/temporalconv
-      # TGCN,
-      a3tgcn_conv,
-
-# layers/pool
-      global_pool,
-      global_attention_pool,
-      set2set_pool,
-      topk_pool,
-      topk_index,
-
 # mldatasets
       mldataset2gnngraph
+
+## The following methods are defined but not exported
+
+# # layers/basic
+#       dot_decoder,
+
+# # layers/conv
+#       agnn_conv,
+#       cg_conv,
+#       cheb_conv,
+#       edge_conv,
+#       egnn_conv,
+#       gat_conv,
+#       gatv2_conv,
+#       gated_graph_conv,
+#       gcn_conv,
+#       gin_conv,
+#       gmm_conv,
+#       graph_conv,
+#       megnet_conv,
+#       nn_conv,
+#       res_gated_graph_conv,
+#       sage_conv,
+#       sg_conv,
+#       transformer_conv,
+
+# # layers/temporalconv
+#       a3tgcn_conv,
+
+# # layers/pool
+#       global_pool,
+#       global_attention_pool,
+#       set2set_pool,
+#       topk_pool,
+#       topk_index,
+
 
 include("utils.jl")
 include("layers/basic.jl")

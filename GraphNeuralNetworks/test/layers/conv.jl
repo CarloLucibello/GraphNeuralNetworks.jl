@@ -47,7 +47,7 @@ test_graphs = [g1, g_single_vertex]
         w = T[1, 2, 3, 4, 5, 6]
         g = GNNGraph((s, t, w), ndata = ones(T, 1, 3), graph_type = GRAPH_T)
         x = g.ndata.x
-        custom_norm_fn(d) = 1 ./ sqrt.(d)  
+        custom_norm_fn(d) = 1 ./ sqrt.(T.(d))  
         l = GCNConv(1 => 1, add_self_loops = false, use_edge_weight = true)
         l.weight .= 1
         d = degree(g, dir = :in, edge_weight = true)
@@ -74,17 +74,12 @@ end
     @test l.k == k
     for g in test_graphs
         g = add_self_loops(g)
-        test_layer(l, g, rtol = RTOL_HIGH, test_gpu = false,
-                    outsize = (out_channel, g.num_nodes))
-        if TEST_GPU
-            @test_broken test_layer(l, g, rtol = RTOL_HIGH, test_gpu = true,
-                                    outsize = (out_channel, g.num_nodes))
-        end
+        test_layer(l, g, rtol = RTOL_HIGH, outsize = (out_channel, g.num_nodes))
     end
 
     @testset "bias=false" begin
-        @test length(Flux.params(ChebConv(2 => 3, 3))) == 2
-        @test length(Flux.params(ChebConv(2 => 3, 3, bias = false))) == 1
+        @test length(trainables(ChebConv(2 => 3, 3))) == 2
+        @test length(trainables(ChebConv(2 => 3, 3, bias = false))) == 1
     end
 end
 
@@ -100,8 +95,8 @@ end
     end
 
     @testset "bias=false" begin
-        @test length(Flux.params(GraphConv(2 => 3))) == 3
-        @test length(Flux.params(GraphConv(2 => 3, bias = false))) == 2
+        @test length(trainables(GraphConv(2 => 3))) == 3
+        @test length(trainables(GraphConv(2 => 3, bias = false))) == 2
     end
 end
 
@@ -127,11 +122,11 @@ end
 
     @testset "num params" begin
         l = GATConv(2 => 3, add_self_loops = false)
-        @test length(Flux.params(l)) == 3
+        @test length(trainables(l)) == 3
         l = GATConv((2, 4) => 3, add_self_loops = false)
-        @test length(Flux.params(l)) == 4
+        @test length(trainables(l)) == 4
         l = GATConv((2, 4) => 3, add_self_loops = false, bias = false)
-        @test length(Flux.params(l)) == 3
+        @test length(trainables(l)) == 3
     end
 end
 
@@ -157,11 +152,11 @@ end
 
     @testset "num params" begin
         l = GATv2Conv(2 => 3, add_self_loops = false)
-        @test length(Flux.params(l)) == 5
+        @test length(trainables(l)) == 5
         l = GATv2Conv((2, 4) => 3, add_self_loops = false)
-        @test length(Flux.params(l)) == 6
+        @test length(trainables(l)) == 6
         l = GATv2Conv((2, 4) => 3, add_self_loops = false, bias = false)
-        @test length(Flux.params(l)) == 4
+        @test length(trainables(l)) == 4
     end
 end
 
@@ -267,7 +262,7 @@ end
     K = 5
     l = GMMConv((in_channel, ein_channel) => out_channel, K = K)
     for g in test_graphs
-        g = GNNGraph(g, edata = rand(Float32, ein_channel, g.num_edges))
+        g = GNNGraph(g, edata = rand(T, ein_channel, g.num_edges))
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (out_channel, g.num_nodes))
     end
 end

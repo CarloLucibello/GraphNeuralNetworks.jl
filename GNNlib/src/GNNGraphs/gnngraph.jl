@@ -86,13 +86,13 @@ g = GNNGraph(s, t)
 g = GNNGraph(erdos_renyi(100, 20))
 
 # Add 2 node feature arrays at creation time
-g = GNNGraph(g, ndata = (x=rand(100, g.num_nodes), y=rand(g.num_nodes)))
+g = GNNGraph(g, ndata = (x=rand(Float32,100,g.num_nodes), y=rand(Float32,g.num_nodes)))
 
 # Add 1 edge feature array, after the graph creation
-g.edata.z = rand(16, g.num_edges)
+g.edata.z = rand(Float32,16,g.num_edges)
 
 # Add node features and edge features with default names `x` and `e`
-g = GNNGraph(g, ndata = rand(100, g.num_nodes), edata = rand(16, g.num_edges))
+g = GNNGraph(g, ndata = rand(Float32,100,g.num_nodes), edata = rand(Float32,16,g.num_edges))
 
 g.ndata.x # or just g.x
 g.edata.e # or just g.e

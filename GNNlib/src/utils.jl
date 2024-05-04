@@ -120,7 +120,14 @@ function broadcast_edges(g::GNNGraph, x)
     return gather(x, gi)
 end
 
-
 expand_srcdst(g::AbstractGNNGraph, x) = throw(ArgumentError("Invalid input type, expected matrix or tuple of matrices."))
 expand_srcdst(g::AbstractGNNGraph, x::AbstractMatrix) = (x, x)
 expand_srcdst(g::AbstractGNNGraph, x::Tuple{<:AbstractMatrix, <:AbstractMatrix}) = x
+
+# Replacement for Base.Fix1 to allow for multiple arguments
+struct Fix1{F,X}
+    f::F
+    x::X
+end
+
+(f::Fix1)(y...) = f.f(f.x, y...)

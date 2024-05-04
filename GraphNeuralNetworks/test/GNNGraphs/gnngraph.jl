@@ -91,25 +91,27 @@ end
 
     @testset "normalized_laplacian" begin
         mat = normalized_laplacian(g)
+        @test mat isa AbstractSparseMatrix{Float32}
         if TEST_GPU
             mat_gpu = normalized_laplacian(g_gpu)
             @test mat_gpu isa ACUMatrix{Float32}
-            @test Array(mat_gpu) == mat
+            @test Array(mat_gpu) ≈ mat
         end
     end
 
-    @testset "scaled_laplacian" begin if TEST_GPU
-        @test_broken begin
-            mat = scaled_laplacian(g)
+    @testset "scaled_laplacian" begin 
+        mat = scaled_laplacian(g)
+        @test mat isa AbstractSparseMatrix{Float32}
+        if TEST_GPU
             mat_gpu = scaled_laplacian(g_gpu)
             @test mat_gpu isa ACUMatrix{Float32}
-            @test Array(mat_gpu) == mat
+            @test Array(mat_gpu) ≈ mat 
         end
-    end end
+    end
 
     @testset "constructors" begin
-        adjacency_matrix(g; dir = :out) == adj_mat
-        adjacency_matrix(g; dir = :in) == adj_mat
+        @test adjacency_matrix(g; dir = :out) == adj_mat
+        @test adjacency_matrix(g; dir = :in) == adj_mat
     end
 
     if TEST_GPU
