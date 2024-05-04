@@ -20,9 +20,9 @@ julia> ds = DataStore(3, (x = rand(2, 3), y = rand(30)))
 ERROR: AssertionError: DataStore: data[y] has 30 observations, but n = 3
 Stacktrace:
  [1] DataStore(n::Int64, data::Dict{Symbol, Any})
-   @ GraphNeuralNetworks.GNNGraphs ~/.julia/dev/GraphNeuralNetworks/src/GNNGraphs/datastore.jl:54
+   @ GNNlib.GNNGraphs ~/.julia/dev/GNNlib/src/GNNGraphs/datastore.jl:54
  [2] DataStore(n::Int64, data::NamedTuple{(:x, :y), Tuple{Matrix{Float64}, Vector{Float64}}})
-   @ GraphNeuralNetworks.GNNGraphs ~/.julia/dev/GraphNeuralNetworks/src/GNNGraphs/datastore.jl:73
+   @ GNNlib.GNNGraphs ~/.julia/dev/GNNlib/src/GNNGraphs/datastore.jl:73
  [3] top-level scope
    @ REPL[13]:1
 

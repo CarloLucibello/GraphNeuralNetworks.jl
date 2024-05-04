@@ -64,7 +64,14 @@ function gcn_conv(l, g::AbstractGNNGraph, x,
     end
     return l.σ.(x .+ l.bias)
 end
-nv
+
+function gcn_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
+                edge_weight::AbstractVector, norm_fn::Function)
+    
+    g = GNNGraph(edge_index(g)...; g.num_nodes)  # convert to COO
+    return gcn_conv(l, g, x, edge_weight, norm_fn)
+end
+
 
 function  cheb_conv(c, g::GNNGraph, X::AbstractMatrix{T}) where {T}
     check_num_nodes(g, X)
@@ -115,7 +122,8 @@ function gat_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} =
     end
 
     # a hand-written message passing
-    m = apply_edges((xi, xj, e) -> gat_message(l, xi, xj, e), g, Wxi, Wxj, e)
+    message = Base.Fix1(gat_message, l)
+    m = apply_edges(message, g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
     α = dropout(α, l.dropout)
     β = α .* m.Wxj
@@ -163,7 +171,8 @@ function gatv2_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix}
     Wxi = reshape(l.dense_i(xi), out, heads, :)                                  # out × heads × nnodes
     Wxj = reshape(l.dense_j(xj), out, heads, :)                                  # out × heads × nnodes
 
-    m = apply_edges((xi, xj, e) -> gatv2_message(l, xi, xj, e), g, Wxi, Wxj, e)
+    message = Base.Fix1(gatv2_message, l)
+    m = apply_edges(message, g, Wxi, Wxj, e)
     α = softmax_edge_neighbors(g, m.logα)
     α = dropout(α, l.dropout)
     β = α .* m.Wxj
@@ -206,18 +215,19 @@ function gated_graph_conv(g::GNNGraph, H::AbstractMatrix{S}) where {S <: Real}
         M = propagate(copy_xj, g, l.aggr; xj = M)
         H, _ = l.gru(H, M)
     end
-    H
+    return H
 end
 
 function edge_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
 
-    message(l, xi, xj, e) = l.nn(vcat(xi, xj .- xi))
-
-    x = propagate(message, g, l.aggr, l, xi = xi, xj = xj, e = nothing)
+    message = Base.Fix1(edge_conv_message, l)
+    x = propagate(message, g, l.aggr, xi = xi, xj = xj, e = nothing)
     return x
 end
+
+edge_conv_message(l, xi, xj, e) = l.nn(vcat(xi, xj .- xi))
 
 
 function gin_conv(l, g::AbstractGNNGraph, x)
@@ -226,17 +236,17 @@ function gin_conv(l, g::AbstractGNNGraph, x)
  
     m = propagate(copy_xj, g, l.aggr, xj = xj)
     
-    l.nn((1 .+ ofeltype(xi, l.ϵ)) .* xi .+ m)
+    return l.nn((1 .+ ofeltype(xi, l.ϵ)) .* xi .+ m)
 end
 
 function nn_conv(l, g::GNNGraph, x::AbstractMatrix, e)
     check_num_nodes(g, x)
-
-    m = propagate(nn_conv_message, g, l.aggr, l, xj = x, e = e)
+    message = Base.Fix1(nn_conv_message, l)
+    m = propagate(message, g, l.aggr, xj = x, e = e)
     return l.σ.(l.weight * x .+ m .+ l.bias)
 end
 
-function nn_conv_message(l::NNConv, xi, xj, e)
+function nn_conv_message(l, xi, xj, e)
     nin, nedges = size(xj)
     W = reshape(l.nn(e), (:, nin, nedges))
     xj = reshape(xj, (nin, 1, nedges)) # needed by batched_mul
@@ -275,7 +285,8 @@ function cgc_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} =
         check_num_edges(g, e)
     end
 
-    m = propagate(message, g, +, l, xi = xi, xj = xj, e = e)
+    message = Base.Fix1(cgc_message, l)
+    m = propagate(message, g, +, xi = xi, xj = xj, e = e)
 
     if l.residual
         if size(x, 1) == size(m, 1)
@@ -297,66 +308,8 @@ function cgc_message(l, xi, xj, e)
     return l.dense_f(z) .* l.dense_s(z)
 end
 
-# TODO FROM HERE
 
-@doc raw"""
-    AGNNConv(; init_beta=1.0f0, trainable=true, add_self_loops=true)
-
-Attention-based Graph Neural Network layer from paper [Attention-based
-Graph Neural Network for Semi-Supervised Learning](https://arxiv.org/abs/1803.03735).
-
-The forward pass is given by
-```math
-\mathbf{x}_i' = \sum_{j \in N(i)} \alpha_{ij} \mathbf{x}_j
-```
-where the attention coefficients ``\alpha_{ij}`` are given by
-```math
-\alpha_{ij} =\frac{e^{\beta \cos(\mathbf{x}_i, \mathbf{x}_j)}}
-                  {\sum_{j'}e^{\beta \cos(\mathbf{x}_i, \mathbf{x}_{j'})}}
-```
-with the cosine distance defined by
-```math 
-\cos(\mathbf{x}_i, \mathbf{x}_j) = 
-  \frac{\mathbf{x}_i \cdot \mathbf{x}_j}{\lVert\mathbf{x}_i\rVert \lVert\mathbf{x}_j\rVert}
-```
-and ``\beta`` a trainable parameter if `trainable=true`.
-
-# Arguments
-
-- `init_beta`: The initial value of ``\beta``. Default 1.0f0.
-- `trainable`: If true, ``\beta`` is trainable. Default `true`.
-- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
-
-# Examples:
-
-```julia
-# create data
-s = [1,1,2,3]
-t = [2,3,1,1]
-g = GNNGraph(s, t)
-
-# create layer
-l = AGNNConv(init_beta=2.0f0)
-
-# forward pass
-y = l(g, x)   
-```
-"""
-struct AGNNConv{A <: AbstractVector} <: GNNLayer
-    β::A
-    add_self_loops::Bool
-    trainable::Bool
-end
-
-@functor AGNNConv
-
-Flux.trainable(l::AGNNConv) = l.trainable ? (; l.β) : (;)
-
-function AGNNConv(; init_beta = 1.0f0, add_self_loops = true, trainable = true)
-    AGNNConv([init_beta], add_self_loops, trainable)
-end
-
-function (l::AGNNConv)(g::GNNGraph, x::AbstractMatrix)
+function agnn_conv(l, g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
     if l.add_self_loops
         g = add_self_loops(g)
@@ -373,64 +326,7 @@ function (l::AGNNConv)(g::GNNGraph, x::AbstractMatrix)
     return x
 end
 
-@doc raw"""
-    MEGNetConv(ϕe, ϕv; aggr=mean)
-    MEGNetConv(in => out; aggr=mean)
-
-Convolution from [Graph Networks as a Universal Machine Learning Framework for Molecules and Crystals](https://arxiv.org/pdf/1812.05055.pdf)
-paper. In the forward pass, takes as inputs node features `x` and edge features `e` and returns
-updated features `x'` and `e'` according to 
-
-```math
-\begin{aligned}
-\mathbf{e}_{i\to j}'  = \phi_e([\mathbf{x}_i;\,  \mathbf{x}_j;\,  \mathbf{e}_{i\to j}]),\\
-\mathbf{x}_{i}'  = \phi_v([\mathbf{x}_i;\, \square_{j\in \mathcal{N}(i)}\,\mathbf{e}_{j\to i}']).
-\end{aligned}
-```
-
-`aggr` defines the aggregation to be performed.
-
-If the neural networks `ϕe` and  `ϕv` are not provided, they will be constructed from
-the `in` and `out` arguments instead as multi-layer perceptron with one hidden layer and `relu` 
-activations.
-
-# Examples
-
-```julia
-g = rand_graph(10, 30)
-x = randn(Float32, 3, 10)
-e = randn(Float32, 3, 30)
-m = MEGNetConv(3 => 3)
-x′, e′ = m(g, x, e)
-```
-"""
-struct MEGNetConv{TE, TV, A} <: GNNLayer
-    ϕe::TE
-    ϕv::TV
-    aggr::A
-end
-
-@functor MEGNetConv
-
-MEGNetConv(ϕe, ϕv; aggr = mean) = MEGNetConv(ϕe, ϕv, aggr)
-
-function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
-    nin, nout = ch
-    ϕe = Chain(Dense(3nin, nout, relu),
-               Dense(nout, nout))
-
-    ϕv = Chain(Dense(nin + nout, nout, relu),
-               Dense(nout, nout))
-
-    MEGNetConv(ϕe, ϕv; aggr)
-end
-
-function (l::MEGNetConv)(g::GNNGraph)
-    x, e = l(g, node_features(g), edge_features(g))
-    g = GNNGraph(g, ndata = x, edata = e)
-end
-
-function (l::MEGNetConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
+function megnet_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     check_num_nodes(g, x)
 
     ē = apply_edges(g, xi = x, xj = x, e = e) do xi, xj, e
@@ -444,82 +340,7 @@ function (l::MEGNetConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     return x̄, ē
 end
 
-@doc raw"""
-    GMMConv((in, ein) => out, σ=identity; K=1, bias=true, init=glorot_uniform, residual=false)
-
-Graph mixture model convolution layer from the paper [Geometric deep learning on graphs and manifolds using mixture model CNNs](https://arxiv.org/abs/1611.08402)
-Performs the operation
-```math
-\mathbf{x}_i' = \mathbf{x}_i + \frac{1}{|N(i)|} \sum_{j\in N(i)}\frac{1}{K}\sum_{k=1}^K \mathbf{w}_k(\mathbf{e}_{j\to i}) \odot \Theta_k \mathbf{x}_j
-```
-where ``w^a_{k}(e^a)`` for feature `a` and kernel `k` is given by
-```math
-w^a_{k}(e^a) = \exp(-\frac{1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_k))
-```
-``\Theta_k, \mu^a_k, (\Sigma^{-1})^a_k`` are learnable parameters.
-
-The input to the layer is a node feature array `x` of size `(num_features, num_nodes)` and
-edge pseudo-coordinate array `e` of size `(num_features, num_edges)`
-The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
-as the input size.
-
-# Arguments 
-
-- `in`: Number of input node features.
-- `ein`: Number of input edge features.
-- `out`: Number of output features.
-- `σ`: Activation function. Default `identity`.
-- `K`: Number of kernels. Default `1`.
-- `bias`: Add learnable bias. Default `true`.
-- `init`: Weights' initializer. Default `glorot_uniform`.
-- `residual`: Residual conncetion. Default `false`.
-
-# Examples
-
-```julia
-# create data
-s = [1,1,2,3]
-t = [2,3,1,1]
-g = GNNGraph(s,t)
-nin, ein, out, K = 4, 10, 7, 8 
-x = randn(Float32, nin, g.num_nodes)
-e = randn(Float32, ein, g.num_edges)
-
-# create layer
-l = GMMConv((nin, ein) => out, K=K)
-
-# forward pass
-l(g, x, e)
-```
-"""
-struct GMMConv{A <: AbstractMatrix, B, F} <: GNNLayer
-    mu::A
-    sigma_inv::A
-    bias::B
-    σ::F
-    ch::Pair{NTuple{2, Int}, Int}
-    K::Int
-    dense_x::Dense
-    residual::Bool
-end
-
-@functor GMMConv
-
-function GMMConv(ch::Pair{NTuple{2, Int}, Int},
-                 σ = identity;
-                 K::Int = 1,
-                 bias::Bool = true,
-                 init = Flux.glorot_uniform,
-                 residual = false)
-    (nin, ein), out = ch
-    mu = init(ein, K)
-    sigma_inv = init(ein, K)
-    b = bias ? Flux.create_bias(mu, true, out) : false
-    dense_x = Dense(nin, out * K, bias = false)
-    GMMConv(mu, sigma_inv, b, σ, ch, K, dense_x, residual)
-end
-
-function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
+function gmm_conv(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     (nin, ein), out = l.ch #Notational Simplicity
 
     @assert (ein == size(e)[1]&&g.num_edges == size(e)[2]) "Pseudo-cordinate dimension is not equal to (ein,num_edge)"
@@ -550,87 +371,9 @@ function (l::GMMConv)(g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     return m
 end
 
-(l::GMMConv)(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
-
-function Base.show(io::IO, l::GMMConv)
-    (nin, ein), out = l.ch
-    print(io, "GMMConv((", nin, ",", ein, ")=>", out)
-    l.σ == identity || print(io, ", σ=", l.dense_s.σ)
-    print(io, ", K=", l.K)
-    l.residual == true || print(io, ", residual=", l.residual)
-    print(io, ")")
-end
-
-@doc raw"""
-    SGConv(int => out, k=1; [bias, init, add_self_loops, use_edge_weight])
-                                
-SGC layer from [Simplifying Graph Convolutional Networks](https://arxiv.org/pdf/1902.07153.pdf)
-Performs operation
-```math
-H^{K} = (\tilde{D}^{-1/2} \tilde{A} \tilde{D}^{-1/2})^K X \Theta
-```
-where ``\tilde{A}`` is ``A + I``.
-
-# Arguments
-
-- `in`: Number of input features.
-- `out`: Number of output features.
-- `k` : Number of hops k. Default `1`.
-- `bias`: Add learnable bias. Default `true`.
-- `init`: Weights' initializer. Default `glorot_uniform`.
-- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
-- `use_edge_weight`: If `true`, consider the edge weights in the input graph (if available).
-                     If `add_self_loops=true` the new weights will be set to 1. Default `false`.
-
-# Examples
-
-```julia
-# create data
-s = [1,1,2,3]
-t = [2,3,1,1]
-g = GNNGraph(s, t)
-x = randn(Float32, 3, g.num_nodes)
-
-# create layer
-l = SGConv(3 => 5; add_self_loops = true) 
-
-# forward pass
-y = l(g, x)       # size:  5 × num_nodes
-
-# convolution with edge weights
-w = [1.1, 0.1, 2.3, 0.5]
-y = l(g, x, w)
-
-# Edge weights can also be embedded in the graph.
-g = GNNGraph(s, t, w)
-l = SGConv(3 => 5, add_self_loops = true, use_edge_weight=true) 
-y = l(g, x) # same as l(g, x, w) 
-```
-"""
-struct SGConv{A <: AbstractMatrix, B} <: GNNLayer
-    weight::A
-    bias::B
-    k::Int
-    add_self_loops::Bool
-    use_edge_weight::Bool
-end
-
-@functor SGConv
-
-function SGConv(ch::Pair{Int, Int}, k = 1;
-                init = glorot_uniform,
-                bias::Bool = true,
-                add_self_loops = true,
-                use_edge_weight = false)
-    in, out = ch
-    W = init(out, in)
-    b = bias ? Flux.create_bias(W, true, out) : false
-    SGConv(W, b, k, add_self_loops, use_edge_weight)
-end
-
 # this layer is not stable enough to be supported by GNNHeteroGraph type
 # due to it's looping mechanism
-function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T},
+function sgc_conv(l, g::GNNGraph, x::AbstractMatrix{T},
                      edge_weight::EW = nothing) where
     {T, EW <: Union{Nothing, AbstractVector}}
     @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
@@ -673,112 +416,13 @@ function (l::SGConv)(g::GNNGraph, x::AbstractMatrix{T},
     return (x .+ l.bias)
 end
 
-function (l::SGConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
+function sgc_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
                      edge_weight::AbstractVector)
     g = GNNGraph(edge_index(g)...; g.num_nodes)
-    return l(g, x, edge_weight)
+    return sgc_conv(l, g, x, edge_weight)
 end
 
-function Base.show(io::IO, l::SGConv)
-    out, in = size(l.weight)
-    print(io, "SGConv($in => $out")
-    l.k == 1 || print(io, ", ", l.k)
-    print(io, ")")
-end
-
-@doc raw"""
-    EGNNConv((in, ein) => out; hidden_size=2in, residual=false)
-    EGNNConv(in => out; hidden_size=2in, residual=false)
-
-Equivariant Graph Convolutional Layer from [E(n) Equivariant Graph
-Neural Networks](https://arxiv.org/abs/2102.09844).
-
-The layer performs the following operation:
-
-```math
-\begin{aligned}
-\mathbf{m}_{j\to i} &=\phi_e(\mathbf{h}_i, \mathbf{h}_j, \lVert\mathbf{x}_i-\mathbf{x}_j\rVert^2, \mathbf{e}_{j\to i}),\\
-\mathbf{x}_i' &= \mathbf{x}_i + C_i\sum_{j\in\mathcal{N}(i)}(\mathbf{x}_i-\mathbf{x}_j)\phi_x(\mathbf{m}_{j\to i}),\\
-\mathbf{m}_i &= C_i\sum_{j\in\mathcal{N}(i)} \mathbf{m}_{j\to i},\\
-\mathbf{h}_i' &= \mathbf{h}_i + \phi_h(\mathbf{h}_i, \mathbf{m}_i)
-\end{aligned}
-```
-where ``\mathbf{h}_i``, ``\mathbf{x}_i``, ``\mathbf{e}_{j\to i}`` are invariant node features, equivariant node
-features, and edge features respectively. ``\phi_e``, ``\phi_h``, and
-``\phi_x`` are two-layer MLPs. `C` is a constant for normalization,
-computed as ``1/|\mathcal{N}(i)|``.
-
-
-# Constructor Arguments
-
-- `in`: Number of input features for `h`.
-- `out`: Number of output features for `h`.
-- `ein`: Number of input edge features.
-- `hidden_size`: Hidden representation size.
-- `residual`: If `true`, add a residual connection. Only possible if `in == out`. Default `false`.
-
-# Forward Pass 
-
-    l(g, x, h, e=nothing)
-                     
-## Forward Pass Arguments:
-
-- `g` : The graph.
-- `x` : Matrix of equivariant node coordinates.
-- `h` : Matrix of invariant node features.
-- `e` : Matrix of invariant edge features. Default `nothing`.
-
-Returns updated `h` and `x`.
-
-# Examples
-
-```julia
-g = rand_graph(10, 10)
-h = randn(Float32, 5, g.num_nodes)
-x = randn(Float32, 3, g.num_nodes)
-egnn = EGNNConv(5 => 6, 10)
-hnew, xnew = egnn(g, h, x)
-```
-"""
-struct EGNNConv{TE, TX, TH, NF} <: GNNLayer
-    ϕe::TE
-    ϕx::TX
-    ϕh::TH
-    num_features::NF
-    residual::Bool
-end
-
-@functor EGNNConv
-
-function EGNNConv(ch::Pair{Int, Int}, hidden_size = 2 * ch[1]; residual = false)
-    EGNNConv((ch[1], 0) => ch[2]; hidden_size, residual)
-end
-
-#Follows reference implementation at https://github.com/vgsatorras/egnn/blob/main/models/egnn_clean/egnn_clean.py
-function EGNNConv(ch::Pair{NTuple{2, Int}, Int}; hidden_size::Int = 2 * ch[1][1],
-                  residual = false)
-    (in_size, edge_feat_size), out_size = ch
-    act_fn = swish
-
-    # +1 for the radial feature: ||x_i - x_j||^2
-    ϕe = Chain(Dense(in_size * 2 + edge_feat_size + 1 => hidden_size, act_fn),
-               Dense(hidden_size => hidden_size, act_fn))
-
-    ϕh = Chain(Dense(in_size + hidden_size, hidden_size, swish),
-               Dense(hidden_size, out_size))
-
-    ϕx = Chain(Dense(hidden_size, hidden_size, swish),
-               Dense(hidden_size, 1, bias = false))
-
-    num_features = (in = in_size, edge = edge_feat_size, out = out_size,
-                    hidden = hidden_size)
-    if residual
-        @assert in_size==out_size "Residual connection only possible if in_size == out_size"
-    end
-    return EGNNConv(ϕe, ϕx, ϕh, num_features, residual)
-end
-
-function (l::EGNNConv)(g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e = nothing)
+function egnn_conv(g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e = nothing)
     if l.num_features.edge > 0
         @assert e!==nothing "Edge features must be provided."
     end
@@ -788,7 +432,8 @@ function (l::EGNNConv)(g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e = no
     sqnorm_xdiff = sum(x_diff .^ 2, dims = 1)
     x_diff = x_diff ./ (sqrt.(sqnorm_xdiff) .+ 1.0f-6)
 
-    msg = apply_edges(message, g, l,
+    message = Base.Fix1(egnn_message, l)
+    msg = apply_edges(message, g,
                       xi = (; h), xj = (; h), e = (; e, x_diff, sqnorm_xdiff))
     h_aggr = aggregate_neighbors(g, +, msg.h)
     x_aggr = aggregate_neighbors(g, mean, msg.x)
@@ -803,7 +448,7 @@ function (l::EGNNConv)(g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e = no
     return h, x
 end
 
-function message(l::EGNNConv, xi, xj, e)
+function egnn_message(l, xi, xj, e)
     if l.num_features.edge > 0
         f = vcat(xi.h, xj.h, e.sqnorm_xdiff, e.e)
     else
@@ -815,157 +460,7 @@ function message(l::EGNNConv, xi, xj, e)
     return (; x = msg_x, h = msg_h)
 end
 
-function Base.show(io::IO, l::EGNNConv)
-    ne = l.num_features.edge
-    nin = l.num_features.in
-    nout = l.num_features.out
-    nh = l.num_features.hidden
-    print(io, "EGNNConv(($nin, $ne) => $nout; hidden_size=$nh")
-    if l.residual
-        print(io, ", residual=true")
-    end
-    print(io, ")")
-end
-
-@doc raw"""
-    TransformerConv((in, ein) => out; [heads, concat, init, add_self_loops, bias_qkv,
-        bias_root, root_weight, gating, skip_connection, batch_norm, ff_channels]))
-
-The transformer-like multi head attention convolutional operator from the 
-[Masked Label Prediction: Unified Message Passing Model for Semi-Supervised 
-Classification](https://arxiv.org/abs/2009.03509) paper, which also considers 
-edge features.
-It further contains options to also be configured as the transformer-like convolutional operator from the 
-[Attention, Learn to Solve Routing Problems!](https://arxiv.org/abs/1706.03762) paper,
-including a successive feed-forward network as well as skip layers and batch normalization.
-
-The layer's basic forward pass is given by
-```math
-x_i' = W_1x_i + \sum_{j\in N(i)} \alpha_{ij} (W_2 x_j + W_6e_{ij})
-```
-where the attention scores are
-```math
-\alpha_{ij} = \mathrm{softmax}\left(\frac{(W_3x_i)^T(W_4x_j+
-W_6e_{ij})}{\sqrt{d}}\right).
-```
-
-Optionally, a combination of the aggregated value with transformed root node features 
-by a gating mechanism via
-```math
-x'_i = \beta_i W_1 x_i + (1 - \beta_i) \underbrace{\left(\sum_{j \in \mathcal{N}(i)}
-\alpha_{i,j} W_2 x_j \right)}_{=m_i}
-```
-with
-```math
-\beta_i = \textrm{sigmoid}(W_5^{\top} [ W_1 x_i, m_i, W_1 x_i - m_i ]).
-```
-can be performed.
-
-# Arguments 
-
-- `in`: Dimension of input features, which also corresponds to the dimension of 
-    the output features.
-- `ein`: Dimension of the edge features; if 0, no edge features will be used.
-- `out`: Dimension of the output.
-- `heads`: Number of heads in output. Default `1`.
-- `concat`: Concatenate layer output or not. If not, layer output is averaged
-    over the heads. Default `true`.
-- `init`: Weight matrices' initializing function. Default `glorot_uniform`.
-- `add_self_loops`: Add self loops to the input graph. Default `false`.
-- `bias_qkv`: If set, bias is used in the key, query and value transformations for nodes.
-    Default `true`.
-- `bias_root`: If set, the layer will also learn an additive bias for the root when root 
-    weight is used. Default `true`.
-- `root_weight`: If set, the layer will add the transformed root node features
-    to the output. Default `true`.
-- `gating`: If set, will combine aggregation and transformed root node features by a
-    gating mechanism. Default `false`.
-- `skip_connection`: If set, a skip connection will be made from the input and 
-    added to the output. Default `false`.
-- `batch_norm`: If set, a batch normalization will be applied to the output. Default `false`.
-- `ff_channels`: If positive, a feed-forward NN is appended, with the first having the given
-    number of hidden nodes; this NN also gets a skip connection and batch normalization 
-    if the respective parameters are set. Default: `0`.
-
-# Examples
-
-```julia
-N, in_channel, out_channel = 4, 3, 5
-ein, heads = 2, 3
-g = GNNGraph([1,1,2,4], [2,3,1,1])
-l = TransformerConv((in_channel, ein) => in_channel; heads, gating = true, bias_qkv = true)
-x = rand(Float32, in_channel, N)
-e = rand(Float32, ein, g.num_edges)
-l(g, x, e)
-```        
-"""
-struct TransformerConv{TW1, TW2, TW3, TW4, TW5, TW6, TFF, TBN1, TBN2} <: GNNLayer
-    W1::TW1
-    W2::TW2
-    W3::TW3
-    W4::TW4
-    W5::TW5
-    W6::TW6
-    FF::TFF
-    BN1::TBN1
-    BN2::TBN2
-    channels::Pair{NTuple{2, Int}, Int}
-    heads::Int
-    add_self_loops::Bool
-    concat::Bool
-    skip_connection::Bool
-    sqrt_out::Float32
-end
-
-@functor TransformerConv
-
-function Flux.trainable(l::TransformerConv)
-    (W1 = l.W1, W2 = l.W2, W3 = l.W3, W4 = l.W4, W5 = l.W5, W6 = l.W6, FF = l.FF, BN1 = l.BN1, BN2 = l.BN2)
-end
-
-function TransformerConv(ch::Pair{Int, Int}, args...; kws...)
-    TransformerConv((ch[1], 0) => ch[2], args...; kws...)
-end
-
-function TransformerConv(ch::Pair{NTuple{2, Int}, Int};
-                         heads::Int = 1,
-                         concat::Bool = true,
-                         init = glorot_uniform,
-                         add_self_loops::Bool = false,
-                         bias_qkv = true,
-                         bias_root::Bool = true,
-                         root_weight::Bool = true,
-                         gating::Bool = false,
-                         skip_connection::Bool = false,
-                         batch_norm::Bool = false,
-                         ff_channels::Int = 0)
-    (in, ein), out = ch
-
-    if add_self_loops
-        @assert iszero(ein) "Using edge features and setting add_self_loops=true at the same time is not yet supported."
-    end
-
-    W1 = root_weight ?
-         Dense(in, out * (concat ? heads : 1); bias = bias_root, init = init) : nothing
-    W2 = Dense(in => out * heads; bias = bias_qkv, init = init)
-    W3 = Dense(in => out * heads; bias = bias_qkv, init = init)
-    W4 = Dense(in => out * heads; bias = bias_qkv, init = init)
-    out_mha = out * (concat ? heads : 1)
-    W5 = gating ? Dense(3 * out_mha => 1, sigmoid; bias = false, init = init) : nothing
-    W6 = ein > 0 ? Dense(ein => out * heads; bias = bias_qkv, init = init) : nothing
-    FF = ff_channels > 0 ?
-         Chain(Dense(out_mha => ff_channels, relu),
-               Dense(ff_channels => out_mha)) : nothing
-    BN1 = batch_norm ? BatchNorm(out_mha) : nothing
-    BN2 = (batch_norm && ff_channels > 0) ? BatchNorm(out_mha) : nothing
-
-    return TransformerConv(W1, W2, W3, W4, W5, W6, FF, BN1, BN2,
-                           ch, heads, add_self_loops, concat, skip_connection,
-                           Float32(√out))
-end
-
-function (l::TransformerConv)(g::GNNGraph, x::AbstractMatrix,
-                              e::Union{AbstractMatrix, Nothing} = nothing)
+function transformer_conv(l, g::GNNGraph, x::AbstractMatrix,  e::Union{AbstractMatrix, Nothing} = nothing)
     check_num_nodes(g, x)
 
     if l.add_self_loops
@@ -980,9 +475,11 @@ function (l::TransformerConv)(g::GNNGraph, x::AbstractMatrix,
     W4x = reshape(l.W4(x), out, heads, :)
     W6e = !isnothing(l.W6) ? reshape(l.W6(e), out, heads, :) : nothing
 
-    m = apply_edges(message_uij, g, l; xi = (; W3x), xj = (; W4x), e = (; W6e))
+    message_uij = Base.Fix1(transformer_message_uij, l)
+    m = apply_edges(message_uij, g; xi = (; W3x), xj = (; W4x), e = (; W6e))
     α = softmax_edge_neighbors(g, m)
-    α_val = propagate(message_main, g, +, l; xi = (; W3x), xj = (; W2x), e = (; W6e, α))
+    α_val = propagate(transformer_message_main, g, +; 
+                     xi = (; W3x), xj = (; W2x), e = (; W6e, α))
 
     h = α_val
     if l.concat
@@ -1023,11 +520,8 @@ function (l::TransformerConv)(g::GNNGraph, x::AbstractMatrix,
     return h
 end
 
-function (l::TransformerConv)(g::GNNGraph)
-    GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
-end
-
-function message_uij(l::TransformerConv, xi, xj, e)
+# TODO remove l dependence
+function transformer_message_uij(l, xi, xj, e)
     key = xj.W4x
     if !isnothing(e.W6e)
         key += e.W6e
@@ -1036,15 +530,10 @@ function message_uij(l::TransformerConv, xi, xj, e)
     return uij
 end
 
-function message_main(l::TransformerConv, xi, xj, e)
+function transformer_message_main(xi, xj, e)
     val = xj.W2x
     if !isnothing(e.W6e)
         val += e.W6e
     end
     return e.α .* val
-end
-
-function Base.show(io::IO, l::TransformerConv)
-    (in, ein), out = l.channels
-    print(io, "TransformerConv(($in, $ein) => $out, heads=$(l.heads))")
 end

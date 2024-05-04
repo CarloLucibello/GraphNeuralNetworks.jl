@@ -83,18 +83,6 @@ function propagate(f, g::AbstractGNNGraph, aggr, xi, xj, e = nothing)
     return m̄
 end
 
-## convenience methods for working around performance issues
-# https://github.com/JuliaLang/julia/issues/15276
-## and zygote issues
-# https://github.com/FluxML/Zygote.jl/issues/1317
-function propagate(f, g::AbstractGNNGraph, aggr, l::GNNLayer; xi = nothing, xj = nothing,
-                   e = nothing)
-    propagate((xi, xj, e) -> f(l, xi, xj, e), g, aggr, xi, xj, e)
-end
-function propagate(f, g::AbstractGNNGraph, aggr, l::GNNLayer, xi, xj, e = nothing)
-    propagate((xi, xj, e) -> f(l, xi, xj, e), g, aggr, xi, xj, e)
-end
-
 ## APPLY EDGES
 
 """
@@ -147,19 +135,6 @@ function apply_edges(f, g::AbstractGNNGraph, xi, xj, e = nothing)
     xj = GNNGraphs._gather(xj, s)
     m = f(xi, xj, e)
     return m
-end
-
-
-## convenience methods for working around performance issues
-# https://github.com/JuliaLang/julia/issues/15276
-## and zygote issues
-# https://github.com/FluxML/Zygote.jl/issues/1317
-function apply_edges(f, g::AbstractGNNGraph, l::GNNLayer; xi = nothing, xj = nothing, e = nothing)
-    apply_edges((xi, xj, e) -> f(l, xi, xj, e), g, xi, xj, e)
-end
-
-function apply_edges(f, g::AbstractGNNGraph, l::GNNLayer, xi, xj, e = nothing)
-    apply_edges((xi, xj, e) -> f(l, xi, xj, e), g, xi, xj, e)
 end
 
 ##  AGGREGATE NEIGHBORS

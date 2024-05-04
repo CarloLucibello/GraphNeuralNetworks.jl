@@ -1,4 +1,4 @@
-module GraphNeuralNetworks
+module GNNlib
 
 using Statistics: mean
 using LinearAlgebra, Random
@@ -9,16 +9,20 @@ using NNlib
 using NNlib: scatter, gather
 using ChainRulesCore
 using SparseArrays, Graphs # not needed but if removed Documenter will complain
+using DataStructures: nlargest
+using Reexport: @reexport
 
 include("GNNGraphs/GNNGraphs.jl")
 
-using .GNNGraphs
+@reexport using .GNNGraphs
 
 using .GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
                   check_num_nodes, check_num_edges,
                   EType, NType # for heteroconvs
 
 export
+
+
 # utils
       reduce_nodes,
       reduce_edges,
@@ -67,14 +71,14 @@ export
 #       HeteroGraphConv,
 
 # layers/temporalconv
-      TGCN,
-      A3TGCN,
+      # TGCN,
+      a3tgcn_conv,
 
 # layers/pool
-      GlobalPool,
-      GlobalAttentionPool,
-      Set2Set,
-      TopKPool,
+      global_pool,
+      global_attention_pool,
+      set2set_pool,
+      topk_pool,
       topk_index,
 
 # mldatasets
@@ -83,7 +87,7 @@ export
 include("utils.jl")
 include("layers/basic.jl")
 include("layers/conv.jl")
-include("layers/heteroconv.jl")
+# include("layers/heteroconv.jl") # no functional part at the moment
 include("layers/temporalconv.jl")
 include("layers/pool.jl")
 include("msgpass.jl")

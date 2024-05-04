@@ -2,10 +2,10 @@ module GNNlibCUDAExt
 
 using CUDA
 using Random, Statistics, LinearAlgebra
-using GraphNeuralNetworks
-using GraphNeuralNetworks.GNNGraphs
-using GraphNeuralNetworks.GNNGraphs: COO_T, ADJMAT_T, SPARSE_T 
-import GraphNeuralNetworks: propagate
+using GNNlib
+using GNNlib.GNNGraphs
+using GNNlib.GNNGraphs: COO_T, ADJMAT_T, SPARSE_T 
+import GNNlib: propagate
 
 const CUMAT_T = Union{CUDA.AnyCuMatrix, CUDA.CUSPARSE.CuSparseMatrix}
 

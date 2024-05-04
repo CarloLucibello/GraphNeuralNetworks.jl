@@ -1,10 +1,10 @@
-module GraphNeuralNetworksSimpleWeightedGraphsExt
+module GNNlibSimpleWeightedGraphsExt
 
-using GraphNeuralNetworks
+using GNNlib
 using Graphs
 using SimpleWeightedGraphs
 
-function GraphNeuralNetworks.GNNGraph(g::T; kws...) where 
+function GNNlib.GNNGraph(g::T; kws...) where 
                  {T <: Union{SimpleWeightedGraph, SimpleWeightedDiGraph}}
    return GNNGraph(g.weights, kws...)
 end

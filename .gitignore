@@ -5,7 +5,8 @@
 *.swp
 *.swo
 Manifest.toml
-/docs/build/
+docs/build/
 .vscode
 LocalPreferences.toml
 .DS_Store
+test.jl

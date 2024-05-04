@@ -215,7 +215,4 @@ julia> dotdec(g, rand(2, 5))
 """
 struct DotDecoder <: GNNLayer end
 
-function (::DotDecoder)(g, x)
-    check_num_nodes(g, x)
-    return apply_edges(xi_dot_xj, g, xi = x, xj = x)
-end
+(::DotDecoder)(g, x) = GNNlib.dot_decoder(g, x)
