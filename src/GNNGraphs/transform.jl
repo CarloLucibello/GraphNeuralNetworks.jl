@@ -1100,33 +1100,24 @@ The function performs the following steps:
 """
 function ppr_diffusion(g::GNNGraph{<:COO_T}; alpha_f32::Float32=0.85f0)
     s, t = edge_index(g)
-    w = get_edge_weight(g)  
+    w = ones(Float32, g.num_edges)
 
     N = g.num_nodes
 
-    A = zeros(Float32, N, N)
-    
-    for (idx, src, dst) in zip(1:length(s), s, t)
-        A[dst, src] += w[idx]  
-    end
+    initial_A = sparse(t, s, w, N, N)
+    scaled_A = (alpha_f32 - 1) * initial_A
 
-    A .*= (alpha_f32 - 1)
+    I_sparse = sparse(Diagonal(ones(Float32, N)))
+    A_sparse = I_sparse + scaled_A
 
-    for i in 1:N
-        A[i, i] += 1
-    end
+    A_dense = Matrix(A_sparse)
 
-    # α * (I + (α - 1) * A)^-1
-    PPR = alpha_f32 * inv(A)
-    println(PPR)
+    PPR = alpha_f32 * inv(A_dense)
 
-    new_w = Float32[]
-    for (src, dst) in zip(s, t)
-        push!(new_w, PPR[dst, src]) 
-    end
+    new_w = [PPR[dst, src] for (src, dst) in zip(s, t)]
 
     return GNNGraph((s, t, new_w),
-                    g.num_nodes, length(s), g.num_graphs,
-                    g.graph_indicator,
-                    g.ndata, g.edata, g.gdata)
+             g.num_nodes, length(s), g.num_graphs,
+             g.graph_indicator,
+             g.ndata, g.edata, g.gdata)
 end
