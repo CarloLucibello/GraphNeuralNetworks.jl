@@ -187,23 +187,23 @@ function Base.show(io::IO, a3tgcn::A3TGCN)
     print(io, "A3TGCN($(a3tgcn.in) => $(a3tgcn.out))")
 end
 
-struct GConvLSTMCell{W <: AbstractArray{<:Number, 2}, B} <: GNNLayer
+struct GConvLSTMCell <: GNNLayer
     conv_x_i::ChebConv
     conv_h_i::ChebConv
-    w_i::W
-    b_i::B
+    w_i
+    b_i
     conv_x_f::ChebConv
     conv_h_f::ChebConv
-    w_f::W
-    b_f::B
+    w_f
+    b_f
     conv_x_c::ChebConv
     conv_h_c::ChebConv
-    w_c::W
-    b_c::B
+    w_c
+    b_c
     conv_x_o::ChebConv
     conv_h_o::ChebConv
-    w_o::W
-    b_o::B
+    w_o
+    b_o
     k::Int
     state0
     in::Int
@@ -265,7 +265,7 @@ function Base.show(io::IO, gclstm::GConvLSTMCell)
     print(io, "GConvLSTMCell($(gclstm.in) => $(gclstm.out))")
 end
 
-GConvLSTM(ch,k,n; kwargs...) = Flux.Recur(GConvLSTMCell(ch,k,n; kwargs...))
+GConvLSTM(ch, k, n; kwargs...) = Flux.Recur(GConvLSTMCell(ch, k, n; kwargs...))
 Flux.Recur(tgcn::GConvLSTMCell) = Flux.Recur(tgcn, tgcn.state0)
 
 (l::Flux.Recur{GConvLSTMCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
