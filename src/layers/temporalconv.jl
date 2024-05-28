@@ -187,6 +187,80 @@ function Base.show(io::IO, a3tgcn::A3TGCN)
     print(io, "A3TGCN($(a3tgcn.in) => $(a3tgcn.out))")
 end
 
+struct GConvLSTMCell{W <: AbstractArray{<:Number, 2}, B} <: GNNLayer
+    conv_x_i::ChebConv
+    conv_h_i::ChebConv
+    w_i::W
+    b_i::B
+    conv_x_f::ChebConv
+    conv_h_f::ChebConv
+    w_f::W
+    b_f::B
+    conv_x_c::ChebConv
+    conv_h_c::ChebConv
+    w_c::W
+    b_c::B
+    conv_x_o::ChebConv
+    conv_h_o::ChebConv
+    w_o::W
+    b_o::B
+    k::Int
+    state0
+    in::Int
+    out::Int
+end
+
+Flux.@functor GConvLSTMCell
+
+function GConvLSTMCell(ch::Pair{Int, Int}, k::Int, n::Int;
+                        bias::Bool = true,
+                        init = Flux.glorot_uniform,
+                        init_state = Flux.zeros32)
+    in, out = ch
+    conv_x_i = ChebConv(in => out, k; bias, init)
+    conv_h_i = ChebConv(out => out, k; bias, init)
+    w_i = init(out, 1)
+    b_i = bias ? Flux.create_bias(w_i, true, out) : false
+    conv_x_f = ChebConv(in => out, k; bias, init)
+    conv_h_f = ChebConv(out => out, k; bias, init)
+    w_f = init(out, 1)
+    b_f = bias ? Flux.create_bias(w_f, true, out) : false
+    conv_x_c = ChebConv(in => out, k; bias, init)
+    conv_h_c = ChebConv(out => out, k; bias, init)
+    w_c = init(out, 1)
+    b_c = bias ? Flux.create_bias(w_c, true, out) : false
+    conv_x_o = ChebConv(in => out, k; bias, init)
+    conv_h_o = ChebConv(out => out, k; bias, init)
+    w_o = init(out, 1)
+    b_o = bias ? Flux.create_bias(w_o, true, out) : false
+    state0 = (init_state(out, n), init_state(out, n))
+    return GConvLSTMCell(conv_x_i, conv_h_i, w_i, b_i,
+                         conv_x_f, conv_h_f, w_f, b_f,
+                         conv_x_c, conv_h_c, w_c, b_c,
+                         conv_x_o, conv_h_o, w_o, b_o,
+                         k, state0, in, out)
+end
+
+function (gclstm::GConvLSTMCell)((h, c), g::GNNGraph, x)
+    i = gclstm.conv_x_i(g, x) .+ gclstm.conv_h_i(g, h) .+ gclstm.w_i.* c .+ gclstm.b_i 
+    i = Flux.sigmoid_fast(i)
+    f =  gclstm.conv_x_f(g, x) .+ gclstm.conv_h_f(g, h) .+ gclstm.w_f .* c .+ gclstm.b_f
+    f = Flux.sigmoid_fast(f)
+    c =  f .* c .+ i .* Flux.tanh_fast(gclstm.conv_x_c(g, x) .+ gclstm.conv_h_c(g, h) .+ gclstm.w_c .* c .+ gclstm.b_c)
+    o =  gclstm.conv_x_o(g, x) .+ gclstm.conv_h_o(g, h) .+ gclstm.w_o .* c .+ gclstm.b_o
+    o = Flux.sigmoid_fast(o)
+    h =  o .* Flux.tanh_fast(c)
+    return (h,c), h
+end
+
+GConvLSTM(ch,k,n; kwargs...) = Flux.Recur(GConvLSTMCell(ch,k,n; kwargs...))
+Flux.Recur(tgcn::GConvLSTMCell) = Flux.Recur(tgcn, tgcn.state0)
+
+(l::Flux.Recur{GConvLSTMCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
+_applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph, x) = l(g, x)
+_applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph) = l(g)
+
+
 function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
     return l.(tg.snapshots, x)
 end
