@@ -217,18 +217,22 @@ function GConvLSTMCell(ch::Pair{Int, Int}, k::Int, n::Int;
                         init = Flux.glorot_uniform,
                         init_state = Flux.zeros32)
     in, out = ch
+    # input gate
     conv_x_i = ChebConv(in => out, k; bias, init)
     conv_h_i = ChebConv(out => out, k; bias, init)
     w_i = init(out, 1)
     b_i = bias ? Flux.create_bias(w_i, true, out) : false
+    # forget gate
     conv_x_f = ChebConv(in => out, k; bias, init)
     conv_h_f = ChebConv(out => out, k; bias, init)
     w_f = init(out, 1)
     b_f = bias ? Flux.create_bias(w_f, true, out) : false
+    # cell state
     conv_x_c = ChebConv(in => out, k; bias, init)
     conv_h_c = ChebConv(out => out, k; bias, init)
     w_c = init(out, 1)
     b_c = bias ? Flux.create_bias(w_c, true, out) : false
+    # output gate
     conv_x_o = ChebConv(in => out, k; bias, init)
     conv_h_o = ChebConv(out => out, k; bias, init)
     w_o = init(out, 1)
@@ -242,15 +246,23 @@ function GConvLSTMCell(ch::Pair{Int, Int}, k::Int, n::Int;
 end
 
 function (gclstm::GConvLSTMCell)((h, c), g::GNNGraph, x)
-    i = gclstm.conv_x_i(g, x) .+ gclstm.conv_h_i(g, h) .+ gclstm.w_i.* c .+ gclstm.b_i 
+    # input gate
+    i = gclstm.conv_x_i(g, x) .+ gclstm.conv_h_i(g, h) .+ gclstm.w_i .* c .+ gclstm.b_i 
     i = Flux.sigmoid_fast(i)
+    # forget gate
     f = gclstm.conv_x_f(g, x) .+ gclstm.conv_h_f(g, h) .+ gclstm.w_f .* c .+ gclstm.b_f
     f = Flux.sigmoid_fast(f)
+    # cell state
     c = f .* c .+ i .* Flux.tanh_fast(gclstm.conv_x_c(g, x) .+ gclstm.conv_h_c(g, h) .+ gclstm.w_c .* c .+ gclstm.b_c)
+    # output gate
     o = gclstm.conv_x_o(g, x) .+ gclstm.conv_h_o(g, h) .+ gclstm.w_o .* c .+ gclstm.b_o
     o = Flux.sigmoid_fast(o)
     h =  o .* Flux.tanh_fast(c)
     return (h,c), h
+end
+
+function Base.show(io::IO, gclstm::GConvLSTMCell)
+    print(io, "GConvLSTMCell($(gclstm.in) => $(gclstm.out))")
 end
 
 GConvLSTM(ch,k,n; kwargs...) = Flux.Recur(GConvLSTMCell(ch,k,n; kwargs...))
@@ -259,7 +271,6 @@ Flux.Recur(tgcn::GConvLSTMCell) = Flux.Recur(tgcn, tgcn.state0)
 (l::Flux.Recur{GConvLSTMCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
 _applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph, x) = l(g, x)
 _applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph) = l(g)
-
 
 function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
     return l.(tg.snapshots, x)
