@@ -265,6 +265,37 @@ function Base.show(io::IO, gclstm::GConvLSTMCell)
     print(io, "GConvLSTMCell($(gclstm.in) => $(gclstm.out))")
 end
 
+"""
+    GConvLSTM(in => out, k, n; [bias, init, init_state])
+
+Graph Convolutional Long Short-Term Memory (GConvLSTM) recurrent layer from the paper [Structured Sequence Modeling with Graph Convolutional Recurrent Networks](https://arxiv.org/pdf/1612.07659). 
+
+Performs a layer of ChebConv to model spatial dependencies, followed by a Long Short-Term Memory (LSTM) cell to model temporal dependencies.
+
+# Arguments
+
+- `in`: Number of input features.
+- `out`: Number of output features.
+- `k`: Chebyshev polynomial order.
+- `n`: Number of nodes in the graph.
+- `bias`: Add learnable bias. Default `true`.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `init_state`: Initial state of the hidden stat of the LSTM layer. Default `zeros32`.
+
+# Examples
+
+```jldoctest
+julia> g, x = rand_graph(5, 10), rand(Float32, 2, 5);
+
+julia> gclstm = GConvLSTM(2 => 5, 2, g.num_nodes);
+
+julia> y = gclstm(g, x);
+
+julia> size(y)
+(5, 5)
+```
+"""
+
 GConvLSTM(ch, k, n; kwargs...) = Flux.Recur(GConvLSTMCell(ch, k, n; kwargs...))
 Flux.Recur(tgcn::GConvLSTMCell) = Flux.Recur(tgcn, tgcn.state0)
 
