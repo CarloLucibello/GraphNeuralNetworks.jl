@@ -285,14 +285,21 @@ Performs a layer of ChebConv to model spatial dependencies, followed by a Long S
 # Examples
 
 ```jldoctest
-julia> g, x = rand_graph(5, 10), rand(Float32, 2, 5);
+julia> g1, x1 = rand_graph(5, 10), rand(Float32, 2, 5);
 
-julia> gclstm = GConvLSTM(2 => 5, 2, g.num_nodes);
+julia> gclstm = GConvLSTM(2 => 5, 2, g1.num_nodes);
 
-julia> y = gclstm(g, x);
+julia> y = gclstm(g1, x1);
 
 julia> size(y)
 (5, 5)
+
+julia> g2, x2 = rand_graph(5, 10), rand(Float32, 2, 5, 30);
+
+julia> z = gclstm(g2, x2);
+
+julia> size(z)
+(5, 5, 30)
 ```
 """
 
