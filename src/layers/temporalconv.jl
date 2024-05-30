@@ -255,14 +255,21 @@ Performs a layer of ChebConv to model spatial dependencies, followed by a Gated 
 # Examples
 
 ```jldoctest
-julia> g, x = rand_graph(5, 10), rand(Float32, 2, 5);
+julia> g1, x1 = rand_graph(5, 10), rand(Float32, 2, 5);
 
 julia> ggru = GConvGRU(2 => 5, 2, g.num_nodes);
 
-julia> y = ggru(g, x);
+julia> y = ggru(g1, x1);
 
 julia> size(y)
 (5, 5)
+
+julia> g2, x2 = rand_graph(5, 10), rand(Float32, 2, 5, 30);
+
+julia> z = ggru(g2, x2);
+
+julia> size(z)
+(5, 5, 30)
 ```
 """ 
 GConvGRU(ch, k, n; kwargs...) = Flux.Recur(GConvGRUCell(ch, k, n; kwargs...))
