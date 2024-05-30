@@ -73,6 +73,7 @@ export
 # layers/temporalconv
       TGCN,
       A3TGCN,
+      GConvGRU,
 
 # layers/pool
       GlobalPool,
