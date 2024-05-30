@@ -257,7 +257,7 @@ Performs a layer of ChebConv to model spatial dependencies, followed by a Gated 
 ```jldoctest
 julia> g1, x1 = rand_graph(5, 10), rand(Float32, 2, 5);
 
-julia> ggru = GConvGRU(2 => 5, 2, g.num_nodes);
+julia> ggru = GConvGRU(2 => 5, 2, g1.num_nodes);
 
 julia> y = ggru(g1, x1);
 
