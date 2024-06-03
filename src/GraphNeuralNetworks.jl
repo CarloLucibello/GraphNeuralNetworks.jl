@@ -74,6 +74,7 @@ export
       TGCN,
       A3TGCN,
       GConvLSTM,
+      GConvGRU,
 
 # layers/pool
       GlobalPool,

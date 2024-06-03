@@ -45,6 +45,17 @@ end
     gconvlstm = GConvLSTM(in_channel => out_channel, 2, g1.num_nodes)
     @test size(Flux.gradient(x -> sum(gconvlstm(g1, x)), g1.ndata.x)[1]) == (in_channel, N)
     model = GNNChain(GConvLSTM(in_channel => out_channel, 2, g1.num_nodes), Dense(out_channel, 1))
+    
+@testset "GConvGRUCell" begin
+    gconvlstm = GraphNeuralNetworks.GConvGRUCell(in_channel => out_channel, 2, g1.num_nodes)
+    h, h = gconvlstm(gconvlstm.state0, g1, g1.ndata.x)
+    @test size(h) == (out_channel, N)
+end
+
+@testset "GConvGRU" begin
+    gconvlstm = GConvGRU(in_channel => out_channel, 2, g1.num_nodes)
+    @test size(Flux.gradient(x -> sum(gconvlstm(g1, x)), g1.ndata.x)[1]) == (in_channel, N)
+    model = GNNChain(GConvGRU(in_channel => out_channel, 2, g1.num_nodes), Dense(out_channel, 1))
     @test size(model(g1, g1.ndata.x)) == (1, N)
     @test model(g1) isa GNNGraph            
 end
