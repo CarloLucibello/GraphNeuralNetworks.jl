@@ -1957,7 +1957,7 @@ struct DConv
     in::Int
     out::Int
     weights::AbstractArray
-    bias::Bool
+    bias::AbstractArray
     K::Int
 end
 
@@ -1967,7 +1967,7 @@ function DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
     in, out = ch
     weights = init(2, K, out, in)
     b = bias ? Flux.create_bias(weights, true, out) : false
-    DConv(in, out, weights, bias, K)
+    DConv(in, out, weights, b, K)
 end
 
 function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
@@ -1976,21 +1976,27 @@ function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
     deg_in = ones_like(A, (1, size(A, 2))) * A
     deg_out = Diagonal(deg_out)
     deg_in = Diagonal(vec(deg_in))
-  
-    h = view(l.weights,1, 1, :, :) * x .+ view(l.weights,2, 1, :, :) * x
+    
+    w1 = view(l.weights,1, 1, :, :)
+    w2 = view(l.weights,2, 1, :, :)
+    h = w1 * x .+ w2 * x
 
     T0 = x
 
     T1_in = T0 * deg_in * A'
     T1_out = T0 * deg_out' * A
 
-    h = h .+ view(l.weights,1, 2, :, :) * T1_in .+ view(l.weights,2, 2, :, :) * T1_out
+    w3 = view(l.weights,1, 2, :, :)
+    w4 = view(l.weights,2, 2, :, :)
+    h = h .+ w3 * T1_in .+ w4 * T1_out
     for i in 2:l.K
         T2_in = T1_in * deg_in * A' 
         T2_in = 2 * T2_in - T0
         T2_out = T1_out * deg_out * A' 
         T2_out = 2 * T2_out - T0
-        h = h .+ view(l.weights,1, i, :, :) * T2_in .+ view(l.weights,2, i, :, :) * T2_out
+        w5 = view(l.weights,1, i, :, :)
+        w6 = view(l.weights,2, i, :, :)
+        h = h .+ w5 * T2_in .+ w6 * T2_out
         T1_in = T2_in
         T1_out = T2_out
     end
