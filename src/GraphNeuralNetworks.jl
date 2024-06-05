@@ -66,6 +66,7 @@ export
       SAGEConv,
       SGConv,
       TransformerConv,
+      DConv,
 
 # layers/heteroconv
       HeteroGraphConv,
