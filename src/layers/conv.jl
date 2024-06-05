@@ -1953,7 +1953,7 @@ function Base.show(io::IO, l::TransformerConv)
     print(io, "TransformerConv(($in, $ein) => $out, heads=$(l.heads))")
 end
 
-struct DConv
+struct DConv <: GNNLayer
     in::Int
     out::Int
     weights::AbstractArray
@@ -1982,13 +1982,14 @@ function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
     h = w1 * x .+ w2 * x
 
     T0 = x
+    if l.K > 1
+        T1_in = T0 * deg_in * A'
+        T1_out = T0 * deg_out' * A
 
-    T1_in = T0 * deg_in * A'
-    T1_out = T0 * deg_out' * A
-
-    w3 = view(l.weights,1, 2, :, :)
-    w4 = view(l.weights,2, 2, :, :)
-    h = h .+ w3 * T1_in .+ w4 * T1_out
+        w3 = view(l.weights,1, 2, :, :)
+        w4 = view(l.weights,2, 2, :, :)
+        h = h .+ w3 * T1_in .+ w4 * T1_out
+    end
     for i in 2:l.K
         T2_in = T1_in * deg_in * A' 
         T2_in = 2 * T2_in - T0
