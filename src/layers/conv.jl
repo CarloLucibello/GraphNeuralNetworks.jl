@@ -1953,6 +1953,31 @@ function Base.show(io::IO, l::TransformerConv)
     print(io, "TransformerConv(($in, $ein) => $out, heads=$(l.heads))")
 end
 
+"""
+    DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
+
+Diffusion convolution layer from the paper [Diffusion Convolutional Recurrent Neural Networks: Data-Driven Traffic Forecasting](https://arxiv.org/pdf/1707.01926).
+
+# Arguments
+
+- `ch`: Pair of input and output dimensions.
+- `K`: Number of diffusion steps.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `bias`: Add learnable bias. Default `true`.
+
+# Examples
+```
+julia> g = GNNGraph(rand(10,10), ndata = rand(2,10));
+
+julia> dconv = DConv(2 => 4, 4)
+DConv(2 => 4, K=4)
+
+julia> y = dconv(g, g.ndata.x);
+
+julia> size(y)
+(4, 10)
+```
+"""
 struct DConv <: GNNLayer
     in::Int
     out::Int
@@ -1995,4 +2020,8 @@ function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
         T1_out = T2_out
     end
     return h .+ l.bias
+end
+
+function Base.show(io::IO, l::DConv)
+    print(io, "DConv($(l.in) => $(l.out), K=$(l.K))")
 end
