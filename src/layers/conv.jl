@@ -1977,27 +1977,20 @@ function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
     deg_out = Diagonal(deg_out)
     deg_in = Diagonal(vec(deg_in))
     
-    w1 = view(l.weights,1, 1, :, :)
-    w2 = view(l.weights,2, 1, :, :)
-    h = w1 * x .+ w2 * x
+    h = l.weights[1,1,:,:] * x .+ l.weights[2,1,:,:] * x
 
     T0 = x
     if l.K > 1
         T1_in = T0 * deg_in * A'
         T1_out = T0 * deg_out' * A
-
-        w3 = view(l.weights,1, 2, :, :)
-        w4 = view(l.weights,2, 2, :, :)
-        h = h .+ w3 * T1_in .+ w4 * T1_out
+        h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
     end
     for i in 2:l.K
         T2_in = T1_in * deg_in * A' 
         T2_in = 2 * T2_in - T0
         T2_out = T1_out * deg_out * A' 
         T2_out = 2 * T2_out - T0
-        w5 = view(l.weights,1, i, :, :)
-        w6 = view(l.weights,2, i, :, :)
-        h = h .+ w5 * T2_in .+ w6 * T2_out
+        h = h .+ l.weights[1,i,:,:] * T2_in .+ l.weights[2,i,:,:] * T2_out
         T1_in = T2_in
         T1_out = T2_out
     end
