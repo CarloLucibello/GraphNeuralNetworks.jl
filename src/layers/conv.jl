@@ -1593,7 +1593,7 @@ end
 @doc raw"""
     TAGConv(in => out, k=3; bias=true, init=glorot_uniform, add_self_loops=true, use_edge_weight=false)
 
-TAGConv layer from "Topology Adaptive Graph Convolutional Networks" (https://arxiv.org/pdf/1710.10370.pdf).
+TAGConv layer from [Topology Adaptive Graph Convolutional Networks](https://arxiv.org/pdf/1710.10370.pdf).
 This layer extends the idea of graph convolutions by applying filters that adapt to the topology of the data. 
 It performs the operation:
 
