@@ -1,25 +1,28 @@
-module GraphNeuralNetworks
+module GNNlib
 
 using Statistics: mean
 using LinearAlgebra, Random
 using Base: tail
-using Flux
-using Flux: glorot_uniform, leakyrelu, GRUCell, @functor, batch
 using MacroTools: @forward
 using MLUtils
 using NNlib
 using NNlib: scatter, gather
 using ChainRulesCore
-using Reexport
 using SparseArrays, Graphs # not needed but if removed Documenter will complain
+using DataStructures: nlargest
+using Reexport: @reexport
 
 include("GNNGraphs/GNNGraphs.jl")
+
 @reexport using .GNNGraphs
+
 using .GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
                   check_num_nodes, check_num_edges,
                   EType, NType # for heteroconvs
 
 export
+
+
 # utils
       reduce_nodes,
       reduce_edges,
@@ -41,58 +44,52 @@ export
       e_mul_xj,
       w_mul_xj,
 
-# layers/basic
-      GNNLayer,
-      GNNChain,
-      WithGraph,
-      DotDecoder,
-
-# layers/conv
-      AGNNConv,
-      CGConv,
-      ChebConv,
-      EdgeConv,
-      EGNNConv,
-      GATConv,
-      GATv2Conv,
-      GatedGraphConv,
-      GCNConv,
-      GINConv,
-      GMMConv,
-      GraphConv,
-      MEGNetConv,
-      NNConv,
-      ResGatedGraphConv,
-      SAGEConv,
-      SGConv,
-      TransformerConv,
-
-# layers/heteroconv
-      HeteroGraphConv,
-
-# layers/temporalconv
-      TGCN,
-      A3TGCN,
-      GConvGRU,
-
-# layers/pool
-      GlobalPool,
-      GlobalAttentionPool,
-      Set2Set,
-      TopKPool,
-      topk_index,
-
 # mldatasets
       mldataset2gnngraph
+
+## The following methods are defined but not exported
+
+# # layers/basic
+#       dot_decoder,
+
+# # layers/conv
+#       agnn_conv,
+#       cg_conv,
+#       cheb_conv,
+#       edge_conv,
+#       egnn_conv,
+#       gat_conv,
+#       gatv2_conv,
+#       gated_graph_conv,
+#       gcn_conv,
+#       gin_conv,
+#       gmm_conv,
+#       graph_conv,
+#       megnet_conv,
+#       nn_conv,
+#       res_gated_graph_conv,
+#       sage_conv,
+#       sg_conv,
+#       transformer_conv,
+
+# # layers/temporalconv
+#       a3tgcn_conv,
+
+# # layers/pool
+#       global_pool,
+#       global_attention_pool,
+#       set2set_pool,
+#       topk_pool,
+#       topk_index,
+
 
 include("utils.jl")
 include("layers/basic.jl")
 include("layers/conv.jl")
-include("layers/heteroconv.jl")
+# include("layers/heteroconv.jl") # no functional part at the moment
 include("layers/temporalconv.jl")
 include("layers/pool.jl")
 include("msgpass.jl")
 include("mldatasets.jl")
-include("deprecations.jl")
 
 end
