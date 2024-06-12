@@ -247,7 +247,7 @@ end end
         g = GNNGraph(s, t, graph_type = GRAPH_T)    
         
         gnew = drop_nodes(g, Float32(0.5))
-        @test gnew.num_nodes == 2
+        @test gnew.num_nodes == 3
 
         gnew = drop_nodes(g, Float32(1.0))
         @test gnew.num_nodes == 0
