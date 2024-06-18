@@ -1967,7 +1967,7 @@ Diffusion convolution layer from the paper [Diffusion Convolutional Recurrent Ne
 
 # Examples
 ```
-julia> g = GNNGraph(rand(10,10), ndata = rand(2,10));
+julia> g = GNNGraph(rand(10, 10), ndata = rand(Float32, 2, 10));
 
 julia> dconv = DConv(2 => 4, 4)
 DConv(2 => 4, K=4)
