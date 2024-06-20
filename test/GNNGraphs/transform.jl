@@ -528,7 +528,6 @@ end
         eweights = [0.1, 0.2, 0.3, 0.4]
 
         g = GNNGraph(s, t, eweights)
-        get_edge_weight(g)
 
         g_new = ppr_diffusion(g)
         w_new = get_edge_weight(g_new)
