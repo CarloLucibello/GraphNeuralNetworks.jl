@@ -1105,7 +1105,7 @@ function ppr_diffusion(g::GNNGraph{<:COO_T}; alpha = 0.85f0)
     N = g.num_nodes
 
     initial_A = sparse(t, s, w, N, N)
-    scaled_A = (alpha_f32 - 1) * initial_A
+    scaled_A = (Float32(alpha) - 1) * initial_A
 
     I_sparse = sparse(Diagonal(ones(Float32, N)))
     A_sparse = I_sparse + scaled_A
