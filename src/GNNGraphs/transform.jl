@@ -1098,7 +1098,7 @@ The function performs the following steps:
 # Returns
 - A new `GNNGraph` instance with the same structure as `g` but with updated edge weights according to the PPR diffusion calculation.
 """
-function ppr_diffusion(g::GNNGraph{<:COO_T}; alpha_f32::Float32=0.85f0)
+function ppr_diffusion(g::GNNGraph{<:COO_T}; alpha = 0.85f0)
     s, t = edge_index(g)
     w = ones(Float32, g.num_edges)
 
