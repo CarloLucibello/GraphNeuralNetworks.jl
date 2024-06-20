@@ -307,7 +307,7 @@ function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove::AbstractVector)
 end
 
 """
-    drop_nodes(g::GNNGraph{<:COO_T}, p::Float32)
+    drop_nodes(g::GNNGraph{<:COO_T}, p)
 
 Randomly drop nodes (and their associated edges) from a GNNGraph based on a given probability. 
 Dropping nodes is a technique that can be used for graph data augmentation, refering paper [DropNode](https://arxiv.org/pdf/2008.12578.pdf).
