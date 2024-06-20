@@ -83,6 +83,7 @@ export
       Set2Set,
       TopKPool,
       topk_index,
+      WeigthAndSumPool,
 
 # mldatasets
       mldataset2gnngraph
