@@ -329,7 +329,7 @@ g_new = drop_node(g, 0.5)
 println(g_new)
 ```
 """
-function drop_nodes(g::GNNGraph{<:COO_T}, p::Float32 = 0.5f)
+function drop_nodes(g::GNNGraph{<:COO_T}, p = 0.5)
     num_nodes = g.num_nodes
     nodes_to_remove = filter(_ -> rand() < p, 1:num_nodes)
     
