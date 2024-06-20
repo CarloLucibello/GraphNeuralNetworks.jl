@@ -1997,23 +1997,25 @@ end
 
 function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
     A = adjacency_matrix(g, weighted = true)
-    deg_out = A * ones_like(A,size(A, 1)) 
-    deg_in = ones_like(A, (1, size(A, 2))) * A
+    deg_out = degree(g; dir = :out)
+    deg_in = degree(g; dir = :in)
     deg_out = Diagonal(deg_out)
-    deg_in = Diagonal(vec(deg_in))
+    deg_in = Diagonal(deg_in)
     
     h = l.weights[1,1,:,:] * x .+ l.weights[2,1,:,:] * x
 
     T0 = x
     if l.K > 1
-        T1_in = T0 * deg_in * A'
-        T1_out = T0 * deg_out' * A
+        # T1_in = T0 * deg_in * A'
+        #T1_out = T0 * deg_out' * A
+        T1_out = propagate(w_mul_xj,g,+; xj= T0*deg_out')
+        T1_in = propagate(w_mul_xj,g,+; xj= T0*deg_in)
         h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
     end
     for i in 2:l.K
-        T2_in = T1_in * deg_in * A' 
+        T2_in = propagate(w_mul_xj,g,+; xj= T1_in*deg_in)
         T2_in = 2 * T2_in - T0
-        T2_out = T1_out * deg_out * A' 
+        T2_out =  propagate(w_mul_xj,g,+; xj= T1_out*deg_out')
         T2_out = 2 * T2_out - T0
         h = h .+ l.weights[1,i,:,:] * T2_in .+ l.weights[2,i,:,:] * T2_out
         T1_in = T2_in
