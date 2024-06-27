@@ -609,9 +609,9 @@ end
         w_new = get_edge_weight(g_new)
 
         check_ew = Float32[0.012749999
-        0.025499998
-        0.038249996
-        0.050999995]
+                           0.025499998
+                           0.038249996
+                           0.050999995]
 
         isequal(w_new, check_ew)
     end
