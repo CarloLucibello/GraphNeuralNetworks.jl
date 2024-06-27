@@ -34,13 +34,39 @@ end
     @test model(g1) isa GNNGraph            
 end
 
+@testset "GConvLSTMCell" begin
+    gconvlstm = GraphNeuralNetworks.GConvLSTMCell(in_channel => out_channel, 2, g1.num_nodes)
+    (h, c), h = gconvlstm(gconvlstm.state0, g1, g1.ndata.x)
+    @test size(h) == (out_channel, N)
+    @test size(c) == (out_channel, N)
+end
+
+@testset "GConvLSTM" begin
+    gconvlstm = GConvLSTM(in_channel => out_channel, 2, g1.num_nodes)
+    @test size(Flux.gradient(x -> sum(gconvlstm(g1, x)), g1.ndata.x)[1]) == (in_channel, N)
+    model = GNNChain(GConvLSTM(in_channel => out_channel, 2, g1.num_nodes), Dense(out_channel, 1))
+end
+
+@testset "GConvGRUCell" begin
+    gconvlstm = GraphNeuralNetworks.GConvGRUCell(in_channel => out_channel, 2, g1.num_nodes)
+    h, h = gconvlstm(gconvlstm.state0, g1, g1.ndata.x)
+    @test size(h) == (out_channel, N)
+end
+
+@testset "GConvGRU" begin
+    gconvlstm = GConvGRU(in_channel => out_channel, 2, g1.num_nodes)
+    @test size(Flux.gradient(x -> sum(gconvlstm(g1, x)), g1.ndata.x)[1]) == (in_channel, N)
+    model = GNNChain(GConvGRU(in_channel => out_channel, 2, g1.num_nodes), Dense(out_channel, 1))
+    @test size(model(g1, g1.ndata.x)) == (1, N)
+    @test model(g1) isa GNNGraph            
+end
+
 @testset "GINConv" begin
     ginconv = GINConv(Dense(in_channel => out_channel),0.3)
     @test length(ginconv(tg, tg.ndata.x)) == S
     @test size(ginconv(tg, tg.ndata.x)[1]) == (out_channel, N) 
     @test length(Flux.gradient(x ->sum(sum(ginconv(tg, x))), tg.ndata.x)[1]) == S    
 end
-
 
 @testset "ChebConv" begin
     chebconv = ChebConv(in_channel => out_channel, 5)

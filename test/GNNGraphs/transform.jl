@@ -101,6 +101,34 @@ end
     @test nodemap == 1:(g1.num_nodes)
 end
 
+@testset "remove_edges" begin
+    if GRAPH_T == :coo
+        s = [1, 1, 2, 3]
+        t = [2, 3, 4, 5]
+        w = [0.1, 0.2, 0.3, 0.4]
+        edata = ['a', 'b', 'c', 'd']
+        g = GNNGraph(s, t, w, edata = edata, graph_type = GRAPH_T)    
+
+        # single edge removal
+        gnew = remove_edges(g, [1])
+        new_s, new_t = edge_index(gnew)
+        @test gnew.num_edges == 3
+        @test new_s == s[2:end]
+        @test new_t == t[2:end]
+        
+        # multiple edge removal
+        gnew = remove_edges(g, [1,2,4])
+        new_s, new_t = edge_index(gnew)
+        new_w = get_edge_weight(gnew)
+        new_edata = gnew.edata.e
+        @test gnew.num_edges == 1
+        @test new_s == [2]
+        @test new_t == [4]
+        @test new_w == [0.3]
+        @test new_edata == ['c']
+    end
+end
+
 @testset "add_edges" begin 
     if GRAPH_T == :coo
         s = [1, 1, 2, 3]
@@ -150,6 +178,7 @@ end
 end
 
 @testset "remove_nodes" begin if GRAPH_T == :coo
+    #single node
     s = [1, 1, 2, 3]
     t = [2, 3, 4, 5]
     eweights = [0.1, 0.2, 0.3, 0.4]
@@ -179,7 +208,54 @@ end
     @test eweights_new == eweightstest
     @test ndata_new == ndatatest
     @test edata_new == edatatest
+
+    # multiple nodes
+    s = [1, 5, 2, 3]
+    t = [2, 3, 4, 5]
+    eweights = [0.1, 0.2, 0.3, 0.4]
+    ndata = [1.0, 2.0, 3.0, 4.0, 5.0]
+    edata = ['a', 'b', 'c', 'd']
+
+    g = GNNGraph(s, t, eweights, ndata = ndata, edata = edata, graph_type = GRAPH_T)
+
+    gnew = remove_nodes(g, [1,4])
+    snew = [3,2]
+    tnew = [2,3]
+    eweights_new = [0.2,0.4]
+    ndata_new = [2.0,3.0,5.0]
+    edata_new = ['b','d']
+
+    stest, ttest = edge_index(gnew)
+    eweightstest = get_edge_weight(gnew)
+    ndatatest = gnew.ndata.x
+    edatatest = gnew.edata.e
+
+    @test gnew.num_edges == 2
+    @test gnew.num_nodes == 3
+    @test snew == stest
+    @test tnew == ttest
+    @test eweights_new == eweightstest
+    @test ndata_new == ndatatest
+    @test edata_new == edatatest
 end end
+
+@testset "drop_nodes" begin
+    if GRAPH_T == :coo
+        Random.seed!(42)
+        s = [1, 1, 2, 3]
+        t = [2, 3, 4, 5]
+        g = GNNGraph(s, t, graph_type = GRAPH_T)    
+        
+        gnew = drop_nodes(g, Float32(0.5))
+        @test gnew.num_nodes == 3
+
+        gnew = drop_nodes(g, Float32(1.0))
+        @test gnew.num_nodes == 0
+
+        gnew = drop_nodes(g, Float32(0.0))
+        @test gnew.num_nodes == 5
+    end
+end
 
 @testset "add_nodes" begin if GRAPH_T == :coo
     g = rand_graph(6, 4, ndata = rand(2, 6), graph_type = GRAPH_T)
