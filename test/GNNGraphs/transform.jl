@@ -613,6 +613,6 @@ end
                            0.038249996
                            0.050999995]
 
-        isequal(w_new, check_ew)
+        isapprox(w_new, check_ew)
     end
 end

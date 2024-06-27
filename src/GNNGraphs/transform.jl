@@ -1205,7 +1205,7 @@ function ppr_diffusion(g::GNNGraph{<:COO_T}; alpha = 0.85f0)
 
     A_dense = Matrix(A_sparse)
 
-    PPR = alpha_f32 * inv(A_dense)
+    PPR = alpha * inv(A_dense)
 
     new_w = [PPR[dst, src] for (src, dst) in zip(s, t)]
 
