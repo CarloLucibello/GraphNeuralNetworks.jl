@@ -239,6 +239,24 @@ end
     @test edata_new == edatatest
 end end
 
+@testset "drop_nodes" begin
+    if GRAPH_T == :coo
+        Random.seed!(42)
+        s = [1, 1, 2, 3]
+        t = [2, 3, 4, 5]
+        g = GNNGraph(s, t, graph_type = GRAPH_T)    
+        
+        gnew = drop_nodes(g, Float32(0.5))
+        @test gnew.num_nodes == 3
+
+        gnew = drop_nodes(g, Float32(1.0))
+        @test gnew.num_nodes == 0
+
+        gnew = drop_nodes(g, Float32(0.0))
+        @test gnew.num_nodes == 5
+    end
+end
+
 @testset "add_nodes" begin if GRAPH_T == :coo
     g = rand_graph(6, 4, ndata = rand(2, 6), graph_type = GRAPH_T)
     gnew = add_nodes(g, 5, ndata = ones(2, 5))
