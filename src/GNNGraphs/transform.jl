@@ -1190,7 +1190,10 @@ The function performs the following steps:
 """
 function ppr_diffusion(g::GNNGraph{<:COO_T}; alpha = 0.85f0)
     s, t = edge_index(g)
-    w = ones(Float32, g.num_edges)
+    w = get_edge_weight(g)
+    if isnothing(w)
+        w = ones(Float32, g.num_edges)
+    end
 
     N = g.num_nodes
 
