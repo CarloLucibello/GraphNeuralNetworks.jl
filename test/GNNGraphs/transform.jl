@@ -596,3 +596,23 @@ end
         @test g.graph[(:A, :to1, :A)][3] == vcat([2, 2, 2], fill(1, n))
     end
 end
+
+@testset "ppr_diffusion" begin
+    if GRAPH_T == :coo
+        s = [1, 1, 2, 3]
+        t = [2, 3, 4, 5]
+        eweights = [0.1, 0.2, 0.3, 0.4]
+
+        g = GNNGraph(s, t, eweights)
+
+        g_new = ppr_diffusion(g)
+        w_new = get_edge_weight(g_new)
+
+        check_ew = Float32[0.012749999
+                           0.025499998
+                           0.038249996
+                           0.050999995]
+
+        @test w_new ≈ check_ew
+    end
+end
