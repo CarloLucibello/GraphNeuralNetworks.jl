@@ -240,6 +240,52 @@ function remove_multi_edges(g::GNNGraph{<:COO_T}; aggr = +)
 end
 
 """
+    drop_edge(g::GNNGraph{<:COO_T}, p)
+
+Randomly drop edges from a GNNGraph based on a given probability.
+
+This function implements the edge dropping technique described in the following papers:
+- [DropEdge: Towards Deep Graph Convolutional Networks on Node Classification](https://arxiv.org/abs/1907.10903)
+- [Graph Contrastive Learning with Augmentations](https://arxiv.org/abs/2010.13902)
+
+# Arguments
+- `g`: The input graph from which edges will be dropped.
+- `p`: The probability of dropping each edge. Default value is `0.5`.
+
+# Returns
+A modified GNNGraph with edges dropped based on the given probability.
+
+# Example
+```julia
+julia> using GraphNeuralNetworks
+
+julia> g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
+GNNGraph:     
+  num_nodes: 3
+  num_edges: 5
+  
+julia> g_new = drop_edge(g, 0.5)
+GNNGraph:
+  num_nodes: 3
+  num_edges: 3
+
+println(g_new)
+```
+"""
+function drop_edge(g::GNNGraph{<:COO_T}, p = 0.5)
+    num_edges = g.num_edges
+    edges_to_remove = filter(_ -> rand() < p, 1:num_edges)        
+    g = remove_edges(g, edges_to_remove)
+    s, t = edge_index(g)
+    w = get_edge_weight(g)
+    edata = g.edata
+    return GNNGraph((s, t, w),
+             g.num_nodes, length(s), g.num_graphs,
+             g.graph_indicator,
+             g.ndata, edata, g.gdata)
+end
+  
+"""
     remove_nodes(g::GNNGraph, nodes_to_remove::AbstractVector)
 
 Remove specified nodes, and their associated edges, from a GNNGraph. This operation reindexes the remaining nodes to maintain a continuous sequence of node indices, starting from 1. Similarly, edges are reindexed to account for the removal of edges connected to the removed nodes.
@@ -253,8 +299,6 @@ A new GNNGraph with the specified nodes and all edges associated with these node
 
 # Example
 ```julia
-using GraphNeuralNetworks
-
 g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
 
 # Remove nodes with indices 2 and 3, for example
@@ -321,12 +365,17 @@ A modified GNNGraph with nodes (and their associated edges) dropped based on the
 
 # Example
 ```julia
-using GraphNeuralNetworks
-# Construct a GNNGraph
-g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1], num_nodes=3)
-# Drop nodes with a probability of 0.5
-g_new = drop_node(g, 0.5)
-println(g_new)
+julia> using GraphNeuralNetworks
+
+julia> g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1], num_nodes=3)
+GNNGraph:
+  num_nodes: 3
+  num_edges: 5
+
+julia> g_new = drop_nodes(g, 0.5)
+GNNGraph:
+  num_nodes: 1
+  num_edges: 0
 ```
 """
 function drop_nodes(g::GNNGraph{<:COO_T}, p = 0.5)
