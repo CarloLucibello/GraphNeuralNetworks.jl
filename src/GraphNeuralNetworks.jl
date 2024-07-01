@@ -67,6 +67,7 @@ export
       SGConv,
       TAGConv,
       TransformerConv,
+      DConv,
 
 # layers/heteroconv
       HeteroGraphConv,
