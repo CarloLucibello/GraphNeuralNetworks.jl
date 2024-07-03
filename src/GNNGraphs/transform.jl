@@ -458,15 +458,22 @@ function perturb_edges(g::GNNGraph{<:COO_T}, perturb_ratio::Float64; seed::Int =
     num_nodes = g.num_nodes
     @assert num_nodes > 1 "Graph must contain at least 2 nodes to add edges"
 
-    snew = Int[]
-    tnew = Int[]
+    snew = ceil.(Int, rand(Float32, num_edges_to_add) .* num_nodes)
+    tnew = ceil.(Int, rand(Float32, num_edges_to_add) .* num_nodes)
+
+    mask_loops = snew .!= tnew
+    snew = snew[mask_loops]
+    tnew = tnew[mask_loops]
+
     while length(snew) < num_edges_to_add
-        s_candidate = rand(1:num_nodes)
-        t_candidate = rand(1:num_nodes)
-        if s_candidate != t_candidate
-            push!(snew, s_candidate)
-            push!(tnew, t_candidate)
-        end
+        n = num_edges_to_add - length(snew)
+        snewnew = ceil.(Int, rand(Float32, n) .* num_nodes)
+        tnewnew = ceil.(Int, rand(Float32, n) .* num_nodes)
+        mask_new_loops = snewnew .!= tnewnew
+        snewnew = snewnew[mask_new_loops]
+        tnewnew = tnewnew[mask_new_loops]
+        snew = [snew; snewnew]
+        tnew = [tnew; tnewnew]
     end
 
     return add_edges(g, (snew, tnew, nothing))
