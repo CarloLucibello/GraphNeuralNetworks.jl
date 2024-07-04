@@ -421,7 +421,7 @@ The function returns a new `GNNGraph` instance that shares some of the underlyin
 
 # Parameters
 - `g::GNNGraph`: The graph to be perturbed.
-- `perturb_ratio::Float64`: The ratio of the number of new edges to add relative to the current number of edges in the graph. For example, a `perturb_ratio` of 0.1 means that 10% of the current number of edges will be added as new random edges.
+- `perturb_ratio`: The ratio of the number of new edges to add relative to the current number of edges in the graph. For example, a `perturb_ratio` of 0.1 means that 10% of the current number of edges will be added as new random edges.
 - `seed=123`: An optional seed for the random number generator to ensure reproducible results.
 
 # Examples
