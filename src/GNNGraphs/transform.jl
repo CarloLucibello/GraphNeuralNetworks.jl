@@ -413,7 +413,7 @@ function add_edges(g::GNNHeteroGraph{<:COO_T},
 end
 
 """
-    perturb_edges(g::GNNGraph, perturb_ratio; [seed])
+    perturb_edges([rng], g::GNNGraph, perturb_ratio)
 
 Perturb the graph `g` by adding random edges, based on a specified `perturb_ratio`. The `perturb_ratio` determines the fraction of new edges to add relative to the current number of edges in the graph. These new edges are added without creating self-loops. Optionally, a random `seed` can be provided to ensure reproducible perturbations.
 
