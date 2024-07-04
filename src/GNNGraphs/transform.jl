@@ -443,7 +443,7 @@ GNNGraph:
   num_edges: 7 # Two new edges added if the original graph had 5 edges, as 0.5 of 5 rounds to 2.
 ```
 """
-function perturb_edges(g::GNNGraph{<:COO_T}, perturb_ratio::Float64; seed::Int = Random.default_rng())
+function perturb_edges(g::GNNGraph{<:COO_T}, perturb_ratio; seed::Int = Random.default_rng())
     @assert perturb_ratio >= 0 && perturb_ratio <= 1 "perturb_ratio must be between 0 and 1"
 
     Random.seed!(seed)
