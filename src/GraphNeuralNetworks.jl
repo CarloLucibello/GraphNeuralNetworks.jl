@@ -57,6 +57,7 @@ export
       GATv2Conv,
       GatedGraphConv,
       GCNConv,
+      GCNConvFixedW,
       GINConv,
       GMMConv,
       GraphConv,

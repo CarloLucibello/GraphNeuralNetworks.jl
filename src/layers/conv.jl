@@ -168,6 +168,100 @@ function Base.show(io::IO, l::GCNConv)
     print(io, ")")
 end
 
+struct GCNConvFixedW{F} <: GNNLayer
+    in::Int
+    out::Int
+    σ::F
+    add_self_loops::Bool
+    use_edge_weight::Bool
+end
+
+@functor GCNConvFixedW
+
+function GCNConvFixedW(ch::Pair{Int, Int}, σ = identity;
+                 add_self_loops = true,
+                 use_edge_weight = false)
+    in, out = ch
+    GCNConvFixedW(in, out, σ, add_self_loops, use_edge_weight)
+end
+
+function (l::GCNConvFixedW)(g::AbstractGNNGraph, 
+                      x,
+                      weight,
+                      edge_weight::EW = nothing,
+                      norm_fn::Function = d -> 1 ./ sqrt.(d)  
+                      ) where {EW <: Union{Nothing, AbstractVector}}
+    if size(weight, 2) !== l.in
+        throw(ArgumentError("Input weight size $(size(weight, 2)) does not match the input size $(l.in)"))
+    end
+    if size(weight, 1) !== l.out
+        throw(ArgumentError("Output weight size $(size(weight, 1)) does not match the output size $(l.out)"))
+    end
+                
+    check_gcnconv_input(g, edge_weight)
+
+    if l.add_self_loops
+        g = add_self_loops(g)
+        if edge_weight !== nothing
+            # Pad weights with ones
+            # TODO for ADJMAT_T the new edges are not generally at the end
+            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            @assert length(edge_weight) == g.num_edges
+        end
+    end
+    Dout, Din = size(weight)
+    if Dout < Din && !(g isa GNNHeteroGraph)
+        # multiply before convolution if it is more convenient, otherwise multiply after
+        # (this works only for homogenous graph)
+        x = weight * x
+    end
+
+    xj, xi = expand_srcdst(g, x) # expand only after potential multiplication
+    T = eltype(xi)
+
+    if g isa GNNHeteroGraph
+        din = degree(g, g.etypes[1], T; dir = :in)
+        dout = degree(g, g.etypes[1], T; dir = :out)
+
+        cout = norm_fn(dout)
+        cin = norm_fn(din)
+    else
+        if edge_weight !== nothing
+            d = degree(g, T; dir = :in, edge_weight)
+        else
+            d = degree(g, T; dir = :in, edge_weight = l.use_edge_weight)
+        end
+        cin = cout = norm_fn(d)
+    end
+    xj = xj .* cout'
+    if edge_weight !== nothing
+        x = propagate(e_mul_xj, g, +, xj = xj, e = edge_weight)
+    elseif l.use_edge_weight
+        x = propagate(w_mul_xj, g, +, xj = xj)
+    else
+        x = propagate(copy_xj, g, +, xj = xj)
+    end
+    x = x .* cin'
+    if Dout >= Din || g isa GNNHeteroGraph
+        x = weight * x
+    end
+    return l.σ.(x)
+end
+
+function (l::GCNConvFixedW)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
+                      edge_weight::AbstractVector, norm_fn::Function)
+    g = GNNGraph(edge_index(g)...; g.num_nodes)  # convert to COO
+    return l(g, x, edge_weight, norm_fn)
+end
+
+function Base.show(io::IO, l::GCNConvFixedW)
+    in = l.in
+    out = l.out
+    print(io, "GCNConvFixedW($in => $out")
+    l.σ == identity || print(io, ", ", l.σ)
+    print(io, ")")
+end
+
 @doc raw"""
     ChebConv(in => out, k; bias=true, init=glorot_uniform)
 
