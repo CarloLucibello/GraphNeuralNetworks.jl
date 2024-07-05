@@ -66,6 +66,16 @@ test_graphs = [g1, g_single_vertex]
     end
 end
 
+@testset "GCNConvFixedW" begin
+    l = GraphNeuralNetworks.GCNConvFixedW(in_channel => out_channel)
+    w = zeros(T, out_channel, in_channel)
+    g1 = GNNGraph(adj1, ndata = ones(T, in_channel, N))
+    @test l(g1, g1.ndata.x, w) == zeros(T, out_channel, N)
+    a = rand(T, in_channel, N)
+    g2 = GNNGraph(adj1, ndata = a)
+    @test l(g2, g2.ndata.x, w) == w * a
+end
+
 @testset "ChebConv" begin
     k = 2
     l = ChebConv(in_channel => out_channel, k)
