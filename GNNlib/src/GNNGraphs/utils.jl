@@ -312,8 +312,9 @@ end
 iscuarray(x::AbstractArray) = false 
 @non_differentiable iscuarray(::Any)
 
+
 @doc raw"""
-    color_refinement(g::GNNGraph, x0) -> x, num_colors, niters
+    color_refinement(g::GNNGraph, [x0]) -> x, num_colors, niters
 
 The color refinement algorithm for graph coloring. 
 Given a graph `g` and an initial coloring `x0`, the algorithm 
@@ -326,15 +327,19 @@ of the neighbors of each node. This hash is used to determine if the coloring ha
 x_i' = hashmap((x_i, sort([x_j for j \in N(i)]))).
 ````
 
+This algorithm is related to the 1-Weisfeiler-Lehman algorithm for graph isomorphism testing.
+
 # Arguments
 - `g::GNNGraph`: The graph to color.
-- `x0::AbstractVector{<:Integer}`: The initial coloring.
+- `x0::AbstractVector{<:Integer}`: The initial coloring. If not provided, all nodes are colored with 1.
 
 # Returns
 - `x::AbstractVector{<:Integer}`: The final coloring.
 - `num_colors::Int`: The number of colors used.
 - `niters::Int`: The number of iterations until convergence.
 """
+color_refinement(g::GNNGraph) = color_refinement(g, ones(Int, g.num_nodes))
+
 function color_refinement(g::GNNGraph, x0::AbstractVector{<:Integer})
     @assert length(x0) == g.num_nodes
     s, t = edge_index(g)
