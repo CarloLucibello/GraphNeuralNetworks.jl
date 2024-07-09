@@ -48,3 +48,15 @@
     @test sdec == snew
     @test tdec == tnew
 end
+
+@testset "color_refinment" begin
+    g = rand_graph(10, 20, seed=17, graph_type = GRAPH_T)
+    x0 = ones(Int, 10)
+    x, ncolors, niters = color_refinement(g, x0)
+    @test ncolors == 8
+    @test niters == 2
+    @test x == [4, 5, 6, 7, 8, 5, 8, 9, 10, 11]
+    
+    x2, _, _ = color_refinement(g)
+    @test x2 == x
+end

@@ -14,7 +14,7 @@ import KrylovKit
 using ChainRulesCore
 using LinearAlgebra, Random, Statistics
 import MLUtils
-using MLUtils: getobs, numobs, ones_like, zeros_like
+using MLUtils: getobs, numobs, ones_like, zeros_like, chunk
 import Functors
 
 include("chainrules.jl") # hacks for differentiability
@@ -104,6 +104,7 @@ include("operators.jl")
 
 include("convert.jl")
 include("utils.jl")
+export sort_edge_index, color_refinement
 
 include("gatherscatter.jl")
 # _gather, _scatter

@@ -101,6 +101,8 @@ include("operators.jl")
 
 include("convert.jl")
 include("utils.jl")
+export sort_edge_index,
+       color_refinement
 
 include("gatherscatter.jl")
 # _gather, _scatter

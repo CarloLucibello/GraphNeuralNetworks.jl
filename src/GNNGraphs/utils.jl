@@ -49,12 +49,20 @@ end
 
 sort_edge_index(eindex::Tuple) = sort_edge_index(eindex...)
 
+"""
+    sort_edge_index(ei::Tuple) -> u', v'
+    sort_edge_index(u, v) -> u', v'
+
+Return a sorted version of the tuple of vectors `ei = (u, v)`,
+applying a common permutation to `u` and `v`.
+The sorting is lexycographic, that is the pairs `(ui, vi)` 
+are sorted first according to the `ui` and then according to `vi`. 
+"""
 function sort_edge_index(u, v)
     uv = collect(zip(u, v))
     p = sortperm(uv) # isless lexicographically defined for tuples
     return u[p], v[p]
 end
-
 
 
 cat_features(x1::Nothing, x2::Nothing) = nothing
@@ -302,3 +310,55 @@ end
 
 iscuarray(x::AbstractArray) = false 
 @non_differentiable iscuarray(::Any)
+
+
+@doc raw"""
+    color_refinement(g::GNNGraph, [x0]) -> x, num_colors, niters
+
+The color refinement algorithm for graph coloring. 
+Given a graph `g` and an initial coloring `x0`, the algorithm 
+iteratively refines the coloring until a fixed point is reached.
+
+At each iteration the algorithm computes a hash of the coloring and the sorted list of colors
+of the neighbors of each node. This hash is used to determine if the coloring has changed.
+
+```math
+x_i' = hashmap((x_i, sort([x_j for j \in N(i)]))).
+````
+
+This algorithm is related to the 1-Weisfeiler-Lehman algorithm for graph isomorphism testing.
+
+# Arguments
+- `g::GNNGraph`: The graph to color.
+- `x0::AbstractVector{<:Integer}`: The initial coloring. If not provided, all nodes are colored with 1.
+
+# Returns
+- `x::AbstractVector{<:Integer}`: The final coloring.
+- `num_colors::Int`: The number of colors used.
+- `niters::Int`: The number of iterations until convergence.
+"""
+color_refinement(g::GNNGraph) = color_refinement(g, ones(Int, g.num_nodes))
+
+function color_refinement(g::GNNGraph, x0::AbstractVector{<:Integer})
+    @assert length(x0) == g.num_nodes
+    s, t = edge_index(g)
+    t, s = sort_edge_index(t, s) # sort by target
+    degs = degree(g, dir=:in)
+    x = x0 
+
+    hashmap = Dict{UInt64, Int}()
+    x′ = zeros(Int, length(x0))
+    niters = 0    
+    while true
+        xneigs = chunk(x[s], size=degs)
+        for (i, (xi, xineigs)) in enumerate(zip(x, xneigs))
+            idx = hash((xi, sort(xineigs)))
+            x′[i] = get!(hashmap, idx, length(hashmap) + 1)
+        end
+        niters += 1
+        x == x′ && break
+        x = x′
+    end
+    num_colors = length(union(x))
+    return x, num_colors, niters
+end
