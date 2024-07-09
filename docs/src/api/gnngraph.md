@@ -52,6 +52,10 @@ Pages   = ["transform.jl"]
 Private = false
 ```
 
+```@docs
+GNNGraphs.sort_edge_index
+``` 
+
 ## Generate
 
 ```@autodocs
