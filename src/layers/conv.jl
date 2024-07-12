@@ -168,6 +168,7 @@ function Base.show(io::IO, l::GCNConv)
     print(io, ")")
 end
 
+# same architecture as GCNConv but passing the weights
 struct GCNConvFixedW{F} <: GNNLayer
     in::Int
     out::Int
