@@ -1996,7 +1996,9 @@ function DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
 end
 
 function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
-    A = adjacency_matrix(g, weighted = true)
+    #A = adjacency_matrix(g, weighted = true)
+    s,t = edge_index(g)
+    gt = GNNGraph(t,s,get_edge_weight(g))
     deg_out = degree(g; dir = :out)
     deg_in = degree(g; dir = :in)
     deg_out = Diagonal(deg_out)
@@ -2009,11 +2011,11 @@ function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
         # T1_in = T0 * deg_in * A'
         #T1_out = T0 * deg_out' * A
         T1_out = propagate(w_mul_xj,g,+; xj= T0*deg_out')
-        T1_in = propagate(w_mul_xj,g,+; xj= T0*deg_in)
+        T1_in = propagate(w_mul_xj,gt,+; xj= T0*deg_in)
         h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
     end
     for i in 2:l.K
-        T2_in = propagate(w_mul_xj,g,+; xj= T1_in*deg_in)
+        T2_in = propagate(w_mul_xj,gt,+; xj= T1_in*deg_in)
         T2_in = 2 * T2_in - T0
         T2_out =  propagate(w_mul_xj,g,+; xj= T1_out*deg_out')
         T2_out = 2 * T2_out - T0
