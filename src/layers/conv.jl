@@ -2015,9 +2015,9 @@ function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
         h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
     end
     for i in 2:l.K
-        T2_in = propagate(w_mul_xj,gt,+; xj= T1_in*deg_in)
+        T2_in = propagate(w_mul_xj, gt, +; xj = T1_in*deg_in)
         T2_in = 2 * T2_in - T0
-        T2_out =  propagate(w_mul_xj,g,+; xj= T1_out*deg_out')
+        T2_out =  propagate(w_mul_xj, g ,+; xj = T1_out*deg_out')
         T2_out = 2 * T2_out - T0
         h = h .+ l.weights[1,i,:,:] * T2_in .+ l.weights[2,i,:,:] * T2_out
         T1_in = T2_in
