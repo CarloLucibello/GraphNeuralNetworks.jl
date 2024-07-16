@@ -2010,8 +2010,8 @@ function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
     if l.K > 1
         # T1_in = T0 * deg_in * A'
         #T1_out = T0 * deg_out' * A
-        T1_out = propagate(w_mul_xj,g,+; xj= T0*deg_out')
-        T1_in = propagate(w_mul_xj,gt,+; xj= T0*deg_in)
+        T1_out = propagate(w_mul_xj, g, +; xj = T0*deg_out')
+        T1_in = propagate(w_mul_xj, gt, +; xj = T0*deg_in)
         h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
     end
     for i in 2:l.K
