@@ -1997,8 +1997,8 @@ end
 
 function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
     #A = adjacency_matrix(g, weighted = true)
-    s,t = edge_index(g)
-    gt = GNNGraph(t,s,get_edge_weight(g))
+    s, t = edge_index(g)
+    gt = GNNGraph(t, s, get_edge_weight(g))
     deg_out = degree(g; dir = :out)
     deg_in = degree(g; dir = :in)
     deg_out = Diagonal(deg_out)
