@@ -443,41 +443,41 @@ GNNGraph:
   num_edges: 7 # Two new edges added if the original graph had 5 edges, as 0.5 of 5 rounds to 2.
 ```
 """
-function perturb_edges(g::GNNGraph{<:COO_T}, perturb_ratio; seed::Int = Random.default_rng())
-    @assert perturb_ratio >= 0 && perturb_ratio <= 1 "perturb_ratio must be between 0 and 1"
-
-    Random.seed!(seed)
-
-    num_current_edges = g.num_edges
-    num_edges_to_add = ceil(Int, num_current_edges * perturb_ratio)
-
-    if num_edges_to_add == 0
-        return g
+function perturb_edges(g::GNNGraph{<:COO_T}, perturb_ratio::Float64; rng::AbstractRNG = Random.default_rng())
+        @assert perturb_ratio >= 0 && perturb_ratio <= 1 "perturb_ratio must be between 0 and 1"
+    
+        Random.seed!(rng)
+    
+        num_current_edges = g.num_edges
+        num_edges_to_add = ceil(Int, num_current_edges * perturb_ratio)
+    
+        if num_edges_to_add == 0
+            return g
+        end
+    
+        num_nodes = g.num_nodes
+        @assert num_nodes > 1 "Graph must contain at least 2 nodes to add edges"
+    
+        snew = ceil.(Int, rand_like(rng, ones(num_nodes), Float32, num_edges_to_add) .* num_nodes)
+        tnew = ceil.(Int, rand_like(rng, ones(num_nodes), Float32, num_edges_to_add) .* num_nodes)
+    
+        mask_loops = snew .!= tnew
+        snew = snew[mask_loops]
+        tnew = tnew[mask_loops]
+    
+        while length(snew) < num_edges_to_add
+            n = num_edges_to_add - length(snew)
+            snewnew = ceil.(Int, rand_like(rng, ones(num_nodes), Float32, n) .* num_nodes)
+            tnewnew = ceil.(Int, rand_like(rng, ones(num_nodes), Float32, n) .* num_nodes)
+            mask_new_loops = snewnew .!= tnewnew
+            snewnew = snewnew[mask_new_loops]
+            tnewnew = tnewnew[mask_new_loops]
+            snew = [snew; snewnew]
+            tnew = [tnew; tnewnew]
+        end
+    
+        return add_edges(g, (snew, tnew, nothing))
     end
-
-    num_nodes = g.num_nodes
-    @assert num_nodes > 1 "Graph must contain at least 2 nodes to add edges"
-
-    snew = ceil.(Int, rand(Float32, num_edges_to_add) .* num_nodes)
-    tnew = ceil.(Int, rand(Float32, num_edges_to_add) .* num_nodes)
-
-    mask_loops = snew .!= tnew
-    snew = snew[mask_loops]
-    tnew = tnew[mask_loops]
-
-    while length(snew) < num_edges_to_add
-        n = num_edges_to_add - length(snew)
-        snewnew = ceil.(Int, rand(Float32, n) .* num_nodes)
-        tnewnew = ceil.(Int, rand(Float32, n) .* num_nodes)
-        mask_new_loops = snewnew .!= tnewnew
-        snewnew = snewnew[mask_new_loops]
-        tnewnew = tnewnew[mask_new_loops]
-        snew = [snew; snewnew]
-        tnew = [tnew; tnewnew]
-    end
-
-    return add_edges(g, (snew, tnew, nothing))
-end
 
 
 ### TODO Cannot implement this since GNNGraph is immutable (cannot change num_edges). make it mutable

@@ -150,10 +150,10 @@ end
 end
 
 @testset "perturb_edges" begin if GRAPH_T == :coo
-    s, t = [1, 2, 3, 3, 4], [2, 3, 4, 4, 4];
-    w = Float32[1.0, 2.0, 3.0, 4.0, 5.0];
-    g = GNNGraph((s, t, w))
-    g_per = perturb_edges(g, 0.5, seed = 42)
+    s, t = [1, 2, 3, 4, 5], [2, 3, 4, 5, 1]
+    g = GNNGraph((s, t))
+    rng = MersenneTwister(42)
+    g_per = perturb_edges(g, 0.5, rng=rng)
     @assert g_per.num_edges == 8
 end end
 
