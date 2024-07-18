@@ -182,7 +182,7 @@ end
     g = GNNGraph((s, t))
     rng = MersenneTwister(42)
     g_per = perturb_edges(g, 0.5, rng=rng)
-    @assert g_per.num_edges == 8
+    @test g_per.num_edges == 8
 end end
 
 @testset "remove_nodes" begin if GRAPH_T == :coo
