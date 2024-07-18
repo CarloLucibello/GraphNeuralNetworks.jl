@@ -40,7 +40,7 @@ and optionally an edge weight vector. Returns a node feature matrix of size
 
 The `norm_fn` parameter allows for custom normalization of the graph convolution operation by passing a function as argument. 
 By default, it computes ``\frac{1}{\sqrt{d}}`` i.e the inverse square root of the degree (`d`) of each node in the graph. 
-If `conv_weight` is an `AbstractMatrix` of size `[out, in]`, then the convolution is performed using that weight matrix.
+If `conv_weight` is an `AbstractMatrix` of size `[out, in]`, then the convolution is performed using that weight matrix instead of the weights stored in the model.
 
 # Examples
 
