@@ -64,6 +64,17 @@ test_graphs = [g1, g_single_vertex]
         @test gradient(w -> sum(l(g, x, w)), w)[1] isa AbstractVector{T}   # redundant test but more explicit
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (1, g.num_nodes), test_gpu = false)
     end
+
+    @testset "conv_weight" begin
+         l = GraphNeuralNetworks.GCNConv(in_channel => out_channel)
+        w = zeros(T, out_channel, in_channel)
+        g1 = GNNGraph(adj1, ndata = ones(T, in_channel, N))
+        @test l(g1, g1.ndata.x, conv_weight = w) == zeros(T, out_channel, N)
+        a = rand(T, in_channel, N)
+        g2 = GNNGraph(adj1, ndata = a)
+        @test l(g2, g2.ndata.x, conv_weight = w) == w * a
+    
+    end
 end
 
 @testset "ChebConv" begin

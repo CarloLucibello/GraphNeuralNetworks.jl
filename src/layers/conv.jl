@@ -32,14 +32,15 @@ and optionally an edge weight vector.
 
 # Forward
 
-    (::GCNConv)(g::GNNGraph, x::AbstractMatrix, edge_weight = nothing, norm_fn::Function = d -> 1 ./ sqrt.(d)) -> AbstractMatrix
+    (::GCNConv)(g::GNNGraph, x::AbstractMatrix, edge_weight = nothing, norm_fn::Function = d -> 1 ./ sqrt.(d), conv_weight::Union{Nothing,AbstractMatrix} = nothing) -> AbstractMatrix
 
-Takes as input a graph `g`,ca node feature matrix `x` of size `[in, num_nodes]`,
+Takes as input a graph `g`, a node feature matrix `x` of size `[in, num_nodes]`,
 and optionally an edge weight vector. Returns a node feature matrix of size 
 `[out, num_nodes]`.
 
 The `norm_fn` parameter allows for custom normalization of the graph convolution operation by passing a function as argument. 
 By default, it computes ``\frac{1}{\sqrt{d}}`` i.e the inverse square root of the degree (`d`) of each node in the graph. 
+If `conv_weight` is an `AbstractMatrix` of size `[out, in]`, then the convolution is performed using that weight matrix instead of the weights stored in the model.
 
 # Examples
 
@@ -102,10 +103,20 @@ check_gcnconv_input(g::AbstractGNNGraph, edge_weight::Nothing) = nothing
 function (l::GCNConv)(g::AbstractGNNGraph, 
                       x,
                       edge_weight::EW = nothing,
-                      norm_fn::Function = d -> 1 ./ sqrt.(d)  
+                      norm_fn::Function = d -> 1 ./ sqrt.(d); 
+                      conv_weight::Union{Nothing,AbstractMatrix} = nothing
                       ) where {EW <: Union{Nothing, AbstractVector}}
 
     check_gcnconv_input(g, edge_weight)
+
+    if conv_weight === nothing
+        weight = l.weight
+    else
+        weight = conv_weight
+        if size(weight) != size(l.weight)
+            throw(ArgumentError("The weight matrix has the wrong size. Expected $(size(l.weight)) but got $(size(weight))"))
+        end
+    end
 
     if l.add_self_loops
         g = add_self_loops(g)
@@ -116,11 +127,11 @@ function (l::GCNConv)(g::AbstractGNNGraph,
             @assert length(edge_weight) == g.num_edges
         end
     end
-    Dout, Din = size(l.weight)
+    Dout, Din = size(weight)
     if Dout < Din && !(g isa GNNHeteroGraph)
         # multiply before convolution if it is more convenient, otherwise multiply after
         # (this works only for homogenous graph)
-        x = l.weight * x
+        x = weight * x
     end
 
     xj, xi = expand_srcdst(g, x) # expand only after potential multiplication
@@ -150,7 +161,7 @@ function (l::GCNConv)(g::AbstractGNNGraph,
     end
     x = x .* cin'
     if Dout >= Din || g isa GNNHeteroGraph
-        x = l.weight * x
+        x = weight * x
     end
     return l.σ.(x .+ l.bias)
 end
