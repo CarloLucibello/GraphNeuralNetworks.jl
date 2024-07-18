@@ -9,9 +9,6 @@ import GraphNeuralNetworks: propagate
 
 const CUMAT_T = Union{CUDA.AnyCuMatrix, CUDA.CUSPARSE.CuSparseMatrix}
 
-include("GNNGraphs/query.jl")
-include("GNNGraphs/transform.jl")
-include("GNNGraphs/utils.jl")
 include("msgpass.jl")
 
 end #module

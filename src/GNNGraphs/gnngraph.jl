@@ -27,7 +27,7 @@ as well, unless explicitely set by the keyword arguments
 `ndata`, `edata`, and `gdata`.
 
 A `GNNGraph` can also represent multiple graphs batched togheter
-(see [`Flux.batch`](@ref) or [`SparseArrays.blockdiag`](@ref)).
+(see [`MLUtils.batch`](@ref) or [`SparseArrays.blockdiag`](@ref)).
 The field `g.graph_indicator` contains the graph membership
 of each node.
 

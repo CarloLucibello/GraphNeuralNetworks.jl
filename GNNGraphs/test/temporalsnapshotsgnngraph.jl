@@ -107,7 +107,8 @@ if TEST_GPU
         snapshots = [rand_graph(10, 20; ndata = rand(5,10)) for i in 1:5]
         tsg = TemporalSnapshotsGNNGraph(snapshots)
         tsg.tgdata.x = rand(5)
-        tsg = Flux.gpu(tsg)
+        dev = gpu_device()
+        tsg = tsg |> dev
         @test tsg.snapshots[1].ndata.x isa CuArray
         @test tsg.snapshots[end].ndata.x isa CuArray
         @test tsg.tgdata.x isa CuArray

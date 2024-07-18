@@ -1,10 +1,7 @@
 using CUDA
-using GraphNeuralNetworks
-using GraphNeuralNetworks.GNNGraphs: sort_edge_index
-using GraphNeuralNetworks.GNNGraphs: getn, getdata
+using GNNGraphs
+using GNNGraphs: getn, getdata
 using Functors
-using Flux
-using Flux: gpu, @functor
 using LinearAlgebra, Statistics, Random
 using NNlib
 import MLUtils
@@ -26,21 +23,22 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
-    "utils",
-    "msgpass",
-    "layers/basic",
-    "layers/conv",
-    "layers/heteroconv",
-    "layers/temporalconv",
-    "layers/pool",
-    "mldatasets",
-    "examples/node_classification_cora",
-    "deprecations",
+    "chainrules",
+    "datastore",
+    "gnngraph",
+    "convert",
+    "transform",
+    "operators",
+    "generate",
+    "query",
+    "sampling",
+    "gnnheterograph",
+    "temporalsnapshotsgnngraph",
+    "ext/SimpleWeightedGraphs/SimpleWeightedGraphs"
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
 
-# @testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :dense, :sparse)
 for graph_type in (:coo, :dense, :sparse)
     @info "Testing graph format :$graph_type"
     global GRAPH_T = graph_type
@@ -49,7 +47,6 @@ for graph_type in (:coo, :dense, :sparse)
     # global TEST_GPU = false
 
     @testset "$t" for t in tests
-        startswith(t, "examples") && GRAPH_T == :dense && continue     # not testing :dense since causes OutOfMememory on github's CI
         t == "GNNGraphs/sampling" && GRAPH_T != :coo && continue
         include("$t.jl")
     end

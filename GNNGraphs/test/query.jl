@@ -185,10 +185,10 @@ end
     g = GNNGraph(s, t)
     @test laplacian_lambda_max(g) ≈ Float32(1.809017)
     data1 = [g for i in 1:5]
-    gall1 = Flux.batch(data1)
+    gall1 = MLUtils.batch(data1)
     @test laplacian_lambda_max(gall1) ≈ [Float32(1.809017) for i in 1:5]
     data2 = [rand_graph(10, 20) for i in 1:3]
-    gall2 = Flux.batch(data2)
+    gall2 = MLUtils.batch(data2)
     @test length(laplacian_lambda_max(gall2, add_self_loops=true)) == 3
 end
 
