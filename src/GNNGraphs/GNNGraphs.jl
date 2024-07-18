@@ -14,7 +14,7 @@ import KrylovKit
 using ChainRulesCore
 using LinearAlgebra, Random, Statistics
 import MLUtils
-using MLUtils: getobs, numobs, ones_like, zeros_like
+using MLUtils: getobs, numobs, ones_like, zeros_like, rand_like
 import Functors
 
 include("chainrules.jl") # hacks for differentiability
