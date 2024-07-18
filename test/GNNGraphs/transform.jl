@@ -177,6 +177,14 @@ end
     end 
 end
 
+@testset "perturb_edges" begin if GRAPH_T == :coo
+    s, t = [1, 2, 3, 4, 5], [2, 3, 4, 5, 1]
+    g = GNNGraph((s, t))
+    rng = MersenneTwister(42)
+    g_per = perturb_edges(g, 0.5, rng=rng)
+    @test g_per.num_edges == 8
+end end
+
 @testset "remove_nodes" begin if GRAPH_T == :coo
     #single node
     s = [1, 1, 2, 3]
