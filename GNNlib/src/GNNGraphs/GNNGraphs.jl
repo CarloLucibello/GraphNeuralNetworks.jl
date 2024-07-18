@@ -5,8 +5,8 @@ using Functors: @functor
 import Graphs
 using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree,
               has_self_loops, is_directed
-import Flux
-using Flux: batch
+import MLUtils
+using MLUtils: getobs, numobs, ones_like, zeros_like, batch
 import NearestNeighbors
 import NNlib
 import StatsBase
@@ -14,7 +14,6 @@ import KrylovKit
 using ChainRulesCore
 using LinearAlgebra, Random, Statistics
 import MLUtils
-using MLUtils: getobs, numobs, ones_like, zeros_like, chunk, rand_like
 import Functors
 
 include("chainrules.jl") # hacks for differentiability
@@ -78,10 +77,7 @@ export add_nodes,
        to_bidirected,
        to_unidirected,
        random_walk_pe,
-       perturb_edges,
        remove_nodes,
-       ppr_diffusion,
-       drop_nodes,
 # from Flux
        batch,
        unbatch,
@@ -105,7 +101,8 @@ include("operators.jl")
 
 include("convert.jl")
 include("utils.jl")
-export sort_edge_index, color_refinement
+export sort_edge_index,
+       color_refinement
 
 include("gatherscatter.jl")
 # _gather, _scatter

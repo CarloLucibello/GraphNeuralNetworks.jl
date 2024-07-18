@@ -287,6 +287,21 @@ end
     end
 end
 
+@testset "TAGConv" begin
+    K = [1, 2, 3]
+    for k in K
+        l = TAGConv(in_channel => out_channel, k, add_self_loops = true)
+        for g in test_graphs
+            test_layer(l, g, rtol = RTOL_HIGH, outsize = (out_channel, g.num_nodes))
+        end
+
+        l = TAGConv(in_channel => out_channel, k, add_self_loops = true)
+        for g in test_graphs
+            test_layer(l, g, rtol = RTOL_HIGH, outsize = (out_channel, g.num_nodes))
+        end
+    end
+end
+
 @testset "EGNNConv" begin
     hin = 5
     hout = 5
@@ -332,5 +347,15 @@ end
         test_layer(l, g, rtol = RTOL_LOW,
                     exclude_grad_fields = [:negative_slope],
                     outsize = (in_channel, g.num_nodes))
+    end
+end
+
+@testset "DConv" begin
+    K = [1, 2, 3] # for different number of hops       
+    for k in K
+        l = DConv(in_channel => out_channel, k)
+        for g in test_graphs
+            test_layer(l, g, rtol = RTOL_HIGH, outsize = (out_channel, g.num_nodes))
+        end
     end
 end

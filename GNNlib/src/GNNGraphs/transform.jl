@@ -307,38 +307,6 @@ function remove_nodes(g::GNNGraph{<:COO_T}, nodes_to_remove::AbstractVector)
 end
 
 """
-    drop_nodes(g::GNNGraph{<:COO_T}, p)
-
-Randomly drop nodes (and their associated edges) from a GNNGraph based on a given probability. 
-Dropping nodes is a technique that can be used for graph data augmentation, refering paper [DropNode](https://arxiv.org/pdf/2008.12578.pdf).
-
-# Arguments
-- `g`: The input graph from which nodes (and their associated edges) will be dropped.
-- `p`: The probability of dropping each node. Default value is `0.5`.
-
-# Returns
-A modified GNNGraph with nodes (and their associated edges) dropped based on the given probability.
-
-# Example
-```julia
-using GraphNeuralNetworks
-# Construct a GNNGraph
-g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1], num_nodes=3)
-# Drop nodes with a probability of 0.5
-g_new = drop_node(g, 0.5)
-println(g_new)
-```
-"""
-function drop_nodes(g::GNNGraph{<:COO_T}, p = 0.5)
-    num_nodes = g.num_nodes
-    nodes_to_remove = filter(_ -> rand() < p, 1:num_nodes)
-    
-    new_g = remove_nodes(g, nodes_to_remove)
-    
-    return new_g
-end
-
-"""
     add_edges(g::GNNGraph, s::AbstractVector, t::AbstractVector; [edata])
     add_edges(g::GNNGraph, (s, t); [edata])
     add_edges(g::GNNGraph, (s, t, w); [edata])
@@ -502,72 +470,6 @@ function add_edges(g::GNNHeteroGraph{<:COO_T},
              ntypes, etypes)
 end
 
-"""
-    perturb_edges([rng], g::GNNGraph, perturb_ratio)
-
-Perturb the graph `g` by adding random edges, based on a specified `perturb_ratio`. The `perturb_ratio` determines the fraction of new edges to add relative to the current number of edges in the graph. These new edges are added without creating self-loops. Optionally, a random `seed` can be provided to ensure reproducible perturbations.
-
-The function returns a new `GNNGraph` instance that shares some of the underlying data with `g` but includes the additional edges. The nodes for the new edges are selected randomly, and no edge data (`edata`) or weights (`w`) are assigned to these new edges.
-
-# Parameters
-- `g::GNNGraph`: The graph to be perturbed.
-- `perturb_ratio`: The ratio of the number of new edges to add relative to the current number of edges in the graph. For example, a `perturb_ratio` of 0.1 means that 10% of the current number of edges will be added as new random edges.
-- `seed=123`: An optional seed for the random number generator to ensure reproducible results.
-
-# Examples
-
-```julia
-julia> g = GNNGraph((s, t, w))
-GNNGraph:
-  num_nodes: 4
-  num_edges: 5
-
-julia> perturbed_g = perturb_edges(g, 0.2)
-GNNGraph:
-  num_nodes: 4
-  num_edges: 6 # One new edge added if the original graph had 5 edges, as 0.2 of 5 is 1.
-
-julia> perturbed_g = perturb_edges(g, 0.5, seed=42)
-GNNGraph:
-  num_nodes: 4
-  num_edges: 7 # Two new edges added if the original graph had 5 edges, as 0.5 of 5 rounds to 2.
-```
-"""
-function perturb_edges(g::GNNGraph{<:COO_T}, perturb_ratio::Float64; rng::AbstractRNG = Random.default_rng())
-        @assert perturb_ratio >= 0 && perturb_ratio <= 1 "perturb_ratio must be between 0 and 1"
-    
-        Random.seed!(rng)
-    
-        num_current_edges = g.num_edges
-        num_edges_to_add = ceil(Int, num_current_edges * perturb_ratio)
-    
-        if num_edges_to_add == 0
-            return g
-        end
-    
-        num_nodes = g.num_nodes
-        @assert num_nodes > 1 "Graph must contain at least 2 nodes to add edges"
-    
-        snew = ceil.(Int, rand_like(rng, ones(num_nodes), Float32, num_edges_to_add) .* num_nodes)
-        tnew = ceil.(Int, rand_like(rng, ones(num_nodes), Float32, num_edges_to_add) .* num_nodes)
-    
-        mask_loops = snew .!= tnew
-        snew = snew[mask_loops]
-        tnew = tnew[mask_loops]
-    
-        while length(snew) < num_edges_to_add
-            n = num_edges_to_add - length(snew)
-            snewnew = ceil.(Int, rand_like(rng, ones(num_nodes), Float32, n) .* num_nodes)
-            tnewnew = ceil.(Int, rand_like(rng, ones(num_nodes), Float32, n) .* num_nodes)
-            mask_new_loops = snewnew .!= tnewnew
-            snewnew = snewnew[mask_new_loops]
-            tnewnew = tnewnew[mask_new_loops]
-            snew = [snew; snewnew]
-            tnew = [tnew; tnewnew]
-        end
-    
-        return add_edges(g, (snew, tnew, nothing))
-    end
 
 
 ### TODO Cannot implement this since GNNGraph is immutable (cannot change num_edges). make it mutable
@@ -766,7 +668,7 @@ end
 """
     blockdiag(xs::GNNGraph...)
 
-Equivalent to [`Flux.batch`](@ref).
+Equivalent to [`MLUtils.batch`](@ref).
 """
 function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
     g = g1
@@ -783,7 +685,7 @@ Batch together multiple `GNNGraph`s into a single one
 containing the total number of original nodes and edges.
 
 Equivalent to [`SparseArrays.blockdiag`](@ref).
-See also [`Flux.unbatch`](@ref).
+See also [`MLUtils.unbatch`](@ref).
 
 # Examples
 
@@ -802,7 +704,7 @@ GNNGraph:
     ndata:
         x => (8, 7)
 
-julia> g12 = Flux.batch([g1, g2])
+julia> g12 = MLUtils.batch([g1, g2])
 GNNGraph:
     num_nodes = 11
     num_edges = 10
@@ -822,18 +724,18 @@ julia> g12.ndata.x
  1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
 ```
 """
-function Flux.batch(gs::AbstractVector{<:GNNGraph})
+function MLUtils.batch(gs::AbstractVector{<:GNNGraph})
     Told = eltype(gs)
     # try to restrict the eltype
     gs = [g for g in gs]
     if eltype(gs) != Told
-        return Flux.batch(gs)
+        return MLUtils.batch(gs)
     else
         return blockdiag(gs...)
     end
 end
 
-function Flux.batch(gs::AbstractVector{<:GNNGraph{T}}) where {T <: COO_T}
+function MLUtils.batch(gs::AbstractVector{<:GNNGraph{T}}) where {T <: COO_T}
     v_num_nodes = [g.num_nodes for g in gs]
     edge_indices = [edge_index(g) for g in gs]
     nodesum = cumsum([0; v_num_nodes])[1:(end - 1)]
@@ -862,12 +764,12 @@ function Flux.batch(gs::AbstractVector{<:GNNGraph{T}}) where {T <: COO_T}
              cat_features([g.gdata for g in gs]))
 end
 
-function Flux.batch(g::GNNGraph)
+function MLUtils.batch(g::GNNGraph)
     throw(ArgumentError("Cannot batch a `GNNGraph` (containing $(g.num_graphs) graphs). Pass a vector of `GNNGraph`s instead."))
 end
 
 
-function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph})
+function MLUtils.batch(gs::AbstractVector{<:GNNHeteroGraph})
     function edge_index_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
         if haskey(g.graph, edge_t)
             g.graph[edge_t][1:2]
@@ -937,21 +839,21 @@ end
 """
     unbatch(g::GNNGraph)
 
-Opposite of the [`Flux.batch`](@ref) operation, returns 
+Opposite of the [`MLUtils.batch`](@ref) operation, returns 
 an array of the individual graphs batched together in `g`.
 
-See also [`Flux.batch`](@ref) and [`getgraph`](@ref).
+See also [`MLUtils.batch`](@ref) and [`getgraph`](@ref).
 
 # Examples
 
 ```jldoctest
-julia> gbatched = Flux.batch([rand_graph(5, 6), rand_graph(10, 8), rand_graph(4,2)])
+julia> gbatched = MLUtils.batch([rand_graph(5, 6), rand_graph(10, 8), rand_graph(4,2)])
 GNNGraph:
     num_nodes = 19
     num_edges = 16
     num_graphs = 3
 
-julia> Flux.unbatch(gbatched)
+julia> MLUtils.unbatch(gbatched)
 3-element Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}:
  GNNGraph:
     num_nodes = 5
@@ -966,7 +868,7 @@ julia> Flux.unbatch(gbatched)
     num_edges = 2
 ```
 """
-function Flux.unbatch(g::GNNGraph{T}) where {T <: COO_T}
+function MLUtils.unbatch(g::GNNGraph{T}) where {T <: COO_T}
     g.num_graphs == 1 && return [g]
 
     nodemasks = _unbatch_nodemasks(g.graph_indicator, g.num_graphs)
@@ -1005,7 +907,7 @@ function Flux.unbatch(g::GNNGraph{T}) where {T <: COO_T}
     return [build_graph(i) for i in 1:(g.num_graphs)]
 end
 
-function Flux.unbatch(g::GNNGraph)
+function MLUtils.unbatch(g::GNNGraph)
     return [getgraph(g, i) for i in 1:(g.num_graphs)]
 end
 
@@ -1126,13 +1028,6 @@ function negative_sample(g::GNNGraph;
 
     s, t = edge_index(g)
     n = g.num_nodes
-    if iscuarray(s)
-        # Convert to gpu since set operations and sampling are not supported by CUDA.jl
-        device = Flux.gpu
-        s, t = Flux.cpu(s), Flux.cpu(t)
-    else
-        device = Flux.cpu
-    end
     idx_pos, maxid = edge_encoding(s, t, n)
     if bidirected
         num_neg_edges = num_neg_edges ÷ 2
@@ -1156,7 +1051,7 @@ function negative_sample(g::GNNGraph;
     if bidirected
         s_neg, t_neg = [s_neg; t_neg], [t_neg; s_neg]
     end
-    return GNNGraph(s_neg, t_neg, num_nodes = n) |> device
+    return GNNGraph(s_neg, t_neg, num_nodes = n)
 end
 
 """
@@ -1234,49 +1129,3 @@ ci2t(ci::AbstractVector{<:CartesianIndex}, dims) = ntuple(i -> map(x -> x[i], ci
 @non_differentiable remove_self_loops(x...)  # TODO this is wrong, since g carries feature arrays, needs rrule
 @non_differentiable dense_zeros_like(x...)
 
-"""
-    ppr_diffusion(g::GNNGraph{<:COO_T}, alpha =0.85f0) -> GNNGraph
-
-Calculates the Personalized PageRank (PPR) diffusion based on the edge weight matrix of a GNNGraph and updates the graph with new edge weights derived from the PPR matrix.
-References paper: [The pagerank citation ranking: Bringing order to the web](http://ilpubs.stanford.edu:8090/422)
-
-
-The function performs the following steps:
-1. Constructs a modified adjacency matrix `A` using the graph's edge weights, where `A` is adjusted by `(α - 1) * A + I`, with `α` being the damping factor (`alpha_f32`) and `I` the identity matrix.
-2. Normalizes `A` to ensure each column sums to 1, representing transition probabilities.
-3. Applies the PPR formula `α * (I + (α - 1) * A)^-1` to compute the diffusion matrix.
-4. Updates the original edge weights of the graph based on the PPR diffusion matrix, assigning new weights for each edge from the PPR matrix.
-
-# Arguments
-- `g::GNNGraph`: The input graph for which PPR diffusion is to be calculated. It should have edge weights available.
-- `alpha_f32::Float32`: The damping factor used in PPR calculation, controlling the teleport probability in the random walk. Defaults to `0.85f0`.
-
-# Returns
-- A new `GNNGraph` instance with the same structure as `g` but with updated edge weights according to the PPR diffusion calculation.
-"""
-function ppr_diffusion(g::GNNGraph{<:COO_T}; alpha = 0.85f0)
-    s, t = edge_index(g)
-    w = get_edge_weight(g)
-    if isnothing(w)
-        w = ones(Float32, g.num_edges)
-    end
-
-    N = g.num_nodes
-
-    initial_A = sparse(t, s, w, N, N)
-    scaled_A = (Float32(alpha) - 1) * initial_A
-
-    I_sparse = sparse(Diagonal(ones(Float32, N)))
-    A_sparse = I_sparse + scaled_A
-
-    A_dense = Matrix(A_sparse)
-
-    PPR = alpha * inv(A_dense)
-
-    new_w = [PPR[dst, src] for (src, dst) in zip(s, t)]
-
-    return GNNGraph((s, t, new_w),
-             g.num_nodes, length(s), g.num_graphs,
-             g.graph_indicator,
-             g.ndata, g.edata, g.gdata)
-end

@@ -1,13 +1,12 @@
-name = "GraphNeuralNetworks"
-uuid = "cffab07f-9bc2-4db1-8861-388f63bf7694"
+name = "GNNlib"
+uuid = "a6a84749-d869-43f8-aacc-be26a1996e48"
 authors = ["Carlo Lucibello and contributors"]
-version = "0.6.19"
+version = "0.1.0"
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Functors = "d9f16b24-f501-4c13-a1f2-28368ffc5196"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
@@ -27,18 +26,17 @@ CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 
 [extensions]
-GraphNeuralNetworksCUDAExt = "CUDA"
-GraphNeuralNetworksSimpleWeightedGraphsExt = "SimpleWeightedGraphs"
+GNNlibCUDAExt = "CUDA"
+GNNlibSimpleWeightedGraphsExt = "SimpleWeightedGraphs"
 
 [compat]
 Adapt = "3, 4"
 CUDA = "4, 5"
 ChainRulesCore = "1"
 DataStructures = "0.18"
-Flux = "0.14"
 Functors = "0.4.1"
 Graphs = "1.4"
-KrylovKit = "0.6, 0.7, 0.8"
+KrylovKit = "0.6, 0.7"
 LinearAlgebra = "1"
 MLDatasets = "0.7"
 MLUtils = "0.4"

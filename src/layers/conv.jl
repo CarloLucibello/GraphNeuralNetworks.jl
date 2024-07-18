@@ -1591,6 +1591,132 @@ function Base.show(io::IO, l::SGConv)
 end
 
 @doc raw"""
+    TAGConv(in => out, k=3; bias=true, init=glorot_uniform, add_self_loops=true, use_edge_weight=false)
+
+TAGConv layer from [Topology Adaptive Graph Convolutional Networks](https://arxiv.org/pdf/1710.10370.pdf).
+This layer extends the idea of graph convolutions by applying filters that adapt to the topology of the data. 
+It performs the operation:
+
+```math
+H^{K} = {\sum}_{k=0}^K (D^{-1/2} A D^{-1/2})^{k} X {\Theta}_{k}
+```
+
+where `A` is the adjacency matrix of the graph, `D` is the degree matrix, `X` is the input feature matrix, and ``{\Theta}_{k}`` is a unique weight matrix for each hop `k`.
+
+# Arguments
+- `in`: Number of input features.
+- `out`: Number of output features.
+- `k`: Maximum number of hops to consider. Default is `3`.
+- `bias`: Whether to include a learnable bias term. Default is `true`.
+- `init`: Initialization function for the weights. Default is `glorot_uniform`.
+- `add_self_loops`: Whether to add self-loops to the adjacency matrix. Default is `true`.
+- `use_edge_weight`: If `true`, edge weights are considered in the computation (if available). Default is `false`.
+
+# Examples
+
+```julia
+# Example graph data
+s = [1, 1, 2, 3]
+t = [2, 3, 1, 1]
+g = GNNGraph(s, t)  # Create a graph
+x = randn(Float32, 3, g.num_nodes)  # Random features for each node
+
+# Create a TAGConv layer
+l = TAGConv(3 => 5, k=3; add_self_loops=true)
+
+# Apply the TAGConv layer
+y = l(g, x)  # Output size: 5 × num_nodes
+```
+"""
+struct TAGConv{A <: AbstractMatrix, B} <: GNNLayer
+    weight::A
+    bias::B
+    k::Int
+    add_self_loops::Bool
+    use_edge_weight::Bool
+end
+
+
+@functor TAGConv
+
+function TAGConv(ch::Pair{Int, Int}, k = 3;
+                  init = glorot_uniform,
+                  bias::Bool = true,
+                  add_self_loops = true,
+                  use_edge_weight = false)
+    in, out = ch
+    W = init(out, in)
+    b = bias ? Flux.create_bias(W, true, out) : false
+    TAGConv(W, b, k, add_self_loops, use_edge_weight)
+end
+
+function (l::TAGConv)(g::GNNGraph, x::AbstractMatrix{T},
+                     edge_weight::EW = nothing) where
+    {T, EW <: Union{Nothing, AbstractVector}}
+    @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+
+    if edge_weight !== nothing
+        @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
+    end
+
+    if l.add_self_loops
+        g = add_self_loops(g)
+        if edge_weight !== nothing
+            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            @assert length(edge_weight) == g.num_edges
+        end
+    end
+    Dout, Din = size(l.weight)
+    if edge_weight !== nothing
+        d = degree(g, T; dir = :in, edge_weight)
+    else
+        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+    end
+    c = 1 ./ sqrt.(d)
+
+    sum_pow = 0
+    sum_total = 0
+    for iter in 1:(l.k)
+        x = x .* c'
+        if edge_weight !== nothing
+            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
+        elseif l.use_edge_weight
+            x = propagate(w_mul_xj, g, +, xj = x)
+        else
+            x = propagate(copy_xj, g, +, xj = x)
+        end
+        x = x .* c'
+
+        # On the first iteration, initialize sum_pow with the first propagated features
+        # On subsequent iterations, accumulate propagated features
+        if iter == 1
+            sum_pow = x
+            sum_total = l.weight * sum_pow
+        else
+            sum_pow += x            
+            # Weighted sum of features for each power of adjacency matrix
+            # This applies the weight matrix to the accumulated sum of propagated features
+            sum_total += l.weight * sum_pow
+        end
+    end
+
+    return (sum_total .+ l.bias)
+end
+
+function (l::TAGConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
+                     edge_weight::AbstractVector)
+    g = GNNGraph(edge_index(g)...; g.num_nodes)
+    return l(g, x, edge_weight)
+end
+
+function Base.show(io::IO, l::TAGConv)
+    out, in = size(l.weight)
+    print(io, "TAGConv($in => $out")
+    l.k == 1 || print(io, ", ", l.k)
+    print(io, ")")
+end
+
+@doc raw"""
     EGNNConv((in, ein) => out; hidden_size=2in, residual=false)
     EGNNConv(in => out; hidden_size=2in, residual=false)
 
@@ -1790,6 +1916,18 @@ can be performed.
 - `ff_channels`: If positive, a feed-forward NN is appended, with the first having the given
     number of hidden nodes; this NN also gets a skip connection and batch normalization 
     if the respective parameters are set. Default: `0`.
+
+# Examples
+
+```julia
+N, in_channel, out_channel = 4, 3, 5
+ein, heads = 2, 3
+g = GNNGraph([1,1,2,4], [2,3,1,1])
+l = TransformerConv((in_channel, ein) => in_channel; heads, gating = true, bias_qkv = true)
+x = rand(Float32, in_channel, N)
+e = rand(Float32, ein, g.num_edges)
+l(g, x, e)
+```        
 """
 struct TransformerConv{TW1, TW2, TW3, TW4, TW5, TW6, TFF, TBN1, TBN2} <: GNNLayer
     W1::TW1
@@ -1939,4 +2077,81 @@ end
 function Base.show(io::IO, l::TransformerConv)
     (in, ein), out = l.channels
     print(io, "TransformerConv(($in, $ein) => $out, heads=$(l.heads))")
+end
+
+"""
+    DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
+
+Diffusion convolution layer from the paper [Diffusion Convolutional Recurrent Neural Networks: Data-Driven Traffic Forecasting](https://arxiv.org/pdf/1707.01926).
+
+# Arguments
+
+- `ch`: Pair of input and output dimensions.
+- `K`: Number of diffusion steps.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `bias`: Add learnable bias. Default `true`.
+
+# Examples
+```
+julia> g = GNNGraph(rand(10, 10), ndata = rand(Float32, 2, 10));
+
+julia> dconv = DConv(2 => 4, 4)
+DConv(2 => 4, K=4)
+
+julia> y = dconv(g, g.ndata.x);
+
+julia> size(y)
+(4, 10)
+```
+"""
+struct DConv <: GNNLayer
+    in::Int
+    out::Int
+    weights::AbstractArray
+    bias::AbstractArray
+    K::Int
+end
+
+@functor DConv
+
+function DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
+    in, out = ch
+    weights = init(2, K, out, in)
+    b = bias ? Flux.create_bias(weights, true, out) : false
+    DConv(in, out, weights, b, K)
+end
+
+function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
+    #A = adjacency_matrix(g, weighted = true)
+    s, t = edge_index(g)
+    gt = GNNGraph(t, s, get_edge_weight(g))
+    deg_out = degree(g; dir = :out)
+    deg_in = degree(g; dir = :in)
+    deg_out = Diagonal(deg_out)
+    deg_in = Diagonal(deg_in)
+    
+    h = l.weights[1,1,:,:] * x .+ l.weights[2,1,:,:] * x
+
+    T0 = x
+    if l.K > 1
+        # T1_in = T0 * deg_in * A'
+        #T1_out = T0 * deg_out' * A
+        T1_out = propagate(w_mul_xj, g, +; xj = T0*deg_out')
+        T1_in = propagate(w_mul_xj, gt, +; xj = T0*deg_in)
+        h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
+    end
+    for i in 2:l.K
+        T2_in = propagate(w_mul_xj, gt, +; xj = T1_in*deg_in)
+        T2_in = 2 * T2_in - T0
+        T2_out =  propagate(w_mul_xj, g ,+; xj = T1_out*deg_out')
+        T2_out = 2 * T2_out - T0
+        h = h .+ l.weights[1,i,:,:] * T2_in .+ l.weights[2,i,:,:] * T2_out
+        T1_in = T2_in
+        T1_out = T2_out
+    end
+    return h .+ l.bias
+end
+
+function Base.show(io::IO, l::DConv)
+    print(io, "DConv($(l.in) => $(l.out), K=$(l.K))")
 end
