@@ -349,3 +349,13 @@ end
                     outsize = (in_channel, g.num_nodes))
     end
 end
+
+@testset "DConv" begin
+    K = [1, 2, 3] # for different number of hops       
+    for k in K
+        l = DConv(in_channel => out_channel, k)
+        for g in test_graphs
+            test_layer(l, g, rtol = RTOL_HIGH, outsize = (out_channel, g.num_nodes))
+        end
+    end
+end

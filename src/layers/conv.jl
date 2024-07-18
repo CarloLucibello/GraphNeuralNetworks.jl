@@ -2078,3 +2078,80 @@ function Base.show(io::IO, l::TransformerConv)
     (in, ein), out = l.channels
     print(io, "TransformerConv(($in, $ein) => $out, heads=$(l.heads))")
 end
+
+"""
+    DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
+
+Diffusion convolution layer from the paper [Diffusion Convolutional Recurrent Neural Networks: Data-Driven Traffic Forecasting](https://arxiv.org/pdf/1707.01926).
+
+# Arguments
+
+- `ch`: Pair of input and output dimensions.
+- `K`: Number of diffusion steps.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `bias`: Add learnable bias. Default `true`.
+
+# Examples
+```
+julia> g = GNNGraph(rand(10, 10), ndata = rand(Float32, 2, 10));
+
+julia> dconv = DConv(2 => 4, 4)
+DConv(2 => 4, K=4)
+
+julia> y = dconv(g, g.ndata.x);
+
+julia> size(y)
+(4, 10)
+```
+"""
+struct DConv <: GNNLayer
+    in::Int
+    out::Int
+    weights::AbstractArray
+    bias::AbstractArray
+    K::Int
+end
+
+@functor DConv
+
+function DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
+    in, out = ch
+    weights = init(2, K, out, in)
+    b = bias ? Flux.create_bias(weights, true, out) : false
+    DConv(in, out, weights, b, K)
+end
+
+function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
+    #A = adjacency_matrix(g, weighted = true)
+    s, t = edge_index(g)
+    gt = GNNGraph(t, s, get_edge_weight(g))
+    deg_out = degree(g; dir = :out)
+    deg_in = degree(g; dir = :in)
+    deg_out = Diagonal(deg_out)
+    deg_in = Diagonal(deg_in)
+    
+    h = l.weights[1,1,:,:] * x .+ l.weights[2,1,:,:] * x
+
+    T0 = x
+    if l.K > 1
+        # T1_in = T0 * deg_in * A'
+        #T1_out = T0 * deg_out' * A
+        T1_out = propagate(w_mul_xj, g, +; xj = T0*deg_out')
+        T1_in = propagate(w_mul_xj, gt, +; xj = T0*deg_in)
+        h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
+    end
+    for i in 2:l.K
+        T2_in = propagate(w_mul_xj, gt, +; xj = T1_in*deg_in)
+        T2_in = 2 * T2_in - T0
+        T2_out =  propagate(w_mul_xj, g ,+; xj = T1_out*deg_out')
+        T2_out = 2 * T2_out - T0
+        h = h .+ l.weights[1,i,:,:] * T2_in .+ l.weights[2,i,:,:] * T2_out
+        T1_in = T2_in
+        T1_out = T2_out
+    end
+    return h .+ l.bias
+end
+
+function Base.show(io::IO, l::DConv)
+    print(io, "DConv($(l.in) => $(l.out), K=$(l.K))")
+end
