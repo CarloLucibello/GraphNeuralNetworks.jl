@@ -1,4 +1,4 @@
-using CUDA
+using CUDA, cuDNN
 using GNNGraphs
 using GNNGraphs: getn, getdata
 using Functors
@@ -13,6 +13,8 @@ using Test
 using MLDatasets
 using InlineStrings  # not used but with the import we test #98 and #104
 using SimpleWeightedGraphs
+using LuxDeviceUtils: gpu_device, cpu_device, get_device
+using LuxDeviceUtils: LuxCUDADevice # remove after https://github.com/LuxDL/LuxDeviceUtils.jl/pull/58
 
 CUDA.allowscalar(false)
 

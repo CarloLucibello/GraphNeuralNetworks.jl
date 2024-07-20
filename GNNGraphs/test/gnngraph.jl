@@ -57,7 +57,8 @@ end
     # core functionality
     g = GNNGraph(s, t; graph_type = GRAPH_T)
     if TEST_GPU
-        g_gpu = g |> gpu
+        dev = LuxCUDADevice() #TODO replace with gpu_device()
+        g_gpu = g |> dev
     end
 
     @test g.num_edges == 8
@@ -99,12 +100,10 @@ end
     end
 
     @testset "scaled_laplacian" begin if TEST_GPU
-        @test_broken begin
-            mat = scaled_laplacian(g)
-            mat_gpu = scaled_laplacian(g_gpu)
-            @test mat_gpu isa ACUMatrix{Float32}
-            @test Array(mat_gpu) == mat
-        end
+        mat = scaled_laplacian(g)
+        mat_gpu = scaled_laplacian(g_gpu)
+        @test mat_gpu isa ACUMatrix{Float32}
+        @test Array(mat_gpu) ≈ mat
     end end
 
     @testset "constructors" begin
@@ -142,7 +141,8 @@ end
     # core functionality
     g = GNNGraph(s, t; graph_type = GRAPH_T)
     if TEST_GPU
-        g_gpu = g |> gpu
+        dev = LuxCUDADevice() #TODO replace with `gpu_device()`
+        g_gpu = g |> dev
     end
 
     @test g.num_edges == 4

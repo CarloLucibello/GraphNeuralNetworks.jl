@@ -3,7 +3,7 @@ module GNNGraphs
 using SparseArrays
 using Functors: @functor
 import Graphs
-using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree,
+using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree, 
               has_self_loops, is_directed
 import NearestNeighbors
 import NNlib

@@ -766,7 +766,7 @@ end
 """
     blockdiag(xs::GNNGraph...)
 
-Equivalent to [`Flux.batch`](@ref).
+Equivalent to [`MLUtils.batch`](@ref).
 """
 function SparseArrays.blockdiag(g1::GNNGraph, gothers::GNNGraph...)
     g = g1
@@ -783,7 +783,7 @@ Batch together multiple `GNNGraph`s into a single one
 containing the total number of original nodes and edges.
 
 Equivalent to [`SparseArrays.blockdiag`](@ref).
-See also [`Flux.unbatch`](@ref).
+See also [`MLUtils.unbatch`](@ref).
 
 # Examples
 
@@ -802,7 +802,7 @@ GNNGraph:
     ndata:
         x => (8, 7)
 
-julia> g12 = Flux.batch([g1, g2])
+julia> g12 = MLUtils.batch([g1, g2])
 GNNGraph:
     num_nodes = 11
     num_edges = 10
@@ -822,18 +822,18 @@ julia> g12.ndata.x
  1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
 ```
 """
-function Flux.batch(gs::AbstractVector{<:GNNGraph})
+function MLUtils.batch(gs::AbstractVector{<:GNNGraph})
     Told = eltype(gs)
     # try to restrict the eltype
     gs = [g for g in gs]
     if eltype(gs) != Told
-        return Flux.batch(gs)
+        return MLUtils.batch(gs)
     else
         return blockdiag(gs...)
     end
 end
 
-function Flux.batch(gs::AbstractVector{<:GNNGraph{T}}) where {T <: COO_T}
+function MLUtils.batch(gs::AbstractVector{<:GNNGraph{T}}) where {T <: COO_T}
     v_num_nodes = [g.num_nodes for g in gs]
     edge_indices = [edge_index(g) for g in gs]
     nodesum = cumsum([0; v_num_nodes])[1:(end - 1)]
@@ -862,12 +862,12 @@ function Flux.batch(gs::AbstractVector{<:GNNGraph{T}}) where {T <: COO_T}
              cat_features([g.gdata for g in gs]))
 end
 
-function Flux.batch(g::GNNGraph)
+function MLUtils.batch(g::GNNGraph)
     throw(ArgumentError("Cannot batch a `GNNGraph` (containing $(g.num_graphs) graphs). Pass a vector of `GNNGraph`s instead."))
 end
 
 
-function Flux.batch(gs::AbstractVector{<:GNNHeteroGraph})
+function MLUtils.batch(gs::AbstractVector{<:GNNHeteroGraph})
     function edge_index_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
         if haskey(g.graph, edge_t)
             g.graph[edge_t][1:2]
@@ -937,21 +937,21 @@ end
 """
     unbatch(g::GNNGraph)
 
-Opposite of the [`Flux.batch`](@ref) operation, returns 
+Opposite of the [`MLUtils.batch`](@ref) operation, returns 
 an array of the individual graphs batched together in `g`.
 
-See also [`Flux.batch`](@ref) and [`getgraph`](@ref).
+See also [`MLUtils.batch`](@ref) and [`getgraph`](@ref).
 
 # Examples
 
 ```jldoctest
-julia> gbatched = Flux.batch([rand_graph(5, 6), rand_graph(10, 8), rand_graph(4,2)])
+julia> gbatched = MLUtils.batch([rand_graph(5, 6), rand_graph(10, 8), rand_graph(4,2)])
 GNNGraph:
     num_nodes = 19
     num_edges = 16
     num_graphs = 3
 
-julia> Flux.unbatch(gbatched)
+julia> MLUtils.unbatch(gbatched)
 3-element Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}:
  GNNGraph:
     num_nodes = 5
@@ -966,7 +966,7 @@ julia> Flux.unbatch(gbatched)
     num_edges = 2
 ```
 """
-function Flux.unbatch(g::GNNGraph{T}) where {T <: COO_T}
+function MLUtils.unbatch(g::GNNGraph{T}) where {T <: COO_T}
     g.num_graphs == 1 && return [g]
 
     nodemasks = _unbatch_nodemasks(g.graph_indicator, g.num_graphs)
@@ -1005,7 +1005,7 @@ function Flux.unbatch(g::GNNGraph{T}) where {T <: COO_T}
     return [build_graph(i) for i in 1:(g.num_graphs)]
 end
 
-function Flux.unbatch(g::GNNGraph)
+function MLUtils.unbatch(g::GNNGraph)
     return [getgraph(g, i) for i in 1:(g.num_graphs)]
 end
 
@@ -1126,13 +1126,10 @@ function negative_sample(g::GNNGraph;
 
     s, t = edge_index(g)
     n = g.num_nodes
-    if iscuarray(s)
-        # Convert to gpu since set operations and sampling are not supported by CUDA.jl
-        device = Flux.gpu
-        s, t = Flux.cpu(s), Flux.cpu(t)
-    else
-        device = Flux.cpu
-    end
+    device = get_device(s)
+    cdevice = cpu_device()
+    # Convert to gpu since set operations and sampling are not supported by CUDA.jl
+    s, t = cdevice(s), cdevice(t)
     idx_pos, maxid = edge_encoding(s, t, n)
     if bidirected
         num_neg_edges = num_neg_edges ÷ 2

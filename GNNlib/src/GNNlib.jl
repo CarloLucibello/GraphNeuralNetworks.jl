@@ -11,19 +11,13 @@ using ChainRulesCore
 using SparseArrays, Graphs # not needed but if removed Documenter will complain
 using DataStructures: nlargest
 using Reexport: @reexport
-
-include("GNNGraphs/GNNGraphs.jl")
-
-@reexport using .GNNGraphs
-
+using GNNGraphs
 using .GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
                   check_num_nodes, check_num_edges,
                   EType, NType # for heteroconvs
 
 export
-
-
-# utils
+      # utils
       reduce_nodes,
       reduce_edges,
       softmax_nodes,
@@ -31,8 +25,7 @@ export
       broadcast_nodes,
       broadcast_edges,
       softmax_edge_neighbors,
-
-# msgpass
+      # msgpass
       apply_edges,
       aggregate_neighbors,
       propagate,
@@ -43,8 +36,7 @@ export
       xj_sub_xi,
       e_mul_xj,
       w_mul_xj,
-
-# mldatasets
+      # mldatasets
       mldataset2gnngraph
 
 ## The following methods are defined but not exported
@@ -92,4 +84,5 @@ include("layers/pool.jl")
 include("msgpass.jl")
 include("mldatasets.jl")
 
-end
+end #module
+ 
