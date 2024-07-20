@@ -26,7 +26,7 @@ julia> edge_index(g)
 ([1, 3, 3, 4], [5, 4, 5, 2])
 
 # In the bidirected case, edge data will be duplicated on the reverse edges if needed.
-julia> g = rand_graph(5, 4, edata=rand(16, 2))
+julia> g = rand_graph(5, 4, edata=rand(Float32, 16, 2))
 GNNGraph:
     num_nodes = 5
     num_edges = 4
@@ -173,7 +173,7 @@ to its `k` closest `points`.
 ```jldoctest
 julia> n, k = 10, 3;
 
-julia> x = rand(3, n);
+julia> x = rand(Float32, 3, n);
 
 julia> g = knn_graph(x, k)
 GNNGraph:
@@ -254,7 +254,7 @@ to its neighbors within a given distance `r`.
 ```jldoctest
 julia> n, r = 10, 0.75;
 
-julia> x = rand(3, n);
+julia> x = rand(Float32, 3, n);
 
 julia> g = radius_graph(x, r)
 GNNGraph:

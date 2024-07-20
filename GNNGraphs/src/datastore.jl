@@ -9,25 +9,27 @@ At construction time, the `data` can be provided as any iterables of pairs
 of symbols and arrays or as keyword arguments:
 
 ```jldoctest
-julia> ds = DataStore(3, x = rand(2, 3), y = rand(3))
+julia> ds = DataStore(3, x = rand(Float32, 2, 3), y = rand(Float32, 3))
 DataStore(3) with 2 elements:
-  y = 3-element Vector{Float64}
-  x = 2×3 Matrix{Float64}
+  y = 3-element Vector{Float32}
+  x = 2×3 Matrix{Float32}
 
-julia> ds = DataStore(3, Dict(:x => rand(2, 3), :y => rand(3))); # equivalent to above
+julia> ds = DataStore(3, Dict(:x => rand(Float32, 2, 3), :y => rand(Float32, 3))); # equivalent to above
 
-julia> ds = DataStore(3, (x = rand(2, 3), y = rand(30)))
+julia> ds = DataStore(3, (x = rand(Float32, 2, 3), y = rand(Float32, 30)))
 ERROR: AssertionError: DataStore: data[y] has 30 observations, but n = 3
 Stacktrace:
  [1] DataStore(n::Int64, data::Dict{Symbol, Any})
-   @ GraphNeuralNetworks.GNNGraphs ~/.julia/dev/GraphNeuralNetworks/src/GNNGraphs/datastore.jl:54
- [2] DataStore(n::Int64, data::NamedTuple{(:x, :y), Tuple{Matrix{Float64}, Vector{Float64}}})
-   @ GraphNeuralNetworks.GNNGraphs ~/.julia/dev/GraphNeuralNetworks/src/GNNGraphs/datastore.jl:73
+   @ GNNGraphs ~/.julia/dev/GNNGraphs/datastore.jl:54
+ [2] DataStore(n::Int64, data::NamedTuple{(:x, :y), Tuple{Matrix{Float32}, Vector{Float32}}})
+   @ GNNGraphs ~/.julia/dev/GNNGraphs/datastore.jl:73
  [3] top-level scope
    @ REPL[13]:1
 
-julia> ds = DataStore(x = rand(2, 3), y = rand(30)) # no checks
+julia> ds = DataStore(x = randFloat32, 2, 3), y = rand(Float32, 30)) # no checks
 DataStore() with 2 elements:
+  y = 30-element Vector{Float32}
+  x = 2×3 Matrix{Float32}
   y = 30-element Vector{Float64}
   x = 2×3 Matrix{Float64}
 ```
@@ -36,17 +38,17 @@ The `DataStore` has an interface similar to both dictionaries and named tuples.
 Arrays can be accessed and added using either the indexing or the property syntax:
 
 ```jldoctest
-julia> ds = DataStore(x = ones(2, 3), y = zeros(3))
+julia> ds = DataStore(x = ones(Float32, 2, 3), y = zeros(Float32, 3))
 DataStore() with 2 elements:
-  y = 3-element Vector{Float64}
-  x = 2×3 Matrix{Float64}
+  y = 3-element Vector{Float32}
+  x = 2×3 Matrix{Float32}
 
 julia> ds.x   # same as `ds[:x]`
-2×3 Matrix{Float64}:
+2×3 Matrix{Float32}:
  1.0  1.0  1.0
  1.0  1.0  1.0
 
-julia> ds.z = zeros(3)  # Add new feature array `z`. Same as `ds[:z] = rand(3)`
+julia> ds.z = zeros(Float32, 3)  # Add new feature array `z`. Same as `ds[:z] = rand(Float32, 3)`
 3-element Vector{Float64}:
 0.0
 0.0
