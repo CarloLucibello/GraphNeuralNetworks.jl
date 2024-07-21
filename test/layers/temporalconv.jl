@@ -61,6 +61,14 @@ end
     @test model(g1) isa GNNGraph            
 end
 
+@testset "DCGRU" begin
+    dcgru = DCGRU(in_channel => out_channel, 2, g1.num_nodes)
+    @test size(Flux.gradient(x -> sum(dcgru(g1, x)), g1.ndata.x)[1]) == (in_channel, N)
+    model = GNNChain(DCGRU(in_channel => out_channel, 2, g1.num_nodes), Dense(out_channel, 1))
+    @test size(model(g1, g1.ndata.x)) == (1, N)
+    @test model(g1) isa GNNGraph            
+end
+
 @testset "GINConv" begin
     ginconv = GINConv(Dense(in_channel => out_channel),0.3)
     @test length(ginconv(tg, tg.ndata.x)) == S
