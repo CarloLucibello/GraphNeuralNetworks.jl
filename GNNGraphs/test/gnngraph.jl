@@ -57,7 +57,8 @@ end
     # core functionality
     g = GNNGraph(s, t; graph_type = GRAPH_T)
     if TEST_GPU
-        g_gpu = g |> gpu
+        dev = LuxCUDADevice() #TODO replace with gpu_device()
+        g_gpu = g |> dev
     end
 
     @test g.num_edges == 8
@@ -99,12 +100,10 @@ end
     end
 
     @testset "scaled_laplacian" begin if TEST_GPU
-        @test_broken begin
-            mat = scaled_laplacian(g)
-            mat_gpu = scaled_laplacian(g_gpu)
-            @test mat_gpu isa ACUMatrix{Float32}
-            @test Array(mat_gpu) == mat
-        end
+        mat = scaled_laplacian(g)
+        mat_gpu = scaled_laplacian(g_gpu)
+        @test mat_gpu isa ACUMatrix{Float32}
+        @test Array(mat_gpu) ≈ mat
     end end
 
     @testset "constructors" begin
@@ -142,7 +141,8 @@ end
     # core functionality
     g = GNNGraph(s, t; graph_type = GRAPH_T)
     if TEST_GPU
-        g_gpu = g |> gpu
+        dev = LuxCUDADevice() #TODO replace with `gpu_device()`
+        g_gpu = g |> dev
     end
 
     @test g.num_edges == 4
@@ -275,14 +275,14 @@ end
     U = rand(10, 1)
     data = [rand_graph(n, m, ndata = X, edata = E, gdata = U, graph_type = GRAPH_T)
             for _ in 1:num_graphs]
-    g = Flux.batch(data)
+    g = MLUtils.batch(data)
 
     @testset "batch then pass to dataloader" begin
         @test MLUtils.getobs(g, 3) == getgraph(g, 3)
         @test MLUtils.getobs(g, 3:5) == getgraph(g, 3:5)
         @test MLUtils.numobs(g) == g.num_graphs
 
-        d = Flux.DataLoader(g, batchsize = 2, shuffle = false)
+        d = MLUtils.DataLoader(g, batchsize = 2, shuffle = false)
         @test first(d) == getgraph(g, 1:2)
     end
 
@@ -292,7 +292,7 @@ end
         @test MLUtils.getobs(data, 3:5) == [data[3], data[4], data[5]]
         @test MLUtils.numobs(data) == g.num_graphs
 
-        d = Flux.DataLoader(data, batchsize = 2, shuffle = false)
+        d = MLUtils.DataLoader(data, batchsize = 2, shuffle = false)
         @test first(d) == [data[1], data[2]]
     end
 end

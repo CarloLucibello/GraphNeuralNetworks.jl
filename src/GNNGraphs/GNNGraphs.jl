@@ -5,8 +5,6 @@ using Functors: @functor
 import Graphs
 using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree,
               has_self_loops, is_directed
-import Flux
-using Flux: batch
 import NearestNeighbors
 import NNlib
 import StatsBase
@@ -82,7 +80,7 @@ export add_nodes,
        remove_nodes,
        ppr_diffusion,
        drop_nodes,
-# from Flux
+# from MLUtils.jl
        batch,
        unbatch,
 # from SparseArrays

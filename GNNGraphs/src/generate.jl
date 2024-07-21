@@ -254,7 +254,7 @@ to its neighbors within a given distance `r`.
 ```jldoctest
 julia> n, r = 10, 0.75;
 
-julia> x = Float32, 3, n);
+julia> x = rand(Float32, 3, n);
 
 julia> g = radius_graph(x, r)
 GNNGraph:

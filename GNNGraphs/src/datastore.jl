@@ -20,9 +20,9 @@ julia> ds = DataStore(3, (x = rand(Float32, 2, 3), y = rand(Float32, 30)))
 ERROR: AssertionError: DataStore: data[y] has 30 observations, but n = 3
 Stacktrace:
  [1] DataStore(n::Int64, data::Dict{Symbol, Any})
-   @ GNNlib.GNNGraphs ~/.julia/dev/GNNlib/src/GNNGraphs/datastore.jl:54
+   @ GNNGraphs ~/.julia/dev/GNNGraphs/datastore.jl:54
  [2] DataStore(n::Int64, data::NamedTuple{(:x, :y), Tuple{Matrix{Float32}, Vector{Float32}}})
-   @ GNNlib.GNNGraphs ~/.julia/dev/GNNlib/src/GNNGraphs/datastore.jl:73
+   @ GNNGraphs ~/.julia/dev/GNNGraphs/datastore.jl:73
  [3] top-level scope
    @ REPL[13]:1
 
@@ -30,6 +30,8 @@ julia> ds = DataStore(x = randFloat32, 2, 3), y = rand(Float32, 30)) # no checks
 DataStore() with 2 elements:
   y = 30-element Vector{Float32}
   x = 2×3 Matrix{Float32}
+  y = 30-element Vector{Float64}
+  x = 2×3 Matrix{Float64}
 ```
 
 The `DataStore` has an interface similar to both dictionaries and named tuples.

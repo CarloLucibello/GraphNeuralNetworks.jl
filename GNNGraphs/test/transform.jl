@@ -22,15 +22,15 @@ end
     g2 = GNNGraph(random_regular_graph(4, 2), ndata = rand(16, 4), graph_type = GRAPH_T)
     g3 = GNNGraph(random_regular_graph(7, 2), ndata = rand(16, 7), graph_type = GRAPH_T)
 
-    g12 = Flux.batch([g1, g2])
+    g12 = MLUtils.batch([g1, g2])
     g12b = blockdiag(g1, g2)
     @test g12 == g12b
 
-    g123 = Flux.batch([g1, g2, g3])
+    g123 = MLUtils.batch([g1, g2, g3])
     @test g123.graph_indicator == [fill(1, 10); fill(2, 4); fill(3, 7)]
 
     # Allow wider eltype
-    g123 = Flux.batch(GNNGraph[g1, g2, g3])
+    g123 = MLUtils.batch(GNNGraph[g1, g2, g3])
     @test g123.graph_indicator == [fill(1, 10); fill(2, 4); fill(3, 7)]
 
 
@@ -43,11 +43,11 @@ end
     g1 = GNNGraph(g1, gdata = rand())
     g2 = GNNGraph(g2, gdata = rand())
     g3 = GNNGraph(g3, gdata = rand())
-    g123 = Flux.batch([g1, g2, g3])
+    g123 = MLUtils.batch([g1, g2, g3])
     @test g123.gdata.u == [g1.gdata.u, g2.gdata.u, g3.gdata.u]
 
     # Batch of batches
-    g123123 = Flux.batch([g123, g123])
+    g123123 = MLUtils.batch([g123, g123])
     @test g123123.graph_indicator ==
           [fill(1, 10); fill(2, 4); fill(3, 7); fill(4, 10); fill(5, 4); fill(6, 7)]
     @test g123123.num_graphs == 6
@@ -56,8 +56,8 @@ end
 @testset "unbatch" begin
     g1 = rand_graph(10, 20, graph_type = GRAPH_T)
     g2 = rand_graph(5, 10, graph_type = GRAPH_T)
-    g12 = Flux.batch([g1, g2])
-    gs = Flux.unbatch([g1, g2])
+    g12 = MLUtils.batch([g1, g2])
+    gs = MLUtils.unbatch([g1, g2])
     @test length(gs) == 2
     @test gs[1].num_nodes == 10
     @test gs[1].num_edges == 20
@@ -74,8 +74,8 @@ end
     gs = [rand_graph(n, c * n, ndata = rand(2, n), edata = rand(3, c * n),
                      graph_type = GRAPH_T)
           for _ in 1:ngraphs]
-    gall = Flux.batch(gs)
-    gs2 = Flux.unbatch(gall)
+    gall = MLUtils.batch(gs)
+    gs2 = MLUtils.unbatch(gall)
     @test gs2[1] == gs[1]
     @test gs2[end] == gs[end]
 end
@@ -85,7 +85,7 @@ end
                   graph_type = GRAPH_T)
     g2 = GNNGraph(random_regular_graph(4, 2), ndata = rand(16, 4), graph_type = GRAPH_T)
     g3 = GNNGraph(random_regular_graph(7, 2), ndata = rand(16, 7), graph_type = GRAPH_T)
-    g = Flux.batch([g1, g2, g3])
+    g = MLUtils.batch([g1, g2, g3])
 
     g2b, nodemap = getgraph(g, 2, nmap = true)
     s, t = edge_index(g2b)
@@ -435,7 +435,7 @@ end
 @testset "HeteroGraphs" begin
     @testset "batch" begin
         gs = [rand_bipartite_heterograph((10, 15), 20) for _ in 1:5]
-        g = Flux.batch(gs)
+        g = MLUtils.batch(gs)
         @test g.num_nodes[:A] == 50
         @test g.num_nodes[:B] == 75
         @test g.num_edges[(:A,:to,:B)] == 100
@@ -450,14 +450,14 @@ end
             gi.edata[(:A,:to,:B)].e = fill(2, 20)
             gi.gdata.u = 7
         end
-        g = Flux.batch(gs)
+        g = MLUtils.batch(gs)
         @test g.ndata[:A].x == ones(2, 50)
         @test g.ndata[:A].y == zeros(50)
         @test g.edata[(:A,:to,:B)].e == fill(2, 100)
         @test g.gdata.u == fill(7, 5)
 
         # Allow for wider eltype 
-        g = Flux.batch(GNNHeteroGraph[g for g in gs])
+        g = MLUtils.batch(GNNHeteroGraph[g for g in gs])
         @test g.ndata[:A].x == ones(2, 50)
         @test g.ndata[:A].y == zeros(50)
         @test g.edata[(:A,:to,:B)].e == fill(2, 100)
@@ -471,7 +471,7 @@ end
             rand_heterograph((:A => 10, :B => 10, :C => 10), ((:A, :to1, :C) => 5, (:A, :to1, :B) => 5)),
             rand_heterograph((:C => 20), ((:C, :to3, :C) => 10))
         ]
-        g = Flux.batch(gs)
+        g = MLUtils.batch(gs)
 
         @test g.num_nodes[:A] == 10 + 10 + 10
         @test g.num_nodes[:B] == 14 + 15 + 15 + 10
@@ -509,7 +509,7 @@ end
             gi.gdata.u = 7
         end
 
-        g = Flux.batch(gs)
+        g = MLUtils.batch(gs)
 
         @test g.ndata[:A].x == reduce(hcat, fill(0, 10 + 10 + 10))
         @test g.ndata[:A].y == ones(2, 10 + 10 + 10)
@@ -521,7 +521,7 @@ end
         @test g.gdata.u == fill(7, 5)
 
         # Allow for wider eltype 
-        g = Flux.batch(GNNHeteroGraph[g for g in gs])
+        g = MLUtils.batch(GNNHeteroGraph[g for g in gs])
         @test g.ndata[:A].x == reduce(hcat, fill(0, 10 + 10 + 10))
         @test g.ndata[:A].y == ones(2, 10 + 10 + 10)
         @test g.ndata[:B].x == ones(3, 14 + 15 + 15 + 10)

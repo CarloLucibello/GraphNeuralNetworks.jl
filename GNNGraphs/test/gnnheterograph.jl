@@ -195,9 +195,9 @@ end
 #     eindex = ((:A, :rel1, :B) => edges1, (:B, :rel2, :A) => edges2)
 #     ndata = Dict(:A => (x = rand(2, num_nodes[:A]), y = rand(3, num_nodes[:A])),:B => rand(10, num_nodes[:B]))
 #     edata= Dict((:A, :rel1, :B) => (x = rand(2, 20), y = rand(3, 20)),(:B, :rel2, :A) => rand(10, 30))
-#     hg1 = GraphNeuralNetworks.GNNHeteroGraph(eindex; num_nodes)
-#     hg2 = GraphNeuralNetworks.GNNHeteroGraph(eindex; num_nodes, ndata,edata)
-#     hg3 = GraphNeuralNetworks.GNNHeteroGraph(eindex; num_nodes, ndata)
+#     hg1 = GNNHeteroGraph(eindex; num_nodes)
+#     hg2 = GNNHeteroGraph(eindex; num_nodes, ndata,edata)
+#     hg3 = GNNHeteroGraph(eindex; num_nodes, ndata)
 #     @test sprint(show, hg1) == "GNNHeteroGraph(Dict(:A => 10, :B => 20), Dict((:A, :rel1, :B) => 20, (:B, :rel2, :A) => 30))"
 #     @test sprint(show, hg2) == sprint(show, hg1)
 #     @test sprint(show, MIME("text/plain"), hg1; context=:compact => true) == "GNNHeteroGraph(Dict(:A => 10, :B => 20), Dict((:A, :rel1, :B) => 20, (:B, :rel2, :A) => 30))"
