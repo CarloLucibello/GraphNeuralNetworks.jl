@@ -401,6 +401,51 @@ Flux.Recur(tgcn::GConvLSTMCell) = Flux.Recur(tgcn, tgcn.state0)
 _applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph, x) = l(g, x)
 _applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph) = l(g)
 
+struct DCGRUCell
+    in::Int
+    out::Int
+    state0
+    K::Int
+    dconv_u::DConv
+    dconv_r::DConv
+    dconv_c::DConv
+end
+
+Flux.@functor DCGRUCell
+
+function DCGRUCell(ch::Pair{Int,Int}, K::Int, n::Int; bias = true, init = glorot_uniform, init_state = Flux.zeros32)
+    in, out = ch
+    dconv_u = DConv((in + out) => out, K; bias=bias, init=init)
+    dconv_r = DConv((in + out) => out, K; bias=bias, init=init)
+    dconv_c = DConv((in + out) => out, K; bias=bias, init=init)
+    state0 = init_state(out, n)
+    return DCGRUCell(in, out, state0, K, dconv_u, dconv_r, dconv_c)
+end
+
+function (dcgru::DCGRUCell)(h, g::GNNGraph, x)
+    h̃ = vcat(x, h)
+    z = dcgru.dconv_u(g, h̃)
+    z = Flux.sigmoid_fast.(z)
+    r = dcgru.dconv_r(g, h̃)
+    r = Flux.sigmoid_fast.(r)
+    ĥ = vcat(x, h .* r)
+    c = dcgru.dconv_c(g, ĥ)
+    c = Flux.tanh.(c)
+    h = z.* h + (1 .- z) .* c
+    return h, h
+end
+
+function Base.show(io::IO, dcgru::DCGRUCell)
+    print(io, "DCGRUCell($(dcgru.in) => $(dcgru.out), $(dcgru.K))")
+end
+
+DCGRU(ch, K, n; kwargs...) = Flux.Recur(DCGRUCell(ch, K, n; kwargs...))
+Flux.Recur(dcgru::DCGRUCell) = Flux.Recur(dcgru, dcgru.state0)
+
+(l::Flux.Recur{DCGRUCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
+_applylayer(l::Flux.Recur{DCGRUCell}, g::GNNGraph, x) = l(g, x)
+_applylayer(l::Flux.Recur{DCGRUCell}, g::GNNGraph) = l(g)
+
 function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
     return l.(tg.snapshots, x)
 end
