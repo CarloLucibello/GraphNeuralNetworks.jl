@@ -7,6 +7,8 @@ using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree
               has_self_loops, is_directed
 import NearestNeighbors
 import NNlib
+import Flux
+using Flux: batch
 import StatsBase
 import KrylovKit
 using ChainRulesCore
