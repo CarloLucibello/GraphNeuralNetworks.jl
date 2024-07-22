@@ -1126,10 +1126,13 @@ function negative_sample(g::GNNGraph;
 
     s, t = edge_index(g)
     n = g.num_nodes
-    device = get_device(s)
-    cdevice = cpu_device()
-    # Convert to gpu since set operations and sampling are not supported by CUDA.jl
-    s, t = cdevice(s), cdevice(t)
+    if iscuarray(s)
+        # Convert to gpu since set operations and sampling are not supported by CUDA.jl
+        device = Flux.gpu
+        s, t = Flux.cpu(s), Flux.cpu(t)
+    else
+        device = Flux.cpu
+    end
     idx_pos, maxid = edge_encoding(s, t, n)
     if bidirected
         num_neg_edges = num_neg_edges ÷ 2
@@ -1155,6 +1158,7 @@ function negative_sample(g::GNNGraph;
     end
     return GNNGraph(s_neg, t_neg, num_nodes = n) |> device
 end
+
 
 """
     rand_edge_split(g::GNNGraph, frac; bidirected=is_bidirected(g)) -> g1, g2
