@@ -181,7 +181,7 @@ end
     s, t = [1, 2, 3, 4, 5], [2, 3, 4, 5, 1]
     g = GNNGraph((s, t))
     rng = MersenneTwister(42)
-    g_per = perturb_edges(g, 0.5, rng=rng)
+    g_per = perturb_edges(rng, g, 0.5)
     @test g_per.num_edges == 8
 end end
 

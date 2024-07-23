@@ -535,7 +535,7 @@ GNNGraph:
 ```
 """
 perturb_edges(g::GNNGraph{<:COO_T}, perturb_ratio::AbstractFloat) = 
-    pertub_edges(Random.default_rng(), g, perturb_ratio)
+    perturb_edges(Random.default_rng(), g, perturb_ratio)
 
 function perturb_edges(rng::AbstractRNG, g::GNNGraph{<:COO_T}, perturb_ratio::AbstractFloat)
     @assert perturb_ratio >= 0 && perturb_ratio <= 1 "perturb_ratio must be between 0 and 1"
