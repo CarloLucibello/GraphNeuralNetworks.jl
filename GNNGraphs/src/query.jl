@@ -349,7 +349,7 @@ function _degree((s, t)::Tuple, T::Type, dir::Symbol, edge_weight::Nothing, num_
 end
 
 function _degree((s, t)::Tuple, T::Type, dir::Symbol, edge_weight::AbstractVector, num_nodes::Int)
-    degs = fill!(similar(s, T, num_nodes), 0)
+    degs = zeros_like(s, T, num_nodes)
 
     if dir ∈ [:out, :both]
         degs = degs .+ NNlib.scatter(+, edge_weight, s, dstsize = (num_nodes,))

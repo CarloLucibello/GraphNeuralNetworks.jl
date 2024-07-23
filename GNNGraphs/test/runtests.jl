@@ -36,7 +36,7 @@ tests = [
     "sampling",
     "gnnheterograph",
     "temporalsnapshotsgnngraph",
-    "ext/SimpleWeightedGraphs/SimpleWeightedGraphs"
+    "ext/SimpleWeightedGraphs"
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
@@ -49,7 +49,6 @@ for graph_type in (:coo, :dense, :sparse)
     # global TEST_GPU = false
 
     @testset "$t" for t in tests
-        t == "GNNGraphs/sampling" && GRAPH_T != :coo && continue
         include("$t.jl")
     end
 end
