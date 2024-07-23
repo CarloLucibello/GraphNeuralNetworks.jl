@@ -37,7 +37,7 @@ jobs:
           # dev mono repo versions
           pkg"registry up"
           Pkg.update()
-          pkg"dev ./GNNGraphs ./GNNlib ."
+          pkg"dev ./GNNGraphs"
           Pkg.test("GNNGraphs"; coverage=true)
       - uses: julia-actions/julia-processcoverage@v1
         with:
