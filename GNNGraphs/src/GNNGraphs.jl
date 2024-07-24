@@ -80,7 +80,6 @@ export add_nodes,
        perturb_edges,
        remove_nodes,
        ppr_diffusion,
-       drop_nodes,
 # from MLUtils
        batch,
        unbatch,
