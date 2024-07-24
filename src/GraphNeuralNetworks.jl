@@ -13,9 +13,8 @@ using ChainRulesCore
 using Reexport
 using SparseArrays, Graphs # not needed but if removed Documenter will complain
 
-include("GNNGraphs/GNNGraphs.jl")
-@reexport using .GNNGraphs
-using .GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
+@reexport using GNNGraphs
+using GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
                   check_num_nodes, check_num_edges,
                   EType, NType # for heteroconvs
 

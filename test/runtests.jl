@@ -1,7 +1,7 @@
 using CUDA
 using GraphNeuralNetworks
-using GraphNeuralNetworks.GNNGraphs: sort_edge_index
-using GraphNeuralNetworks.GNNGraphs: getn, getdata
+using GNNGraphs: sort_edge_index
+using GNNGraphs: getn, getdata
 using Functors
 using Flux
 using Flux: gpu, @functor
@@ -15,7 +15,6 @@ using Zygote
 using Test
 using MLDatasets
 using InlineStrings  # not used but with the import we test #98 and #104
-using SimpleWeightedGraphs
 
 CUDA.allowscalar(false)
 
@@ -26,17 +25,6 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
-    "GNNGraphs/chainrules",
-    "GNNGraphs/datastore",
-    "GNNGraphs/gnngraph",
-    "GNNGraphs/convert",
-    "GNNGraphs/transform",
-    "GNNGraphs/operators",
-    "GNNGraphs/generate",
-    "GNNGraphs/query",
-    "GNNGraphs/sampling",
-    "GNNGraphs/gnnheterograph",
-    "GNNGraphs/temporalsnapshotsgnngraph",
     "utils",
     "msgpass",
     "layers/basic",
@@ -46,7 +34,6 @@ tests = [
     "layers/pool",
     "mldatasets",
     "examples/node_classification_cora",
-    "deprecations",
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
@@ -61,7 +48,6 @@ for graph_type in (:coo, :dense, :sparse)
 
     @testset "$t" for t in tests
         startswith(t, "examples") && GRAPH_T == :dense && continue     # not testing :dense since causes OutOfMememory on github's CI
-        t == "GNNGraphs/sampling" && GRAPH_T != :coo && continue
         include("$t.jl")
     end
 end

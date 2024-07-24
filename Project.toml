@@ -9,6 +9,7 @@ ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Functors = "d9f16b24-f501-4c13-a1f2-28368ffc5196"
+GNNGraphs = "aed8fd31-079b-4b5a-b342-a13352159b8c"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -24,11 +25,9 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [weakdeps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
-SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 
 [extensions]
 GraphNeuralNetworksCUDAExt = "CUDA"
-GraphNeuralNetworksSimpleWeightedGraphsExt = "SimpleWeightedGraphs"
 
 [compat]
 Adapt = "3, 4"
@@ -38,6 +37,7 @@ DataStructures = "0.18"
 Flux = "0.14"
 Functors = "0.4.1"
 Graphs = "1.4"
+GNNGraphs = "1.0"
 KrylovKit = "0.6, 0.7, 0.8"
 LinearAlgebra = "1"
 MLDatasets = "0.7"
@@ -47,12 +47,11 @@ NNlib = "0.9"
 NearestNeighbors = "0.4"
 Random = "1"
 Reexport = "1"
-SimpleWeightedGraphs = "1.4.0"
 SparseArrays = "1"
 Statistics = "1"
 StatsBase = "0.34"
 cuDNN = "1"
-julia = "1.9"
+julia = "1.10"
 
 [extras]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
@@ -62,10 +61,9 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
 InlineStrings = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
-SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 cuDNN = "02a925ec-e4fe-4b08-9a7e-0d78e3d38ccd"
 
 [targets]
-test = ["Test", "Adapt", "DataFrames", "InlineStrings", "SimpleWeightedGraphs", "Zygote", "FiniteDifferences", "ChainRulesTestUtils", "MLDatasets", "CUDA", "cuDNN"]
+test = ["Test", "Adapt", "DataFrames", "InlineStrings", "Zygote", "FiniteDifferences", "ChainRulesTestUtils", "MLDatasets", "CUDA", "cuDNN"]
