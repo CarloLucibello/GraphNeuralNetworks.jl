@@ -1,4 +1,4 @@
-name: CI
+name: GNN
 on:
   pull_request:
     branches:
@@ -8,15 +8,15 @@ on:
       - master
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         version:
-          # - '1.9' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.5 or higher, change this to '1.5'.
-          - '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
-          - 'nightly'
+          - '1.10' # Replace this with the minimum Julia version that your package supports.
+          - '1' #  '1' will automatically expand to the latest stable 1.x release of Julia.
+          # - 'pre'
         os:
           - ubuntu-latest
         arch:
