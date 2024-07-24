@@ -1,5 +1,15 @@
 # Developer Notes
 
+## Develop Monorepo
+
+GraphNeuralNetworks.jl is package hosted in a monorepo that contains multiple packages. 
+The GraphNeuralNetworks.jl package depends on GNNGraphs.jl, also hosted in the same monorepo.
+
+```julia
+pkg> activate .
+
+pkg> dev ./GNNGraphs
+```
 ## Benchmarking
 
 You can benchmark the effect on performance of your commits using the script `perf/perf.jl`.
