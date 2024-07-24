@@ -6,7 +6,7 @@ Documentation page for the type `GNNHeteroGraph` representing heterogeneous grap
 
 
 ```@autodocs
-Modules = [GraphNeuralNetworks.GNNGraphs]
+Modules = [GNNGraphs]
 Pages   = ["gnnheterograph.jl"]
 Private = false
 ```

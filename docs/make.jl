@@ -1,11 +1,12 @@
 using Flux, NNlib, GraphNeuralNetworks, Graphs, SparseArrays
+using GNNGraphs
 using Pluto, PlutoStaticHTML # for tutorials
 using Documenter, DemoCards
 
-tutorials, tutorials_cb, tutorial_assets = makedemos("tutorials")
+# tutorials, tutorials_cb, tutorial_assets = makedemos("tutorials")
 
 assets = []
-isnothing(tutorial_assets) || push!(assets, tutorial_assets)
+# isnothing(tutorial_assets) || push!(assets, tutorial_assets)
 
 DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup,
                     :(using GraphNeuralNetworks, Graphs, SparseArrays, NNlib, Flux);
@@ -15,7 +16,7 @@ prettyurls = get(ENV, "CI", nothing) == "true"
 mathengine = MathJax3()
 
 makedocs(;
-         modules = [GraphNeuralNetworks, NNlib, Flux, Graphs, SparseArrays],
+         modules = [GraphNeuralNetworks, GNNGraphs],
          doctest = false,
          clean = true,
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets),
@@ -25,7 +26,7 @@ makedocs(;
              "Message Passing" => "messagepassing.md",
              "Model Building" => "models.md",
              "Datasets" => "datasets.md",
-             "Tutorials" => tutorials,
+            #  "Tutorials" => tutorials,
              "API Reference" => [
                  "GNNGraph" => "api/gnngraph.md",
                  "Basic Layers" => "api/basic.md",
@@ -40,6 +41,6 @@ makedocs(;
              "Summer Of Code" => "gsoc.md",
          ])
 
-tutorials_cb()
+# tutorials_cb()
 
 deploydocs(repo = "github.com/CarloLucibello/GraphNeuralNetworks.jl.git")

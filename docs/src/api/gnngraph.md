@@ -26,7 +26,7 @@ GNNGraph
 ## DataStore
 
 ```@autodocs
-Modules = [GraphNeuralNetworks.GNNGraphs]
+Modules = [GNNGraphs]
 Pages   = ["datastore.jl"]
 Private = false
 ```
@@ -34,7 +34,7 @@ Private = false
 ## Query
 
 ```@autodocs
-Modules = [GraphNeuralNetworks.GNNGraphs]
+Modules = [GNNGraphs]
 Pages   = ["query.jl"]
 Private = false
 ```
@@ -47,7 +47,7 @@ Graphs.inneighbors
 ## Transform
 
 ```@autodocs
-Modules = [GraphNeuralNetworks.GNNGraphs]
+Modules = [GNNGraphs]
 Pages   = ["transform.jl"]
 Private = false
 ```
@@ -62,7 +62,7 @@ GNNGraphs.color_refinement
 ## Generate
 
 ```@autodocs
-Modules = [GraphNeuralNetworks.GNNGraphs]
+Modules = [GNNGraphs]
 Pages   = ["generate.jl"]
 Private = false
 Filter = t -> typeof(t) <: Function && t!=rand_temporal_radius_graph && t!=rand_temporal_hyperbolic_graph
@@ -72,7 +72,7 @@ Filter = t -> typeof(t) <: Function && t!=rand_temporal_radius_graph && t!=rand_
 ## Operators
 
 ```@autodocs
-Modules = [GraphNeuralNetworks.GNNGraphs]
+Modules = [GNNGraphs]
 Pages   = ["operators.jl"]
 Private = false
 ```
@@ -84,7 +84,7 @@ Graphs.intersect
 ## Sampling 
 
 ```@autodocs
-Modules = [GraphNeuralNetworks.GNNGraphs]
+Modules = [GNNGraphs]
 Pages   = ["sampling.jl"]
 Private = false
 ```
