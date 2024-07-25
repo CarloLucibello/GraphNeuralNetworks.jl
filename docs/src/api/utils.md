@@ -33,11 +33,9 @@ GraphNeuralNetworks.softmax_edge_neighbors
 
 ### NNlib
 
-Primitive functions implemented in NNlib.jl.
+Primitive functions implemented in NNlib.jl:
 
-```@docs
-NNlib.gather!
-NNlib.gather
-NNlib.scatter!
-NNlib.scatter
-```
+- [`gather!`](https://fluxml.ai/NNlib.jl/stable/reference/#NNlib.gather!)
+- [`gather`](https://fluxml.ai/NNlib.jl/stable/reference/#NNlib.gather)
+- [`scatter!`](https://fluxml.ai/NNlib.jl/stable/reference/#NNlib.scatter!)
+- [`scatter`](https://fluxml.ai/NNlib.jl/stable/reference/#NNlib.scatter)

@@ -2,11 +2,18 @@ using Flux, NNlib, GraphNeuralNetworks, Graphs, SparseArrays
 using GNNGraphs
 using Pluto, PlutoStaticHTML # for tutorials
 using Documenter, DemoCards
+using DocumenterInterLinks
+
+# 
 
 # tutorials, tutorials_cb, tutorial_assets = makedemos("tutorials")
-
 assets = []
 # isnothing(tutorial_assets) || push!(assets, tutorial_assets)
+
+interlinks = InterLinks(
+    "NNlib" => "https://fluxml.ai/NNlib.jl/stable/",
+    "Graphs" => "https://juliagraphs.org/Graphs.jl/stable/")
+
 
 DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup,
                     :(using GraphNeuralNetworks, Graphs, SparseArrays, NNlib, Flux);
@@ -19,6 +26,7 @@ makedocs(;
          modules = [GraphNeuralNetworks, GNNGraphs],
          doctest = false,
          clean = true,
+         plugins = [interlinks],
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets),
          sitename = "GraphNeuralNetworks.jl",
          pages = ["Home" => "index.md",

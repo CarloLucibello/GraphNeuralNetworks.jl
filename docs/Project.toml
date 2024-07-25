@@ -1,6 +1,7 @@
 [deps]
 DemoCards = "311a05b2-6137-4a5a-b473-18580a3d38b5"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterInterLinks = "d12716ef-a0f6-4df4-a9f1-a5a34e75c656"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 GNNGraphs = "aed8fd31-079b-4b5a-b342-a13352159b8c"
 GraphNeuralNetworks = "cffab07f-9bc2-4db1-8861-388f63bf7694"

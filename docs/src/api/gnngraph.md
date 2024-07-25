@@ -21,6 +21,7 @@ Pages   = ["gnngraph.md"]
 
 ```@docs
 GNNGraph
+Base.copy
 ```
 
 ## DataStore
@@ -40,8 +41,8 @@ Private = false
 ```
 
 ```@docs
-Graphs.outneighbors
-Graphs.inneighbors
+Graphs.neighbors
+Graphs.has_edge
 ```
 
 ## Transform
