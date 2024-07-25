@@ -1,5 +1,3 @@
-using DataStructures: nlargest
-
 @doc raw"""
     GlobalPool(aggr)
 

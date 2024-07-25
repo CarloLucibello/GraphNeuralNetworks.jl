@@ -2,8 +2,6 @@ module GNNlib
 
 using Statistics: mean
 using LinearAlgebra, Random
-using Base: tail
-using MacroTools: @forward
 using MLUtils
 using NNlib
 using NNlib: scatter, gather
