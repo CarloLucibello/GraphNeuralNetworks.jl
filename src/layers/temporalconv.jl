@@ -401,6 +401,89 @@ Flux.Recur(tgcn::GConvLSTMCell) = Flux.Recur(tgcn, tgcn.state0)
 _applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph, x) = l(g, x)
 _applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph) = l(g)
 
+struct DCGRUCell
+    in::Int
+    out::Int
+    state0
+    k::Int
+    dconv_u::DConv
+    dconv_r::DConv
+    dconv_c::DConv
+end
+
+Flux.@functor DCGRUCell
+
+function DCGRUCell(ch::Pair{Int,Int}, k::Int, n::Int; bias = true, init = glorot_uniform, init_state = Flux.zeros32)
+    in, out = ch
+    dconv_u = DConv((in + out) => out, k; bias=bias, init=init)
+    dconv_r = DConv((in + out) => out, k; bias=bias, init=init)
+    dconv_c = DConv((in + out) => out, k; bias=bias, init=init)
+    state0 = init_state(out, n)
+    return DCGRUCell(in, out, state0, k, dconv_u, dconv_r, dconv_c)
+end
+
+function (dcgru::DCGRUCell)(h, g::GNNGraph, x)
+    h̃ = vcat(x, h)
+    z = dcgru.dconv_u(g, h̃)
+    z = NNlib.sigmoid_fast.(z)
+    r = dcgru.dconv_r(g, h̃)
+    r = NNlib.sigmoid_fast.(r)
+    ĥ = vcat(x, h .* r)
+    c = dcgru.dconv_c(g, ĥ)
+    c = tanh.(c)
+    h = z.* h + (1 .- z) .* c
+    return h, h
+end
+
+function Base.show(io::IO, dcgru::DCGRUCell)
+    print(io, "DCGRUCell($(dcgru.in) => $(dcgru.out), $(dcgru.k))")
+end
+
+"""
+    DCGRU(in => out, k, n; [bias, init, init_state])
+
+Diffusion Convolutional Recurrent Neural Network (DCGRU) layer from the paper [Diffusion Convolutional Recurrent Neural
+Network: Data-driven Traffic Forecasting](https://arxiv.org/pdf/1707.01926).
+
+Performs a Diffusion Convolutional layer to model spatial dependencies, followed by a Gated Recurrent Unit (GRU) cell to model temporal dependencies.
+
+# Arguments
+
+- `in`: Number of input features.
+- `out`: Number of output features.
+- `k`: Diffusion step.
+- `n`: Number of nodes in the graph.
+- `bias`: Add learnable bias. Default `true`.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `init_state`: Initial state of the hidden stat of the LSTM layer. Default `zeros32`.
+
+# Examples
+
+```jldoctest
+julia> g1, x1 = rand_graph(5, 10), rand(Float32, 2, 5);
+
+julia> dcgru = DCGRU(2 => 5, 2, g1.num_nodes);
+
+julia> y = dcgru(g1, x1);
+
+julia> size(y)
+(5, 5)
+
+julia> g2, x2 = rand_graph(5, 10), rand(Float32, 2, 5, 30);
+
+julia> z = dcgru(g2, x2);
+
+julia> size(z)
+(5, 5, 30)
+```
+"""
+DCGRU(ch, k, n; kwargs...) = Flux.Recur(DCGRUCell(ch, k, n; kwargs...))
+Flux.Recur(dcgru::DCGRUCell) = Flux.Recur(dcgru, dcgru.state0)
+
+(l::Flux.Recur{DCGRUCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
+_applylayer(l::Flux.Recur{DCGRUCell}, g::GNNGraph, x) = l(g, x)
+_applylayer(l::Flux.Recur{DCGRUCell}, g::GNNGraph) = l(g)
+
 function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
     return l.(tg.snapshots, x)
 end
