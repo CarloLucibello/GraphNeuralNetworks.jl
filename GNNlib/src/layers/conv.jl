@@ -199,7 +199,7 @@ function gatv2_message(l, Wxi, Wxj, e)
 end
 
 
-# TODO remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
+# TODO PIRACY! remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
 @non_differentiable fill!(x...)
 
 function gated_graph_conv(l, g::GNNGraph, H::AbstractMatrix{S}) where {S <: Real}

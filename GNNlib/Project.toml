@@ -4,18 +4,14 @@ authors = ["Carlo Lucibello and contributors"]
 version = "0.1.0"
 
 [deps]
-Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-Functors = "d9f16b24-f501-4c13-a1f2-28368ffc5196"
+GNNGraphs = "aed8fd31-079b-4b5a-b342-a13352159b8c"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
-KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MLUtils = "f1d291b0-491e-4a28-83b9-f70985020b54"
 NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
-SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [weakdeps]
@@ -25,36 +21,19 @@ CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 GNNlibCUDAExt = "CUDA"
 
 [compat]
-Adapt = "3, 4"
+ChainRulesCore = "1.24"
 CUDA = "4, 5"
-ChainRulesCore = "1"
 DataStructures = "0.18"
-Functors = "0.4.1"
-Graphs = "1.4"
-KrylovKit = "0.6, 0.7"
+GNNGraphs = "1.0"
 LinearAlgebra = "1"
-MLDatasets = "0.7"
 MLUtils = "0.4"
 NNlib = "0.9"
 Random = "1"
-Reexport = "1"
-SparseArrays = "1"
 Statistics = "1"
-cuDNN = "1"
 julia = "1.10"
 
 [extras]
-Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
-ChainRulesTestUtils = "cdddcdb0-9152-4a09-a978-84456f9df70a"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
-InlineStrings = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
-MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
-SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
-cuDNN = "02a925ec-e4fe-4b08-9a7e-0d78e3d38ccd"
 
 [targets]
-test = ["Test", "Adapt", "DataFrames", "InlineStrings", "SimpleWeightedGraphs", "Zygote", "FiniteDifferences", "ChainRulesTestUtils", "MLDatasets", "CUDA", "cuDNN"]
+test = ["Test"]
