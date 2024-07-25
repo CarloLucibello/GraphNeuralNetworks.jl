@@ -108,4 +108,7 @@ export sort_edge_index, color_refinement
 include("gatherscatter.jl")
 # _gather, _scatter
 
+include("mldatasets.jl")
+export mldataset2gnngraph
+
 end #module

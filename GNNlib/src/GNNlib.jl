@@ -31,9 +31,7 @@ export
       xi_sub_xj,
       xj_sub_xi,
       e_mul_xj,
-      w_mul_xj,
-      # mldatasets
-      mldataset2gnngraph
+      w_mul_xj
 
 ## The following methods are defined but not exported
 
@@ -78,7 +76,6 @@ include("layers/conv.jl")
 include("layers/temporalconv.jl")
 include("layers/pool.jl")
 include("msgpass.jl")
-include("mldatasets.jl")
 
 end #module
  
