@@ -90,11 +90,11 @@ function  cheb_conv(c, g::GNNGraph, X::AbstractMatrix{T}) where {T}
     return Y .+ c.bias
 end
 
-function graph_conv(l, g::AbstractGNNGraph, x)
+function graph_conv(l, g::AbstractGNNGraph, x, ps)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
     m = propagate(copy_xj, g, l.aggr, xj = xj)
-    x = l.σ.(l.weight1 * xi .+ l.weight2 * m .+ l.bias)
+    x = l.σ.(ps.weight1 * xi .+ ps.weight2 * m .+ ps.bias)
     return x
 end
 
