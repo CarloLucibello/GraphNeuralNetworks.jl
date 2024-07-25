@@ -1,5 +1,9 @@
-using Flux, NNlib, GraphNeuralNetworks, Graphs, SparseArrays
+using GraphNeuralNetworks
 using GNNGraphs
+using Flux 
+using NNlib
+using Graphs
+using SparseArrays
 using Pluto, PlutoStaticHTML # for tutorials
 using Documenter, DemoCards
 using DocumenterInterLinks

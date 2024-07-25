@@ -11,6 +11,10 @@ Pages   = ["gnnheterograph.jl"]
 Private = false
 ```
 
+```@docs
+Graphs.has_edge(::GNNHeteroGraph, ::Tuple{Symbol, Symbol, Symbol}, ::Integer, ::Integer)
+```
+
 ## Heterogeneous Graph Convolutions
 
 Heterogeneous graph convolutions are implemented in the type [`HeteroGraphConv`](@ref).

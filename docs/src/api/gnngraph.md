@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = GraphNeuralNetworks
+CurrentModule = GNNGraphs
 ```
 
 # GNNGraph
@@ -41,8 +41,7 @@ Private = false
 ```
 
 ```@docs
-Graphs.neighbors
-Graphs.has_edge
+Graphs.neighbors(::GNNGraph, ::Integer)
 ```
 
 ## Transform
@@ -79,7 +78,7 @@ Private = false
 ```
 
 ```@docs
-Graphs.intersect
+Base.intersect
 ```
 
 ## Sampling 
