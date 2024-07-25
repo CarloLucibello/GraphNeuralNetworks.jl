@@ -1,4 +1,9 @@
 # 2 or more args graph operators
+""""
+    intersect(g1::GNNGraph, g2::GNNGraph)
+
+Intersect two graphs by keeping only the common edges.
+"""
 function Base.intersect(g1::GNNGraph, g2::GNNGraph)
     @assert g1.num_nodes == g2.num_nodes
     @assert graph_type_symbol(g1) == graph_type_symbol(g2)

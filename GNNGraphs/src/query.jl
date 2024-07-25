@@ -89,7 +89,17 @@ Graphs.ne(g::GNNGraph) = g.num_edges
 Graphs.has_vertex(g::GNNGraph, i::Int) = 1 <= i <= g.num_nodes
 Graphs.vertices(g::GNNGraph) = 1:(g.num_nodes)
 
-function Graphs.neighbors(g::GNNGraph, i; dir = :out)
+
+"""
+    neighbors(g::GNNGraph, i::Integer; dir=:out)
+
+Return the neighbors of node `i` in the graph `g`.
+If `dir=:out`, return the neighbors through outgoing edges.
+If `dir=:in`, return the neighbors through incoming edges.
+
+See also [`outneighbors`](@ref Graphs.outneighbors), [`inneighbors`](@ref Graphs.inneighbors).
+"""
+function Graphs.neighbors(g::GNNGraph, i::Integer; dir::Symbol = :out)
     @assert dir ∈ (:in, :out)
     if dir == :out
         outneighbors(g, i)
@@ -98,6 +108,13 @@ function Graphs.neighbors(g::GNNGraph, i; dir = :out)
     end
 end
 
+"""
+    outneighbors(g::GNNGraph, i::Integer)
+
+Return the neighbors of node `i` in the graph `g` through outgoing edges.
+
+See also [`neighbors`](@ref Graphs.neighbors) and [`inneighbors`](@ref Graphs.inneighbors).
+"""
 function Graphs.outneighbors(g::GNNGraph{<:COO_T}, i::Integer)
     s, t = edge_index(g)
     return t[s .== i]
@@ -108,6 +125,13 @@ function Graphs.outneighbors(g::GNNGraph{<:ADJMAT_T}, i::Integer)
     return findall(!=(0), A[i, :])
 end
 
+"""
+    inneighbors(g::GNNGraph, i::Integer)
+
+Return the neighbors of node `i` in the graph `g` through incoming edges.
+
+See also [`neighbors`](@ref Graphs.neighbors) and [`outneighbors`](@ref Graphs.outneighbors).
+"""
 function Graphs.inneighbors(g::GNNGraph{<:COO_T}, i::Integer)
     s, t = edge_index(g)
     return s[t .== i]

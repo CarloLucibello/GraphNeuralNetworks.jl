@@ -9,3 +9,4 @@ Manifest.toml
 .vscode
 LocalPreferences.toml
 .DS_Store
+docs/src/democards/gridtheme.css

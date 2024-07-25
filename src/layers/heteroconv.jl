@@ -78,7 +78,7 @@ function _reduceby_node_t(aggr, outs, ntypes)
     end
     # workaround to provide the aggregation once per unique node type,
     # gradient is not needed
-    unique_ntypes = Flux.ChainRulesCore.ignore_derivatives() do
+    unique_ntypes = ChainRulesCore.ignore_derivatives() do
         unique(ntypes)
     end
     vals = [_reduce(node_t) for node_t in unique_ntypes]

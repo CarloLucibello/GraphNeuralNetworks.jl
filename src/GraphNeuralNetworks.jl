@@ -2,16 +2,15 @@ module GraphNeuralNetworks
 
 using Statistics: mean
 using LinearAlgebra, Random
-using Base: tail
 using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, @functor, batch
 using MacroTools: @forward
-using MLUtils
 using NNlib
 using NNlib: scatter, gather
 using ChainRulesCore
 using Reexport
-using SparseArrays, Graphs # not needed but if removed Documenter will complain
+using DataStructures: nlargest
+using MLUtils: zeros_like
 
 @reexport using GNNGraphs
 using GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,

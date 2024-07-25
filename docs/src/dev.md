@@ -10,6 +10,24 @@ pkg> activate .
 
 pkg> dev ./GNNGraphs
 ```
+
+
+For generating the documentation locally instead
+```
+cd docs
+julia
+```
+```julia
+(@v1.10) pkg> activate .
+  Activating project at `~/.julia/dev/GraphNeuralNetworks/docs`
+
+(docs) pkg> dev ../ ../GNNGraphs/
+   Resolving package versions...
+  No Changes to `~/.julia/dev/GraphNeuralNetworks/docs/Project.toml`
+  No Changes to `~/.julia/dev/GraphNeuralNetworks/docs/Manifest.toml`
+
+julia> include("make.jl")
+```
 ## Benchmarking
 
 You can benchmark the effect on performance of your commits using the script `perf/perf.jl`.
