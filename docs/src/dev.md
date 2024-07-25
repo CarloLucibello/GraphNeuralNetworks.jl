@@ -11,6 +11,8 @@ pkg> activate .
 pkg> dev ./GNNGraphs
 ```
 
+Each PR should update the version number in the Porject.toml file of each involved package if needed by semnatic versioning. For instance, when adding new features GNNGraphs could move from "1.17.5" to "1.18.0-DEV". The "DEV" will be removed when the package is tagged and released.
+
 
 For generating the documentation locally instead
 ```

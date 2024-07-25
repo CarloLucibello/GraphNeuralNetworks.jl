@@ -1,7 +1,7 @@
 name = "GraphNeuralNetworks"
 uuid = "cffab07f-9bc2-4db1-8861-388f63bf7694"
 authors = ["Carlo Lucibello and contributors"]
-version = "0.6.20"
+version = "0.6.21-DEV"
 
 [deps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
@@ -32,6 +32,7 @@ Functors = "0.4.1"
 GNNGraphs = "1.0"
 LinearAlgebra = "1"
 MacroTools = "0.5"
+MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
 MLUtils = "0.4"
 NNlib = "0.9"
 Random = "1"
@@ -54,4 +55,4 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 cuDNN = "02a925ec-e4fe-4b08-9a7e-0d78e3d38ccd"
 
 [targets]
-test = ["Test", "Adapt", "DataFrames", "InlineStrings", "SparseArrays", "Graphs", "Zygote", "FiniteDifferences", "ChainRulesTestUtils", "CUDA", "cuDNN"]
+test = ["Test", "MLDatasets", "Adapt", "DataFrames", "InlineStrings", "SparseArrays", "Graphs", "Zygote", "FiniteDifferences", "ChainRulesTestUtils", "CUDA", "cuDNN"]
