@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: julia --project=docs/ -e '
           using Pkg;
-          Pkg.develop([PackageSpec(path=joinpath(pwd(), "GNNGraphs"))]);
+          Pkg.develop([PackageSpec(path=pwd()), PackageSpec(path=joinpath(pwd(), "GNNGraphs"))]);
           Pkg.instantiate();'
       - name: Build and deploy
         env:
