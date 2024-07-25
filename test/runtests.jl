@@ -31,7 +31,6 @@ tests = [
     "layers/heteroconv",
     "layers/temporalconv",
     "layers/pool",
-    "mldatasets",
     "examples/node_classification_cora",
 ]
 

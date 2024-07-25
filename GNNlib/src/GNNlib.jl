@@ -2,13 +2,11 @@ module GNNlib
 
 using Statistics: mean
 using LinearAlgebra, Random
-using MLUtils
+using MLUtils: zeros_like
 using NNlib
 using NNlib: scatter, gather
-using ChainRulesCore
-using SparseArrays, Graphs # not needed but if removed Documenter will complain
 using DataStructures: nlargest
-using Reexport: @reexport
+using ChainRulesCore: @non_differentiable
 using GNNGraphs
 using .GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
                   check_num_nodes, check_num_edges,
@@ -33,9 +31,7 @@ export
       xi_sub_xj,
       xj_sub_xi,
       e_mul_xj,
-      w_mul_xj,
-      # mldatasets
-      mldataset2gnngraph
+      w_mul_xj
 
 ## The following methods are defined but not exported
 
@@ -80,7 +76,6 @@ include("layers/conv.jl")
 include("layers/temporalconv.jl")
 include("layers/pool.jl")
 include("msgpass.jl")
-include("mldatasets.jl")
 
 end #module
  

@@ -1,7 +1,8 @@
 # Developer Notes
 
-## Develop Monorepo
+## Develop and Managing the Monorepo
 
+### Development
 GraphNeuralNetworks.jl is package hosted in a monorepo that contains multiple packages. 
 The GraphNeuralNetworks.jl package depends on GNNGraphs.jl, also hosted in the same monorepo.
 
@@ -11,8 +12,12 @@ pkg> activate .
 pkg> dev ./GNNGraphs
 ```
 
+### Versions and Tagging
+Each PR should update the version number in the Porject.toml file of each involved package if needed by semnatic versioning. For instance, when adding new features GNNGraphs could move from "1.17.5" to "1.18.0-DEV". The "DEV" will be removed when the package is tagged and released. Pay also attention to updating
+the compat bounds, e.g. GraphNeuralNetworks might require a newer version of GNNGraphs.
 
-For generating the documentation locally instead
+### Generate Documentation Locally
+For generating the documentation locally
 ```
 cd docs
 julia

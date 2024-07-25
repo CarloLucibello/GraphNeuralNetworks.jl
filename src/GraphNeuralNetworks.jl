@@ -93,7 +93,6 @@ include("layers/heteroconv.jl")
 include("layers/temporalconv.jl")
 include("layers/pool.jl")
 include("msgpass.jl")
-include("mldatasets.jl")
 include("deprecations.jl")
 
 end

@@ -36,6 +36,7 @@ tests = [
     "sampling",
     "gnnheterograph",
     "temporalsnapshotsgnngraph",
+    "mldatasets",
     "ext/SimpleWeightedGraphs"
 ]
 
