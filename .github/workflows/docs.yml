@@ -16,12 +16,10 @@ jobs:
         with:
           version: '1.10.4'
       - name: Install dependencies
-        shell: julia --project=docs/ {0}
-        run: |
-          using Pkg
-          Pkg.develop(path="./GNNGraphs") 
-          Pkg.develop(path=".")
-          Pkg.instantiate()
+        run: julia --project=docs/ -e '
+          using Pkg;
+          Pkg.develop([PackageSpec(path=joinpath(pwd(), "GNNGraphs"))]);
+          Pkg.instantiate();'
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
