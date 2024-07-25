@@ -425,12 +425,12 @@ end
 function (dcgru::DCGRUCell)(h, g::GNNGraph, x)
     h̃ = vcat(x, h)
     z = dcgru.dconv_u(g, h̃)
-    z = Flux.sigmoid_fast.(z)
+    z = NNlib.sigmoid_fast.(z)
     r = dcgru.dconv_r(g, h̃)
-    r = Flux.sigmoid_fast.(r)
+    r = NNlib.sigmoid_fast.(r)
     ĥ = vcat(x, h .* r)
     c = dcgru.dconv_c(g, ĥ)
-    c = Flux.tanh.(c)
+    c = tanh.(c)
     h = z.* h + (1 .- z) .* c
     return h, h
 end
