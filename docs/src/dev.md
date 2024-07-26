@@ -2,7 +2,7 @@
 
 ## Develop and Managing the Monorepo
 
-### Development
+### Development Enviroment
 GraphNeuralNetworks.jl is package hosted in a monorepo that contains multiple packages. 
 The GraphNeuralNetworks.jl package depends on GNNGraphs.jl, also hosted in the same monorepo.
 
@@ -11,6 +11,14 @@ pkg> activate .
 
 pkg> dev ./GNNGraphs
 ```
+
+### Add a New Layer 
+
+To add a new graph convolutional layer and make it available in both the Flux-based frontend (GraphNeuralNetworks.jl) and the Lux-based frontend (GNNLux), you need to:
+1. Add the functional version to GNNlib
+2. Add the stateful version to GraphNeuralNetworks
+3. Add the stateless version to GNNLux
+4. Add the layer to the table in docs/api/conv.md
 
 ### Versions and Tagging
 Each PR should update the version number in the Porject.toml file of each involved package if needed by semnatic versioning. For instance, when adding new features GNNGraphs could move from "1.17.5" to "1.18.0-DEV". The "DEV" will be removed when the package is tagged and released. Pay also attention to updating

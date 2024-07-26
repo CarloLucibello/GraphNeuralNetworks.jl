@@ -73,7 +73,6 @@ test_graphs = [g1, g_single_vertex]
         a = rand(T, in_channel, N)
         g2 = GNNGraph(adj1, ndata = a)
         @test l(g2, g2.ndata.x, conv_weight = w) == w * a
-    
     end
 end
 

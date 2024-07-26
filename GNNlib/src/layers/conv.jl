@@ -10,12 +10,17 @@ end
 
 check_gcnconv_input(g::AbstractGNNGraph, edge_weight::Nothing) = nothing
 
-function gcn_conv(l, g::AbstractGNNGraph, x,
-            edge_weight::EW = nothing,
-            norm_fn::Function = d -> 1 ./ sqrt.(d)  
-            ) where {EW <: Union{Nothing, AbstractVector}}
-
+function gcn_conv(l, g::AbstractGNNGraph, x, edge_weight::EW, norm_fn::F, conv_weight::CW, ps) where 
+        {EW <: Union{Nothing, AbstractVector}, CW<:Union{Nothing,AbstractMatrix}, F}
     check_gcnconv_input(g, edge_weight)
+    if conv_weight === nothing
+        weight = ps.weight
+    else
+        weight = conv_weight
+        if size(weight) != size(ps.weight)
+            throw(ArgumentError("The weight matrix has the wrong size. Expected $(size(ps.weight)) but got $(size(weight))"))
+        end
+    end
 
     if l.add_self_loops
         g = add_self_loops(g)
@@ -26,11 +31,11 @@ function gcn_conv(l, g::AbstractGNNGraph, x,
             @assert length(edge_weight) == g.num_edges
         end
     end
-    Dout, Din = size(l.weight)
+    Dout, Din = size(weight)
     if Dout < Din && !(g isa GNNHeteroGraph)
         # multiply before convolution if it is more convenient, otherwise multiply after
         # (this works only for homogenous graph)
-        x = l.weight * x
+        x = weight * x
     end
 
     xj, xi = expand_srcdst(g, x) # expand only after potential multiplication
@@ -60,34 +65,38 @@ function gcn_conv(l, g::AbstractGNNGraph, x,
     end
     x = x .* cin'
     if Dout >= Din || g isa GNNHeteroGraph
-        x = l.weight * x
+        x = weight * x
     end
-    return l.σ.(x .+ l.bias)
+    if l.use_bias
+        x = x .+ ps.bias
+    end
+    return l.σ.(x)
 end
 
-function gcn_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
-                edge_weight::AbstractVector, norm_fn::Function)
-    
+# when we also have edge_weight we need to convert the graph to COO
+function gcn_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix, edge_weight::AbstractVector, norm_fn::F, ps) where F    
     g = GNNGraph(edge_index(g)...; g.num_nodes)  # convert to COO
-    return gcn_conv(l, g, x, edge_weight, norm_fn)
+    return gcn_conv(l, g, x, edge_weight, norm_fn, ps)
 end
 
-
-function  cheb_conv(c, g::GNNGraph, X::AbstractMatrix{T}) where {T}
+function cheb_conv(c, g::GNNGraph, X::AbstractMatrix{T}, ps) where {T}
     check_num_nodes(g, X)
-    @assert size(X, 1)==size(c.weight, 2) "Input feature size must match input channel size."
+    @assert size(X, 1) == size(ps.weight, 2) "Input feature size must match input channel size."
 
     L̃ = scaled_laplacian(g, eltype(X))
 
     Z_prev = X
     Z = X * L̃
-    Y = view(c.weight, :, :, 1) * Z_prev
-    Y += view(c.weight, :, :, 2) * Z
+    Y = view(ps.weight, :, :, 1) * Z_prev
+    Y = Y .+ view(ps.weight, :, :, 2) * Z
     for k in 3:(c.k)
         Z, Z_prev = 2 * Z * L̃ - Z_prev, Z
-        Y += view(c.weight, :, :, k) * Z
+        Y = Y .+ view(ps.weight, :, :, k) * Z
     end
-    return Y .+ c.bias
+    if c.use_bias
+        Y = Y .+ ps.bias
+    end
+    return Y
 end
 
 function graph_conv(l, g::AbstractGNNGraph, x, ps)
