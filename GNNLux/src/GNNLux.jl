@@ -8,8 +8,13 @@ using Random: AbstractRNG
 using GNNlib: GNNlib
 @reexport using GNNGraphs
 
+include("layers/basic.jl")
+export GNNLayer
+
 include("layers/conv.jl")
-export GraphConv
+export GCNConv,
+       ChebConv,
+       GraphConv
 
 end #module
  
