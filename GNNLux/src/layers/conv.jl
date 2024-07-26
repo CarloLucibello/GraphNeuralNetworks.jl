@@ -46,10 +46,10 @@ function LuxCore.initialparameters(rng::AbstractRNG, l::GCNConv)
     weight = l.init_weight(rng, l.out_dims, l.in_dims)
     if l.use_bias
         bias = l.init_bias(rng, l.out_dims)
+        return (; weight, bias)
     else
-        bias = false
+        return (; weight)
     end
-    return (; weight, bias)
 end
 
 LuxCore.parameterlength(l::GCNConv) = l.use_bias ? l.in_dims * l.out_dims + l.out_dims : l.in_dims * l.out_dims
@@ -61,11 +61,11 @@ function Base.show(io::IO, l::GCNConv)
     l.σ == identity || print(io, ", ", l.σ)
     l.use_bias || print(io, ", use_bias=false")
     l.add_self_loops || print(io, ", add_self_loops=false")
-    l.use_edge_weight || print(io, ", use_edge_weight=true")
+    !l.use_edge_weight || print(io, ", use_edge_weight=true")
     print(io, ")")
 end
 
-# TODO norm_fn should be keyword argument
+# TODO norm_fn should be keyword argument only
 (l::GCNConv)(g, x, ps, st; conv_weight=nothing, edge_weight=nothing, norm_fn= d -> 1 ./ sqrt.(d)) = 
     l(g, x, edge_weight, norm_fn, ps, st; conv_weight)
 (l::GCNConv)(g, x, edge_weight, ps, st; conv_weight=nothing, norm_fn = d -> 1 ./ sqrt.(d)) = 
