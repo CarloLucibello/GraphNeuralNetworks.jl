@@ -79,8 +79,8 @@ function LuxCore.parameterlength(l::GraphConv)
     end
 end
 
-statelength(d::GraphConv) = 0
-outputsize(d::GraphConv) = (d.out_dims,)
+LuxCore.statelength(d::GraphConv) = 0
+LuxCore.outputsize(d::GraphConv) = (d.out_dims,)
 
 function Base.show(io::IO, l::GraphConv)
     print(io, "GraphConv(", l.in_dims, " => ", l.out_dims)

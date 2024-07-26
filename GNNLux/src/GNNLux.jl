@@ -5,7 +5,7 @@ using LuxCore: LuxCore, AbstractExplicitLayer
 using Lux: glorot_uniform, zeros32
 using Reexport: @reexport
 using Random: AbstractRNG
-
+using GNNlib: GNNlib
 @reexport using GNNGraphs
 
 include("layers/conv.jl")

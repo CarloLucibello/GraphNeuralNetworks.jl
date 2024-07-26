@@ -94,8 +94,11 @@ function graph_conv(l, g::AbstractGNNGraph, x, ps)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
     m = propagate(copy_xj, g, l.aggr, xj = xj)
-    x = l.σ.(ps.weight1 * xi .+ ps.weight2 * m .+ ps.bias)
-    return x
+    x = ps.weight1 * xi .+ ps.weight2 * m
+    if l.use_bias
+        x = x .+ ps.bias
+    end
+    return l.σ.(x)
 end
 
 function gat_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} = nothing)
