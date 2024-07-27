@@ -14,7 +14,7 @@ using LinearAlgebra, Random, Statistics
 import MLUtils
 using MLUtils: getobs, numobs, ones_like, zeros_like, chunk, batch, rand_like
 import Functors
-using LuxDeviceUtils: get_device, cpu_device, LuxCPUDevice
+using MLDataDevices: get_device, cpu_device, CPUDevice
 
 include("chainrules.jl") # hacks for differentiability
 
