@@ -54,7 +54,7 @@ test_graphs = [g1, g_single_vertex]
         y = l(g, x)
         @test y[1, 1] ≈ w[1] / √(d[1] * d[2]) + w[2] / √(d[1] * d[3])
         @test y[1, 2] ≈ w[3] / √(d[2] * d[1]) + w[4] / √(d[2] * d[3])
-        @test y ≈ l(g, x, w, custom_norm_fn) # checking without custom
+        @test y ≈ l(g, x, w; norm_fn = custom_norm_fn) # checking without custom
 
         # test gradient with respect to edge weights
         w = rand(T, 6)

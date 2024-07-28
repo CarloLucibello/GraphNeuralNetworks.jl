@@ -11,6 +11,7 @@ using ChainRulesCore
 using Reexport
 using DataStructures: nlargest
 using MLUtils: zeros_like
+using GNNlib: GNNlib
 
 @reexport using GNNGraphs
 using GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
