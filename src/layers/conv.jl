@@ -1577,7 +1577,7 @@ function DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
     DConv(in, out, weights, b, K)
 end
 
-(l::DConv)(g, x) = GNNlib.dconv(l, g, x)
+(l::DConv)(g, x) = GNNlib.d_conv(l, g, x)
 
 function Base.show(io::IO, l::DConv)
     print(io, "DConv($(l.in) => $(l.out), K=$(l.K))")
