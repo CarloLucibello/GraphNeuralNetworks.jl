@@ -591,3 +591,96 @@ function transformer_message_main(xi, xj, e)
     end
     return e.α .* val
 end
+
+
+
+function tag_conv(l, g::GNNGraph, x::AbstractMatrix{T},
+                     edge_weight::EW = nothing) where
+    {T, EW <: Union{Nothing, AbstractVector}}
+    @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+
+    if edge_weight !== nothing
+        @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
+    end
+
+    if l.add_self_loops
+        g = add_self_loops(g)
+        if edge_weight !== nothing
+            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            @assert length(edge_weight) == g.num_edges
+        end
+    end
+    Dout, Din = size(l.weight)
+    if edge_weight !== nothing
+        d = degree(g, T; dir = :in, edge_weight)
+    else
+        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+    end
+    c = 1 ./ sqrt.(d)
+
+    sum_pow = 0
+    sum_total = 0
+    for iter in 1:(l.k)
+        x = x .* c'
+        if edge_weight !== nothing
+            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
+        elseif l.use_edge_weight
+            x = propagate(w_mul_xj, g, +, xj = x)
+        else
+            x = propagate(copy_xj, g, +, xj = x)
+        end
+        x = x .* c'
+
+        # On the first iteration, initialize sum_pow with the first propagated features
+        # On subsequent iterations, accumulate propagated features
+        if iter == 1
+            sum_pow = x
+            sum_total = l.weight * sum_pow
+        else
+            sum_pow += x            
+            # Weighted sum of features for each power of adjacency matrix
+            # This applies the weight matrix to the accumulated sum of propagated features
+            sum_total += l.weight * sum_pow
+        end
+    end
+
+    return (sum_total .+ l.bias)
+end
+
+function tag_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
+                     edge_weight::AbstractVector)
+    g = GNNGraph(edge_index(g)...; g.num_nodes)
+    return l(g, x, edge_weight)
+end
+
+
+function d_conv(l, g::GNNGraph, x::AbstractMatrix)
+    #A = adjacency_matrix(g, weighted = true)
+    s, t = edge_index(g)
+    gt = GNNGraph(t, s, get_edge_weight(g))
+    deg_out = degree(g; dir = :out)
+    deg_in = degree(g; dir = :in)
+    deg_out = Diagonal(deg_out)
+    deg_in = Diagonal(deg_in)
+    
+    h = l.weights[1,1,:,:] * x .+ l.weights[2,1,:,:] * x
+
+    T0 = x
+    if l.K > 1
+        # T1_in = T0 * deg_in * A'
+        #T1_out = T0 * deg_out' * A
+        T1_out = propagate(w_mul_xj, g, +; xj = T0*deg_out')
+        T1_in = propagate(w_mul_xj, gt, +; xj = T0*deg_in)
+        h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
+    end
+    for i in 2:l.K
+        T2_in = propagate(w_mul_xj, gt, +; xj = T1_in*deg_in)
+        T2_in = 2 * T2_in - T0
+        T2_out =  propagate(w_mul_xj, g ,+; xj = T1_out*deg_out')
+        T2_out = 2 * T2_out - T0
+        h = h .+ l.weights[1,i,:,:] * T2_in .+ l.weights[2,i,:,:] * T2_out
+        T1_in = T2_in
+        T1_out = T2_out
+    end
+    return h .+ l.bias
+end

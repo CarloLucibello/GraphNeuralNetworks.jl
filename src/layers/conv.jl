@@ -1259,7 +1259,6 @@ struct TAGConv{A <: AbstractMatrix, B} <: GNNLayer
     use_edge_weight::Bool
 end
 
-
 @functor TAGConv
 
 function TAGConv(ch::Pair{Int, Int}, k = 3;
@@ -1273,64 +1272,7 @@ function TAGConv(ch::Pair{Int, Int}, k = 3;
     TAGConv(W, b, k, add_self_loops, use_edge_weight)
 end
 
-function (l::TAGConv)(g::GNNGraph, x::AbstractMatrix{T},
-                     edge_weight::EW = nothing) where
-    {T, EW <: Union{Nothing, AbstractVector}}
-    @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
-
-    if edge_weight !== nothing
-        @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
-    end
-
-    if l.add_self_loops
-        g = add_self_loops(g)
-        if edge_weight !== nothing
-            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
-            @assert length(edge_weight) == g.num_edges
-        end
-    end
-    Dout, Din = size(l.weight)
-    if edge_weight !== nothing
-        d = degree(g, T; dir = :in, edge_weight)
-    else
-        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
-    end
-    c = 1 ./ sqrt.(d)
-
-    sum_pow = 0
-    sum_total = 0
-    for iter in 1:(l.k)
-        x = x .* c'
-        if edge_weight !== nothing
-            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
-        elseif l.use_edge_weight
-            x = propagate(w_mul_xj, g, +, xj = x)
-        else
-            x = propagate(copy_xj, g, +, xj = x)
-        end
-        x = x .* c'
-
-        # On the first iteration, initialize sum_pow with the first propagated features
-        # On subsequent iterations, accumulate propagated features
-        if iter == 1
-            sum_pow = x
-            sum_total = l.weight * sum_pow
-        else
-            sum_pow += x            
-            # Weighted sum of features for each power of adjacency matrix
-            # This applies the weight matrix to the accumulated sum of propagated features
-            sum_total += l.weight * sum_pow
-        end
-    end
-
-    return (sum_total .+ l.bias)
-end
-
-function (l::TAGConv)(g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
-                     edge_weight::AbstractVector)
-    g = GNNGraph(edge_index(g)...; g.num_nodes)
-    return l(g, x, edge_weight)
-end
+(l::TAGConv)(g, x, edge_weight = nothing) = GNNlib.tag_conv(l, g, x, edge_weight)
 
 function Base.show(io::IO, l::TAGConv)
     out, in = size(l.weight)
@@ -1431,42 +1373,7 @@ function EGNNConv(ch::Pair{NTuple{2, Int}, Int}; hidden_size::Int = 2 * ch[1][1]
     return EGNNConv(ϕe, ϕx, ϕh, num_features, residual)
 end
 
-function (l::EGNNConv)(g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e = nothing)
-    if l.num_features.edge > 0
-        @assert e!==nothing "Edge features must be provided."
-    end
-    @assert size(h, 1)==l.num_features.in "Input features must match layer input size."
-
-    x_diff = apply_edges(xi_sub_xj, g, x, x)
-    sqnorm_xdiff = sum(x_diff .^ 2, dims = 1)
-    x_diff = x_diff ./ (sqrt.(sqnorm_xdiff) .+ 1.0f-6)
-
-    msg = apply_edges(message, g, l,
-                      xi = (; h), xj = (; h), e = (; e, x_diff, sqnorm_xdiff))
-    h_aggr = aggregate_neighbors(g, +, msg.h)
-    x_aggr = aggregate_neighbors(g, mean, msg.x)
-
-    hnew = l.ϕh(vcat(h, h_aggr))
-    if l.residual
-        h = h .+ hnew
-    else
-        h = hnew
-    end
-    x = x .+ x_aggr
-    return h, x
-end
-
-function message(l::EGNNConv, xi, xj, e)
-    if l.num_features.edge > 0
-        f = vcat(xi.h, xj.h, e.sqnorm_xdiff, e.e)
-    else
-        f = vcat(xi.h, xj.h, e.sqnorm_xdiff)
-    end
-
-    msg_h = l.ϕe(f)
-    msg_x = l.ϕx(msg_h) .* e.x_diff
-    return (; x = msg_x, h = msg_h)
-end
+(l::EGNNConv)(g, h, x, e = nothing) = GNNlib.egnn_conv(l, g, h, x, e)
 
 function Base.show(io::IO, l::EGNNConv)
     ne = l.num_features.edge
@@ -1573,7 +1480,7 @@ end
 @functor TransformerConv
 
 function Flux.trainable(l::TransformerConv)
-    (W1 = l.W1, W2 = l.W2, W3 = l.W3, W4 = l.W4, W5 = l.W5, W6 = l.W6, FF = l.FF, BN1 = l.BN1, BN2 = l.BN2)
+    (; l.W1, l.W2, l.W3, l.W4, l.W5, l.W6, l.FF, l.BN1, l.BN2)
 end
 
 function TransformerConv(ch::Pair{Int, Int}, args...; kws...)
@@ -1617,84 +1524,10 @@ function TransformerConv(ch::Pair{NTuple{2, Int}, Int};
                            Float32(√out))
 end
 
-function (l::TransformerConv)(g::GNNGraph, x::AbstractMatrix,
-                              e::Union{AbstractMatrix, Nothing} = nothing)
-    check_num_nodes(g, x)
-
-    if l.add_self_loops
-        g = add_self_loops(g)
-    end
-
-    out = l.channels[2]
-    heads = l.heads
-    W1x = !isnothing(l.W1) ? l.W1(x) : nothing
-    W2x = reshape(l.W2(x), out, heads, :)
-    W3x = reshape(l.W3(x), out, heads, :)
-    W4x = reshape(l.W4(x), out, heads, :)
-    W6e = !isnothing(l.W6) ? reshape(l.W6(e), out, heads, :) : nothing
-
-    m = apply_edges(message_uij, g, l; xi = (; W3x), xj = (; W4x), e = (; W6e))
-    α = softmax_edge_neighbors(g, m)
-    α_val = propagate(message_main, g, +, l; xi = (; W3x), xj = (; W2x), e = (; W6e, α))
-
-    h = α_val
-    if l.concat
-        h = reshape(h, out * heads, :)  # concatenate heads
-    else
-        h = mean(h, dims = 2)  # average heads
-        h = reshape(h, out, :)
-    end
-
-    if !isnothing(W1x)  # root_weight
-        if !isnothing(l.W5)  # gating
-            β = l.W5(vcat(h, W1x, h .- W1x))
-            h = β .* W1x + (1.0f0 .- β) .* h
-        else
-            h += W1x
-        end
-    end
-
-    if l.skip_connection
-        @assert size(h, 1)==size(x, 1) "In-channels must correspond to out-channels * heads if skip_connection is used"
-        h += x
-    end
-    if !isnothing(l.BN1)
-        h = l.BN1(h)
-    end
-
-    if !isnothing(l.FF)
-        h1 = h
-        h = l.FF(h)
-        if l.skip_connection
-            h += h1
-        end
-        if !isnothing(l.BN2)
-            h = l.BN2(h)
-        end
-    end
-
-    return h
-end
+(l::TransformerConv)(g, x, e = nothing) = GNNlib.transformer_conv(l, g, x, e)
 
 function (l::TransformerConv)(g::GNNGraph)
     GNNGraph(g, ndata = l(g, node_features(g), edge_features(g)))
-end
-
-function message_uij(l::TransformerConv, xi, xj, e)
-    key = xj.W4x
-    if !isnothing(e.W6e)
-        key += e.W6e
-    end
-    uij = sum(xi.W3x .* key, dims = 1) ./ l.sqrt_out
-    return uij
-end
-
-function message_main(l::TransformerConv, xi, xj, e)
-    val = xj.W2x
-    if !isnothing(e.W6e)
-        val += e.W6e
-    end
-    return e.α .* val
 end
 
 function Base.show(io::IO, l::TransformerConv)
@@ -1744,36 +1577,7 @@ function DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
     DConv(in, out, weights, b, K)
 end
 
-function (l::DConv)(g::GNNGraph, x::AbstractMatrix)
-    #A = adjacency_matrix(g, weighted = true)
-    s, t = edge_index(g)
-    gt = GNNGraph(t, s, get_edge_weight(g))
-    deg_out = degree(g; dir = :out)
-    deg_in = degree(g; dir = :in)
-    deg_out = Diagonal(deg_out)
-    deg_in = Diagonal(deg_in)
-    
-    h = l.weights[1,1,:,:] * x .+ l.weights[2,1,:,:] * x
-
-    T0 = x
-    if l.K > 1
-        # T1_in = T0 * deg_in * A'
-        #T1_out = T0 * deg_out' * A
-        T1_out = propagate(w_mul_xj, g, +; xj = T0*deg_out')
-        T1_in = propagate(w_mul_xj, gt, +; xj = T0*deg_in)
-        h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
-    end
-    for i in 2:l.K
-        T2_in = propagate(w_mul_xj, gt, +; xj = T1_in*deg_in)
-        T2_in = 2 * T2_in - T0
-        T2_out =  propagate(w_mul_xj, g ,+; xj = T1_out*deg_out')
-        T2_out = 2 * T2_out - T0
-        h = h .+ l.weights[1,i,:,:] * T2_in .+ l.weights[2,i,:,:] * T2_out
-        T1_in = T2_in
-        T1_out = T2_out
-    end
-    return h .+ l.bias
-end
+(l::DConv)(g, x) = GNNlib.dconv(l, g, x)
 
 function Base.show(io::IO, l::DConv)
     print(io, "DConv($(l.in) => $(l.out), K=$(l.K))")
