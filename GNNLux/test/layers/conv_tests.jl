@@ -62,4 +62,32 @@
         loss = (x, ps) -> sum(first(l(g, x, ps, st)))
         @eval @test_gradients $loss $x $ps atol=1.0f-3 rtol=1.0f-3 skip_tracker=true skip_reverse_diff=true
     end
+
+    @testset "EdgeConv" begin
+        nn = Chain(Dense(6 => 5, relu), Dense(5 => 5))
+        l = EdgeConv(nn, aggr = +)
+        @test l isa GNNContainerLayer
+        ps = Lux.initialparameters(rng, l)
+        st = Lux.initialstates(rng, l)
+        @test Lux.parameterlength(l) == Lux.parameterlength(ps)
+        @test Lux.statelength(l) == Lux.statelength(st)
+        y, st′ = l(g, x, ps, st)
+        @test size(y) == (5, 10)
+        loss = (x, ps) -> sum(first(l(g, x, ps, st)))
+        @eval @test_gradients $loss $x $ps atol=1.0f-3 rtol=1.0f-3 skip_tracker=true skip_reverse_diff=true
+    end
+
+    @testset  "CGConv" begin
+        l = CGConv(3 => 5, residual = true)
+        @test l isa GNNContainerLayer
+        ps = Lux.initialparameters(rng, l)
+        st = Lux.initialstates(rng, l)
+        @test Lux.parameterlength(l) == Lux.parameterlength(ps)
+        @test Lux.statelength(l) == Lux.statelength(st)
+        y, st′ = l(g, x, ps, st)
+        @test size(y) == (5, 10)
+        @test Lux.outputsize(l) == (5,)
+        loss = (x, ps) -> sum(first(l(g, x, ps, st)))
+        @eval @test_gradients $loss $x $ps atol=1.0f-3 rtol=1.0f-3 skip_tracker=true
+    end
 end

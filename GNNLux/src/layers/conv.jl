@@ -1,22 +1,8 @@
-# Missing Layers
-
-# | Layer                       |Sparse Ops|Edge Weight|Edge Features| Heterograph  | TemporalSnapshotsGNNGraphs |
-# | :--------                   |  :---:   |:---:      |:---:        |  :---:       | :---:                      |
-# | [`EGNNConv`](@ref)          |          |           |     ✓       |              |                           |
-# | [`EdgeConv`](@ref)          |          |           |             |       ✓      |                            |  
-# | [`GATConv`](@ref)           |          |           |     ✓       |       ✓      |              ✓             |
-# | [`GATv2Conv`](@ref)         |          |           |     ✓       |       ✓      |             ✓              |
-# | [`GatedGraphConv`](@ref)    |     ✓    |           |             |              |            ✓               |
-# | [`GINConv`](@ref)           |     ✓    |           |             |       ✓      |               ✓           |
-# | [`GMMConv`](@ref)           |          |           |     ✓       |              |                            |
-# | [`MEGNetConv`](@ref)        |          |           |     ✓       |              |                            |              
-# | [`NNConv`](@ref)            |          |           |     ✓       |              |                            |
-# | [`ResGatedGraphConv`](@ref) |          |           |             |       ✓      |               ✓             |
-# | [`SAGEConv`](@ref)          |     ✓    |           |             |       ✓      |             ✓               |
-# | [`SGConv`](@ref)            |     ✓    |           |             |              |             ✓             |
-# | [`TransformerConv`](@ref)   |          |           |     ✓       |              |                           |
-
 _getbias(ps) = hasproperty(ps, :bias) ? getproperty(ps, :bias) : false
+_getstate(st, name) = hasproperty(st, name) ? getproperty(st, name) : NamedTuple()
+_getstate(s::StatefulLuxLayer{true}) = s.st
+_getstate(s::StatefulLuxLayer{false}) = s.st_any
+
 
 @concrete struct GCNConv <: GNNLayer
     in_dims::Int
@@ -235,11 +221,37 @@ function CGConv(ch::Pair{NTuple{2, Int}, Int}, act = identity; residual = false,
     return CGConv((nin, ein), out, dense_f, dense_s, residual, init_weight, init_bias)
 end
 
+LuxCore.outputsize(l::CGConv) = (l.out_dims,)
+
 (l::CGConv)(g, x, ps, st) = l(g, x, nothing, ps, st)
 
 function (l::CGConv)(g, x, e, ps, st)
-    dense_f = StatefulLuxLayer(l.dense_f, ps.dense_f)
-    dense_s = StatefulLuxLayer(l.dense_s, ps.dense_s)
+    dense_f = StatefulLuxLayer{true}(l.dense_f, ps.dense_f, _getstate(st, :dense_f))
+    dense_s = StatefulLuxLayer{true}(l.dense_s, ps.dense_s, _getstate(st, :dense_s))
     m = (; dense_f, dense_s, l.residual)
     return GNNlib.cg_conv(m, g, x, e), st
 end
+
+@concrete struct EdgeConv <: GNNContainerLayer{(:nn,)}
+    nn <: AbstractExplicitLayer
+    aggr
+end
+
+EdgeConv(nn; aggr = max) = EdgeConv(nn, aggr)
+
+function Base.show(io::IO, l::EdgeConv)
+    print(io, "EdgeConv(", l.nn)
+    print(io, ", aggr=", l.aggr)
+    print(io, ")")
+end
+
+
+function (l::EdgeConv)(g::AbstractGNNGraph, x, ps, st)
+    nn = StatefulLuxLayer{true}(l.nn, ps, st)
+    m = (; nn, l.aggr)
+    y = GNNlib.edge_conv(m, g, x)
+    stnew = _getstate(nn)
+    return y, stnew
+end
+
+

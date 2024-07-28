@@ -226,7 +226,7 @@ function edge_conv(l, g::AbstractGNNGraph, x)
     xj, xi = expand_srcdst(g, x)
 
     message = Fix1(edge_conv_message, l)
-    x = propagate(message, g, l.aggr, xi = xi, xj = xj, e = nothing)
+    x = propagate(message, g, l.aggr; xi, xj, e = nothing)
     return x
 end
 
