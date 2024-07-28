@@ -1,3 +1,4 @@
+####################### GCNConv ######################################
 
 check_gcnconv_input(g::AbstractGNNGraph{<:ADJMAT_T}, edge_weight::AbstractVector) = 
     throw(ArgumentError("Providing external edge_weight is not yet supported for adjacency matrix graphs"))
@@ -77,6 +78,8 @@ function gcn_conv(l, g::GNNGraph{<:ADJMAT_T}, x, edge_weight::EW, norm_fn::F, co
     return gcn_conv(l, g, x, edge_weight, norm_fn, conv_weight)
 end
 
+####################### ChebConv ######################################
+
 function cheb_conv(l, g::GNNGraph, X::AbstractMatrix{T}) where {T}
     check_num_nodes(g, X)
     @assert size(X, 1) == size(l.weight, 2) "Input feature size must match input channel size."
@@ -94,6 +97,8 @@ function cheb_conv(l, g::GNNGraph, X::AbstractMatrix{T}) where {T}
     return Y .+ l.bias
 end
 
+####################### GraphConv ######################################
+
 function graph_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
@@ -101,6 +106,8 @@ function graph_conv(l, g::AbstractGNNGraph, x)
     x = l.weight1 * xi .+ l.weight2 * m
     return l.σ.(x .+ l.bias)
 end
+
+####################### GATConv ######################################
 
 function gat_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
@@ -158,6 +165,8 @@ function gat_message(l, Wxi, Wxj, e)
     return (; logα, Wxj)
 end
 
+####################### GATv2Conv ######################################
+
 function gatv2_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
     @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
@@ -202,6 +211,7 @@ function gatv2_message(l, Wxi, Wxj, e)
     return (; logα, Wxj)
 end
 
+####################### GatedGraphConv ######################################
 
 # TODO PIRACY! remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
 @non_differentiable fill!(x...)
@@ -222,6 +232,8 @@ function gated_graph_conv(l, g::GNNGraph, H::AbstractMatrix{S}) where {S <: Real
     return H
 end
 
+####################### EdgeConv ######################################
+
 function edge_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
@@ -233,6 +245,7 @@ end
 
 edge_conv_message(l, xi, xj, e) = l.nn(vcat(xi, xj .- xi))
 
+####################### GINConv ######################################
 
 function gin_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
@@ -242,6 +255,8 @@ function gin_conv(l, g::AbstractGNNGraph, x)
     
     return l.nn((1 .+ ofeltype(xi, l.ϵ)) .* xi .+ m)
 end
+
+####################### NNConv ######################################
 
 function nn_conv(l, g::GNNGraph, x::AbstractMatrix, e)
     check_num_nodes(g, x)
@@ -258,6 +273,8 @@ function nn_conv_message(l, xi, xj, e)
     return reshape(m, :, nedges)
 end
 
+####################### SAGEConv ######################################
+
 function sage_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
@@ -265,6 +282,8 @@ function sage_conv(l, g::AbstractGNNGraph, x)
     x = l.σ.(l.weight * vcat(xi, m) .+ l.bias)
     return x
 end
+
+####################### ResGatedConv ######################################
 
 function res_gated_graph_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
@@ -280,6 +299,8 @@ function res_gated_graph_conv(l, g::AbstractGNNGraph, x)
 
     return l.σ.(l.U * xi .+ m .+ l.bias)
 end
+
+####################### CGConv ######################################
 
 function cg_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
@@ -312,6 +333,7 @@ function cg_message(l, xi, xj, e)
     return l.dense_f(z) .* l.dense_s(z)
 end
 
+####################### AGNNConv ######################################
 
 function agnn_conv(l, g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
@@ -330,6 +352,8 @@ function agnn_conv(l, g::GNNGraph, x::AbstractMatrix)
     return x
 end
 
+####################### MegNetConv ######################################
+
 function megnet_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     check_num_nodes(g, x)
 
@@ -343,6 +367,8 @@ function megnet_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
 
     return x̄, ē
 end
+
+####################### GMMConv ######################################
 
 function gmm_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     (nin, ein), out = l.ch #Notational Simplicity
@@ -374,6 +400,8 @@ function gmm_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
 
     return m
 end
+
+####################### SGCConv ######################################
 
 # this layer is not stable enough to be supported by GNNHeteroGraph type
 # due to it's looping mechanism
@@ -426,6 +454,8 @@ function sgc_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
     return sgc_conv(l, g, x, edge_weight)
 end
 
+####################### EGNNGConv ######################################
+
 function egnn_conv(l, g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e = nothing)
     if l.num_features.edge > 0
         @assert e!==nothing "Edge features must be provided."
@@ -463,6 +493,8 @@ function egnn_message(l, xi, xj, e)
     msg_x = l.ϕx(msg_h) .* e.x_diff
     return (; x = msg_x, h = msg_h)
 end
+
+######################## SGConv ######################################
 
 # this layer is not stable enough to be supported by GNNHeteroGraph type
 # due to it's looping mechanism
@@ -514,6 +546,8 @@ function sg_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
     g = GNNGraph(edge_index(g)...; g.num_nodes)
     return sg_conv(l, g, x, edge_weight)
 end
+
+######################## TransformerConv ######################################
 
 function transformer_conv(l, g::GNNGraph, x::AbstractMatrix,  e::Union{AbstractMatrix, Nothing} = nothing)
     check_num_nodes(g, x)
@@ -594,6 +628,7 @@ function transformer_message_main(xi, xj, e)
 end
 
 
+######################## TAGConv ######################################
 
 function tag_conv(l, g::GNNGraph, x::AbstractMatrix{T},
                      edge_weight::EW = nothing) where
@@ -654,6 +689,7 @@ function tag_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
     return l(g, x, edge_weight)
 end
 
+######################## DConv ######################################
 
 function d_conv(l, g::GNNGraph, x::AbstractMatrix)
     #A = adjacency_matrix(g, weighted = true)
