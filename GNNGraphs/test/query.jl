@@ -59,7 +59,7 @@ end
         @test eltype(degree(g, Float32)) == Float32
 
         if TEST_GPU
-            dev = LuxCUDADevice() #TODO replace with `gpu_device()`
+            dev = CUDADevice() #TODO replace with `gpu_device()`
             g_gpu = g |> dev
             d = degree(g)
             d_gpu = degree(g_gpu)
@@ -87,7 +87,7 @@ end
         @test degree(g, edge_weight = 2 * eweight) ≈ [4.4, 2.4, 2.0, 0.0] broken = (GRAPH_T != :coo)
         
         if TEST_GPU
-            dev = LuxCUDADevice() #TODO replace with `gpu_device()`
+            dev = CUDADevice() #TODO replace with `gpu_device()`
             g_gpu = g |> dev
             d = degree(g)
             d_gpu = degree(g_gpu)

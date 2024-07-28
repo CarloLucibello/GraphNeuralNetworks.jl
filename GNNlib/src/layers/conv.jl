@@ -10,15 +10,15 @@ end
 
 check_gcnconv_input(g::AbstractGNNGraph, edge_weight::Nothing) = nothing
 
-function gcn_conv(l, g::AbstractGNNGraph, x, edge_weight::EW, norm_fn::F, conv_weight::CW, ps) where 
+function gcn_conv(l, g::AbstractGNNGraph, x, edge_weight::EW, norm_fn::F, conv_weight::CW) where 
         {EW <: Union{Nothing, AbstractVector}, CW<:Union{Nothing,AbstractMatrix}, F}
     check_gcnconv_input(g, edge_weight)
     if conv_weight === nothing
-        weight = ps.weight
+        weight = l.weight
     else
         weight = conv_weight
-        if size(weight) != size(ps.weight)
-            throw(ArgumentError("The weight matrix has the wrong size. Expected $(size(ps.weight)) but got $(size(weight))"))
+        if size(weight) != size(l.weight)
+            throw(ArgumentError("The weight matrix has the wrong size. Expected $(size(l.weight)) but got $(size(weight))"))
         end
     end
 
@@ -67,47 +67,38 @@ function gcn_conv(l, g::AbstractGNNGraph, x, edge_weight::EW, norm_fn::F, conv_w
     if Dout >= Din || g isa GNNHeteroGraph
         x = weight * x
     end
-    if l.use_bias
-        x = x .+ ps.bias
-    end
-    return l.σ.(x)
+    return l.σ.(x .+ l.bias)
 end
 
 # when we also have edge_weight we need to convert the graph to COO
-function gcn_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix, edge_weight::AbstractVector, norm_fn::F, ps) where F    
+function gcn_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix, edge_weight::AbstractVector, norm_fn::F) where F    
     g = GNNGraph(edge_index(g)...; g.num_nodes)  # convert to COO
-    return gcn_conv(l, g, x, edge_weight, norm_fn, ps)
+    return gcn_conv(l, g, x, edge_weight, norm_fn)
 end
 
-function cheb_conv(c, g::GNNGraph, X::AbstractMatrix{T}, ps) where {T}
+function cheb_conv(l, g::GNNGraph, X::AbstractMatrix{T}) where {T}
     check_num_nodes(g, X)
-    @assert size(X, 1) == size(ps.weight, 2) "Input feature size must match input channel size."
+    @assert size(X, 1) == size(l.weight, 2) "Input feature size must match input channel size."
 
     L̃ = scaled_laplacian(g, eltype(X))
 
     Z_prev = X
     Z = X * L̃
-    Y = view(ps.weight, :, :, 1) * Z_prev
-    Y = Y .+ view(ps.weight, :, :, 2) * Z
-    for k in 3:(c.k)
+    Y = view(l.weight, :, :, 1) * Z_prev
+    Y = Y .+ view(l.weight, :, :, 2) * Z
+    for k in 3:(l.k)
         Z, Z_prev = 2 * Z * L̃ - Z_prev, Z
-        Y = Y .+ view(ps.weight, :, :, k) * Z
+        Y = Y .+ view(l.weight, :, :, k) * Z
     end
-    if c.use_bias
-        Y = Y .+ ps.bias
-    end
-    return Y
+    return Y .+ l.bias
 end
 
-function graph_conv(l, g::AbstractGNNGraph, x, ps)
+function graph_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
     m = propagate(copy_xj, g, l.aggr, xj = xj)
-    x = ps.weight1 * xi .+ ps.weight2 * m
-    if l.use_bias
-        x = x .+ ps.bias
-    end
-    return l.σ.(x)
+    x = l.weight1 * xi .+ l.weight2 * m
+    return l.σ.(x .+ l.bias)
 end
 
 function gat_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} = nothing)
@@ -235,7 +226,7 @@ function edge_conv(l, g::AbstractGNNGraph, x)
     xj, xi = expand_srcdst(g, x)
 
     message = Fix1(edge_conv_message, l)
-    x = propagate(message, g, l.aggr, xi = xi, xj = xj, e = nothing)
+    x = propagate(message, g, l.aggr; xi, xj, e = nothing)
     return x
 end
 

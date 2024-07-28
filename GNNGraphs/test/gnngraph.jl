@@ -57,7 +57,7 @@ end
     # core functionality
     g = GNNGraph(s, t; graph_type = GRAPH_T)
     if TEST_GPU
-        dev = LuxCUDADevice() #TODO replace with gpu_device()
+        dev = CUDADevice()
         g_gpu = g |> dev
     end
 
@@ -141,7 +141,7 @@ end
     # core functionality
     g = GNNGraph(s, t; graph_type = GRAPH_T)
     if TEST_GPU
-        dev = LuxCUDADevice() #TODO replace with `gpu_device()`
+        dev = CUDADevice() #TODO replace with `gpu_device()`
         g_gpu = g |> dev
     end
 
