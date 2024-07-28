@@ -11,90 +11,59 @@ using ChainRulesCore
 using Reexport
 using DataStructures: nlargest
 using MLUtils: zeros_like
-using GNNlib: GNNlib
 
-@reexport using GNNGraphs
 using GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,
                   check_num_nodes, check_num_edges,
                   EType, NType # for heteroconvs
 
-export
-# utils
-      reduce_nodes,
-      reduce_edges,
-      softmax_nodes,
-      softmax_edges,
-      broadcast_nodes,
-      broadcast_edges,
-      softmax_edge_neighbors,
+@reexport using GNNGraphs
+@reexport using GNNlib
 
-# msgpass
-      apply_edges,
-      aggregate_neighbors,
-      propagate,
-      copy_xj,
-      copy_xi,
-      xi_dot_xj,
-      xi_sub_xj,
-      xj_sub_xi,
-      e_mul_xj,
-      w_mul_xj,
-
-# layers/basic
-      GNNLayer,
-      GNNChain,
-      WithGraph,
-      DotDecoder,
-
-# layers/conv
-      AGNNConv,
-      CGConv,
-      ChebConv,
-      EdgeConv,
-      EGNNConv,
-      GATConv,
-      GATv2Conv,
-      GatedGraphConv,
-      GCNConv,
-      GINConv,
-      GMMConv,
-      GraphConv,
-      MEGNetConv,
-      NNConv,
-      ResGatedGraphConv,
-      SAGEConv,
-      SGConv,
-      TAGConv,
-      TransformerConv,
-      DConv,
-
-# layers/heteroconv
-      HeteroGraphConv,
-
-# layers/temporalconv
-      TGCN,
-      A3TGCN,
-      GConvLSTM,
-      GConvGRU,
-      DCGRU,
-
-# layers/pool
-      GlobalPool,
-      GlobalAttentionPool,
-      Set2Set,
-      TopKPool,
-      topk_index,
-
-# mldatasets
-      mldataset2gnngraph
-
-include("utils.jl")
 include("layers/basic.jl")
+export GNNLayer,
+       GNNChain,
+       WithGraph,
+       DotDecoder
+
 include("layers/conv.jl")
+export AGNNConv,
+       CGConv,
+       ChebConv,
+       DConv,
+       EdgeConv,
+       EGNNConv,
+       GATConv,
+       GATv2Conv,
+       GatedGraphConv,
+       GCNConv,
+       GINConv,
+       GMMConv,
+       GraphConv,
+       MEGNetConv,
+       NNConv,
+       ResGatedGraphConv,
+       SAGEConv,
+       SGConv,
+       TAGConv,
+       TransformerConv
+
 include("layers/heteroconv.jl")
+export HeteroGraphConv
+
 include("layers/temporalconv.jl")
+export TGCN,
+       A3TGCN,
+       GConvLSTM,
+       GConvGRU,
+       DCGRU
+
 include("layers/pool.jl")
-include("msgpass.jl")
+export GlobalPool,
+       GlobalAttentionPool,
+       Set2Set,
+       TopKPool,
+       topk_index
+
 include("deprecations.jl")
 
 end
