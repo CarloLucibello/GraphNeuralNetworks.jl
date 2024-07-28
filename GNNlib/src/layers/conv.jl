@@ -1,3 +1,4 @@
+####################### GCNConv ######################################
 
 check_gcnconv_input(g::AbstractGNNGraph{<:ADJMAT_T}, edge_weight::AbstractVector) = 
     throw(ArgumentError("Providing external edge_weight is not yet supported for adjacency matrix graphs"))
@@ -71,10 +72,13 @@ function gcn_conv(l, g::AbstractGNNGraph, x, edge_weight::EW, norm_fn::F, conv_w
 end
 
 # when we also have edge_weight we need to convert the graph to COO
-function gcn_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix, edge_weight::AbstractVector, norm_fn::F) where F    
+function gcn_conv(l, g::GNNGraph{<:ADJMAT_T}, x, edge_weight::EW, norm_fn::F, conv_weight::CW) where 
+        {EW <: Union{Nothing, AbstractVector}, CW<:Union{Nothing,AbstractMatrix}, F} 
     g = GNNGraph(edge_index(g)...; g.num_nodes)  # convert to COO
-    return gcn_conv(l, g, x, edge_weight, norm_fn)
+    return gcn_conv(l, g, x, edge_weight, norm_fn, conv_weight)
 end
+
+####################### ChebConv ######################################
 
 function cheb_conv(l, g::GNNGraph, X::AbstractMatrix{T}) where {T}
     check_num_nodes(g, X)
@@ -93,6 +97,8 @@ function cheb_conv(l, g::GNNGraph, X::AbstractMatrix{T}) where {T}
     return Y .+ l.bias
 end
 
+####################### GraphConv ######################################
+
 function graph_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
@@ -100,6 +106,8 @@ function graph_conv(l, g::AbstractGNNGraph, x)
     x = l.weight1 * xi .+ l.weight2 * m
     return l.σ.(x .+ l.bias)
 end
+
+####################### GATConv ######################################
 
 function gat_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
@@ -157,6 +165,8 @@ function gat_message(l, Wxi, Wxj, e)
     return (; logα, Wxj)
 end
 
+####################### GATv2Conv ######################################
+
 function gatv2_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
     @assert !((e === nothing) && (l.dense_e !== nothing)) "Input edge features required for this layer"
@@ -201,6 +211,7 @@ function gatv2_message(l, Wxi, Wxj, e)
     return (; logα, Wxj)
 end
 
+####################### GatedGraphConv ######################################
 
 # TODO PIRACY! remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
 @non_differentiable fill!(x...)
@@ -221,6 +232,8 @@ function gated_graph_conv(l, g::GNNGraph, H::AbstractMatrix{S}) where {S <: Real
     return H
 end
 
+####################### EdgeConv ######################################
+
 function edge_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
@@ -232,6 +245,7 @@ end
 
 edge_conv_message(l, xi, xj, e) = l.nn(vcat(xi, xj .- xi))
 
+####################### GINConv ######################################
 
 function gin_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
@@ -241,6 +255,8 @@ function gin_conv(l, g::AbstractGNNGraph, x)
     
     return l.nn((1 .+ ofeltype(xi, l.ϵ)) .* xi .+ m)
 end
+
+####################### NNConv ######################################
 
 function nn_conv(l, g::GNNGraph, x::AbstractMatrix, e)
     check_num_nodes(g, x)
@@ -257,6 +273,8 @@ function nn_conv_message(l, xi, xj, e)
     return reshape(m, :, nedges)
 end
 
+####################### SAGEConv ######################################
+
 function sage_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
     xj, xi = expand_srcdst(g, x)
@@ -264,6 +282,8 @@ function sage_conv(l, g::AbstractGNNGraph, x)
     x = l.σ.(l.weight * vcat(xi, m) .+ l.bias)
     return x
 end
+
+####################### ResGatedConv ######################################
 
 function res_gated_graph_conv(l, g::AbstractGNNGraph, x)
     check_num_nodes(g, x)
@@ -279,6 +299,8 @@ function res_gated_graph_conv(l, g::AbstractGNNGraph, x)
 
     return l.σ.(l.U * xi .+ m .+ l.bias)
 end
+
+####################### CGConv ######################################
 
 function cg_conv(l, g::AbstractGNNGraph, x, e::Union{Nothing, AbstractMatrix} = nothing)
     check_num_nodes(g, x)
@@ -311,6 +333,7 @@ function cg_message(l, xi, xj, e)
     return l.dense_f(z) .* l.dense_s(z)
 end
 
+####################### AGNNConv ######################################
 
 function agnn_conv(l, g::GNNGraph, x::AbstractMatrix)
     check_num_nodes(g, x)
@@ -329,6 +352,8 @@ function agnn_conv(l, g::GNNGraph, x::AbstractMatrix)
     return x
 end
 
+####################### MegNetConv ######################################
+
 function megnet_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     check_num_nodes(g, x)
 
@@ -342,6 +367,8 @@ function megnet_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
 
     return x̄, ē
 end
+
+####################### GMMConv ######################################
 
 function gmm_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     (nin, ein), out = l.ch #Notational Simplicity
@@ -373,6 +400,8 @@ function gmm_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
 
     return m
 end
+
+####################### SGCConv ######################################
 
 # this layer is not stable enough to be supported by GNNHeteroGraph type
 # due to it's looping mechanism
@@ -425,6 +454,8 @@ function sgc_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
     return sgc_conv(l, g, x, edge_weight)
 end
 
+####################### EGNNGConv ######################################
+
 function egnn_conv(l, g::GNNGraph, h::AbstractMatrix, x::AbstractMatrix, e = nothing)
     if l.num_features.edge > 0
         @assert e!==nothing "Edge features must be provided."
@@ -462,6 +493,8 @@ function egnn_message(l, xi, xj, e)
     msg_x = l.ϕx(msg_h) .* e.x_diff
     return (; x = msg_x, h = msg_h)
 end
+
+######################## SGConv ######################################
 
 # this layer is not stable enough to be supported by GNNHeteroGraph type
 # due to it's looping mechanism
@@ -513,6 +546,8 @@ function sg_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
     g = GNNGraph(edge_index(g)...; g.num_nodes)
     return sg_conv(l, g, x, edge_weight)
 end
+
+######################## TransformerConv ######################################
 
 function transformer_conv(l, g::GNNGraph, x::AbstractMatrix,  e::Union{AbstractMatrix, Nothing} = nothing)
     check_num_nodes(g, x)
@@ -590,4 +625,99 @@ function transformer_message_main(xi, xj, e)
         val += e.W6e
     end
     return e.α .* val
+end
+
+
+######################## TAGConv ######################################
+
+function tag_conv(l, g::GNNGraph, x::AbstractMatrix{T},
+                     edge_weight::EW = nothing) where
+    {T, EW <: Union{Nothing, AbstractVector}}
+    @assert !(g isa GNNGraph{<:ADJMAT_T} && edge_weight !== nothing) "Providing external edge_weight is not yet supported for adjacency matrix graphs"
+
+    if edge_weight !== nothing
+        @assert length(edge_weight)==g.num_edges "Wrong number of edge weights (expected $(g.num_edges) but given $(length(edge_weight)))"
+    end
+
+    if l.add_self_loops
+        g = add_self_loops(g)
+        if edge_weight !== nothing
+            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            @assert length(edge_weight) == g.num_edges
+        end
+    end
+    Dout, Din = size(l.weight)
+    if edge_weight !== nothing
+        d = degree(g, T; dir = :in, edge_weight)
+    else
+        d = degree(g, T; dir = :in, edge_weight=l.use_edge_weight)
+    end
+    c = 1 ./ sqrt.(d)
+
+    sum_pow = 0
+    sum_total = 0
+    for iter in 1:(l.k)
+        x = x .* c'
+        if edge_weight !== nothing
+            x = propagate(e_mul_xj, g, +, xj = x, e = edge_weight)
+        elseif l.use_edge_weight
+            x = propagate(w_mul_xj, g, +, xj = x)
+        else
+            x = propagate(copy_xj, g, +, xj = x)
+        end
+        x = x .* c'
+
+        # On the first iteration, initialize sum_pow with the first propagated features
+        # On subsequent iterations, accumulate propagated features
+        if iter == 1
+            sum_pow = x
+            sum_total = l.weight * sum_pow
+        else
+            sum_pow += x            
+            # Weighted sum of features for each power of adjacency matrix
+            # This applies the weight matrix to the accumulated sum of propagated features
+            sum_total += l.weight * sum_pow
+        end
+    end
+
+    return (sum_total .+ l.bias)
+end
+
+function tag_conv(l, g::GNNGraph{<:ADJMAT_T}, x::AbstractMatrix,
+                     edge_weight::AbstractVector)
+    g = GNNGraph(edge_index(g)...; g.num_nodes)
+    return l(g, x, edge_weight)
+end
+
+######################## DConv ######################################
+
+function d_conv(l, g::GNNGraph, x::AbstractMatrix)
+    #A = adjacency_matrix(g, weighted = true)
+    s, t = edge_index(g)
+    gt = GNNGraph(t, s, get_edge_weight(g))
+    deg_out = degree(g; dir = :out)
+    deg_in = degree(g; dir = :in)
+    deg_out = Diagonal(deg_out)
+    deg_in = Diagonal(deg_in)
+    
+    h = l.weights[1,1,:,:] * x .+ l.weights[2,1,:,:] * x
+
+    T0 = x
+    if l.K > 1
+        # T1_in = T0 * deg_in * A'
+        #T1_out = T0 * deg_out' * A
+        T1_out = propagate(w_mul_xj, g, +; xj = T0*deg_out')
+        T1_in = propagate(w_mul_xj, gt, +; xj = T0*deg_in)
+        h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
+    end
+    for i in 2:l.K
+        T2_in = propagate(w_mul_xj, gt, +; xj = T1_in*deg_in)
+        T2_in = 2 * T2_in - T0
+        T2_out =  propagate(w_mul_xj, g ,+; xj = T1_out*deg_out')
+        T2_out = 2 * T2_out - T0
+        h = h .+ l.weights[1,i,:,:] * T2_in .+ l.weights[2,i,:,:] * T2_out
+        T1_in = T2_in
+        T1_out = T2_out
+    end
+    return h .+ l.bias
 end
