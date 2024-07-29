@@ -2,23 +2,43 @@
 
 import Reexport: @reexport
 
+@reexport using Test
 @reexport using GNNLux
-@reexport using Lux, Functors
-@reexport using ComponentArrays, LuxCore, LuxTestUtils, Random, StableRNGs, Test,
-                Zygote, Statistics
-@reexport using LuxTestUtils: @jet, @test_gradients, check_approx
-using MLDataDevices
+@reexport using Lux
+@reexport using StableRNGs
+@reexport using Random, Statistics
 
-# Some Helper Functions
-function get_default_rng(mode::String)
-    dev = mode == "cpu" ? CPUDevice() :
-          mode == "cuda" ? CUDADevice() : mode == "amdgpu" ? AMDGPUDevice() : nothing
-    rng = default_device_rng(dev)
-    return rng isa TaskLocalRNG ? copy(rng) : deepcopy(rng)
+using LuxTestUtils: test_gradients, AutoReverseDiff, AutoTracker, AutoForwardDiff, AutoEnzyme
+
+export test_lux_layer
+
+function test_lux_layer(rng::AbstractRNG, l, g::GNNGraph, x; 
+            outputsize=nothing, sizey=nothing, container=false,
+            atol=1.0f-2, rtol=1.0f-2)
+
+    if container
+        @test l isa GNNContainerLayer
+    else
+        @test l isa GNNLayer
+    end
+
+    ps = LuxCore.initialparameters(rng, l)
+    st = LuxCore.initialstates(rng, l)
+    @test LuxCore.parameterlength(l) == LuxCore.parameterlength(ps)
+    @test LuxCore.statelength(l) == LuxCore.statelength(st)
+    
+    y, st′ = l(g, x, ps, st)
+    if outputsize !== nothing
+        @test LuxCore.outputsize(l) == outputsize
+    end
+    if sizey !== nothing
+        @test size(y) == sizey
+    elseif outputsize !== nothing
+        @test size(y) == (outputsize..., g.num_nodes)
+    end
+    
+    loss = (x, ps) -> sum(first(l(g, x, ps, st)))
+    test_gradients(loss, x, ps; atol, rtol, skip_backends=[AutoReverseDiff(), AutoTracker(), AutoForwardDiff(), AutoEnzyme()])
 end
-
-export get_default_rng
-
-# export BACKEND_GROUP, MODES, cpu_testing, cuda_testing, amdgpu_testing
 
 end

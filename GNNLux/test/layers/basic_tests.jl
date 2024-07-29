@@ -7,18 +7,13 @@
         @test GNNLayer <: LuxCore.AbstractExplicitLayer
     end
 
+    @testset "GNNContainerLayer" begin
+        @test GNNContainerLayer <: LuxCore.AbstractExplicitContainerLayer
+    end
+
     @testset "GNNChain" begin
         @test GNNChain <: LuxCore.AbstractExplicitContainerLayer{(:layers,)}
-        @test GNNChain <: GNNContainerLayer
         c = GNNChain(GraphConv(3 => 5, relu), GCNConv(5 => 3))
-        ps = LuxCore.initialparameters(rng, c)
-        st = LuxCore.initialstates(rng, c)
-        @test LuxCore.parameterlength(c) == LuxCore.parameterlength(ps)
-        @test LuxCore.statelength(c) == LuxCore.statelength(st)
-        y, st′ = c(g, x, ps, st)
-        @test LuxCore.outputsize(c) == (3,)
-        @test size(y) == (3, 10)
-        loss = (x, ps) -> sum(first(c(g, x, ps, st)))
-        @eval @test_gradients $loss $x $ps atol=1.0f-3 rtol=1.0f-3 skip_tracker=true skip_reverse_diff=true
+        test_lux_layer(rng, c, g, x, outputsize=(3,), container=true)
     end
 end
