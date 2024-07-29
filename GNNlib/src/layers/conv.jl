@@ -703,14 +703,14 @@ function d_conv(l, g::GNNGraph, x::AbstractMatrix)
     h = l.weights[1,1,:,:] * x .+ l.weights[2,1,:,:] * x
 
     T0 = x
-    if l.K > 1
+    if l.k > 1
         # T1_in = T0 * deg_in * A'
         #T1_out = T0 * deg_out' * A
         T1_out = propagate(w_mul_xj, g, +; xj = T0*deg_out')
         T1_in = propagate(w_mul_xj, gt, +; xj = T0*deg_in)
         h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
     end
-    for i in 2:l.K
+    for i in 2:l.k
         T2_in = propagate(w_mul_xj, gt, +; xj = T1_in*deg_in)
         T2_in = 2 * T2_in - T0
         T2_out =  propagate(w_mul_xj, g ,+; xj = T1_out*deg_out')

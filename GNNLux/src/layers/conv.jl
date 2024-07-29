@@ -255,3 +255,165 @@ function (l::EdgeConv)(g::AbstractGNNGraph, x, ps, st)
 end
 
 
+@concrete struct EGNNConv <: GNNContainerLayer{(:ϕe, :ϕx, :ϕh)}
+    ϕe
+    ϕx
+    ϕh
+    num_features
+    residual::Bool
+end
+
+function EGNNConv(ch::Pair{Int, Int}, hidden_size = 2 * ch[1]; residual = false)
+    return EGNNConv((ch[1], 0) => ch[2]; hidden_size, residual)
+end
+
+#Follows reference implementation at https://github.com/vgsatorras/egnn/blob/main/models/egnn_clean/egnn_clean.py
+function EGNNConv(ch::Pair{NTuple{2, Int}, Int}; hidden_size::Int = 2 * ch[1][1],
+                  residual = false)
+    (in_size, edge_feat_size), out_size = ch
+    act_fn = swish
+
+    # +1 for the radial feature: ||x_i - x_j||^2
+    ϕe = Chain(Dense(in_size * 2 + edge_feat_size + 1 => hidden_size, act_fn),
+               Dense(hidden_size => hidden_size, act_fn))
+
+    ϕh = Chain(Dense(in_size + hidden_size => hidden_size, swish),
+               Dense(hidden_size => out_size))
+
+    ϕx = Chain(Dense(hidden_size => hidden_size, swish),
+               Dense(hidden_size => 1, use_bias = false))
+
+    num_features = (in = in_size, edge = edge_feat_size, out = out_size,
+                    hidden = hidden_size)
+    if residual
+        @assert in_size==out_size "Residual connection only possible if in_size == out_size"
+    end
+    return EGNNConv(ϕe, ϕx, ϕh, num_features, residual)
+end
+
+LuxCore.outputsize(l::EGNNConv) = (l.num_features.out,)
+
+(l::EGNNConv)(g, h, x, ps, st) = l(g, h, x, nothing, ps, st)
+
+function (l::EGNNConv)(g, h, x, e, ps, st)
+    ϕe = StatefulLuxLayer{true}(l.ϕe, ps.ϕe, _getstate(st, :ϕe))
+    ϕx = StatefulLuxLayer{true}(l.ϕx, ps.ϕx, _getstate(st, :ϕx))
+    ϕh = StatefulLuxLayer{true}(l.ϕh, ps.ϕh, _getstate(st, :ϕh))
+    m = (; ϕe, ϕx, ϕh, l.residual, l.num_features)
+    return GNNlib.egnn_conv(m, g, h, x, e), st
+end
+
+function Base.show(io::IO, l::EGNNConv)
+    ne = l.num_features.edge
+    nin = l.num_features.in
+    nout = l.num_features.out
+    nh = l.num_features.hidden
+    print(io, "EGNNConv(($nin, $ne) => $nout; hidden_size=$nh")
+    if l.residual
+        print(io, ", residual=true")
+    end
+    print(io, ")")
+end
+
+@concrete struct DConv <: GNNLayer
+    in_dims::Int
+    out_dims::Int
+    k::Int
+    init_weight
+    init_bias
+    use_bias::Bool
+end
+
+function DConv(ch::Pair{Int, Int}, k::Int; 
+        init_weight = glorot_uniform, 
+        init_bias = zeros32,
+        use_bias = true)
+    in, out = ch
+    return DConv(in, out, k, init_weight, init_bias, use_bias)
+end
+
+function LuxCore.initialparameters(rng::AbstractRNG, l::DConv)
+    weights = l.init_weight(rng, 2, l.k, l.out_dims, l.in_dims)
+    if l.use_bias
+        bias = l.init_bias(rng, l.out_dims)
+        return (; weights, bias)
+    else
+        return (; weights)
+    end
+end
+
+LuxCore.parameterlength(l::DConv) = l.use_bias ? l.in_dims * l.out_dims * l.k + l.out_dims : 
+                                                l.in_dims * l.out_dims * l.k
+
+function (l::DConv)(g, x, ps, st)
+    m = (; ps.weights, bias = _getbias(ps), l.k)
+    return GNNlib.d_conv(m, g, x), st
+end
+
+function Base.show(io::IO, l::DConv)
+    print(io, "DConv($(l.in) => $(l.out), k=$(l.k))")
+end
+
+@concrete struct GATConv <: GNNLayer
+    dense_x
+    dense_e
+    init_weight
+    init_bias
+    use_bias::Bool
+    σ
+    negative_slope
+    channel::Pair{NTuple{2, Int}, Int}
+    heads::Int
+    concat::Bool
+    add_self_loops::Bool
+    dropout
+end
+
+
+GATConv(ch::Pair{Int, Int}, args...; kws...) = GATConv((ch[1], 0) => ch[2], args...; kws...)
+
+function GATConv(ch::Pair{NTuple{2, Int}, Int}, σ = identity;
+                 heads::Int = 1, concat::Bool = true, negative_slope = 0.2,
+                 init_weight = glorot_uniform, init_bias = zeros32,
+                 use_bias::Bool = true, 
+                 add_self_loops = true, dropout=0.0)
+    (in, ein), out = ch
+    if add_self_loops
+        @assert ein==0 "Using edge features and setting add_self_loops=true at the same time is not yet supported."
+    end
+
+    dense_x = Dense(in => out * heads, use_bias = false)
+    dense_e = ein > 0 ? Dense(ein => out * heads, use_bias = false) : nothing
+    negative_slope = convert(Float32, negative_slope)
+    return GATConv(dense_x, dense_e, init_weight, init_bias, use_bias, 
+                 σ, negative_slope, ch, heads, concat, add_self_loops, dropout)
+end
+
+# Flux.trainable(l::GATConv) = (dense_x = l.dense_x, dense_e = l.dense_e, bias = l.bias, a = l.a)
+function LuxCore.initialparameters(rng::AbstractRNG, l::GATConv)
+    (in, ein), out = l.channel
+    dense_x = initialparameters(rng, l.dense_x)
+    a = init_weight(ein > 0 ? 3out : 2out, heads)
+    ps = (; dense_x, a)
+    if ein > 0
+        ps = (ps..., dense_e = initialparameters(rng, l.dense_e))
+    end
+    if use_bias
+        ps = (ps..., bias = l.init_bias(rng, concat ? out * l.heads : out))
+    end
+    return ps
+end
+
+(l::GATConv)(g, x, ps, st) = l(g, x, nothing, ps, st)
+
+function (l::GATConv)(g, x, e, ps, st) 
+    return GNNlib.gat_conv(l, g, x, e), st
+end
+
+function Base.show(io::IO, l::GATConv)
+    (in, ein), out = l.channel
+    print(io, "GATConv(", ein == 0 ? in : (in, ein), " => ", out ÷ l.heads)
+    l.σ == identity || print(io, ", ", l.σ)
+    print(io, ", negative_slope=", l.negative_slope)
+    print(io, ")")
+end
