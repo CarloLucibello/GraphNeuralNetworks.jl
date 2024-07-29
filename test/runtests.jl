@@ -24,8 +24,6 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
-    "utils",
-    "msgpass",
     "layers/basic",
     "layers/conv",
     "layers/heteroconv",

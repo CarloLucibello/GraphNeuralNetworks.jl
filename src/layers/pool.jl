@@ -36,9 +36,7 @@ struct GlobalPool{F} <: GNNLayer
     aggr::F
 end
 
-function (l::GlobalPool)(g::GNNGraph, x::AbstractArray)
-    return reduce_nodes(l.aggr, g, x)
-end
+(l::GlobalPool)(g::GNNGraph, x::AbstractArray) = GNNlib.global_pool(l, g, x)
 
 (l::GlobalPool)(g::GNNGraph) = GNNGraph(g, gdata = l(g, node_features(g)))
 
@@ -96,12 +94,7 @@ end
 
 GlobalAttentionPool(fgate) = GlobalAttentionPool(fgate, identity)
 
-function (l::GlobalAttentionPool)(g::GNNGraph, x::AbstractArray)
-    α = softmax_nodes(g, l.fgate(x))
-    feats = α .* l.ffeat(x)
-    u = reduce_nodes(+, g, feats)
-    return u
-end
+(l::GlobalAttentionPool)(g, x) = GNNlib.global_attention_pool(l, g, x)
 
 (l::GlobalAttentionPool)(g::GNNGraph) = GNNGraph(g, gdata = l(g, node_features(g)))
 
@@ -127,20 +120,7 @@ function TopKPool(adj::AbstractMatrix, k::Int, in_channel::Int; init = glorot_un
     TopKPool(adj, k, init(in_channel), similar(adj, k, k))
 end
 
-function (t::TopKPool)(X::AbstractArray)
-    y = t.p' * X / norm(t.p)
-    idx = topk_index(y, t.k)
-    t.Ã .= view(t.A, idx, idx)
-    X_ = view(X, :, idx) .* σ.(view(y, idx)')
-    return X_
-end
-
-function topk_index(y::AbstractVector, k::Int)
-    v = nlargest(k, y)
-    return collect(1:length(y))[y .>= v[end]]
-end
-
-topk_index(y::Adjoint, k::Int) = topk_index(y', k)
+(t::TopKPool)(x::AbstractArray) = topk_pool(t, x)
 
 
 @doc raw"""
@@ -185,18 +165,9 @@ function Set2Set(n_in::Int, n_iters::Int, n_layers::Int = 1)
     return Set2Set(lstm, n_iters)
 end
 
-function (l::Set2Set)(g::GNNGraph, x::AbstractMatrix)
-    n_in = size(x, 1)
+function (l::Set2Set)(g, x)
     Flux.reset!(l.lstm)
-    qstar = zeros_like(x, (2*n_in, g.num_graphs))
-    for t in 1:l.num_iters
-        q = l.lstm(qstar)                            # [n_in, n_graphs]
-        qn = broadcast_nodes(g, q)                    # [n_in, n_nodes]
-        α = softmax_nodes(g, sum(qn .* x, dims = 1))  # [1, n_nodes]
-        r = reduce_nodes(+, g, x .* α)               # [n_in, n_graphs]
-        qstar = vcat(q, r)                           # [2*n_in, n_graphs]
-    end
-    return qstar
+    return GNNlib.set2set_pool(l, g, x)
 end
 
 (l::Set2Set)(g::GNNGraph) = GNNGraph(g, gdata = l(g, node_features(g)))

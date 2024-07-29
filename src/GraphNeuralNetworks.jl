@@ -9,7 +9,6 @@ using NNlib
 using NNlib: scatter, gather
 using ChainRulesCore
 using Reexport
-using DataStructures: nlargest
 using MLUtils: zeros_like
 
 using GNNGraphs: COO_T, ADJMAT_T, SPARSE_T,

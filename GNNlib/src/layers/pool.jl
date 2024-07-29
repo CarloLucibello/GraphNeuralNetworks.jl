@@ -1,12 +1,12 @@
 
 
-function global_pool(aggr, g::GNNGraph, x::AbstractArray)
-    return reduce_nodes(aggr, g, x)
+function global_pool(l, g::GNNGraph, x::AbstractArray)
+    return reduce_nodes(l.aggr, g, x)
 end
 
-function global_attention_pool(fgate, ffeat, g::GNNGraph, x::AbstractArray)
-    α = softmax_nodes(g, fgate(x))
-    feats = α .* ffeat(x)
+function global_attention_pool(l, g::GNNGraph, x::AbstractArray)
+    α = softmax_nodes(g, l.fgate(x))
+    feats = α .* l.ffeat(x)
     u = reduce_nodes(+, g, feats)
     return u
 end
@@ -26,11 +26,11 @@ end
 
 topk_index(y::Adjoint, k::Int) = topk_index(y', k)
 
-function set2set_pool(lstm, num_iters, g::GNNGraph, x::AbstractMatrix)
+function set2set_pool(l, g::GNNGraph, x::AbstractMatrix)
     n_in = size(x, 1)    
     qstar = zeros_like(x, (2*n_in, g.num_graphs))
-    for t in 1:num_iters
-        q = lstm(qstar)                            # [n_in, n_graphs]
+    for t in 1:l.num_iters
+        q = l.lstm(qstar)                            # [n_in, n_graphs]
         qn = broadcast_nodes(g, q)                    # [n_in, n_nodes]
         α = softmax_nodes(g, sum(qn .* x, dims = 1))  # [1, n_nodes]
         r = reduce_nodes(+, g, x .* α)               # [n_in, n_graphs]

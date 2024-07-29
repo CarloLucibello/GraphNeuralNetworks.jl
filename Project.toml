@@ -5,7 +5,6 @@ version = "0.6.20"
 
 [deps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Functors = "d9f16b24-f501-4c13-a1f2-28368ffc5196"
 GNNGraphs = "aed8fd31-079b-4b5a-b342-a13352159b8c"
@@ -27,7 +26,6 @@ CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 [compat]
 CUDA = "4, 5"
 ChainRulesCore = "1"
-DataStructures = "0.18"
 Flux = "0.14"
 Functors = "0.4.1"
 GNNGraphs = "1.0"
