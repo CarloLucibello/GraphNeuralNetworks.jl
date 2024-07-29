@@ -35,9 +35,7 @@ function TGCNCell(ch::Pair{Int, Int};
 end
 
 function (tgcn::TGCNCell)(h, g::GNNGraph, x::AbstractArray)
-    x̃ = tgcn.conv(g, x)
-    h, x̃ = tgcn.gru(h, x̃)
-    return h, x̃
+    return GNNlib.tgcn_conv(tgcn, h, g, x)
 end
 
 function Base.show(io::IO, tgcn::TGCNCell)
