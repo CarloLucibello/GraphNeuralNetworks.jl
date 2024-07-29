@@ -14,19 +14,19 @@ Pages   = ["messagepassing.md"]
 ## Interface
 
 ```@docs
-apply_edges
-aggregate_neighbors
-propagate
+GNNlib.apply_edges
+GNNlib.aggregate_neighbors
+GNNlib.propagate
 ```
 
 ## Built-in message functions
 
 ```@docs
-copy_xi
-copy_xj
-xi_dot_xj
-xi_sub_xj
-xj_sub_xi
-e_mul_xj
-w_mul_xj
+GNNlib.copy_xi
+GNNlib.copy_xj
+GNNlib.xi_dot_xj
+GNNlib.xi_sub_xj
+GNNlib.xj_sub_xi
+GNNlib.e_mul_xj
+GNNlib.w_mul_xj
 ```

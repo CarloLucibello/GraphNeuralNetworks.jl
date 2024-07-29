@@ -1,14 +1,11 @@
 """
-    propagate(fmsg, g, aggr [layer]; [xi, xj, e])
-    propagate(fmsg, g, aggr, [layer,] xi, xj, e=nothing) 
+    propagate(fmsg, g, aggr; [xi, xj, e])
+    propagate(fmsg, g, aggr xi, xj, e=nothing) 
 
 Performs message passing on graph `g`. Takes care of materializing the node features on each edge, 
 applying the message function `fmsg`, and returning an aggregated message ``\\bar{\\mathbf{m}}`` 
 (depending on the return value of `fmsg`, an array or a named tuple of 
 arrays with last dimension's size `g.num_nodes`).
-
-If also a [`GNNLayer`](@ref) `layer` is provided, it will be passed to `fmsg` 
-as a first argument.
 
 It can be decomposed in two steps:
 
@@ -35,9 +32,7 @@ providing as input `f` a closure.
       with the same batch size. If also `layer` is passed to propagate,
       the signature of `fmsg` has to be `fmsg(layer, xi, xj, e)` 
       instead of `fmsg(xi, xj, e)`.
-- `layer`: A [`GNNLayer`](@ref). If provided it will be passed to `fmsg` as a first argument.
 - `aggr`: Neighborhood aggregation operator. Use `+`, `mean`, `max`, or `min`. 
-
 
 # Examples
 
@@ -86,8 +81,8 @@ end
 ## APPLY EDGES
 
 """
-    apply_edges(fmsg, g, [layer]; [xi, xj, e])
-    apply_edges(fmsg, g, [layer,] xi, xj, e=nothing)
+    apply_edges(fmsg, g; [xi, xj, e])
+    apply_edges(fmsg, g, xi, xj, e=nothing)
 
 Returns the message from node `j` to node `i` applying
 the message function `fmsg` on the edges in graph `g`.
@@ -99,9 +94,6 @@ The function `fmsg` operates on batches of edges, therefore
 `xi`, `xj`, and `e` are tensors whose last dimension
 is the batch size, or can be named tuples of 
 such tensors.
-
-If also a [`GNNLayer`](@ref) `layer` is provided, it will be passed to `fmsg` 
-as a first argument.
     
 # Arguments
 
@@ -117,7 +109,6 @@ as a first argument.
        with the same batch size. If also `layer` is passed to propagate,
       the signature of `fmsg` has to be `fmsg(layer, xi, xj, e)` 
       instead of `fmsg(xi, xj, e)`.
-- `layer`: A [`GNNLayer`](@ref). If provided it will be passed to `fmsg` as a first argument.
 
 See also [`propagate`](@ref) and [`aggregate_neighbors`](@ref).
 """
