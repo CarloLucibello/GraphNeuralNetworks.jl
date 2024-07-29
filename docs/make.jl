@@ -26,7 +26,7 @@ prettyurls = get(ENV, "CI", nothing) == "true"
 mathengine = MathJax3()
 
 makedocs(;
-         modules = [GraphNeuralNetworks, GNNGraphs],
+         modules = [GraphNeuralNetworks, GNNGraphs, GNNlib],
          doctest = false,
          clean = true,
          plugins = [interlinks],
