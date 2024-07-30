@@ -38,7 +38,6 @@ function LuxCore.initialparameters(rng::AbstractRNG, l::GCNConv)
 end
 
 LuxCore.parameterlength(l::GCNConv) = l.use_bias ? l.in_dims * l.out_dims + l.out_dims : l.in_dims * l.out_dims
-LuxCore.statelength(d::GCNConv) = 0
 LuxCore.outputsize(d::GCNConv) = (d.out_dims,)
 
 function Base.show(io::IO, l::GCNConv)
@@ -549,7 +548,6 @@ function LuxCore.initialparameters(rng::AbstractRNG, l::SGConv)
 end
 
 LuxCore.parameterlength(l::SGConv) = l.use_bias ? l.in_dims * l.out_dims + l.out_dims : l.in_dims * l.out_dims
-LuxCore.statelength(d::SGConv) = 0
 LuxCore.outputsize(d::SGConv) = (d.out_dims,)
 
 function Base.show(io::IO, l::SGConv)
@@ -561,14 +559,72 @@ function Base.show(io::IO, l::SGConv)
     print(io, ")")
 end
 
-(l::SGConv)(g, x, ps, st; conv_weight=nothing, edge_weight=nothing) = 
-    l(g, x, edge_weight, ps, st; conv_weight)
+(l::SGConv)(g, x, ps, st) = l(g, x, nothing, ps, st)
 
-function (l::SGConv)(g, x, edge_weight, ps, st; 
-            conv_weight=nothing, )
-
+function (l::SGConv)(g, x, edge_weight, ps, st)
     m = (; ps.weight, bias = _getbias(ps), 
            l.add_self_loops, l.use_edge_weight, l.k)
     y = GNNlib.sg_conv(m, g, x, edge_weight)
     return y, st
+end
+
+@concrete struct GatedGraphConv <: GNNLayer
+    gru
+    init_weight
+    dims::Int
+    num_layers::Int
+    aggr
+end
+
+
+function GatedGraphConv(dims::Int, num_layers::Int; 
+            aggr = +, init_weight = glorot_uniform)
+    gru = GRUCell(dims => dims)
+    return GatedGraphConv(gru, init_weight, dims, num_layers, aggr)
+end
+
+LuxCore.outputsize(l::GatedGraphConv) = (l.dims,)
+
+function LuxCore.initialparameters(rng::AbstractRNG, l::GatedGraphConv)
+    gru = LuxCore.initialparameters(rng, l.gru)
+    weight = l.init_weight(rng, l.dims, l.dims, l.num_layers)
+    return (; gru, weight)
+end
+
+LuxCore.parameterlength(l::GatedGraphConv) = parameterlength(l.gru) + l.dims^2*l.num_layers
+
+
+function (l::GatedGraphConv)(g, x, ps, st)
+    gru = StatefulLuxLayer{true}(l.gru, ps.gru, _getstate(st, :gru))
+    fgru = (h, x) -> gru((x, (h,)))  # make the forward compatible with Flux.GRUCell style
+    m = (; gru=fgru, ps.weight, l.num_layers, l.aggr, l.dims)
+    return GNNlib.gated_graph_conv(m, g, x), st
+end
+
+function Base.show(io::IO, l::GatedGraphConv)
+    print(io, "GatedGraphConv($(l.dims), $(l.num_layers)")
+    print(io, ", aggr=", l.aggr)
+    print(io, ")")
+end
+
+@concrete struct GINConv <: GNNContainerLayer{(:nn,)}
+    nn <: AbstractExplicitLayer
+    ϵ <: Real
+    aggr
+end
+
+GINConv(nn, ϵ; aggr = +) = GINConv(nn, ϵ, aggr)
+
+function (l::GINConv)(g, x, ps, st)
+    nn = StatefulLuxLayer{true}(l.nn, ps, st)
+    m = (; nn, l.ϵ, l.aggr)
+    y = GNNlib.gin_conv(m, g, x)
+    stnew = _getstate(nn)
+    return y, stnew
+end
+
+function Base.show(io::IO, l::GINConv)
+    print(io, "GINConv($(l.nn)")
+    print(io, ", $(l.ϵ)")
+    print(io, ")")
 end

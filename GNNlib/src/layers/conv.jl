@@ -28,7 +28,7 @@ function gcn_conv(l, g::AbstractGNNGraph, x, edge_weight::EW, norm_fn::F, conv_w
         if edge_weight !== nothing
             # Pad weights with ones
             # TODO for ADJMAT_T the new edges are not generally at the end
-            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            edge_weight = [edge_weight; ones_like(edge_weight, g.num_nodes)]
             @assert length(edge_weight) == g.num_edges
         end
     end
@@ -215,23 +215,22 @@ end
 
 ####################### GatedGraphConv ######################################
 
-# TODO PIRACY! remove after https://github.com/JuliaDiff/ChainRules.jl/pull/521
-@non_differentiable fill!(x...)
-
-function gated_graph_conv(l, g::GNNGraph, H::AbstractMatrix{S}) where {S <: Real}
-    check_num_nodes(g, H)
-    m, n = size(H)
-    @assert (m<=l.out_ch) "number of input features must less or equals to output features."
-    if m < l.out_ch
-        Hpad = similar(H, S, l.out_ch - m, n)
-        H = vcat(H, fill!(Hpad, 0))
+function gated_graph_conv(l, g::GNNGraph, x::AbstractMatrix)
+    check_num_nodes(g, x)
+    m, n = size(x)
+    @assert m <= l.dims "number of input features must be less or equal to output features."
+    if m < l.dims
+        xpad = zeros_like(x, (l.dims - m, n))
+        x = vcat(x, xpad)
     end
+    h = x
     for i in 1:(l.num_layers)
-        M = view(l.weight, :, :, i) * H
-        M = propagate(copy_xj, g, l.aggr; xj = M)
-        H, _ = l.gru(H, M)
+        m = view(l.weight, :, :, i) * h
+        m = propagate(copy_xj, g, l.aggr; xj = m)
+        # in gru forward, hidden state is first argument, input is second
+        h, _ = l.gru(h, m)
     end
-    return H
+    return h
 end
 
 ####################### EdgeConv ######################################
@@ -419,7 +418,7 @@ function sgc_conv(l, g::GNNGraph, x::AbstractMatrix{T},
     if l.add_self_loops
         g = add_self_loops(g)
         if edge_weight !== nothing
-            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            edge_weight = [edge_weight; onse_like(edge_weight, g.num_nodes)]
             @assert length(edge_weight) == g.num_edges
         end
     end
@@ -512,7 +511,7 @@ function sg_conv(l, g::GNNGraph, x::AbstractMatrix{T},
     if l.add_self_loops
         g = add_self_loops(g)
         if edge_weight !== nothing
-            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            edge_weight = [edge_weight; ones_like(edge_weight, g.num_nodes)]
             @assert length(edge_weight) == g.num_edges
         end
     end
@@ -644,7 +643,7 @@ function tag_conv(l, g::GNNGraph, x::AbstractMatrix{T},
     if l.add_self_loops
         g = add_self_loops(g)
         if edge_weight !== nothing
-            edge_weight = [edge_weight; fill!(similar(edge_weight, g.num_nodes), 1)]
+            edge_weight = [edge_weight; ones_like(edge_weight, g.num_nodes)]
             @assert length(edge_weight) == g.num_edges
         end
     end
