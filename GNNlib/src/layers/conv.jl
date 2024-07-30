@@ -161,7 +161,8 @@ function gat_message(l, Wxi, Wxj, e)
         Wxx = vcat(Wxi, Wxj, We)
     end
     aWW = sum(l.a .* Wxx, dims = 1)   # 1 × nheads × nedges
-    logα = leakyrelu.(aWW, l.negative_slope)
+    slope = convert(eltype(aWW), l.negative_slope)
+    logα = leakyrelu.(aWW, slope)
     return (; logα, Wxj)
 end
 
@@ -207,7 +208,8 @@ function gatv2_message(l, Wxi, Wxj, e)
     if e !== nothing
         Wx += reshape(l.dense_e(e), out, heads, :)
     end
-    logα = sum(l.a .* leakyrelu.(Wx, l.negative_slope), dims = 1)   # 1 × heads × nedges
+    slope = convert(eltype(Wx), l.negative_slope)
+    logα = sum(l.a .* leakyrelu.(Wx, slope), dims = 1)   # 1 × heads × nedges
     return (; logα, Wxj)
 end
 
@@ -703,14 +705,14 @@ function d_conv(l, g::GNNGraph, x::AbstractMatrix)
     h = l.weights[1,1,:,:] * x .+ l.weights[2,1,:,:] * x
 
     T0 = x
-    if l.K > 1
+    if l.k > 1
         # T1_in = T0 * deg_in * A'
         #T1_out = T0 * deg_out' * A
         T1_out = propagate(w_mul_xj, g, +; xj = T0*deg_out')
         T1_in = propagate(w_mul_xj, gt, +; xj = T0*deg_in)
         h = h .+ l.weights[1,2,:,:] * T1_in .+ l.weights[2,2,:,:] * T1_out
     end
-    for i in 2:l.K
+    for i in 2:l.k
         T2_in = propagate(w_mul_xj, gt, +; xj = T1_in*deg_in)
         T2_in = 2 * T2_in - T0
         T2_out =  propagate(w_mul_xj, g ,+; xj = T1_out*deg_out')

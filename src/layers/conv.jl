@@ -451,8 +451,8 @@ function GATv2Conv(ch::Pair{NTuple{2, Int}, Int},
     end
     b = bias ? Flux.create_bias(dense_i.weight, true, concat ? out * heads : out) : false
     a = init(out, heads)
-    negative_slope = convert(eltype(dense_i.weight), negative_slope)
-    GATv2Conv(dense_i, dense_j, dense_e, b, a, σ, negative_slope, ch, heads, concat,
+    return GATv2Conv(dense_i, dense_j, dense_e, 
+              b, a, σ, negative_slope, ch, heads, concat,
               add_self_loops, dropout)
 end
 
@@ -1536,14 +1536,14 @@ function Base.show(io::IO, l::TransformerConv)
 end
 
 """
-    DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
+    DConv(ch::Pair{Int, Int}, k::Int; init = glorot_uniform, bias = true)
 
 Diffusion convolution layer from the paper [Diffusion Convolutional Recurrent Neural Networks: Data-Driven Traffic Forecasting](https://arxiv.org/pdf/1707.01926).
 
 # Arguments
 
 - `ch`: Pair of input and output dimensions.
-- `K`: Number of diffusion steps.
+- `k`: Number of diffusion steps.
 - `init`: Weights' initializer. Default `glorot_uniform`.
 - `bias`: Add learnable bias. Default `true`.
 
@@ -1552,7 +1552,7 @@ Diffusion convolution layer from the paper [Diffusion Convolutional Recurrent Ne
 julia> g = GNNGraph(rand(10, 10), ndata = rand(Float32, 2, 10));
 
 julia> dconv = DConv(2 => 4, 4)
-DConv(2 => 4, K=4)
+DConv(2 => 4, 4)
 
 julia> y = dconv(g, g.ndata.x);
 
@@ -1565,20 +1565,20 @@ struct DConv <: GNNLayer
     out::Int
     weights::AbstractArray
     bias::AbstractArray
-    K::Int
+    k::Int
 end
 
 @functor DConv
 
-function DConv(ch::Pair{Int, Int}, K::Int; init = glorot_uniform, bias = true)
+function DConv(ch::Pair{Int, Int}, k::Int; init = glorot_uniform, bias = true)
     in, out = ch
-    weights = init(2, K, out, in)
+    weights = init(2, k, out, in)
     b = bias ? Flux.create_bias(weights, true, out) : false
-    DConv(in, out, weights, b, K)
+    return DConv(in, out, weights, b, k)
 end
 
 (l::DConv)(g, x) = GNNlib.d_conv(l, g, x)
 
 function Base.show(io::IO, l::DConv)
-    print(io, "DConv($(l.in) => $(l.out), K=$(l.K))")
+    print(io, "DConv($(l.in) => $(l.out), $(l.k))")
 end

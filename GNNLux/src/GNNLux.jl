@@ -1,8 +1,8 @@
 module GNNLux
 using ConcreteStructs: @concrete
-using NNlib: NNlib, sigmoid, relu
+using NNlib: NNlib, sigmoid, relu, swish
 using LuxCore: LuxCore, AbstractExplicitLayer, AbstractExplicitContainerLayer
-using Lux: Lux, Dense, glorot_uniform, zeros32, StatefulLuxLayer
+using Lux: Lux, Chain, Dense, glorot_uniform, zeros32, StatefulLuxLayer
 using Reexport: @reexport
 using Random: AbstractRNG
 using GNNlib: GNNlib
@@ -18,10 +18,10 @@ export AGNNConv,
        CGConv,
        ChebConv,
        EdgeConv,
-       # EGNNConv,
-       # DConv,
-       # GATConv,
-       # GATv2Conv,
+       EGNNConv,
+       DConv,
+       GATConv,
+       GATv2Conv,
        # GatedGraphConv,
        GCNConv,
        # GINConv,
