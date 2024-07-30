@@ -451,8 +451,8 @@ function GATv2Conv(ch::Pair{NTuple{2, Int}, Int},
     end
     b = bias ? Flux.create_bias(dense_i.weight, true, concat ? out * heads : out) : false
     a = init(out, heads)
-    negative_slope = convert(eltype(dense_i.weight), negative_slope)
-    GATv2Conv(dense_i, dense_j, dense_e, b, a, σ, negative_slope, ch, heads, concat,
+    return GATv2Conv(dense_i, dense_j, dense_e, 
+              b, a, σ, negative_slope, ch, heads, concat,
               add_self_loops, dropout)
 end
 

@@ -56,8 +56,26 @@
 
     @testset "GATConv" begin
         x = randn(rng, Float32, 6, 10)
+
         l = GATConv(6 => 8, heads=2)
+        test_lux_layer(rng, l, g, x, outputsize=(16,))
+
+        l = GATConv(6 => 8, heads=2, concat=false, dropout=0.5)
         test_lux_layer(rng, l, g, x, outputsize=(8,))
+
+        #TODO test edge
+    end
+
+    @testset "GATv2Conv" begin
+        x = randn(rng, Float32, 6, 10)
+
+        l = GATv2Conv(6 => 8, heads=2)
+        test_lux_layer(rng, l, g, x, outputsize=(16,))
+
+        l = GATv2Conv(6 => 8, heads=2, concat=false, dropout=0.5)
+        test_lux_layer(rng, l, g, x, outputsize=(8,))
+
+        #TODO test edge
     end
 end
 

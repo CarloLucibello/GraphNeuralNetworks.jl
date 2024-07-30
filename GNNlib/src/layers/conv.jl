@@ -161,7 +161,8 @@ function gat_message(l, Wxi, Wxj, e)
         Wxx = vcat(Wxi, Wxj, We)
     end
     aWW = sum(l.a .* Wxx, dims = 1)   # 1 × nheads × nedges
-    logα = leakyrelu.(aWW, l.negative_slope)
+    slope = convert(eltype(aWW), l.negative_slope)
+    logα = leakyrelu.(aWW, slope)
     return (; logα, Wxj)
 end
 
@@ -207,7 +208,8 @@ function gatv2_message(l, Wxi, Wxj, e)
     if e !== nothing
         Wx += reshape(l.dense_e(e), out, heads, :)
     end
-    logα = sum(l.a .* leakyrelu.(Wx, l.negative_slope), dims = 1)   # 1 × heads × nedges
+    slope = convert(eltype(Wx), l.negative_slope)
+    logα = sum(l.a .* leakyrelu.(Wx, slope), dims = 1)   # 1 × heads × nedges
     return (; logα, Wxj)
 end
 
