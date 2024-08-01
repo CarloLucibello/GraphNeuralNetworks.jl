@@ -520,7 +520,7 @@ end
 function GatedGraphConv(dims::Int, num_layers::Int;
                         aggr = +, init = glorot_uniform)
     w = init(dims, dims, num_layers)
-    gru = GRUCell(out_ch, dims)
+    gru = GRUCell(dims => dims)
     GatedGraphConv(w, gru, dims, num_layers, aggr)
 end
 
