@@ -28,6 +28,7 @@ function test_lux_layer(rng::AbstractRNG, l, g::GNNGraph, x;
     @test LuxCore.statelength(l) == LuxCore.statelength(st)
     
     y, st′ = l(g, x, ps, st)
+    @test eltype(y) == eltype(x)
     if outputsize !== nothing
         @test LuxCore.outputsize(l) == outputsize
     end

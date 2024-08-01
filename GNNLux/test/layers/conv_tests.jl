@@ -82,5 +82,15 @@
         l = SGConv(in_dims => out_dims, 2)
         test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
     end
-end
 
+    @testset "GatedGraphConv" begin
+        l = GatedGraphConv(in_dims, 3)
+        test_lux_layer(rng, l, g, x, outputsize=(in_dims,))
+    end
+
+    @testset "GINConv" begin
+        nn = Chain(Dense(in_dims => out_dims, relu), Dense(out_dims => out_dims))
+        l = GINConv(nn, 0.5)
+        test_lux_layer(rng, l, g, x, sizey=(out_dims,g.num_nodes), container=true)
+    end
+end

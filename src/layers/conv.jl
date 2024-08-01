@@ -486,7 +486,7 @@ where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing throu
 # Arguments
 
 - `out`: The dimension of output features.
-- `num_layers`: The number of gated recurrent unit.
+- `num_layers`: The number of recursion steps.
 - `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
 - `init`: Weight initialization function.
 
@@ -510,25 +510,25 @@ y = l(g, x)
 struct GatedGraphConv{W <: AbstractArray{<:Number, 3}, R, A} <: GNNLayer
     weight::W
     gru::R
-    out_ch::Int
+    dims::Int
     num_layers::Int
     aggr::A
 end
 
 @functor GatedGraphConv
 
-function GatedGraphConv(out_ch::Int, num_layers::Int;
+function GatedGraphConv(dims::Int, num_layers::Int;
                         aggr = +, init = glorot_uniform)
-    w = init(out_ch, out_ch, num_layers)
-    gru = GRUCell(out_ch, out_ch)
-    GatedGraphConv(w, gru, out_ch, num_layers, aggr)
+    w = init(dims, dims, num_layers)
+    gru = GRUCell(dims => dims)
+    GatedGraphConv(w, gru, dims, num_layers, aggr)
 end
 
 
 (l::GatedGraphConv)(g, H) = GNNlib.gated_graph_conv(l, g, H)
 
 function Base.show(io::IO, l::GatedGraphConv)
-    print(io, "GatedGraphConv(($(l.out_ch) => $(l.out_ch))^$(l.num_layers)")
+    print(io, "GatedGraphConv($(l.dims), $(l.num_layers)")
     print(io, ", aggr=", l.aggr)
     print(io, ")")
 end
@@ -1201,7 +1201,7 @@ function SGConv(ch::Pair{Int, Int}, k = 1;
     in, out = ch
     W = init(out, in)
     b = bias ? Flux.create_bias(W, true, out) : false
-    SGConv(W, b, k, add_self_loops, use_edge_weight)
+    return SGConv(W, b, k, add_self_loops, use_edge_weight)
 end
 
 (l::SGConv)(g, x, edge_weight = nothing) = GNNlib.sg_conv(l, g, x, edge_weight)
