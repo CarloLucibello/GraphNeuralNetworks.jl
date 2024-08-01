@@ -151,7 +151,7 @@ end
 
 """
     remove_edges(g::GNNGraph, edges_to_remove::AbstractVector{<:Integer})
-    remove_edges(g::GNNGraph, p::Float64=0.5)
+    remove_edges(g::GNNGraph, p=0.5)
 
 Remove specified edges from a GNNGraph, either by specifying edge indices or by randomly removing edges with a given probability.
 
