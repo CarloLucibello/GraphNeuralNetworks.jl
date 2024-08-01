@@ -126,6 +126,13 @@ end
         @test new_t == [4]
         @test new_w == [0.3]
         @test new_edata == ['c']
+
+        # drop with probability
+        gnew = remove_edges(g, Float32(1.0))
+        @test gnew.num_edges == 0
+
+        gnew = remove_edges(g, Float32(0.0))
+        @test gnew.num_edges == g.num_edges
     end
 end
 
