@@ -724,7 +724,7 @@ function d_conv(l, g::GNNGraph, x::AbstractMatrix)
     return h .+ l.bias
 end
 
-####################### GCNConv ######################################
+####################### SGConv ######################################
 
 function sg_conv(l, g::AbstractGNNGraph, x, edge_weight::EW, conv_weight::CW) where 
         {EW <: Union{Nothing, AbstractVector}, CW<:Union{Nothing,AbstractMatrix}, F}
@@ -772,8 +772,8 @@ function sg_conv(l, g::AbstractGNNGraph, x, edge_weight::EW, conv_weight::CW) wh
 end
 
 # when we also have edge_weight we need to convert the graph to COO
-function gcn_conv(l, g::GNNGraph{<:ADJMAT_T}, x, edge_weight::EW, conv_weight::CW) where 
+function sg_conv(l, g::GNNGraph{<:ADJMAT_T}, x, edge_weight::EW, conv_weight::CW) where 
         {EW <: Union{Nothing, AbstractVector}, CW<:Union{Nothing,AbstractMatrix}, F} 
     g = GNNGraph(edge_index(g)...; g.num_nodes)  # convert to COO
-    return gcn_conv(l, g, x, edge_weight, conv_weight)
+    return sg_conv(l, g, x, edge_weight, conv_weight)
 end
