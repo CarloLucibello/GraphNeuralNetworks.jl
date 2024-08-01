@@ -214,14 +214,7 @@ end
 function remove_edges(g::GNNGraph{<:COO_T}, p = 0.5)
     num_edges = g.num_edges
     edges_to_remove = filter(_ -> rand() < p, 1:num_edges)        
-    g = remove_edges(g, edges_to_remove)
-    s, t = edge_index(g)
-    w = get_edge_weight(g)
-    edata = g.edata
-    return GNNGraph((s, t, w),
-             g.num_nodes, length(s), g.num_graphs,
-             g.graph_indicator,
-             g.ndata, edata, g.gdata)
+    return remove_edges(g, edges_to_remove)
 end
 
 """
