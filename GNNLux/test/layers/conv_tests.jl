@@ -79,7 +79,7 @@
     end
 
     @testset "SGConv" begin
-        l = SGConv(in_dims => out_dims, relu)
+        l = SGConv(in_dims => out_dims, 2)
         test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
     end
 end

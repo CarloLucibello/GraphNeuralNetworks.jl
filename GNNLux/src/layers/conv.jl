@@ -535,7 +535,7 @@ function SGConv(ch::Pair{Int, Int}, k = 1;
                 add_self_loops::Bool = true,
                 use_edge_weight::Bool = false)
     in_dims, out_dims = ch
-    return SGConv(in_dims, out_dims, use_bias, add_self_loops, use_edge_weight, init_weight, init_bias, k)
+    return SGConv(in_dims, out_dims, k, use_bias, add_self_loops, use_edge_weight, init_weight, init_bias)
 end
 
 function LuxCore.initialparameters(rng::AbstractRNG, l::SGConv)
