@@ -26,12 +26,12 @@ export AGNNConv,
        GCNConv,
        # GINConv,
        # GMMConv,
-       GraphConv
+       GraphConv,
        # MEGNetConv,
        # NNConv,
        # ResGatedGraphConv,
        # SAGEConv,
-       # SGConv,
+       SGConv
        # TAGConv,
        # TransformerConv
    
