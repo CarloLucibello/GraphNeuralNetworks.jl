@@ -568,7 +568,7 @@ function (l::SGConv)(g, x, edge_weight, ps, st;
             conv_weight=nothing, )
 
     m = (; ps.weight, bias = _getbias(ps), 
-           l.add_self_loops, l.use_edge_weight, l.σ)
+           l.add_self_loops, l.use_edge_weight, l.k)
     y = GNNlib.sg_conv(m, g, x, edge_weight, conv_weight)
     return y, st
 end
