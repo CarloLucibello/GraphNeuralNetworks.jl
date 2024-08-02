@@ -642,16 +642,7 @@ end
     σ
 end
 
-"""
-function NNConv(ch::Pair{Int, Int}, σ = identity;
-    init_weight = glorot_uniform,
-    init_bias = zeros32,
-    use_bias::Bool = true,
-    add_self_loops::Bool = true,
-    use_edge_weight::Bool = false,
-    allow_fast_activation::Bool = true)
-"""
-# fix args order
+
 function NNConv(ch::Pair{Int, Int}, nn, σ = identity; 
                 aggr = +, 
                 init_bias = zeros32,
