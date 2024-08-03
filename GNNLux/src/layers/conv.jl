@@ -667,19 +667,7 @@ function (l::GCNConv)(g, x, edge_weight, ps, st)
     return y, stnew
 end
 
-function LuxCore.initialparameters(rng::AbstractRNG, l::NNConv)
-    weight = l.init_weight(rng, l.out_dims, l.in_dims)
-    if l.use_bias
-        bias = l.init_bias(rng, l.out_dims)
-        return (; weight, bias)
-    else
-        return (; weight)
-    end
-end
-
-LuxCore.parameterlength(l::NNConv) = l.use_bias ? l.in_dims * l.out_dims + l.out_dims : l.in_dims * l.out_dims # nn wont affect this right?
 LuxCore.outputsize(d::NNConv) = (d.out_dims,)
-
 
 function Base.show(io::IO, l::GINConv)
     print(io, "NNConv($(l.nn)")
