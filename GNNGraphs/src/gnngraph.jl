@@ -209,10 +209,10 @@ function GNNGraph(g::GNNGraph; ndata = g.ndata, edata = g.edata, gdata = g.gdata
     else
         graph = g.graph
     end
-    GNNGraph(graph,
-             g.num_nodes, g.num_edges, g.num_graphs,
-             g.graph_indicator,
-             ndata, edata, gdata)
+    return GNNGraph(graph,
+                g.num_nodes, g.num_edges, g.num_graphs,
+                g.graph_indicator,
+                ndata, edata, gdata)
 end
 
 """
