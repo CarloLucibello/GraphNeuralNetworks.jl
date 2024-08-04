@@ -669,7 +669,7 @@ end
 
 LuxCore.outputsize(d::NNConv) = (d.out_dims,)
 
-function Base.show(io::IO, l::GINConv)
+function Base.show(io::IO, l::NNConv)
     print(io, "NNConv($(l.nn)")
     print(io, ", $(l.ϵ)")
     l.σ == identity || print(io, ", ", l.σ)
