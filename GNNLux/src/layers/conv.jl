@@ -656,7 +656,7 @@ function NNConv(ch::Pair{Int, Int}, nn, σ = identity;
     return NNConv(nn, aggr, in_dims, out_dims, use_bias, add_self_loops, use_edge_weight, init_weight, init_bias, σ)
 end
 
-function (l::GCNConv)(g, x, edge_weight, ps, st)
+function (l::NNConv)(g, x, edge_weight, ps, st)
     nn = StatefulLuxLayer{true}(l.nn, ps, st)
 
     # what would be the order of args here?
@@ -669,7 +669,7 @@ end
 
 LuxCore.outputsize(d::NNConv) = (d.out_dims,)
 
-function Base.show(io::IO, l::GINConv)
+function Base.show(io::IO, l::NNConv)
     print(io, "NNConv($(l.nn)")
     print(io, ", $(l.ϵ)")
     l.σ == identity || print(io, ", ", l.σ)
