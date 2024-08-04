@@ -663,9 +663,8 @@ function (l::MegNetConv)(g, x, e, ps, st)
 end
 
 function Base.show(io::IO, l::MegNetConv)
-    ne = l.num_features.edge
-    nin = l.num_features.in
-    nout = l.num_features.out
-    print(io, "MegNetConv(($nin, $ne) => $nout")
+    nin = l.in_dims
+    nout = l.out_dims
+    print(io, "MegNetConv(", l.in_dims, " => ", l.out_dims)
     print(io, ")")
 end
