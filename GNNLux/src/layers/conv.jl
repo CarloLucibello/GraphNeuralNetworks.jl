@@ -628,3 +628,46 @@ function Base.show(io::IO, l::GINConv)
     print(io, ", $(l.ϵ)")
     print(io, ")")
 end
+
+@concrete struct MEGNetConv{TE, TV, A} <: GNNLayer
+    ϕe::TE
+    ϕv::TV
+    aggr::A
+    num_features::NamedTuple
+end
+
+MEGNetConv(ϕe, ϕv; aggr = mean) = MEGNetConv(ϕe, ϕv, aggr)
+
+function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
+    nin, nout = ch
+    ϕe = Chain(Dense(3nin, nout, relu),
+               Dense(nout, nout))
+
+    ϕv = Chain(Dense(nin + nout, nout, relu),
+               Dense(nout, nout))
+
+    num_features = (in = in_size, edge = edge_feat_size, out = out_size,
+                    hidden = hidden_size)
+
+    return MEGNetConv(ϕe, ϕv; aggr, num_features)
+end
+
+
+LuxCore.outputsize(l::MegNetConv) = (l.num_features.out,)
+
+(l::MegNetConv)(g, x, ps, st) = l(g, x, nothing, ps, st)
+
+function (l::MegNetConv)(g, x, e, ps, st)
+    ϕe = StatefulLuxLayer{true}(l.ϕe, ps.ϕe, _getstate(st, :ϕe))
+    ϕv = StatefulLuxLayer{true}(l.ϕv, ps.ϕv, _getstate(st, :ϕv))    
+    m = (; ϕe, ϕv, l.residual, l.num_features)
+    return GNNlib.megnet_conv(m, g, x, e), st
+end
+
+function Base.show(io::IO, l::MegNetConv)
+    ne = l.num_features.edge
+    nin = l.num_features.in
+    nout = l.num_features.out
+    print(io, "MegNetConv(($nin, $ne) => $nout")
+    print(io, ")")
+end
