@@ -646,8 +646,7 @@ function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
     ϕv = Chain(Dense(nin + nout, nout, relu),
                Dense(nout, nout))
 
-    num_features = (in = in_size, edge = edge_feat_size, out = out_size,
-                    hidden = hidden_size)
+    num_features = (in = nin, out = nout)
 
     return MEGNetConv(ϕe, ϕv; aggr, num_features)
 end
