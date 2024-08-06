@@ -94,7 +94,8 @@
 end
 
 @testset "color_refinment" begin
-    g = rand_graph(10, 20, seed=17, graph_type = GRAPH_T)
+    rng = MersenneTwister(17)
+    g = rand_graph(rng, 10, 20, graph_type = GRAPH_T)
     x0 = ones(Int, 10)
     x, ncolors, niters = color_refinement(g, x0)
     @test ncolors == 8

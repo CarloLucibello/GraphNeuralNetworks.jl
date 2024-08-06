@@ -518,7 +518,6 @@ end
 Return a new graph obtained from `g` by adding random edges, based on a specified `perturb_ratio`. 
 The `perturb_ratio` determines the fraction of new edges to add relative to the current number of edges in the graph. 
 These new edges are added without creating self-loops. 
-Optionally, a random `seed` can be provided to ensure reproducible perturbations.
 
 The function returns a new `GNNGraph` instance that shares some of the underlying data with `g` but includes the additional edges. 
 The nodes for the new edges are selected randomly, and no edge data (`edata`) or weights (`w`) are assigned to these new edges.

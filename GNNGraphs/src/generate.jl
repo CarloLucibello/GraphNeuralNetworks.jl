@@ -1,5 +1,5 @@
 """
-    rand_graph(n, m; bidirected=true, seed=-1, edge_weight = nothing, kws...)
+    rand_graph([rng,] n, m; bidirected=true, edge_weight = nothing, kws...)
 
 Generate a random (Erdós-Renyi) `GNNGraph` with `n` nodes and `m` edges.
 
@@ -10,7 +10,7 @@ In any case, the output graph will contain no self-loops or multi-edges.
 A vector can be passed  as `edge_weight`. Its length has to be equal to `m`
 in the directed case, and `m÷2` in the bidirected one.
 
-Use a `seed > 0` for reproducibility.
+Pass a random number generator as the first argument to make the generation reproducible.
 
 Additional keyword arguments will be passed to the [`GNNGraph`](@ref) constructor.
 
