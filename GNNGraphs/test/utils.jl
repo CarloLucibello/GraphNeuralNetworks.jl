@@ -93,7 +93,7 @@
     end
 end
 
-@testset "color_refinment" begin
+@testset "color_refinement" begin
     rng = MersenneTwister(17)
     g = rand_graph(rng, 10, 20, graph_type = GRAPH_T)
     x0 = ones(Int, 10)
@@ -104,4 +104,4 @@ end
     
     x2, _, _ = color_refinement(g)
     @test x2 == x
-end
+end 

@@ -59,7 +59,7 @@ function rand_graph(rng::AbstractRNG, n::Integer, m::Integer; bidirected = true,
     else
         s, t, _ = _rand_edges(rng, n, m; directed=true, self_loops=false)
     end
-    return GNNGraph((s, t, edge_weight); kws...)
+    return GNNGraph((s, t, edge_weight); num_nodes=n, kws...)
 end
 
 """
