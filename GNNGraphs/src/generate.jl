@@ -36,15 +36,30 @@ GNNGraph:
 # Each edge has a reverse
 julia> edge_index(g)
 ([1, 3, 3, 4], [3, 4, 1, 3])
-
 ```
 """
-function rand_graph(n::Integer, m::Integer; bidirected = true, seed = -1, edge_weight = nothing, kws...)
-    if bidirected
-        @assert iseven(m) "Need even number of edges for bidirected graphs, given m=$m."
+function rand_graph(n::Integer, m::Integer; seed=-1, kws...)
+    if seed != -1
+        Base.depwarn("Keyword argument `seed` is deprecated, pass an rng as first argument instead.", :rand_graph)
+        rng = MersenneTwister(seed)
+    else
+        rng = Random.default_rng()
     end
-    m2 = bidirected ? m ÷ 2 : m
-    return GNNGraph(Graphs.erdos_renyi(n, m2; is_directed = !bidirected, seed); edge_weight, kws...)
+    return rand_graph(rng, n, m; kws...)
+end
+
+function rand_graph(rng::AbstractRNG, n::Integer, m::Integer; bidirected = true, edge_weight = nothing, kws...)
+    if bidirected
+        @assert iseven(m) lazy"Need even number of edges for bidirected graphs, given m=$m."
+        s, t, _ = _rand_edges(rng, n, m ÷ 2; directed=false, self_loops=false)
+        s, t = vcat(s, t), vcat(t, s)
+        if edge_weight !== nothing
+            edge_weight = vcat(edge_weight, edge_weight)
+        end
+    else
+        s, t, _ = _rand_edges(rng, n, m; directed=true, self_loops=false)
+    end
+    return GNNGraph((s, t, edge_weight); kws...)
 end
 
 """
@@ -104,12 +119,6 @@ function _rand_bidirected_heterograph(rng, n::NDict, m::EDict; kws...)
     return GNNHeteroGraph(graphs; num_nodes = n, kws...)
 end
 
-function _rand_edges(rng, (n1, n2), m)
-    idx = StatsBase.sample(rng, 1:(n1 * n2), m, replace = false)
-    s, t = edge_decoding(idx, n1, n2)
-    val = nothing
-    return s, t, val
-end
 
 """
     rand_bipartite_heterograph(n1, n2, m; [bidirected, seed, node_t, edge_t, kws...])

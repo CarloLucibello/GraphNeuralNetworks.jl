@@ -47,6 +47,50 @@
     tnew[mask] .= s1[mask]
     @test sdec == snew
     @test tdec == tnew
+
+    @testset "directed=false, self_loops=false" begin
+        n = 5
+        edges = [(1,2), (3,1), (1,4), (1,5), (2,3), (2,4), (2,5), (3,4), (3,5), (4,5)]
+        s = [e[1] for e in edges]
+        t = [e[2] for e in edges]
+        g = GNNGraph(s, t)
+        idx, idxmax = GNNGraphs.edge_encoding(s, t, n, directed=false, self_loops=false)
+        @test idxmax == n * (n - 1) ÷ 2
+        @test idx == 1:idxmax
+        
+        snew, tnew = GNNGraphs.edge_decoding(idx, n, directed=false, self_loops=false)
+        @test snew == [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]
+        @test tnew == [2, 3, 4, 5, 3, 4, 5, 4, 5, 5]
+    end
+
+    @testset "directed=false, self_loops=false" begin
+        n = 5
+        edges = [(1,2), (3,1), (1,4), (1,5), (2,3), (2,4), (2,5), (3,4), (3,5), (4,5)]
+        s = [e[1] for e in edges]
+        t = [e[2] for e in edges]
+
+        idx, idxmax = GNNGraphs.edge_encoding(s, t, n, directed=false, self_loops=false)
+        @test idxmax == n * (n - 1) ÷ 2
+        @test idx == 1:idxmax
+        
+        snew, tnew = GNNGraphs.edge_decoding(idx, n, directed=false, self_loops=false)
+        @test snew == [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]
+        @test tnew == [2, 3, 4, 5, 3, 4, 5, 4, 5, 5]
+    end
+
+    @testset "directed=true, self_loops=false" begin
+        n = 5
+        edges = [(1,2), (3,1), (1,4), (1,5), (2,3), (2,4), (2,5), (3,4), (3,5), (4,5)]
+        s = [e[1] for e in edges]
+        t = [e[2] for e in edges]
+
+        idx, idxmax = GNNGraphs.edge_encoding(s, t, n, directed=true, self_loops=false)
+        @test idxmax == n^2 - n
+        @test idx == [1, 9, 3, 4, 6, 7, 8, 11, 12, 16]
+        snew, tnew = GNNGraphs.edge_decoding(idx, n, directed=true, self_loops=false)
+        @test snew == s
+        @test tnew == t
+    end
 end
 
 @testset "color_refinment" begin
