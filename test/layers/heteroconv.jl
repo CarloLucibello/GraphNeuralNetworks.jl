@@ -1,6 +1,6 @@
 @testset "HeteroGraphConv" begin
     d, n = 3, 5
-    g = rand_bipartite_heterograph(n, 2*n, 15)
+    g = rand_bipartite_heterograph((n, 2*n), 15)
     hg = rand_bipartite_heterograph((2,3), 6)
 
     model = HeteroGraphConv([(:A,:to,:B) => GraphConv(d => d), 

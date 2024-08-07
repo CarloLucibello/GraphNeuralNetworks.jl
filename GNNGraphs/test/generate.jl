@@ -81,7 +81,7 @@ end
 end
 
 @testset "rand_bipartite_heterograph" begin
-    g = rand_bipartite_heterograph(10, 15, 20)
+    g = rand_bipartite_heterograph((10, 15), (20, 20))
     @test g.num_nodes == Dict(:A => 10, :B => 15)
     @test g.num_edges == Dict((:A, :to, :B) => 20, (:B, :to, :A) => 20)
     sA, tB = edge_index(g, (:A, :to, :B))
