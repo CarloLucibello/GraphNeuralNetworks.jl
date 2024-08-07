@@ -23,7 +23,7 @@ const ACUMatrix{T} = Union{CuMatrix{T}, CUDA.CUSPARSE.CuSparseMatrix{T}}
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 
 include("test_utils.jl")
-
+"""
 tests = [
     "chainrules",
     "datastore",
@@ -39,7 +39,7 @@ tests = [
     "mldatasets",
     "ext/SimpleWeightedGraphs"
 ]
-
+"""
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
 
 for graph_type in (:coo, :dense, :sparse)

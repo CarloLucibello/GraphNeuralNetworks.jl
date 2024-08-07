@@ -650,18 +650,21 @@ function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
     return MEGNetConv(nin, nout, ϕe, ϕv; aggr)
 end
 
-LuxCore.outputsize(l::MegNetConv) = (l.num_features.out,)
-
-function (l::MegNetConv)(g, x, e, ps, st)
+function (l::MEGNetConv)(g, x, e, ps, st)
     ϕe = StatefulLuxLayer{true}(l.ϕe, ps.ϕe, _getstate(st, :ϕe))
     ϕv = StatefulLuxLayer{true}(l.ϕv, ps.ϕv, _getstate(st, :ϕv))    
     m = (; ϕe, ϕv, l.residual, l.num_features)
     return GNNlib.megnet_conv(m, g, x, e), st
 end
 
-function Base.show(io::IO, l::MegNetConv)
+
+LuxCore.outputsize(l::MEGNetConv) = (l.out_dims,)
+
+(l::MEGNetConv)(g, x, ps, st) = l(g, x, nothing, ps, st)
+
+function Base.show(io::IO, l::MEGNetConv)
     nin = l.in_dims
     nout = l.out_dims
-    print(io, "MegNetConv(", nin, " => ", nout)
+    print(io, "MEGNetConv(", nin, " => ", nout)
     print(io, ")")
 end
