@@ -93,6 +93,7 @@ function rand_heterograph end
 
 # for generic iterators of pairs
 rand_heterograph(n, m; kws...) = rand_heterograph(Dict(n), Dict(m); kws...)
+rand_heterograph(rng::AbstractRNG, n, m; kws...) = rand_heterograph(rng, Dict(n), Dict(m); kws...)
 
 function  rand_heterograph(n::NDict, m::EDict; seed=-1, kws...)
     if seed != -1
