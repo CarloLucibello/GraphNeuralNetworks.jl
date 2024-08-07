@@ -300,8 +300,7 @@ l = GATConv(in_channel => out_channel, add_self_loops = false, bias = false; hea
 y = l(g, x)       
 ```
 """
-struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, DV, T, A <: AbstractMatrix, F, B} <:
-       GNNLayer
+struct GATConv{DX<:Dense,DE<:Union{Dense, Nothing},DV,T,A<:AbstractMatrix,F,B} <: GNNLayer
     dense_x::DX
     dense_e::DE
     bias::B
@@ -316,7 +315,7 @@ struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, DV, T, A <: AbstractMat
 end
 
 Flux.@layer GATConv
-Flux.trainable(l::GATConv) = (dense_x = l.dense_x, dense_e = l.dense_e, bias = l.bias, a = l.a)
+Flux.trainable(l::GATConv) = (; l.dense_x, l.dense_e, l.bias, l.a)
 
 GATConv(ch::Pair{Int, Int}, args...; kws...) = GATConv((ch[1], 0) => ch[2], args...; kws...)
 
