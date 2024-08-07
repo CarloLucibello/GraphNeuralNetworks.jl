@@ -30,8 +30,8 @@
     end
 
     @testset "Constructor from pairs" begin
-        layer = HeteroGraphConv((:A, :to, :B) => GraphConv(64 => 32, relu),
-                                (:B, :to, :A) => GraphConv(64 => 32, relu));
+        layer = HeteroGraphConv((:A, :to, :B) => GraphConv(64 => 32, tanh),
+                                (:B, :to, :A) => GraphConv(64 => 32, tanh));
         @test length(layer.etypes) == 2
     end
 
@@ -95,8 +95,8 @@
 
     @testset "CGConv" begin
         x = (A = rand(Float32, 4,2), B = rand(Float32, 4, 3))
-        layers = HeteroGraphConv( (:A, :to, :B) => CGConv(4 => 2, relu),
-                                    (:B, :to, :A) => CGConv(4 => 2, relu));
+        layers = HeteroGraphConv( (:A, :to, :B) => CGConv(4 => 2, tanh),
+                                    (:B, :to, :A) => CGConv(4 => 2, tanh));
         y = layers(hg, x); 
         @test size(y.A) == (2,2) && size(y.B) == (2,3)
     end
@@ -111,8 +111,8 @@
   
     @testset "SAGEConv" begin
         x = (A = rand(Float32, 4, 2), B = rand(Float32, 4, 3))
-        layers = HeteroGraphConv((:A, :to, :B) => SAGEConv(4 => 2, relu, bias = false, aggr = +),
-                                 (:B, :to, :A) => SAGEConv(4 => 2, relu, bias = false, aggr = +));
+        layers = HeteroGraphConv((:A, :to, :B) => SAGEConv(4 => 2, tanh, bias = false, aggr = +),
+                                 (:B, :to, :A) => SAGEConv(4 => 2, tanh, bias = false, aggr = +));
         y = layers(hg, x); 
         @test size(y.A) == (2, 2) && size(y.B) == (2, 3)
     end
@@ -152,8 +152,8 @@
     @testset "GCNConv" begin
         g = rand_bipartite_heterograph((2,3), 6)
         x = (A = rand(Float32, 4,2), B = rand(Float32, 4, 3))
-        layers = HeteroGraphConv( (:A, :to, :B) => GCNConv(4 => 2, relu),
-                                    (:B, :to, :A) => GCNConv(4 => 2, relu));
+        layers = HeteroGraphConv( (:A, :to, :B) => GCNConv(4 => 2, tanh),
+                                    (:B, :to, :A) => GCNConv(4 => 2, tanh));
         y = layers(g, x); 
         @test size(y.A) == (2,2) && size(y.B) == (2,3)
     end

@@ -21,7 +21,7 @@
     @testset "constructor with names" begin
         m = GNNChain(GCNConv(din => d),
                         LayerNorm(d),
-                        x -> relu.(x),
+                        x -> tanh.(x),
                         Dense(d, dout))
 
         m2 = GNNChain(enc = m,
@@ -34,7 +34,7 @@
     @testset "constructor with vector" begin
         m = GNNChain(GCNConv(din => d),
                         LayerNorm(d),
-                        x -> relu.(x),
+                        x -> tanh.(x),
                         Dense(d, dout))
         m2 = GNNChain([m.layers...])
         @test m2(g, x) == m(g, x)

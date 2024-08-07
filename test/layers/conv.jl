@@ -104,7 +104,7 @@ end
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (out_channel, g.num_nodes))
     end
 
-    l = GraphConv(in_channel => out_channel, relu, bias = false, aggr = mean)
+    l = GraphConv(in_channel => out_channel, tanh, bias = false, aggr = mean)
     for g in test_graphs
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (out_channel, g.num_nodes))
     end
