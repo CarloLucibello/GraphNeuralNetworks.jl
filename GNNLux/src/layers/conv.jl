@@ -650,10 +650,7 @@ function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
     return MEGNetConv(nin, nout, ϕe, ϕv; aggr)
 end
 
-
 LuxCore.outputsize(l::MegNetConv) = (l.num_features.out,)
-
-(l::MegNetConv)(g, x, ps, st) = l(g, x, nothing, ps, st) # check
 
 function (l::MegNetConv)(g, x, e, ps, st)
     ϕe = StatefulLuxLayer{true}(l.ϕe, ps.ϕe, _getstate(st, :ϕe))
@@ -665,6 +662,6 @@ end
 function Base.show(io::IO, l::MegNetConv)
     nin = l.in_dims
     nout = l.out_dims
-    print(io, "MegNetConv(", l.in_dims, " => ", l.out_dims)
+    print(io, "MegNetConv(", nin, " => ", nout)
     print(io, ")")
 end
