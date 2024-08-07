@@ -637,7 +637,8 @@ end
     aggr::A
 end
 
-MEGNetConv(ϕe, ϕv; aggr = mean) = MEGNetConv(ϕe, ϕv, aggr)
+# 'mean' not defined
+#MEGNetConv(ϕe, ϕv; aggr = mean) = MEGNetConv(ϕe, ϕv, aggr)
 
 function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
     nin, nout = ch
