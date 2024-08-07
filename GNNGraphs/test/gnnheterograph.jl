@@ -123,7 +123,7 @@ end
 
 @testset "get/set node features" begin
     d, n = 3, 5
-    g = rand_bipartite_heterograph(n, 2*n, 15)
+    g = rand_bipartite_heterograph((n, 2*n), 15)
     g[:A].x = rand(Float32, d, n)
     g[:B].y = rand(Float32, d, 2*n)
 
@@ -133,7 +133,7 @@ end
 
 @testset "add_edges" begin
     d, n = 3, 5
-    g = rand_bipartite_heterograph(n, 2 * n, 15)
+    g = rand_bipartite_heterograph((n, 2 * n), 15)
     s, t = [1, 2, 3], [3, 2, 1]
     ## Keep the same ntypes - construct with args
     g1 = add_edges(g, (:A, :rel1, :B), s, t)

@@ -133,7 +133,7 @@ end
 end
 
 @testset "ResGatedGraphConv" begin
-    resgatedconv = ResGatedGraphConv(in_channel => out_channel, relu)
+    resgatedconv = ResGatedGraphConv(in_channel => out_channel, tanh)
     @test length(resgatedconv(tg, tg.ndata.x)) == S
     @test size(resgatedconv(tg, tg.ndata.x)[1]) == (out_channel, N) 
     @test length(Flux.gradient(x ->sum(sum(resgatedconv(tg, x))), tg.ndata.x)[1]) == S    
@@ -147,7 +147,7 @@ end
 end
 
 @testset "GraphConv" begin
-    graphconv = GraphConv(in_channel => out_channel,relu)
+    graphconv = GraphConv(in_channel => out_channel, tanh)
     @test length(graphconv(tg, tg.ndata.x)) == S
     @test size(graphconv(tg, tg.ndata.x)[1]) == (out_channel, N) 
     @test length(Flux.gradient(x ->sum(sum(graphconv(tg, x))), tg.ndata.x)[1]) == S    

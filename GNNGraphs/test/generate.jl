@@ -16,19 +16,23 @@
         @test g.edata.e[:, (m2 + 1):end] == e
     end
 
-    g = rand_graph(n, m, bidirected = false, seed = 17, graph_type = GRAPH_T)
+    rng = MersenneTwister(17)
+    g = rand_graph(rng, n, m, bidirected = false, graph_type = GRAPH_T)
     @test g.num_nodes == n
     @test g.num_edges == m
 
-    g2 = rand_graph(n, m, bidirected = false, seed = 17, graph_type = GRAPH_T)
+    rng = MersenneTwister(17)
+    g2 = rand_graph(rng, n, m, bidirected = false, graph_type = GRAPH_T)
     @test edge_index(g2) == edge_index(g)
 
     ew = rand(m2)
-    g = rand_graph(n, m, bidirected = true, seed = 17, graph_type = GRAPH_T, edge_weight = ew)
+    rng = MersenneTwister(17)
+    g = rand_graph(rng, n, m, bidirected = true, graph_type = GRAPH_T, edge_weight = ew)
     @test get_edge_weight(g) == [ew; ew] broken=(GRAPH_T != :coo)
     
     ew = rand(m)
-    g = rand_graph(n, m, bidirected = false, seed = 17, graph_type = GRAPH_T, edge_weight = ew)
+    rng = MersenneTwister(17)
+    g = rand_graph(n, m, bidirected = false, graph_type = GRAPH_T, edge_weight = ew)
     @test get_edge_weight(g) == ew broken=(GRAPH_T != :coo)
 end
 
@@ -77,7 +81,7 @@ end
 end
 
 @testset "rand_bipartite_heterograph" begin
-    g = rand_bipartite_heterograph(10, 15, 20)
+    g = rand_bipartite_heterograph((10, 15), (20, 20))
     @test g.num_nodes == Dict(:A => 10, :B => 15)
     @test g.num_edges == Dict((:A, :to, :B) => 20, (:B, :to, :A) => 20)
     sA, tB = edge_index(g, (:A, :to, :B))
