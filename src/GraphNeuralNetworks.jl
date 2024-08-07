@@ -3,7 +3,7 @@ module GraphNeuralNetworks
 using Statistics: mean
 using LinearAlgebra, Random
 using Flux
-using Flux: glorot_uniform, leakyrelu, GRUCell, @functor, batch
+using Flux: glorot_uniform, leakyrelu, GRUCell, batch
 using MacroTools: @forward
 using NNlib
 using NNlib: scatter, gather

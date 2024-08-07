@@ -182,7 +182,7 @@ begin
         layers::NamedTuple
     end
 
-    Flux.@functor GCN # provides parameter collection, gpu movement and more
+    Flux.@layer GCN # provides parameter collection, gpu movement and more
 
     function GCN(num_features, num_classes)
         layers = (conv1 = GCNConv(num_features => 4),

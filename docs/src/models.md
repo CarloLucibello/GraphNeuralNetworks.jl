@@ -13,7 +13,7 @@ and the *implicit modeling* style based on [`GNNChain`](@ref), more concise but 
 In the explicit modeling style, the model is created according to the following steps:
 
 1. Define a new type for your model (`GNN` in the example below). Layers and submodels are fields.
-2. Apply `Flux.@functor` to the new type to make it Flux's compatible (parameters' collection, gpu movement, etc...)
+2. Apply `Flux.@layer` to the new type to make it Flux's compatible (parameters' collection, gpu movement, etc...)
 3. Optionally define a convenience constructor for your model.
 4. Define the forward pass by implementing the call method for your type.
 5. Instantiate the model. 
@@ -30,7 +30,7 @@ struct GNN                                # step 1
     dense
 end
 
-Flux.@functor GNN                         # step 2
+Flux.@layer GNN                         # step 2
 
 function GNN(din::Int, d::Int, dout::Int) # step 3    
     GNN(GCNConv(din => d),

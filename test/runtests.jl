@@ -4,7 +4,7 @@ using GNNGraphs: sort_edge_index
 using GNNGraphs: getn, getdata
 using Functors
 using Flux
-using Flux: gpu, @functor
+using Flux: gpu
 using LinearAlgebra, Statistics, Random
 using NNlib
 import MLUtils

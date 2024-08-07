@@ -45,7 +45,7 @@ struct GNNConv <: GNNLayer
     σ
 end
 
-Flux.@functor GNNConv
+Flux.@layer GNNConv
 
 function GNNConv(ch::Pair{Int,Int}, σ=identity)
     in, out = ch
