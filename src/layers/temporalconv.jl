@@ -18,7 +18,7 @@ struct TGCNCell <: GNNLayer
     out::Int
 end
 
-Flux.@functor TGCNCell
+Flux.@layer TGCNCell
 
 function TGCNCell(ch::Pair{Int, Int};
                   bias::Bool = true,
@@ -156,7 +156,7 @@ struct A3TGCN <: GNNLayer
     out::Int
 end
 
-Flux.@functor A3TGCN
+Flux.@layer A3TGCN
 
 function A3TGCN(ch::Pair{Int, Int},
                   bias::Bool = true,
@@ -200,7 +200,7 @@ struct GConvGRUCell <: GNNLayer
     out::Int
 end
 
-Flux.@functor GConvGRUCell
+Flux.@layer GConvGRUCell
 
 function GConvGRUCell(ch::Pair{Int, Int}, k::Int, n::Int;
                    bias::Bool = true,
@@ -302,7 +302,7 @@ struct GConvLSTMCell <: GNNLayer
     out::Int
 end
 
-Flux.@functor GConvLSTMCell
+Flux.@layer GConvLSTMCell
 
 function GConvLSTMCell(ch::Pair{Int, Int}, k::Int, n::Int;
                         bias::Bool = true,
@@ -411,7 +411,7 @@ struct DCGRUCell
     dconv_c::DConv
 end
 
-Flux.@functor DCGRUCell
+Flux.@layer DCGRUCell
 
 function DCGRUCell(ch::Pair{Int,Int}, k::Int, n::Int; bias = true, init = glorot_uniform, init_state = Flux.zeros32)
     in, out = ch

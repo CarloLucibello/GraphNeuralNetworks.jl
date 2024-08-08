@@ -90,7 +90,7 @@ struct GlobalAttentionPool{G, F}
     ffeat::F
 end
 
-@functor GlobalAttentionPool
+Flux.@layer GlobalAttentionPool
 
 GlobalAttentionPool(fgate) = GlobalAttentionPool(fgate, identity)
 
@@ -146,7 +146,7 @@ struct Set2Set{L} <: GNNLayer
     num_iters::Int
 end
 
-@functor Set2Set
+Flux.@layer Set2Set
 
 function Set2Set(n_in::Int, n_iters::Int, n_layers::Int = 1)
     @assert n_layers >= 1
