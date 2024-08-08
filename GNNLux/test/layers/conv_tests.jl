@@ -96,9 +96,6 @@
     """
 
     @testset "MEGNetConv" begin
-        in_dims = 6
-        out_dims = 8
-        
         l = MEGNetConv(in_dims => out_dims)
         
         ps = LuxCore.initialparameters(rng, l)
