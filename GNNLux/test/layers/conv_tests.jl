@@ -103,7 +103,7 @@
         
         (x_new, e_new), st_new = l(g, x, ps, st)
         
-        #@test size(x_new) == (out_dims, g.num_nodes)
-        #@test size(e_new) == (out_dims, g.num_edges)
+        @test size(x_new) == (out_dims, g.num_nodes)
+        @test size(e_new) == (out_dims, g.num_edges)
     end
 end

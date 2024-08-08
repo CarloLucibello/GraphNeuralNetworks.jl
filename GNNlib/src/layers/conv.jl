@@ -357,12 +357,7 @@ end
 
 function megnet_conv(l, g::GNNGraph, x::AbstractMatrix, e::Union{AbstractMatrix, Nothing}=nothing)
     check_num_nodes(g, x)
-
-    if isnothing(e)
-        num_edges = g.num_edges
-        e = zeros(eltype(x), 0, num_edges) 
-    end
-
+    
     ē = apply_edges(g, xi = x, xj = x, e = e) do xi, xj, e
         l.ϕe(vcat(xi, xj, e))
     end
