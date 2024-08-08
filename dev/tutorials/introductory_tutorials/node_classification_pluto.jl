@@ -138,7 +138,7 @@ begin
         layers::NamedTuple
     end
 
-    Flux.@functor MLP
+    Flux.@layer :expand MLP
 
     function MLP(num_features, num_classes, hidden_channels; drop_rate = 0.5)
         layers = (hidden = Dense(num_features => hidden_channels),
@@ -235,7 +235,7 @@ begin
         layers::NamedTuple
     end
 
-    Flux.@functor GCN # provides parameter collection, gpu movement and more
+    Flux.@layer GCN # provides parameter collection, gpu movement and more
 
     function GCN(num_features, num_classes, hidden_channels; drop_rate = 0.5)
         layers = (conv1 = GCNConv(num_features => hidden_channels),
