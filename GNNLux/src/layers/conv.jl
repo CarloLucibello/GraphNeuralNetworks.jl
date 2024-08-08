@@ -640,7 +640,7 @@ end
 # 'mean' not defined
 #MEGNetConv(ϕe, ϕv; aggr = mean) = MEGNetConv(ϕe, ϕv, aggr)
 
-function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
+function MEGNetConv(ch::Pair{Int, Int}; aggr)
     nin, nout = ch
     ϕe = Chain(Dense(3nin, nout, relu),
                Dense(nout, nout))
