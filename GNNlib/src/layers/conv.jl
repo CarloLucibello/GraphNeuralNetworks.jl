@@ -360,7 +360,7 @@ function megnet_conv(l, g::GNNGraph, x::AbstractMatrix, e::Union{AbstractMatrix,
 
     if isnothing(e)
         num_edges = g.num_edges
-        e = zeros(eltype(x), 0, num_edges)  # Empty matrix with correct number of columns
+        e = zeros(eltype(x), 0, num_edges) 
     end
 
     ē = apply_edges(g, xi = x, xj = x, e = e) do xi, xj, e
