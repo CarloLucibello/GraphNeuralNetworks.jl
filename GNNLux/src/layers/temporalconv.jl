@@ -1,3 +1,7 @@
+@concrete struct StatefulRecurrentCell <: AbstractExplicitContainerLayer{(:cell,)}
+    cell <: Union{<:Lux.AbstractRecurrentCell, <:GNNContainerLayer}
+end
+
 @concrete struct TGCNCell <: GNNContainerLayer{(:conv, :gru)}
     in_dims::Int
     out_dims::Int
@@ -14,7 +18,7 @@ end
 
 LuxCore.outputsize(l::TGCNCell) = (l.out_dims,)
 
-function (l::TGCNCell)(h, g, x)
+function (l::TGCNCell)(h, g, x, ps, st)
     conv = StatefulLuxLayer{true}(l.conv, ps.conv, _getstate(st, :conv))
     gru = StatefulLuxLayer{true}(l.gru, ps.gru, _getstate(st, :gru))
     m = (; conv, gru)
