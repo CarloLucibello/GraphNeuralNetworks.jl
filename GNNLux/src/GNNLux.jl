@@ -1,6 +1,7 @@
 module GNNLux
 using ConcreteStructs: @concrete
 using NNlib: NNlib, sigmoid, relu, swish
+using Statistics: mean
 using LuxCore: LuxCore, AbstractExplicitLayer, AbstractExplicitContainerLayer, parameterlength, statelength, outputsize, 
               initialparameters, initialstates, parameterlength, statelength
 using Lux: Lux, Chain, Dense, GRUCell,
