@@ -637,8 +637,9 @@ end
     aggr::A
 end
 
-# 'mean' not defined
-#MEGNetConv(ϕe, ϕv; aggr = mean) = MEGNetConv(ϕe, ϕv, aggr)
+function MEGNetConv(in_dims::Int, out_dims::Int, ϕe::TE, ϕv::TV; aggr::A = mean) where {TE, TV, A}
+    return MEGNetConv{TE, TV, A}(in_dims, out_dims, ϕe, ϕv, aggr)
+end
 
 function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
     nin, nout = ch
@@ -648,7 +649,7 @@ function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
     ϕv = Chain(Dense(nin + nout, nout, relu),
                Dense(nout, nout))
 
-    return MEGNetConv(nin, nout, ϕe, ϕv; aggr)
+    return MEGNetConv(nin, nout, ϕe, ϕv, aggr=aggr)
 end
 
 function (l::MEGNetConv)(g, x, e, ps, st)
