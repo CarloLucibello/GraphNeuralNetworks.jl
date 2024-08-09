@@ -355,18 +355,18 @@ end
 
 ####################### MegNetConv ######################################
 
-function megnet_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
+function megnet_conv(l, g::GNNGraph, x::AbstractMatrix, e::Union{AbstractMatrix, Nothing}=nothing)
     check_num_nodes(g, x)
-
-    ē = apply_edges(g, xi = x, xj = x, e = e) do xi, xj, e
+    
+    ē = apply_edges(g, xi = x, xj = x, e = e) do xi, xj, e
         l.ϕe(vcat(xi, xj, e))
     end
 
-    xᵉ = aggregate_neighbors(g, l.aggr, ē)
+    xᵉ = aggregate_neighbors(g, l.aggr, ē)
 
     x̄ = l.ϕv(vcat(x, xᵉ))
 
-    return x̄, ē
+    return x̄, ē
 end
 
 ####################### GMMConv ######################################

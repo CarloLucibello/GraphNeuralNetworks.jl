@@ -628,3 +628,45 @@ function Base.show(io::IO, l::GINConv)
     print(io, ", $(l.ϵ)")
     print(io, ")")
 end
+
+@concrete struct MEGNetConv{TE, TV, A} <: GNNContainerLayer{(:ϕe, :ϕv)}
+    in_dims::Int
+    out_dims::Int
+    ϕe::TE
+    ϕv::TV
+    aggr::A
+end
+
+function MEGNetConv(in_dims::Int, out_dims::Int, ϕe::TE, ϕv::TV; aggr::A = mean) where {TE, TV, A}
+    return MEGNetConv{TE, TV, A}(in_dims, out_dims, ϕe, ϕv, aggr)
+end
+
+function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
+    nin, nout = ch
+    ϕe = Chain(Dense(3nin, nout, relu),
+               Dense(nout, nout))
+
+    ϕv = Chain(Dense(nin + nout, nout, relu),
+               Dense(nout, nout))
+
+    return MEGNetConv(nin, nout, ϕe, ϕv, aggr=aggr)
+end
+
+function (l::MEGNetConv)(g, x, e, ps, st)
+    ϕe = StatefulLuxLayer{true}(l.ϕe, ps.ϕe, _getstate(st, :ϕe))
+    ϕv = StatefulLuxLayer{true}(l.ϕv, ps.ϕv, _getstate(st, :ϕv))    
+    m = (; ϕe, ϕv, aggr=l.aggr)
+    return GNNlib.megnet_conv(m, g, x, e), st
+end
+
+
+LuxCore.outputsize(l::MEGNetConv) = (l.out_dims,)
+
+(l::MEGNetConv)(g, x, ps, st) = l(g, x, nothing, ps, st)
+
+function Base.show(io::IO, l::MEGNetConv)
+    nin = l.in_dims
+    nout = l.out_dims
+    print(io, "MEGNetConv(", nin, " => ", nout)
+    print(io, ")")
+end
