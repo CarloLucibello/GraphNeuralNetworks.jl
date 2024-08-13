@@ -1,6 +1,25 @@
-@concrete struct StatefulRecurrentCell <: AbstractExplicitContainerLayer{(:cell,)}
+@concrete struct StatefulRecurrentCell <: AbstractExplicitContainerLayer{(:cell,)}     
     cell <: Union{<:Lux.AbstractRecurrentCell, <:GNNContainerLayer}
 end
+
+function initialstates(rng::AbstractRNG, r::StatefulRecurrentCell)
+    return (cell=initialstates(rng, r.cell), carry=nothing)
+end
+
+function (r::StatefulRecurrentCell)(g, x, ps, st::NamedTuple)
+    (out, carry), st_ = applyrecurrentcell(r.cell, g, x, ps, st.cell, st.carry)
+    return out, (; cell=st_, carry)
+end
+
+function applyrecurrentcell(l, g, x, ps, st, carry)
+         return Lux.apply(l, g, (x, carry), ps, st)
+end
+
+function applyrecurrentcell(l, g, x, ps, st, ::Nothing)
+    return Lux.apply(l, g, x, ps, st)
+end
+
+LuxCore.apply(m::GNNContainerLayer, g, x, ps, st) = m(g, x, ps, st)
 
 @concrete struct TGCNCell <: GNNContainerLayer{(:conv, :gru)}
     in_dims::Int
@@ -18,13 +37,18 @@ end
 
 LuxCore.outputsize(l::TGCNCell) = (l.out_dims,)
 
-function (l::TGCNCell)(h, g, x, ps, st)
+function (l::TGCNCell)(g, x, h, ps, st)
     conv = StatefulLuxLayer{true}(l.conv, ps.conv, _getstate(st, :conv))
     gru = StatefulLuxLayer{true}(l.gru, ps.gru, _getstate(st, :gru))
-    m = (; conv, gru)
-    return GNNlib.tgcn_conv(m, h, g, x)
+    #m = (; conv, gru)
+    
+    x̃, stconv = l.conv(g, x, ps.conv, st.conv)
+    (h, (h,)), st = l.gru((x̃,(h,)), ps.gru,st.gru)
+    return  (h, (h,)), st
 end
 
 function Base.show(io::IO, tgcn::TGCNCell)
     print(io, "TGCNCell($(tgcn.in_dims) => $(tgcn.out_dims))")
 end
+
+tgcn = StatefulRecurrentCell(TGCNCell(1 =>3))
