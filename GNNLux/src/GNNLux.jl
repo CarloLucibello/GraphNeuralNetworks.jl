@@ -36,7 +36,7 @@ export AGNNConv,
        # TransformerConv
 
 include("layers/temporalconv.jl")
-export TGCNCell
+export TGCN
 
 end #module
  
