@@ -37,7 +37,9 @@ export AGNNConv,
        SGConv
        # TAGConv,
        # TransformerConv
-   
+
+include("layers/temporalconv.jl")
+export TGCN
 
 end #module
  

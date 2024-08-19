@@ -61,7 +61,7 @@ export agnn_conv,
        transformer_conv
 
 include("layers/temporalconv.jl")
-export a3tgcn_conv
+export tgcn_conv
 
 include("layers/pool.jl")
 export global_pool,
