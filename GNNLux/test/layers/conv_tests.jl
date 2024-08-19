@@ -1,6 +1,6 @@
 @testitem "layers/conv" setup=[SharedTestSetup] begin
     rng = StableRNG(1234)
-    edims = 10
+    edim = 10
     g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges)) 
     in_dims = 3
     out_dims = 5
