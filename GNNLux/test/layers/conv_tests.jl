@@ -6,8 +6,6 @@
     out_dims = 5
     x = randn(rng, Float32, in_dims, 10)
 
-    g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges)) 
-
     @testset "GCNConv" begin
         l = GCNConv(in_dims => out_dims, tanh)
         test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
@@ -100,6 +98,7 @@
     @testset "NNConv" begin
         edim = 10
         nn = Dense(edim, out_dims * in_dims)
+        g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges)) 
         l = NNConv(in_dims => out_dims, nn, tanh, aggr = +)
         test_lux_layer(rng, l, g, x, sizey=(out_dims, g.num_nodes), container=true)
     end
