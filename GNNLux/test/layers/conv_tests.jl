@@ -93,4 +93,11 @@
         l = GINConv(nn, 0.5)
         test_lux_layer(rng, l, g, x, sizey=(out_dims,g.num_nodes), container=true)
     end
+
+    @testset "NNConv" begin
+        edim = 10
+        nn = Dense(edim, out_dims * in_dims)
+        l = NNConv(in_dims => out_dims, nn, tanh, bias = true, aggr = +)
+        test_lux_layer(rng, l, g, x, sizey=(out_dims, g.num_nodes), container=true)
+    end
 end

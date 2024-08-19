@@ -659,7 +659,6 @@ end
 function (l::NNConv)(g, x, edge_weight, ps, st)
     nn = StatefulLuxLayer{true}(l.nn, ps, st)
 
-    # what would be the order of args here?
     m = (; nn, l.aggr, ps.weight, bias = _getbias(ps), 
         l.add_self_loops, l.use_edge_weight, l.σ)
     y = GNNlib.nn_conv(m, g, x, edge_weight)
