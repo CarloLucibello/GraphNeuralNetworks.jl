@@ -12,8 +12,8 @@ function (r::StatefulRecurrentCell)(g, x::AbstractMatrix, ps, st::NamedTuple)
 end
 
 function (r::StatefulRecurrentCell)(g, x::AbstractVector, ps, st::NamedTuple)
-    (out, carry), st = applyrecurrentcell(r.cell, g, first(x), ps, st.cell, st.carry)
-    for xᵢ in x[(begin + 1):end]
+    st, carry = st.cell, st.carry
+    for xᵢ in x
         (out, carry), st = applyrecurrentcell(r.cell, g, xᵢ, ps, st, carry)
     end
     return out, (; cell=st, carry)
