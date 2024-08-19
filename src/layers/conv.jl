@@ -76,7 +76,7 @@ struct GCNConv{W <: AbstractMatrix, B, F} <: GNNLayer
     use_edge_weight::Bool
 end
 
-@functor GCNConv
+Flux.@layer GCNConv
 
 function GCNConv(ch::Pair{Int, Int}, σ = identity;
                  init = glorot_uniform,
@@ -167,7 +167,7 @@ function ChebConv(ch::Pair{Int, Int}, k::Int;
     ChebConv(W, b, k)
 end
 
-@functor ChebConv
+Flux.@layer ChebConv
 
 (l::ChebConv)(g, x) = GNNlib.cheb_conv(l, g, x)
 
@@ -225,7 +225,7 @@ struct GraphConv{W <: AbstractMatrix, B, F, A} <: GNNLayer
     aggr::A
 end
 
-@functor GraphConv
+Flux.@layer GraphConv
 
 function GraphConv(ch::Pair{Int, Int}, σ = identity; aggr = +,
                    init = glorot_uniform, bias::Bool = true)
@@ -300,8 +300,7 @@ l = GATConv(in_channel => out_channel, add_self_loops = false, bias = false; hea
 y = l(g, x)       
 ```
 """
-struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, DV, T, A <: AbstractMatrix, F, B} <:
-       GNNLayer
+struct GATConv{DX<:Dense,DE<:Union{Dense, Nothing},DV,T,A<:AbstractMatrix,F,B} <: GNNLayer
     dense_x::DX
     dense_e::DE
     bias::B
@@ -315,8 +314,8 @@ struct GATConv{DX <: Dense, DE <: Union{Dense, Nothing}, DV, T, A <: AbstractMat
     dropout::DV
 end
 
-@functor GATConv
-Flux.trainable(l::GATConv) = (dense_x = l.dense_x, dense_e = l.dense_e, bias = l.bias, a = l.a)
+Flux.@layer GATConv
+Flux.trainable(l::GATConv) = (; l.dense_x, l.dense_e, l.bias, l.a)
 
 GATConv(ch::Pair{Int, Int}, args...; kws...) = GATConv((ch[1], 0) => ch[2], args...; kws...)
 
@@ -420,7 +419,7 @@ struct GATv2Conv{T, A1, A2, A3, DV, B, C <: AbstractMatrix, F} <: GNNLayer
     dropout::DV
 end
 
-@functor GATv2Conv
+Flux.@layer GATv2Conv
 Flux.trainable(l::GATv2Conv) = (dense_i = l.dense_i, dense_j = l.dense_j, dense_e = l.dense_e, bias = l.bias, a = l.a)
 
 function GATv2Conv(ch::Pair{Int, Int}, args...; kws...)
@@ -515,7 +514,7 @@ struct GatedGraphConv{W <: AbstractArray{<:Number, 3}, R, A} <: GNNLayer
     aggr::A
 end
 
-@functor GatedGraphConv
+Flux.@layer GatedGraphConv
 
 function GatedGraphConv(dims::Int, num_layers::Int;
                         aggr = +, init = glorot_uniform)
@@ -572,7 +571,7 @@ struct EdgeConv{NN, A} <: GNNLayer
     aggr::A
 end
 
-@functor EdgeConv
+Flux.@layer :expand EdgeConv
 
 EdgeConv(nn; aggr = max) = EdgeConv(nn, aggr)
 
@@ -626,7 +625,7 @@ struct GINConv{R <: Real, NN, A} <: GNNLayer
     aggr::A
 end
 
-@functor GINConv
+Flux.@layer :expand GINConv
 Flux.trainable(l::GINConv) = (nn = l.nn,)
 
 GINConv(nn, ϵ; aggr = +) = GINConv(nn, ϵ, aggr)
@@ -680,7 +679,7 @@ edim = 10
 g = GNNGraph(s, t)
 
 # create dense layer
-nn = Dense(edim, out_channel * in_channel)
+nn = Dense(edim => out_channel * in_channel)
 
 # create layer
 l = NNConv(in_channel => out_channel, nn, tanh, bias = true, aggr = +)
@@ -697,7 +696,7 @@ struct NNConv{W, B, NN, F, A} <: GNNLayer
     aggr::A
 end
 
-@functor NNConv
+Flux.@layer :expand NNConv
 
 function NNConv(ch::Pair{Int, Int}, nn, σ = identity; aggr = +, bias = true,
                 init = glorot_uniform)
@@ -763,7 +762,7 @@ struct SAGEConv{W <: AbstractMatrix, B, F, A} <: GNNLayer
     aggr::A
 end
 
-@functor SAGEConv
+Flux.@layer SAGEConv
 
 function SAGEConv(ch::Pair{Int, Int}, σ = identity; aggr = mean,
                   init = glorot_uniform, bias::Bool = true)
@@ -833,7 +832,7 @@ struct ResGatedGraphConv{W, B, F} <: GNNLayer
     σ::F
 end
 
-@functor ResGatedGraphConv
+Flux.@layer ResGatedGraphConv
 
 function ResGatedGraphConv(ch::Pair{Int, Int}, σ = identity;
                            init = glorot_uniform, bias::Bool = true)
@@ -907,7 +906,7 @@ struct CGConv{D1, D2} <: GNNLayer
     residual::Bool
 end
 
-@functor CGConv
+Flux.@layer CGConv
 
 CGConv(ch::Pair{Int, Int}, args...; kws...) = CGConv((ch[1], 0) => ch[2], args...; kws...)
 
@@ -980,7 +979,7 @@ struct AGNNConv{A <: AbstractVector} <: GNNLayer
     trainable::Bool
 end
 
-@functor AGNNConv
+Flux.@layer AGNNConv
 
 Flux.trainable(l::AGNNConv) = l.trainable ? (; l.β) : (;)
 
@@ -1027,7 +1026,7 @@ struct MEGNetConv{TE, TV, A} <: GNNLayer
     aggr::A
 end
 
-@functor MEGNetConv
+Flux.@layer :expand MEGNetConv
 
 MEGNetConv(ϕe, ϕv; aggr = mean) = MEGNetConv(ϕe, ϕv, aggr)
 
@@ -1108,7 +1107,7 @@ struct GMMConv{A <: AbstractMatrix, B, F} <: GNNLayer
     residual::Bool
 end
 
-@functor GMMConv
+Flux.@layer GMMConv
 
 function GMMConv(ch::Pair{NTuple{2, Int}, Int},
                  σ = identity;
@@ -1191,7 +1190,7 @@ struct SGConv{A <: AbstractMatrix, B} <: GNNLayer
     use_edge_weight::Bool
 end
 
-@functor SGConv
+Flux.@layer SGConv
 
 function SGConv(ch::Pair{Int, Int}, k = 1;
                 init = glorot_uniform,
@@ -1259,7 +1258,7 @@ struct TAGConv{A <: AbstractMatrix, B} <: GNNLayer
     use_edge_weight::Bool
 end
 
-@functor TAGConv
+Flux.@layer TAGConv
 
 function TAGConv(ch::Pair{Int, Int}, k = 3;
                   init = glorot_uniform,
@@ -1269,7 +1268,7 @@ function TAGConv(ch::Pair{Int, Int}, k = 3;
     in, out = ch
     W = init(out, in)
     b = bias ? Flux.create_bias(W, true, out) : false
-    TAGConv(W, b, k, add_self_loops, use_edge_weight)
+    return TAGConv(W, b, k, add_self_loops, use_edge_weight)
 end
 
 (l::TAGConv)(g, x, edge_weight = nothing) = GNNlib.tag_conv(l, g, x, edge_weight)
@@ -1343,10 +1342,10 @@ struct EGNNConv{TE, TX, TH, NF} <: GNNLayer
     residual::Bool
 end
 
-@functor EGNNConv
+Flux.@layer EGNNConv
 
 function EGNNConv(ch::Pair{Int, Int}, hidden_size = 2 * ch[1]; residual = false)
-    EGNNConv((ch[1], 0) => ch[2]; hidden_size, residual)
+    return EGNNConv((ch[1], 0) => ch[2]; hidden_size, residual)
 end
 
 #Follows reference implementation at https://github.com/vgsatorras/egnn/blob/main/models/egnn_clean/egnn_clean.py
@@ -1477,7 +1476,7 @@ struct TransformerConv{TW1, TW2, TW3, TW4, TW5, TW6, TFF, TBN1, TBN2} <: GNNLaye
     sqrt_out::Float32
 end
 
-@functor TransformerConv
+Flux.@layer TransformerConv
 
 function Flux.trainable(l::TransformerConv)
     (; l.W1, l.W2, l.W3, l.W4, l.W5, l.W6, l.FF, l.BN1, l.BN2)
@@ -1568,7 +1567,7 @@ struct DConv <: GNNLayer
     k::Int
 end
 
-@functor DConv
+Flux.@layer DConv
 
 function DConv(ch::Pair{Int, Int}, k::Int; init = glorot_uniform, bias = true)
     in, out = ch

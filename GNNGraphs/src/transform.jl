@@ -57,7 +57,8 @@ then all new self loops will have no weight.
 If `edge_t` is not passed as argument, for the entire graph self-loop is added to each node for every edge type in the graph where the source and destination node types are the same. 
 This iterates over all edge types present in the graph, applying the self-loop addition logic to each applicable edge type.
 """
-function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}, edge_t::EType) where {T <: AbstractVector{<:Integer}, V}
+function add_self_loops(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
+
     function get_edge_weight_nullable(g::GNNHeteroGraph{<:COO_T}, edge_t::EType)
         get(g.graph, edge_t, (nothing, nothing, nothing))[3]
     end
@@ -69,13 +70,17 @@ function add_self_loops(g::GNNHeteroGraph{Tuple{T, T, V}}, edge_t::EType) where 
     n = get(g.num_nodes, src_t, 0)
 
     if haskey(g.graph, edge_t)
-        x = g.graph[edge_t]
-        s, t = x[1:2]
+        s, t = g.graph[edge_t][1:2]
         nodes = convert(typeof(s), [1:n;])
         s = [s; nodes]
         t = [t; nodes]
     else
-        nodes = convert(T, [1:n;])
+        if !isempty(g.graph)
+            T = typeof(first(values(g.graph))[1])
+            nodes = convert(T, [1:n;])
+        else
+            nodes = [1:n;]
+        end
         s = nodes
         t = nodes
     end
@@ -518,7 +523,6 @@ end
 Return a new graph obtained from `g` by adding random edges, based on a specified `perturb_ratio`. 
 The `perturb_ratio` determines the fraction of new edges to add relative to the current number of edges in the graph. 
 These new edges are added without creating self-loops. 
-Optionally, a random `seed` can be provided to ensure reproducible perturbations.
 
 The function returns a new `GNNGraph` instance that shares some of the underlying data with `g` but includes the additional edges. 
 The nodes for the new edges are selected randomly, and no edge data (`edata`) or weights (`w`) are assigned to these new edges.

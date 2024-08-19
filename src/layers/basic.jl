@@ -45,7 +45,7 @@ end
 
 WithGraph(model, g::GNNGraph; traingraph = false) = WithGraph(model, g, traingraph)
 
-@functor WithGraph
+Flux.@layer :expand WithGraph
 Flux.trainable(l::WithGraph) = l.traingraph ? (; l.model, l.g) : (; l.model)
 
 (l::WithGraph)(g::GNNGraph, x...; kws...) = l.model(g, x...; kws...)
@@ -107,7 +107,7 @@ struct GNNChain{T <: Union{Tuple, NamedTuple, AbstractVector}} <: GNNLayer
     layers::T
 end
 
-@functor GNNChain
+Flux.@layer :expand GNNChain
 
 GNNChain(xs...) = GNNChain(xs)
 

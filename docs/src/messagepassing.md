@@ -109,7 +109,7 @@ struct GCN{A<:AbstractMatrix, B, F} <: GNNLayer
     σ::F
 end
 
-Flux.@functor GCN # allow gpu movement, select trainable params etc...
+Flux.@layer GCN # allow gpu movement, select trainable params etc...
 
 function GCN(ch::Pair{Int,Int}, σ=identity)
     in, out = ch

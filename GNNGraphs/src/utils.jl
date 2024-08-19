@@ -205,17 +205,13 @@ end
 numnonzeros(a::AbstractSparseMatrix) = nnz(a)
 numnonzeros(a::AbstractMatrix) = count(!=(0), a)
 
-# each edge is represented by a number in
-# 1:N^2
-function edge_encoding(s, t, n; directed = true)
-    if directed
-        # directed edges and self-loops allowed
-        idx = (s .- 1) .* n .+ t
+## Map edges into a contiguous range of integers
+function edge_encoding(s, t, n; directed = true, self_loops = true)
+    if directed && self_loops
         maxid = n^2
-    else
-        # Undirected edges and self-loops allowed
+        idx = (s .- 1) .* n .+ t
+    elseif !directed && self_loops
         maxid = n * (n + 1) ÷ 2
-
         mask = s .> t
         snew = copy(s)
         tnew = copy(t)
@@ -228,18 +224,34 @@ function edge_encoding(s, t, n; directed = true)
         #     = ∑_{i',i'<i} (n - i' + 1) + (j - i + 1)
         #     = (i - 1)*(2*(n+1)-i)÷2 + (j - i + 1)
         idx = @. (s - 1) * (2 * (n + 1) - s) ÷ 2 + (t - s + 1)
+    elseif directed && !self_loops
+        @assert all(s .!= t)
+        maxid = n * (n - 1)
+        idx = (s .- 1) .* (n - 1) .+ t .- (t .> s)
+    elseif !directed && !self_loops
+        @assert all(s .!= t)
+        maxid = n * (n - 1) ÷ 2
+        mask = s .> t
+        snew = copy(s)
+        tnew = copy(t)
+        snew[mask] .= t[mask]
+        tnew[mask] .= s[mask]
+        s, t = snew, tnew
+
+        # idx(s,t) = ∑_{s',1<= s'<s} ∑_{t',s'< t' <=n} 1 + ∑_{t',s<t'<=t} 1
+        # idx(s,t) = ∑_{s',1<= s'<s} (n-s') + (t-s)
+        # idx(s,t) = (s-1)n - s*(s-1)/2 + (t-s)
+        idx = @. (s - 1) * n - s * (s - 1) ÷ 2 + (t - s)
     end
     return idx, maxid
 end
 
-# each edge is represented by a number in
-# 1:N^2
-function edge_decoding(idx, n; directed = true)
-    if directed
-        # g = remove_self_loops(g)
+# inverse of edge_encoding
+function edge_decoding(idx, n; directed = true, self_loops = true)
+    if directed && self_loops
         s = (idx .- 1) .÷ n .+ 1
         t = (idx .- 1) .% n .+ 1
-    else
+    elseif !directed && self_loops
         # We replace j=n in
         # idx = (i - 1)*(2*(n+1)-i)÷2 + (j - i + 1)
         # and obtain
@@ -252,17 +264,50 @@ function edge_decoding(idx, n; directed = true)
         s = @. ceil(Int, -sqrt((n + 1 / 2)^2 - 2 * idx) + n + 1 / 2)
         t = @. idx - (s - 1) * (2 * (n + 1) - s) ÷ 2 - 1 + s
         # t =  (idx .- 1) .% n .+ 1
+    elseif directed && !self_loops
+        s = (idx .- 1) .÷ (n - 1) .+ 1
+        t = (idx .- 1) .% (n - 1) .+ 1
+        t = t .+ (t .>= s)
+    elseif !directed && !self_loops
+        # Considering t = s + 1 in
+        # idx = @. (s - 1) * n - s * (s - 1) ÷ 2 + (t - s)
+        # and inverting for s we have
+        s = @. floor(Int, 1/2 + n - 1/2 * sqrt(9 - 4n + 4n^2 - 8*idx))
+        # now we can find t
+        t = @. idx - (s - 1) * n + s * (s - 1) ÷ 2 + s
     end
     return s, t
 end
 
-# each edge is represented by a number in
-# 1:n1*n2
+# for bipartite graphs
 function edge_decoding(idx, n1, n2)
     @assert all(1 .<= idx .<= n1 * n2)
     s = (idx .- 1) .÷ n2 .+ 1
     t = (idx .- 1) .% n2 .+ 1
     return s, t
+end
+
+function _rand_edges(rng, n::Int, m::Int; directed = true, self_loops = true)
+    idmax = if directed && self_loops
+                n^2
+            elseif !directed && self_loops
+                n * (n + 1) ÷ 2
+            elseif directed && !self_loops
+                n * (n - 1)
+            elseif !directed && !self_loops
+                n * (n - 1) ÷ 2
+            end
+    idx = StatsBase.sample(rng, 1:idmax, m, replace = false)
+    s, t = edge_decoding(idx, n; directed, self_loops)
+    val = nothing
+    return s, t, val
+end
+
+function _rand_edges(rng, (n1, n2), m)
+    idx = StatsBase.sample(rng, 1:(n1 * n2), m, replace = false)
+    s, t = edge_decoding(idx, n1, n2)
+    val = nothing
+    return s, t, val
 end
 
 binarize(x) = map(>(0), x)

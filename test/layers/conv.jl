@@ -84,12 +84,8 @@ end
     @test l.k == k
     for g in test_graphs
         g = add_self_loops(g)
-        test_layer(l, g, rtol = RTOL_HIGH, test_gpu = false,
+        test_layer(l, g, rtol = RTOL_HIGH, test_gpu = TEST_GPU,
                     outsize = (out_channel, g.num_nodes))
-        if TEST_GPU
-            @test_broken test_layer(l, g, rtol = RTOL_HIGH, test_gpu = true,
-                                    outsize = (out_channel, g.num_nodes))
-        end
     end
 
     @testset "bias=false" begin
@@ -104,7 +100,7 @@ end
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (out_channel, g.num_nodes))
     end
 
-    l = GraphConv(in_channel => out_channel, relu, bias = false, aggr = mean)
+    l = GraphConv(in_channel => out_channel, tanh, bias = false, aggr = mean)
     for g in test_graphs
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (out_channel, g.num_nodes))
     end

@@ -1,12 +1,12 @@
 @testitem "layers/conv" setup=[SharedTestSetup] begin
     rng = StableRNG(1234)
-    g = rand_graph(10, 40, seed=1234)
+    g = rand_graph(rng, 10, 40)
     in_dims = 3
     out_dims = 5
     x = randn(rng, Float32, in_dims, 10)
 
     @testset "GCNConv" begin
-        l = GCNConv(in_dims => out_dims, relu)
+        l = GCNConv(in_dims => out_dims, tanh)
         test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
     end
 
@@ -16,7 +16,7 @@
     end
 
     @testset "GraphConv" begin
-        l = GraphConv(in_dims => out_dims, relu)
+        l = GraphConv(in_dims => out_dims, tanh)
         test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
     end
 
@@ -26,7 +26,7 @@
     end
 
     @testset "EdgeConv" begin
-        nn = Chain(Dense(2*in_dims => 5, relu), Dense(5 => out_dims))
+        nn = Chain(Dense(2*in_dims => 2, tanh), Dense(2 => out_dims))
         l = EdgeConv(nn, aggr = +)
         test_lux_layer(rng, l, g, x, sizey=(out_dims,10), container=true)
     end

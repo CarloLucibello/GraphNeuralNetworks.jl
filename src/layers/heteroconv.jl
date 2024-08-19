@@ -43,7 +43,7 @@ struct HeteroGraphConv
     aggr::Function
 end
 
-Flux.@functor HeteroGraphConv
+Flux.@layer HeteroGraphConv
 
 HeteroGraphConv(itr::Dict; aggr = +) = HeteroGraphConv(pairs(itr); aggr)
 HeteroGraphConv(itr::Pair...; aggr = +) = HeteroGraphConv(itr; aggr)

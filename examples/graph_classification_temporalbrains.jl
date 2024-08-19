@@ -62,7 +62,7 @@ struct GenderPredictionModel
     dense::Dense
 end
 
-Flux.@functor GenderPredictionModel
+Flux.@layer GenderPredictionModel
 
 function GenderPredictionModel(; nfeatures = 103, nhidden = 128, activation = relu)
     mlp = Chain(Dense(nfeatures, nhidden, activation), Dense(nhidden, nhidden, activation))

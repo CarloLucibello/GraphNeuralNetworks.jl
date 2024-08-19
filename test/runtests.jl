@@ -4,7 +4,7 @@ using GNNGraphs: sort_edge_index
 using GNNGraphs: getn, getdata
 using Functors
 using Flux
-using Flux: gpu, @functor
+using Flux: gpu
 using LinearAlgebra, Statistics, Random
 using NNlib
 import MLUtils
@@ -36,11 +36,10 @@ tests = [
 
 # @testset "GraphNeuralNetworks: graph format $graph_type" for graph_type in (:coo, :dense, :sparse)
 for graph_type in (:coo, :dense, :sparse)
+
     @info "Testing graph format :$graph_type"
     global GRAPH_T = graph_type
     global TEST_GPU = CUDA.functional() && (GRAPH_T != :sparse)
-    # global GRAPH_T = :sparse
-    # global TEST_GPU = false
 
     @testset "$t" for t in tests
         startswith(t, "examples") && GRAPH_T == :dense && continue     # not testing :dense since causes OutOfMememory on github's CI
