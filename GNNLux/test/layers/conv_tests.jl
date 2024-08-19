@@ -97,6 +97,7 @@
     @testset "NNConv" begin
         edim = 10
         nn = Dense(edim, out_dims * in_dims)
+        g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges)) 
         l = NNConv(in_dims => out_dims, nn, tanh, aggr = +)
         test_lux_layer(rng, l, g, x, sizey=(out_dims, g.num_nodes), container=true)
     end
