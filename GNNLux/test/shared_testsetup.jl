@@ -14,7 +14,7 @@ export test_lux_layer
 
 function test_lux_layer(rng::AbstractRNG, l, g::GNNGraph, x; 
             outputsize=nothing, sizey=nothing, container=false,
-            atol=1.0f-2, rtol=1.0f-2)
+            atol=1.0f-2, rtol=1.0f-2, edge_weight=nothing) 
 
     if container
         @test l isa GNNContainerLayer
@@ -27,7 +27,7 @@ function test_lux_layer(rng::AbstractRNG, l, g::GNNGraph, x;
     @test LuxCore.parameterlength(l) == LuxCore.parameterlength(ps)
     @test LuxCore.statelength(l) == LuxCore.statelength(st)
     
-    y, st′ = l(g, x, ps, st)
+    y, st′ = l(g, x, edge_weight, ps, st)  
     @test eltype(y) == eltype(x)
     if outputsize !== nothing
         @test LuxCore.outputsize(l) == outputsize
