@@ -1,10 +1,12 @@
 @testitem "layers/conv" setup=[SharedTestSetup] begin
     rng = StableRNG(1234)
-    edims = 10
-    g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges)) 
+    edim = 10
+    g = rand_graph(rng, 10, 40)
     in_dims = 3
     out_dims = 5
     x = randn(rng, Float32, in_dims, 10)
+
+    g2 = GNNGraph(g, edata = rand(Float32, edim, g.num_edges)) 
 
     @testset "GCNConv" begin
         l = GCNConv(in_dims => out_dims, tanh)
@@ -97,8 +99,8 @@
 
     @testset "NNConv" begin
         edim = 10
-        nn = Dense(edim, out_dims * in_dims)
+        nn = Dense(edim, out_dims * in_dims)        
         l = NNConv(in_dims => out_dims, nn, tanh, aggr = +)
-        test_lux_layer(rng, l, g, x, sizey=(out_dims, g.num_nodes), container=true)
+        test_lux_layer(rng, l, g2, x, sizey=(out_dims, g2.num_nodes), container=true, edge_weight=g2.edata.e) 
     end
 end
