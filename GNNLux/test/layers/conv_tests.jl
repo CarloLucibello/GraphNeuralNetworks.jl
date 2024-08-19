@@ -4,7 +4,7 @@
     in_dims = 3
     out_dims = 5
     x = randn(rng, Float32, in_dims, 10)
-    """
+
     @testset "GCNConv" begin
         l = GCNConv(in_dims => out_dims, relu)
         test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
@@ -93,9 +93,7 @@
         l = GINConv(nn, 0.5)
         test_lux_layer(rng, l, g, x, sizey=(out_dims,g.num_nodes), container=true)
     end
-    """
 
-      
     @testset "MEGNetConv" begin
         l = MEGNetConv(in_dims => out_dims)
     
