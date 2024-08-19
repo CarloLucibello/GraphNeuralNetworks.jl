@@ -1,7 +1,7 @@
 @testitem "layers/conv" setup=[SharedTestSetup] begin
     rng = StableRNG(1234)
     edim = 10
-    g = rand_graph(10, 40)
+    g = rand_graph(rng, 10, 40)
     in_dims = 3
     out_dims = 5
     x = randn(rng, Float32, in_dims, 10)
