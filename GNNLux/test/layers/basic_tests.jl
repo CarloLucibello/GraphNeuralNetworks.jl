@@ -1,6 +1,6 @@
 @testitem "layers/basic" setup=[SharedTestSetup] begin
     rng = StableRNG(17)
-    g = rand_graph(10, 40)
+    g = rand_graph(rng, 10, 40)
     x = randn(rng, Float32, 3, 10)        
 
     @testset "GNNLayer" begin
