@@ -101,6 +101,6 @@
         edim = 10
         nn = Dense(edim, out_dims * in_dims)        
         l = NNConv(in_dims => out_dims, nn, tanh, aggr = +)
-        test_lux_layer(rng, l, g, x, sizey=(out_dims, g.num_nodes), container=true, edge_weight=g.edata.e) 
+        test_lux_layer(rng, l, g2, x, sizey=(out_dims, g2.num_nodes), container=true, edge_weight=g2.edata.e) 
     end
 end
