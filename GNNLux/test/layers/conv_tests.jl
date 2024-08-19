@@ -53,7 +53,7 @@
         @test size(hnew) == (hout, g.num_nodes)
         @test size(xnew) == (in_dims, g.num_nodes)
     end
-    
+
     @testset "GATConv" begin
         x = randn(rng, Float32, 6, 10)
 
