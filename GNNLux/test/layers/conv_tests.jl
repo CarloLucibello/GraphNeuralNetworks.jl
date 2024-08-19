@@ -1,10 +1,12 @@
 @testitem "layers/conv" setup=[SharedTestSetup] begin
     rng = StableRNG(1234)
     edim = 10
-    g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges)) 
+    g = rand_graph(10, 40)
     in_dims = 3
     out_dims = 5
     x = randn(rng, Float32, in_dims, 10)
+
+    g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges)) 
 
     @testset "GCNConv" begin
         l = GCNConv(in_dims => out_dims, tanh)
