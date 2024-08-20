@@ -57,3 +57,39 @@ function Base.show(io::IO, tgcn::TGCNCell)
 end
 
 TGCN(ch::Pair{Int, Int}; kwargs...) = GNNLux.StatefulRecurrentCell(TGCNCell(ch; kwargs...))
+
+@concrete struct A3TGCN <: GNNContainerLayer{(:tgcn, :dense1, :dense2)}
+    in_dims::Int
+    out_dims::Int
+    tgcn
+    dense1
+    dense2
+end
+
+function A3TGCN(ch::Pair{Int, Int}; use_bias = true, init_weight = glorot_uniform, init_state = zeros32, init_bias = zeros32, add_self_loops = false, use_edge_weight = true) 
+    in_dims, out_dims = ch
+    tgcn = TGCN(ch; use_bias, init_weight, init_state, init_bias, add_self_loops, use_edge_weight)
+    dense1 = Dense(out_dims, out_dims)
+    dense2 = Dense(out_dims, out_dims)
+    return A3TGCN(in_dims, out_dims, tgcn, dense1, dense2)
+end
+
+function (l::A3TGCN)(g, x, ps, st)
+    dense1 = StatefulLuxLayer{true}(l.dense1, ps.dense1, _getstate(st, :dense1))
+    dense2 = StatefulLuxLayer{true}(l.dense2, ps.dense2, _getstate(st, :dense2))
+    h, st = l.tgcn(g, x, ps.tgcn, st.tgcn)
+    x = dense1(h)
+    x = dense2(x)
+    a = NNlib.softmax(x, dims = 3)
+    c = sum(a .* h , dims = 3)
+    if length(size(c)) == 3
+        c = dropdims(c, dims = 3)
+    end
+    return c, st
+end
+
+LuxCore.outputsize(l::A3TGCN) = (l.out_dims,)
+
+function Base.show(io::IO, l::A3TGCN)
+    print(io, "A3TGCN($(l.in_dims) => $(l.out_dims))")
+end
