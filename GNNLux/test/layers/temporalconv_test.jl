@@ -12,4 +12,12 @@
         loss = (x, ps) -> sum(first(l(g, x, ps, st)))
         test_gradients(loss, x, ps; atol=1.0f-2, rtol=1.0f-2, skip_backends=[AutoReverseDiff(), AutoTracker(), AutoForwardDiff(), AutoEnzyme()])
     end
+
+    @testset "A3TGCN" begin
+        l = A3TGCN(3=>3)
+        ps = LuxCore.initialparameters(rng, l)
+        st = LuxCore.initialstates(rng, l)
+        loss = (x, ps) -> sum(first(l(g, x, ps, st)))
+        test_gradients(loss, x, ps; atol=1.0f-2, rtol=1.0f-2, skip_backends=[AutoReverseDiff(), AutoTracker(), AutoForwardDiff(), AutoEnzyme()])
+    end
 end
