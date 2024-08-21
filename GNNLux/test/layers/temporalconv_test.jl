@@ -2,7 +2,7 @@
     using LuxTestUtils: test_gradients, AutoReverseDiff, AutoTracker, AutoForwardDiff, AutoEnzyme
 
     rng = StableRNG(1234)
-    g = rand_graph(10, 40, seed=1234)
+    g = rand_graph(rng, 10, 40)
     x = randn(rng, Float32, 3, 10)
 
     @testset "TGCN" begin
