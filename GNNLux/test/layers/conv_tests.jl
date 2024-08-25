@@ -93,4 +93,17 @@
         l = GINConv(nn, 0.5)
         test_lux_layer(rng, l, g, x, sizey=(out_dims,g.num_nodes), container=true)
     end
+
+    @testset "MEGNetConv" begin
+        l = MEGNetConv(in_dims => out_dims)
+    
+        ps = LuxCore.initialparameters(rng, l)
+        st = LuxCore.initialstates(rng, l)
+    
+        e = randn(rng, Float32, in_dims, g.num_edges) 
+        (x_new, e_new), st_new = l(g, x, e, ps, st)   
+    
+        @test size(x_new) == (out_dims, g.num_nodes)
+        @test size(e_new) == (out_dims, g.num_edges)
+    end
 end
