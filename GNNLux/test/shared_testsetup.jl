@@ -28,9 +28,9 @@ function test_lux_layer(rng::AbstractRNG, l, g::GNNGraph, x;
     @test LuxCore.statelength(l) == LuxCore.statelength(st)
 
     if edge_weight !== nothing
-        y, st′ = l(g, x, ps, st)
-    else          
         y, st′ = l(g, x, edge_weight, ps, st)
+    else          
+        y, st′ = l(g, x, ps, st)
     end
             
     @test eltype(y) == eltype(x)
