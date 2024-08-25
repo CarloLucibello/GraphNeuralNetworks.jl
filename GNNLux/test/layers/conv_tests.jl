@@ -102,5 +102,18 @@
         nn = Dense(edim, in_dims * out_dims)        
         l = NNConv(in_dims => out_dims, nn, tanh, aggr = +)
         test_lux_layer(rng, l, g2, x, sizey=(out_dims, g2.num_nodes), container=true, edge_weight=g2.edata.e) 
+    end          
+        
+    @testset "MEGNetConv" begin
+        l = MEGNetConv(in_dims => out_dims)
+    
+        ps = LuxCore.initialparameters(rng, l)
+        st = LuxCore.initialstates(rng, l)
+    
+        e = randn(rng, Float32, in_dims, g.num_edges) 
+        (x_new, e_new), st_new = l(g, x, e, ps, st)   
+    
+        @test size(x_new) == (out_dims, g.num_nodes)
+        @test size(e_new) == (out_dims, g.num_edges)
     end
 end

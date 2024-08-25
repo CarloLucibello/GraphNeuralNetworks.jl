@@ -1,6 +1,7 @@
 module GNNLux
 using ConcreteStructs: @concrete
 using NNlib: NNlib, sigmoid, relu, swish
+using Statistics: mean
 using LuxCore: LuxCore, AbstractExplicitLayer, AbstractExplicitContainerLayer, parameterlength, statelength, outputsize, 
               initialparameters, initialstates, parameterlength, statelength
 using Lux: Lux, Chain, Dense, GRUCell,
@@ -30,14 +31,17 @@ export AGNNConv,
        GINConv,
        # GMMConv,
        GraphConv,
-       # MEGNetConv,
        NNConv,
+       MEGNetConv,
        # ResGatedGraphConv,
        # SAGEConv,
        SGConv
        # TAGConv,
        # TransformerConv
-   
+
+include("layers/temporalconv.jl")
+export TGCN
+export A3TGCN
 
 end #module
  
