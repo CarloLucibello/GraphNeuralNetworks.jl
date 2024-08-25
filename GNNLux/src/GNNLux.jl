@@ -41,6 +41,7 @@ export AGNNConv,
 
 include("layers/temporalconv.jl")
 export TGCN
+export A3TGCN
 
 end #module
  
