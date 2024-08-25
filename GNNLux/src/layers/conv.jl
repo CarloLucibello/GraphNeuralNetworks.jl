@@ -666,11 +666,8 @@ function (l::NNConv)(g, x, edge_weight, ps, st)
     return y, stnew
 end
 
-LuxCore.outputsize(d::NNConv) = (d.out_dims,)
-
 function Base.show(io::IO, l::NNConv)
     print(io, "NNConv($(l.nn)")
-    print(io, ", $(l.ϵ)")
     l.σ == identity || print(io, ", ", l.σ)
     l.use_bias || print(io, ", use_bias=false")
     l.add_self_loops || print(io, ", add_self_loops=false")
