@@ -40,8 +40,11 @@ export AGNNConv,
        # TransformerConv
 
 include("layers/temporalconv.jl")
-export TGCN
-export A3TGCN
+export TGCN,
+       A3TGCN,
+       GConvGRU,
+       GConvLSTM,
+       DCGRU
 
 end #module
  
