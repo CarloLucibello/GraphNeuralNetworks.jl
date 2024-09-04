@@ -116,7 +116,7 @@
         #edim = 10
         #nn = Dense(edim, in_dims * out_dims)        
         #l = NNConv(in_dims => out_dims, nn, tanh, aggr = +)
-        test_lux_layer(rng, l, g2, x, sizey=(n_out, g2.num_nodes), container=true, edge_weight=g2.edata.e) 
+        test_lux_layer(rng, l, g2, x, sizey=(n_out, g2.num_nodes), container=true, edge_weight=e) 
     end          
         
     @testset "MEGNetConv" begin
