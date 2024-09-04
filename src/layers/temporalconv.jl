@@ -484,6 +484,36 @@ Flux.Recur(dcgru::DCGRUCell) = Flux.Recur(dcgru, dcgru.state0)
 _applylayer(l::Flux.Recur{DCGRUCell}, g::GNNGraph, x) = l(g, x)
 _applylayer(l::Flux.Recur{DCGRUCell}, g::GNNGraph) = l(g)
 
+struct EvolveGCNO
+    conv
+    lstm
+    W_init
+    init_state
+    in::Int
+    out::Int
+end
+ 
+Flux.@functor EvolveGCNO
+
+function EvolveGCNO(ch; bias = true, init = glorot_uniform, init_state = Flux.zeros32)
+    in, out = ch
+    W = init(out, in)
+    conv = GCNConv(ch; bias = bias, init = init)
+    lstm = Flux.LSTM(out,out)
+    return EvolveGCNO(conv, lstm, W, init_state, in, out)
+end
+
+function (egcno::EvolveGCNO)(tg::TemporalSnapshotsGNNGraph)
+    H = egcno.init_state(egcno.out, tg.snapshots[i].num_nodes, tg.num_snapshots)
+    W = egcno.W_init
+    for i in 1:tg.num_snapshots
+        W = egcno.lstm(W)
+        H[:,:,i] .= egcno.conv(tg.snapshots[i], tg.ndata.x[i]; conv_weight = W)
+    end
+    return H
+end
+ 
+
 function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
     return l.(tg.snapshots, x)
 end
