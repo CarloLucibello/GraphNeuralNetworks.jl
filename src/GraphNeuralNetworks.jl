@@ -54,7 +54,8 @@ export TGCN,
        A3TGCN,
        GConvLSTM,
        GConvGRU,
-       DCGRU
+       DCGRU,
+       EvolveGCNO
 
 include("layers/pool.jl")
 export GlobalPool,
