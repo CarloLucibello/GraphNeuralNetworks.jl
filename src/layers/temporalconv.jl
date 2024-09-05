@@ -561,7 +561,6 @@ function EvolveGCNO(ch; bias = true, init = glorot_uniform, init_state = Flux.ze
 end
 
 function (egcno::EvolveGCNO)(tg::TemporalSnapshotsGNNGraph, x)
-    X = egcno.init_state(egcno.out, tg.snapshots[1].num_nodes, tg.num_snapshots)
     H = egcno.init_state(egcno.out, egcno.in)
     C = egcno.init_state(egcno.out, egcno.in)
     W = egcno.W_init
@@ -569,7 +568,7 @@ function (egcno::EvolveGCNO)(tg::TemporalSnapshotsGNNGraph, x)
         F = Flux.sigmoid_fast.(egcno.Wf .* W + egcno.Uf .* H + egcno.Bf)
         I = Flux.sigmoid_fast.(egcno.Wi .* W + egcno.Ui .* H + egcno.Bi)
         O = Flux.sigmoid_fast.(egcno.Wo .* W + egcno.Uo .* H + egcno.Bo)
-        C̃ = Flux.tanh.(egcno.Wc .* W + egcno.Uc .* H + egcno.Bc)
+        C̃ = Flux.tanh_fast.(egcno.Wc .* W + egcno.Uc .* H + egcno.Bc)
         C = F .* C + I .* C̃
         H = O .* tanh_fast.(C)
         W = H
