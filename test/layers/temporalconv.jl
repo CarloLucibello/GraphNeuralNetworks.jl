@@ -69,6 +69,12 @@ end
     @test model(g1) isa GNNGraph            
 end
 
+@testset "EvolveGCNO" begin
+    evolvegcno = EvolveGCNO(in_channel => out_channel)
+    @test length(Flux.gradient(x -> sum(sum(evolvegcno(tg, x))), tg.ndata.x)[1]) == S
+    @test size(evolvegcno(tg, tg.ndata.x)[1]) ==  (out_channel, N)
+end
+
 @testset "GINConv" begin
     ginconv = GINConv(Dense(in_channel => out_channel),0.3)
     @test length(ginconv(tg, tg.ndata.x)) == S
