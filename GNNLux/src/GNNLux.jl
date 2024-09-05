@@ -44,7 +44,8 @@ export TGCN,
        A3TGCN,
        GConvGRU,
        GConvLSTM,
-       DCGRU
+       DCGRU,
+       EvolveGCNO
 
 end #module
  
