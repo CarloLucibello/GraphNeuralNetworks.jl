@@ -1,4 +1,5 @@
 using GraphNeuralNetworks
+using Graphs
 
 # Define a NeighborLoader structure for sampling neighbors
 struct NeighborLoader
@@ -21,10 +22,7 @@ function get_neighbors(loader::NeighborLoader, node::Int)
     if haskey(loader.neighbors_cache, node)
         return loader.neighbors_cache[node]
     else
-        println(loader.graph)
-        println("node: ", node)
         neighbors = Graphs.neighbors(loader.graph, node)  # Get neighbors from graph
-        println("neighbors", neighbors)
         loader.neighbors_cache[node] = neighbors
         return neighbors
     end
@@ -32,12 +30,13 @@ end
 
 # Function to sample neighbors for a given node at a specific layer
 function sample_neighbors(loader::NeighborLoader, node::Int, layer::Int)
-    println(loader)
-    println("node: ", node)
     neighbors = get_neighbors(loader, node)
-    println("neigh: ", neighbors)
-    num_samples = min(loader.num_neighbors[layer], length(neighbors))  # Limit to required samples for this layer
-    return rand(neighbors, num_samples)  # Randomly sample neighbors
+    if isempty(neighbors)
+        return Int[]
+    else
+        num_samples = min(loader.num_neighbors[layer], length(neighbors))  # Limit to required samples for this layer
+        return rand(neighbors, num_samples)  # Randomly sample neighbors
+    end
 end
 
 # Helper function to create a subgraph from selected nodes
@@ -47,8 +46,9 @@ function create_subgraph(graph::GNNGraph, nodes::Vector{Int})
     # Collect edges to add
     source = Int[]
     target = Int[]
+    println("nodes: ", nodes)
     for node in nodes
-        for neighbor in neighbors(graph, node)
+        for neighbor in Graphs.neighbors(graph, node, dir = :out)
             if neighbor in node_set
                 push!(source, node)
                 push!(target, neighbor)
@@ -100,11 +100,10 @@ function Base.iterate(loader::NeighborLoader, state=1)
 end
 
 # Example
-using Graphs
-# Example graph
-lg = erdos_renyi(5, 0.4)
+source = [1,1,2,2,3,3,3,4,5]
+target = [2,3,1,3,1,2,4,3,5]
 features = rand(3, 5)
-gnn_graph = GNNGraph(lg, ndata = features)
+gnn_graph = GNNGraph(source, target, ndata = features)
 
 # Define input nodes (seed nodes) to start sampling
 input_nodes = [1, 2, 3, 4, 5]
@@ -126,3 +125,5 @@ for mini_batch_gnn in loader
         break
     end
 end
+
+### TODO: indexes recoding, otherwirse sometimes dimension mismatch with feature matrix
