@@ -114,7 +114,7 @@ loader = NeighborLoader(gnn_graph; num_neighbors = [2, 3], input_nodes=input_nod
 batch_counter = 0
 for mini_batch_gnn in loader
     batch_counter += 1
-    println("Batch $batch_counter: Nodes in mini-batch graph: $(nv(mini_batch_gnn))")
+    println("Batch $batch_counter: Nodes in mini-batch graph: $(nv(mini_batch_gnn)), $mini_batch_gnn")
 
     # Here, you would pass mini_batch_gnn to the GNN model for training
     # For example: model(mini_batch_gnn)
