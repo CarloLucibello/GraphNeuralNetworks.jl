@@ -23,7 +23,8 @@ function get_neighbors(loader::NeighborLoader, node::Int)
     else
         println(loader.graph)
         println("node: ", node)
-        neighbors = Graph.neighbors(loader.graph, node)  # Get neighbors from graph
+        neighbors = Graphs.neighbors(loader.graph, node)  # Get neighbors from graph
+        println("neighbors", neighbors)
         loader.neighbors_cache[node] = neighbors
         return neighbors
     end
@@ -31,7 +32,10 @@ end
 
 # Function to sample neighbors for a given node at a specific layer
 function sample_neighbors(loader::NeighborLoader, node::Int, layer::Int)
+    println(loader)
+    println("node: ", node)
     neighbors = get_neighbors(loader, node)
+    println("neigh: ", neighbors)
     num_samples = min(loader.num_neighbors[layer], length(neighbors))  # Limit to required samples for this layer
     return rand(neighbors, num_samples)  # Randomly sample neighbors
 end
@@ -122,28 +126,3 @@ for mini_batch_gnn in loader
         break
     end
 end
-
-using GraphNeuralNetworks, Graphs, SparseArrays
-
-
-# Construct a GNNGraph from from a Graphs.jl's graph
-lg = erdos_renyi(10, 30)
-g = GNNGraph(lg)
-
-# Same as above using convenience method rand_graph
-g = rand_graph(10, 60)
-
-# From an adjacency matrix
-A = sprand(10, 10, 0.3)
-g = GNNGraph(A)
-
-# From an adjacency list
-adjlist = [[2,3], [1,3], [1,2,4], [3]]
-g = GNNGraph(adjlist)
-
-# From COO representation
-source = [1,1,2,2,3,3,3,4]
-target = [2,3,1,3,1,2,4,3]
-g = GNNGraph(source, target)
-
-Graph.neighbors(g, 1)
