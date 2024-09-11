@@ -22,7 +22,7 @@ function get_neighbors(loader::NeighborLoader, node::Int)
     if haskey(loader.neighbors_cache, node)
         return loader.neighbors_cache[node]
     else
-        neighbors = Graphs.neighbors(loader.graph, node)  # Get neighbors from graph
+        neighbors = Graphs.neighbors(loader.graph, node, dir = :out)  # Get neighbors from graph
         loader.neighbors_cache[node] = neighbors
         return neighbors
     end
@@ -41,17 +41,16 @@ end
 
 # Helper function to create a subgraph from selected nodes
 function create_subgraph(graph::GNNGraph, nodes::Vector{Int})
-    node_set = Set(nodes)  # Use a set for quick look-up
+    node_map = Dict(node => i for (i, node) in enumerate(nodes))
 
     # Collect edges to add
     source = Int[]
     target = Int[]
-    println("nodes: ", nodes)
     for node in nodes
         for neighbor in Graphs.neighbors(graph, node, dir = :out)
-            if neighbor in node_set
-                push!(source, node)
-                push!(target, neighbor)
+            if neighbor in keys(node_map)
+                push!(source, node_map[node])
+                push!(target, node_map[neighbor])
             end
         end
     end
@@ -125,5 +124,3 @@ for mini_batch_gnn in loader
         break
     end
 end
-
-### TODO: indexes recoding, otherwirse sometimes dimension mismatch with feature matrix
