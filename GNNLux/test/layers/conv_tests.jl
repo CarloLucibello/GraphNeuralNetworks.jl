@@ -116,7 +116,7 @@
         ps = LuxCore.initialparameters(rng, l)
         st = LuxCore.initialstates(rng, l)
         
-        y = l(g, x, e, ps, st) # just to see if it runs without an error
+        y = l(g2, x, e, ps, st) # just to see if it runs without an error
         #edim = 10
         #nn = Dense(edim, in_dims * out_dims)        
         #l = NNConv(in_dims => out_dims, nn, tanh, aggr = +)
