@@ -64,12 +64,12 @@ end
 # Iterator protocol for NeighborLoader with lazy batch loading
 function Base.iterate(loader::NeighborLoader, state=1)
     if state > length(loader.input_nodes) || (state - 1) // loader.batch_size >= loader.num_batches
-        return nothing  # End of iteration if batches are exhausted
+        return nothing  # End of iteration if batches are exhausted (state larger than amount of input nodes or current batch no >= batch number)
     end
 
     # Determine the size of the current batch
-    batch_size = min(loader.batch_size, length(loader.input_nodes) - state + 1)
-    batch_nodes = loader.input_nodes[state:state + batch_size - 1]
+    batch_size = min(loader.batch_size, length(loader.input_nodes) - state + 1) # Conditional in case there is not enough nodes to fill the last batch
+    batch_nodes = loader.input_nodes[state:state + batch_size - 1] # Each mini-batch uses different set of input nodes 
 
     # Set for tracking the subgraph nodes
     subgraph_nodes = Set(batch_nodes)
