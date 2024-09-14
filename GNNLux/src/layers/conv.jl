@@ -1,7 +1,9 @@
 _getbias(ps) = hasproperty(ps, :bias) ? getproperty(ps, :bias) : false
 _getstate(st, name) = hasproperty(st, name) ? getproperty(st, name) : NamedTuple()
 _getstate(s::StatefulLuxLayer{true}) = s.st
+_getstate(s::StatefulLuxLayer{Static.True}) = s.st
 _getstate(s::StatefulLuxLayer{false}) = s.st_any
+_getstate(s::StatefulLuxLayer{Static.False}) = s.st_any
 
 
 @concrete struct GCNConv <: GNNLayer
@@ -20,10 +22,9 @@ function GCNConv(ch::Pair{Int, Int}, σ = identity;
                 init_bias = zeros32,
                 use_bias::Bool = true,
                 add_self_loops::Bool = true,
-                use_edge_weight::Bool = false,
-                allow_fast_activation::Bool = true)
+                use_edge_weight::Bool = false)
     in_dims, out_dims = ch
-    σ = allow_fast_activation ? NNlib.fast_act(σ) : σ
+    σ = NNlib.fast_act(σ)
     return GCNConv(in_dims, out_dims, use_bias, add_self_loops, use_edge_weight, init_weight, init_bias, σ)
 end
 
@@ -121,10 +122,9 @@ function GraphConv(ch::Pair{Int, Int}, σ = identity;
             aggr = +,
             init_weight = glorot_uniform,
             init_bias = zeros32, 
-            use_bias::Bool = true, 
-            allow_fast_activation::Bool = true)
+            use_bias::Bool = true)
     in_dims, out_dims = ch
-    σ = allow_fast_activation ? NNlib.fast_act(σ) : σ
+    σ = NNlib.fast_act(σ)
     return GraphConv(in_dims, out_dims, use_bias, init_weight, init_bias, σ, aggr)
 end
 
@@ -212,11 +212,10 @@ end
 CGConv(ch::Pair{Int, Int}, args...; kws...) = CGConv((ch[1], 0) => ch[2], args...; kws...)
 
 function CGConv(ch::Pair{NTuple{2, Int}, Int}, act = identity; residual = false,
-                use_bias = true, init_weight = glorot_uniform, init_bias = zeros32, 
-                allow_fast_activation = true)
+                use_bias = true, init_weight = glorot_uniform, init_bias = zeros32)
     (nin, ein), out = ch
-    dense_f = Dense(2nin + ein => out, sigmoid; use_bias, init_weight, init_bias, allow_fast_activation)
-    dense_s = Dense(2nin + ein => out, act; use_bias, init_weight, init_bias, allow_fast_activation)
+    dense_f = Dense(2nin + ein => out, sigmoid; use_bias, init_weight, init_bias)
+    dense_s = Dense(2nin + ein => out, act; use_bias, init_weight, init_bias)
     return CGConv((nin, ein), out, dense_f, dense_s, residual, init_weight, init_bias)
 end
 
@@ -232,7 +231,7 @@ function (l::CGConv)(g, x, e, ps, st)
 end
 
 @concrete struct EdgeConv <: GNNContainerLayer{(:nn,)}
-    nn <: AbstractExplicitLayer
+    nn <: AbstractLuxLayer
     aggr
 end
 
@@ -246,10 +245,10 @@ end
 
 
 function (l::EdgeConv)(g::AbstractGNNGraph, x, ps, st)
-    nn = StatefulLuxLayer{true}(l.nn, ps, st)
+    nn = StatefulLuxLayer{true}(l.nn, ps.nn, st.nn)
     m = (; nn, l.aggr)
     y = GNNlib.edge_conv(m, g, x)
-    stnew = _getstate(nn)
+    stnew = (; nn = _getstate(nn)) # TODO: support also aggr state if present
     return y, stnew
 end
 
@@ -608,7 +607,7 @@ function Base.show(io::IO, l::GatedGraphConv)
 end
 
 @concrete struct GINConv <: GNNContainerLayer{(:nn,)}
-    nn <: AbstractExplicitLayer
+    nn <: AbstractLuxLayer
     ϵ <: Real
     aggr
 end
@@ -616,10 +615,10 @@ end
 GINConv(nn, ϵ; aggr = +) = GINConv(nn, ϵ, aggr)
 
 function (l::GINConv)(g, x, ps, st)
-    nn = StatefulLuxLayer{true}(l.nn, ps, st)
+    nn = StatefulLuxLayer{true}(l.nn, ps.nn, st.nn)
     m = (; nn, l.ϵ, l.aggr)
     y = GNNlib.gin_conv(m, g, x)
-    stnew = _getstate(nn)
+    stnew = (; nn = _getstate(nn))
     return y, stnew
 end
 

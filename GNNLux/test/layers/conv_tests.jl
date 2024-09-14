@@ -89,7 +89,7 @@
     end
 
     @testset "GINConv" begin
-        nn = Chain(Dense(in_dims => out_dims, relu), Dense(out_dims => out_dims))
+        nn = Chain(Dense(in_dims => out_dims, tanh), Dense(out_dims => out_dims))
         l = GINConv(nn, 0.5)
         test_lux_layer(rng, l, g, x, sizey=(out_dims,g.num_nodes), container=true)
     end
