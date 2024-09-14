@@ -2,7 +2,7 @@ module GNNLux
 using ConcreteStructs: @concrete
 using NNlib: NNlib, sigmoid, relu, swish
 using Statistics: mean
-using LuxCore: LuxCore, AbstractExplicitLayer, AbstractExplicitContainerLayer, parameterlength, statelength, outputsize, 
+using LuxCore: LuxCore, AbstractLuxLayer, AbstractLuxContainerLayer, parameterlength, statelength, outputsize, 
               initialparameters, initialstates, parameterlength, statelength
 using Lux: Lux, Chain, Dense, GRUCell,
            glorot_uniform, zeros32, 
@@ -10,6 +10,7 @@ using Lux: Lux, Chain, Dense, GRUCell,
 using Reexport: @reexport
 using Random: AbstractRNG
 using GNNlib: GNNlib
+using Static
 @reexport using GNNGraphs
 
 include("layers/basic.jl")

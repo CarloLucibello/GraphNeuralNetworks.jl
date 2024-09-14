@@ -1,14 +1,14 @@
 """
-    abstract type GNNLayer <: AbstractExplicitLayer end
+    abstract type GNNLayer <: AbstractLuxLayer end
 
 An abstract type from which graph neural network layers are derived.
-It is Derived from Lux's `AbstractExplicitLayer` type.
+It is Derived from Lux's `AbstractLuxLayer` type.
 
 See also [`GNNChain`](@ref GNNLux.GNNChain).
 """
-abstract type GNNLayer <: AbstractExplicitLayer end
+abstract type GNNLayer <: AbstractLuxLayer end
 
-abstract type GNNContainerLayer{T} <: AbstractExplicitContainerLayer{T} end
+abstract type GNNContainerLayer{T} <: AbstractLuxContainerLayer{T} end
 
 @concrete struct GNNChain <: GNNContainerLayer{(:layers,)}
     layers <: NamedTuple
@@ -24,7 +24,7 @@ function GNNChain(; kw...)
     return GNNChain(nt)
 end
 
-_wrapforchain(l::AbstractExplicitLayer) = l
+_wrapforchain(l::AbstractLuxLayer) = l
 _wrapforchain(l) = Lux.WrappedFunction(l)
 
 Base.keys(c::GNNChain) = Base.keys(getfield(c, :layers))
@@ -44,7 +44,7 @@ Base.firstindex(c::GNNChain) = firstindex(c.layers)
 
 LuxCore.outputsize(c::GNNChain) = LuxCore.outputsize(c.layers[end])
 
-(c::GNNChain)(g::GNNGraph, x, ps, st) = _applychain(c.layers, g, x, ps, st)
+(c::GNNChain)(g::GNNGraph, x, ps, st) = _applychain(c.layers, g, x, ps.layers, st.layers)
 
 function _applychain(layers, g::GNNGraph, x, ps, st)  # type-unstable path, helps compile times
     newst = (;)
@@ -56,6 +56,6 @@ function _applychain(layers, g::GNNGraph, x, ps, st)  # type-unstable path, help
 end
 
 _applylayer(l, g::GNNGraph, x, ps, st) = l(x), (;)
-_applylayer(l::AbstractExplicitLayer, g::GNNGraph, x, ps, st) = l(x, ps, st)
+_applylayer(l::AbstractLuxLayer, g::GNNGraph, x, ps, st) = l(x, ps, st)
 _applylayer(l::GNNLayer, g::GNNGraph, x, ps, st) = l(g, x, ps, st)
 _applylayer(l::GNNContainerLayer, g::GNNGraph, x, ps, st) = l(g, x, ps, st)

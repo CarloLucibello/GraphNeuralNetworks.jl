@@ -1,4 +1,4 @@
-@concrete struct StatefulRecurrentCell <: AbstractExplicitContainerLayer{(:cell,)}     
+@concrete struct StatefulRecurrentCell <: AbstractLuxContainerLayer{(:cell,)}     
     cell <: Union{<:Lux.AbstractRecurrentCell, <:GNNContainerLayer}
 end
 
@@ -7,14 +7,14 @@ function LuxCore.initialstates(rng::AbstractRNG, r::GNNLux.StatefulRecurrentCell
 end
 
 function (r::StatefulRecurrentCell)(g, x::AbstractMatrix, ps, st::NamedTuple)
-    (out, carry), st = applyrecurrentcell(r.cell, g, x, ps, st.cell, st.carry)
+    (out, carry), st = applyrecurrentcell(r.cell, g, x, ps.cell, st.cell, st.carry)
     return out, (; cell=st, carry)
 end
 
 function (r::StatefulRecurrentCell)(g, x::AbstractVector, ps, st::NamedTuple)
     st, carry = st.cell, st.carry
     for xᵢ in x
-        (out, carry), st = applyrecurrentcell(r.cell, g, xᵢ, ps, st, carry)
+        (out, carry), st = applyrecurrentcell(r.cell, g, xᵢ, ps.cell, st, carry)
     end
     return out, (; cell=st, carry)
 end
@@ -35,7 +35,7 @@ end
 
 function TGCNCell(ch::Pair{Int, Int}; use_bias = true, init_weight = glorot_uniform, init_state = zeros32, init_bias = zeros32, add_self_loops = false, use_edge_weight = true) 
     in_dims, out_dims = ch
-    conv = GCNConv(ch, sigmoid; init_weight, init_bias, use_bias, add_self_loops, use_edge_weight, allow_fast_activation= true)
+    conv = GCNConv(ch, sigmoid; init_weight, init_bias, use_bias, add_self_loops, use_edge_weight)
     gru = Lux.GRUCell(out_dims => out_dims; use_bias, init_weight = (init_weight, init_weight, init_weight), init_bias = (init_bias, init_bias, init_bias), init_state = init_state)
     return TGCNCell(in_dims, out_dims, conv, gru, init_state)
 end

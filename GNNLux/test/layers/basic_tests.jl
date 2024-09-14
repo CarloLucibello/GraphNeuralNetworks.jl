@@ -4,16 +4,16 @@
     x = randn(rng, Float32, 3, 10)        
 
     @testset "GNNLayer" begin
-        @test GNNLayer <: LuxCore.AbstractExplicitLayer
+        @test GNNLayer <: LuxCore.AbstractLuxLayer
     end
 
     @testset "GNNContainerLayer" begin
-        @test GNNContainerLayer <: LuxCore.AbstractExplicitContainerLayer
+        @test GNNContainerLayer <: LuxCore.AbstractLuxContainerLayer
     end
 
     @testset "GNNChain" begin
-        @test GNNChain <: LuxCore.AbstractExplicitContainerLayer{(:layers,)}
-        c = GNNChain(GraphConv(3 => 5, relu), GCNConv(5 => 3))
+        @test GNNChain <: LuxCore.AbstractLuxContainerLayer{(:layers,)}
+        c = GNNChain(GraphConv(3 => 5, tanh), GCNConv(5 => 3))
         test_lux_layer(rng, c, g, x, outputsize=(3,), container=true)
     end
 end
