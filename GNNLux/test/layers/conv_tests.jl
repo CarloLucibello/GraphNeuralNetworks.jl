@@ -124,6 +124,6 @@
         ps = LuxCore.initialparameters(rng, l)
         st = LuxCore.initialstates(rng, l)
 
-        y = l(g2, x, e, ps, st) # just to see if it runs without an error
+        test_lux_layer(rng, l, g2, x, sizey=(n_out, g2.num_nodes), container=true, edge_weight=e) 
     end    
 end
