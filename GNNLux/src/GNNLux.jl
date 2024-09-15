@@ -33,7 +33,7 @@ export AGNNConv,
        # GMMConv,
        GraphConv,
        MEGNetConv,
-       # NNConv,
+       NNConv,
        # ResGatedGraphConv,
        # SAGEConv,
        SGConv

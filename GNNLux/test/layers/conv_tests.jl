@@ -106,4 +106,26 @@
         @test size(x_new) == (out_dims, g.num_nodes)
         @test size(e_new) == (out_dims, g.num_edges)
     end
+
+    @testset "NNConv" begin
+        n_in = 3
+        n_in_edge = 10
+        n_out = 5
+
+        s = [1,1,2,3]
+        t = [2,3,1,1]
+        g2 = GNNGraph(s, t)
+
+        nn = Dense(n_in_edge => n_out * n_in)
+        l = NNConv(n_in => n_out, nn, tanh, aggr = +)
+        x = randn(Float32, n_in, g2.num_nodes)
+        e = randn(Float32, n_in_edge, g2.num_edges)
+
+        ps = LuxCore.initialparameters(rng, l)
+        st = LuxCore.initialstates(rng, l)
+
+        y, st′ = l(g2, x, e, ps, st)
+        
+        @test size(y) == (n_out, g2.num_nodes)
+    end    
 end

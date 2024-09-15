@@ -669,3 +669,62 @@ function Base.show(io::IO, l::MEGNetConv)
     print(io, "MEGNetConv(", nin, " => ", nout)
     print(io, ")")
 end
+
+@concrete struct NNConv <: GNNContainerLayer{(:nn,)}
+    nn <: AbstractLuxLayer    
+    aggr
+    in_dims::Int
+    out_dims::Int
+    use_bias::Bool
+    init_weight
+    init_bias
+    σ
+end
+
+function NNConv(ch::Pair{Int, Int}, nn, σ = identity; 
+                aggr = +, 
+                init_bias = zeros32,
+                use_bias::Bool = true,
+                init_weight = glorot_uniform)
+    in_dims, out_dims = ch
+    σ = NNlib.fast_act(σ)
+    return NNConv(nn, aggr, in_dims, out_dims, use_bias, init_weight, init_bias, σ)
+end
+
+function LuxCore.initialparameters(rng::AbstractRNG, l::NNConv)
+    weight = l.init_weight(rng, l.out_dims, l.in_dims)
+    ps = (; nn = LuxCore.initialparameters(rng, l.nn), weight)
+    if l.use_bias
+        ps = (; ps..., bias = l.init_bias(rng, l.out_dims))
+    end
+    return ps
+end
+
+function LuxCore.initialstates(rng::AbstractRNG, l::NNConv)
+    return (; nn = LuxCore.initialstates(rng, l.nn))
+end
+
+function LuxCore.parameterlength(l::NNConv)
+    n = parameterlength(l.nn) + l.in_dims * l.out_dims
+    if l.use_bias
+        n += l.out_dims
+    end
+    return n
+end
+
+LuxCore.statelength(l::NNConv) = statelength(l.nn)
+
+function (l::NNConv)(g, x, e, ps, st)
+    nn = StatefulLuxLayer{true}(l.nn, ps.nn, st.nn)
+    m = (; nn, l.aggr, ps.weight, bias = _getbias(ps), l.σ)
+    y = GNNlib.nn_conv(m, g, x, e)
+    stnew = _getstate(nn)
+    return y, stnew
+end
+
+function Base.show(io::IO, l::NNConv)
+    print(io, "NNConv($(l.nn)")
+    l.σ == identity || print(io, ", ", l.σ)
+    l.use_bias || print(io, ", use_bias=false")
+    print(io, ")")
+end
