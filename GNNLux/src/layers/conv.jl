@@ -721,3 +721,10 @@ function (l::NNConv)(g, x, e, ps, st)
     stnew = _getstate(nn)
     return y, stnew
 end
+
+function Base.show(io::IO, l::NNConv)
+    print(io, "NNConv($(l.nn)")
+    l.σ == identity || print(io, ", ", l.σ)
+    l.use_bias || print(io, ", use_bias=false")
+    print(io, ")")
+end
