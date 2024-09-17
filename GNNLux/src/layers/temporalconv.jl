@@ -274,3 +274,63 @@ LuxCore.outputsize(l::DCGRUCell) = (l.out_dims,)
 
 DCGRU(ch::Pair{Int, Int}, k::Int; kwargs...) = GNNLux.StatefulRecurrentCell(DCGRUCell(ch, k; kwargs...))
 
+@concrete struct EvolveGCNO <: GNNLayer
+    in_dims::Int
+    out_dims::Int
+    use_bias::Bool
+    init_weight
+    init_state::Function
+    init_bias
+end
+
+function EvolveGCNO(ch::Pair{Int, Int}; use_bias = true, init_weight = glorot_uniform, init_state = zeros32, init_bias = zeros32)
+    in_dims, out_dims = ch
+    return EvolveGCNO(in_dims, out_dims, use_bias, init_weight, init_state, init_bias)
+end
+
+function LuxCore.initialparameters(rng::AbstractRNG, l::EvolveGCNO)
+    weight = l.init_weight(rng, l.out_dims, l.in_dims)
+    Wf = l.init_weight(rng, l.out_dims, l.in_dims)
+    Uf = l.init_weight(rng, l.out_dims, l.in_dims)
+    Wi = l.init_weight(rng, l.out_dims, l.in_dims)
+    Ui = l.init_weight(rng, l.out_dims, l.in_dims)
+    Wo = l.init_weight(rng, l.out_dims, l.in_dims)
+    Uo = l.init_weight(rng, l.out_dims, l.in_dims)
+    Wc = l.init_weight(rng, l.out_dims, l.in_dims)
+    Uc = l.init_weight(rng, l.out_dims, l.in_dims)
+    if l.use_bias
+        bias = l.init_bias(rng, l.out_dims)
+        Bf = l.init_bias(rng, l.out_dims, l.in_dims)
+        Bi = l.init_bias(rng, l.out_dims, l.in_dims)
+        Bo = l.init_bias(rng, l.out_dims, l.in_dims)
+        Bc = l.init_bias(rng, l.out_dims, l.in_dims)
+        return (; conv = (; weight, bias), lstm = (; Wf, Uf, Wi, Ui, Wo, Uo, Wc, Uc, Bf, Bi, Bo, Bc))
+    else
+        return (; conv = (; weight), lstm = (; Wf, Uf, Wi, Ui, Wo, Uo, Wc, Uc))
+    end
+end
+
+function LuxCore.initialstates(rng::AbstractRNG, l::EvolveGCNO)
+    h = l.init_state(rng, l.out_dims, l.in_dims)
+    c = l.init_state(rng, l.out_dims, l.in_dims)
+    return (; conv = (;), lstm = (; h, c))
+end
+
+function (l::EvolveGCNO)(tg::TemporalSnapshotsGNNGraph, x, ps::NamedTuple, st::NamedTuple)
+    H, C = st.lstm
+    W = ps.conv.weight
+    m = (; ps.conv.weight, bias = _getbias(ps), 
+    add_self_loops =true, use_edge_weight=true, σ = identity)
+
+    X = map(1:tg.num_snapshots) do i
+        F = NNlib.sigmoid_fast.(ps.lstm.Wf .* W .+ ps.lstm.Uf .* H .+ ps.lstm.Bf)
+        I = NNlib.sigmoid_fast.(ps.lstm.Wi .* W .+ ps.lstm.Ui .* H .+ ps.lstm.Bi)
+        O = NNlib.sigmoid_fast.(ps.lstm.Wo .* W .+ ps.lstm.Uo .* H .+ ps.lstm.Bo)
+        C̃ = NNlib.tanh_fast.(ps.lstm.Wc .* W .+ ps.lstm.Uc .* H .+ ps.lstm.Bc)
+        C = F .* C + I .* C̃
+        H = O .* NNlib.tanh_fast.(C)
+        W = H
+        GNNlib.gcn_conv(m,tg.snapshots[i], x[i], nothing, d -> 1 ./ sqrt.(d), W)
+    end
+    return X, (; conv = (;), lstm = (h = H, c = C))
+end
