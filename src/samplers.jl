@@ -22,7 +22,7 @@ function get_neighbors(loader::NeighborLoader, node::Int)
     if haskey(loader.neighbors_cache, node)
         return loader.neighbors_cache[node]
     else
-        neighbors = Graphs.neighbors(loader.graph, node, dir = :out)  # Get neighbors from graph
+        neighbors = Graphs.neighbors(loader.graph, node, dir = :in)  # Get neighbors from graph
         loader.neighbors_cache[node] = neighbors
         return neighbors
     end
@@ -39,7 +39,10 @@ function sample_neighbors(loader::NeighborLoader, node::Int, layer::Int)
     end
 end
 
-# Helper function to create a subgraph from selected nodes
+### TODO check subsample function
+### TODO write subsample function for universal use
+### TODO factor out to separate PR
+# define a method function Graphs.induced_subgraph(g::GNNGraph, nodes) (rename)
 function create_subgraph(graph::GNNGraph, nodes::Vector{Int})
     node_map = Dict(node => i for (i, node) in enumerate(nodes))
 
@@ -47,7 +50,7 @@ function create_subgraph(graph::GNNGraph, nodes::Vector{Int})
     source = Int[]
     target = Int[]
     for node in nodes
-        for neighbor in Graphs.neighbors(graph, node, dir = :out)
+        for neighbor in Graphs.neighbors(graph, node, dir = :in)
             if neighbor in keys(node_map)
                 push!(source, node_map[node])
                 push!(target, node_map[neighbor])
@@ -108,7 +111,8 @@ gnn_graph = GNNGraph(source, target, ndata = features)
 input_nodes = [1, 2, 3, 4, 5]
 
 # Initialize the NeighborLoader with optional batch_size
-loader = NeighborLoader(gnn_graph; num_neighbors = [2, 3], input_nodes=input_nodes, num_layers = 2, batch_size = 3, num_batches = 3)
+loader = NeighborLoader(gnn_graph; num_neighbors = [0], input_nodes=input_nodes, num_layers = 1, batch_size = 3, num_batches = 3)
+# nn = [0], layers =1, n edges should equal 0, no nodes = mini batch
 
 # Loop through the number of batches for training, using the iterator
 batch_counter = 0
@@ -124,3 +128,7 @@ for mini_batch_gnn in loader
         break
     end
 end
+
+### TODO: only batch size, remove batch num
+### TODO: compare pytorch geometric, compare edge cases: batch size = 1, num nodes = 1
+### TODO: think about what tests
