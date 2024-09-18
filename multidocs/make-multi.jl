@@ -18,8 +18,7 @@ MultiDocumenter.make(
         index_versions = ["stable"],
         engine = MultiDocumenter.FlexSearch
     ),
-    brand_image = MultiDocumenter.BrandImage("/GNNGraphs", "logo.svg"),
-    rootpath = "/GNNGraphs/"
+    brand_image = MultiDocumenter.BrandImage("", "logo.svg"),
 )
 
 cp(joinpath(@__DIR__, "logo.svg"),
