@@ -60,7 +60,7 @@ opt = Flux.setup(Adam(1f-4), model)
 
 Finally, we use a standard Flux training pipeline to fit our dataset.
 We use Flux's `DataLoader` to iterate over mini-batches of graphs 
-that are glued together into a single `GNNGraph` using the `MLUtils.batch` method. This is what happens under the hood when creating a `DataLoader` with the
+that are glued together into a single `GNNGraph` using the [`Flux.batch`](@ref) method. This is what happens under the hood when creating a `DataLoader` with the
 `collate=true` option. 
 
 ```julia
