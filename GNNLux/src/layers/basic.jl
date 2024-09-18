@@ -1,10 +1,10 @@
+#See also [`GNNChain`](@ref GNNLux.GNNChain).
+
 """
     abstract type GNNLayer <: AbstractLuxLayer end
 
 An abstract type from which graph neural network layers are derived.
 It is Derived from Lux's `AbstractLuxLayer` type.
-
-See also [`GNNChain`](@ref GNNLux.GNNChain).
 """
 abstract type GNNLayer <: AbstractLuxLayer end
 

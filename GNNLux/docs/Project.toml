@@ -1,0 +1,5 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+GNNLux = "e8545f4d-a905-48ac-a8c4-ca114b98986d"
+GNNlib = "a6a84749-d869-43f8-aacc-be26a1996e48"
+LiveServer = "16fef848-5104-11e9-1b77-fb7a48bbb589"
