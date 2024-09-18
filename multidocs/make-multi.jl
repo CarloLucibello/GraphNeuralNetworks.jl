@@ -2,6 +2,11 @@ using MultiDocumenter
 
 docs = [
     MultiDocumenter.MultiDocRef(
+        upstream = joinpath(dirname(@__DIR__), "docs", "build"),
+        path = "graphneuralnetworks",
+        name = "GraphNeuralNetworks.jl",
+        fix_canonical_url = false),
+    MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "GNNGraphs", "docs", "build"),
         path = "gnngraphs",
         name = "GNNGraphs",
@@ -10,7 +15,12 @@ docs = [
         upstream = joinpath(dirname(@__DIR__), "GNNlib", "docs", "build"),
         path = "gnnlib",
         name = "GNNlib",
-        fix_canonical_url = false)
+        fix_canonical_url = false),
+    MultiDocumenter.MultiDocRef(
+        upstream = joinpath(dirname(@__DIR__), "GNNLux", "docs", "build"),
+        path = "gnnlux",
+        name = "GNNLux",
+        fix_canonical_url = false),    
 ]
 
 outpath = joinpath(@__DIR__, "build")
