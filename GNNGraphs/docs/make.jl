@@ -12,11 +12,11 @@ makedocs(;
          clean = true,
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
          sitename = "GNNGraphs.jl",
-         pages = [#"Home" => "index.md",
+         pages = ["Home" => "index.md",
             "Graphs" => ["gnngraph.md", "heterograph.md", "temporalgraph.md"],
             #  "Message Passing" => "messagepassing.md",
             #  "Model Building" => "models.md",
-            #  "Datasets" => "datasets.md",
+            "Datasets" => "datasets.md",
             #  #"Tutorials" => tutorials,
             "API Reference" => [
                  "GNNGraph" => "api/gnngraph.md",
@@ -30,7 +30,11 @@ makedocs(;
               ],
             #  "Developer Notes" => "dev.md",
             
-         ])
+         ]
+         )
+         
+         
 
 
-deploydocs(repo = "github.com/CarloLucibello/GraphNeuralNetworks/GNNGraphs.jl.git")
+deploydocs(;repo = "https://github.com/CarloLucibello/GraphNeuralNetworks.jl.git",
+dirname = "GNNGraphs")

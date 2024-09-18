@@ -7,7 +7,7 @@ Convert a graph dataset from the package MLDatasets.jl into one or many [`GNNGra
 
 # Examples
 
-```jldoctest
+```julia
 julia> using MLDatasets, GraphNeuralNetworks
 
 julia> mldataset2gnngraph(Cora())
