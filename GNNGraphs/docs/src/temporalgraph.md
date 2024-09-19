@@ -1,6 +1,6 @@
 # Temporal Graphs
 
-Temporal Graphs are graphs with time varying topologies and node features. In GraphNeuralNetworks.jl temporal graphs with fixed number of nodes over time are supported by the [`TemporalSnapshotsGNNGraph`](@ref) type.
+Temporal Graphs are graphs with time varying topologies and  features. In GNNGraphs.jl, temporal graphs with fixed number of nodes over time are supported by the [`TemporalSnapshotsGNNGraph`](@ref) type.
 
 ## Creating a TemporalSnapshotsGNNGraph
 
@@ -124,7 +124,7 @@ Vector{Matrix{Float64}}
 
 ## Graph convolutions on TemporalSnapshotsGNNGraph
 
-A graph convolutional layer can be applied to each snapshot independently, in the next example we apply a `GINConv` layer to each snapshot of a `TemporalSnapshotsGNNGraph`.  
+A graph convolutional layer can be applied to each snapshot independently, in the next example we apply a [`GINConv`](@ref) layer to each snapshot of a `TemporalSnapshotsGNNGraph`.  
 
 ```jldoctest
 julia> using GraphNeuralNetworks, Flux

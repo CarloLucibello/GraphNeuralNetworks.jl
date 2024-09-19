@@ -4,7 +4,7 @@ CurrentModule = GNNGraphs
 
 # GNNGraph
 
-Documentation page for the graph type `GNNGraph` provided by GraphNeuralNetworks.jl and related methods. 
+Documentation page for the graph type `GNNGraph` provided by GNNGraphs.jl and related methods. 
 
 Besides the methods documented here, one can rely on the large set of functionalities
 given by [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl) thanks to the fact
