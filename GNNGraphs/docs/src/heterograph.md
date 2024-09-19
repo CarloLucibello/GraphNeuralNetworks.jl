@@ -6,7 +6,7 @@ Relations such as `:rate` or `:like` can connect nodes of different types. We ca
 
 Different node/edge types can store different groups of features
 and this makes heterographs a very flexible modeling tools 
-and data containers. In GraphNeuralNetworks.jl heterographs are implemented in 
+and data containers. In GNNGraphs.jl heterographs are implemented in 
 the type [`GNNHeteroGraph`](@ref).
 
 

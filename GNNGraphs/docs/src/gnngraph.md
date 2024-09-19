@@ -1,6 +1,6 @@
 # Static Graphs 
 
-The fundamental graph type in GraphNeuralNetworks.jl is the [`GNNGraph`](@ref).
+The fundamental graph type in GNNGraphs.jl is the [`GNNGraph`](@ref).
 A GNNGraph `g` is a directed graph with nodes labeled from 1 to `g.num_nodes`.
 The underlying implementation allows for efficient application of graph neural network
 operators, gpu movement, and storage of node/edge/graph related feature arrays.
@@ -12,7 +12,7 @@ therefore it supports most functionality from that library.
 A GNNGraph can be created from several different data sources encoding the graph topology:
 
 ```julia
-using GraphNeuralNetworks, Graphs, SparseArrays
+using GNNGraphs, Graphs, SparseArrays
 
 
 # Construct a GNNGraph from from a Graphs.jl's graph
@@ -233,7 +233,7 @@ Moreover, a `GNNGraph` can be easily constructed from a `Graphs.Graph` or a `Gra
 ```julia
 julia> import Graphs
 
-julia> using GraphNeuralNetworks
+julia> using GNNGraphs
 
 # A Graphs.jl undirected graph
 julia> gu = Graphs.erdos_renyi(10, 20)    

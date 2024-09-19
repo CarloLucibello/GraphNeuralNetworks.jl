@@ -127,7 +127,7 @@ Vector{Matrix{Float64}}
 A graph convolutional layer can be applied to each snapshot independently, in the next example we apply a [`GINConv`](@ref) layer to each snapshot of a `TemporalSnapshotsGNNGraph`.  
 
 ```jldoctest
-julia> using GraphNeuralNetworks, Flux
+julia> using GNNGraphs, Flux
 
 julia> snapshots = [rand_graph(10, 20; ndata = rand(3, 10)), rand_graph(10, 14; ndata = rand(3, 10))];
 
