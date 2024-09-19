@@ -16,7 +16,7 @@ and to ``\gamma_x`` and ``\gamma_e`` as to the node update and edge update funct
 respectively. The aggregation ``\square`` is over the neighborhood ``N(i)`` of node ``i``, 
 and it is usually equal either to ``\sum``, to `max` or to a `mean` operation. 
 
-In GraphNeuralNetworks.jl, the message passing mechanism is exposed by the [`propagate`](@ref) function.
+In GNNlib.jl, the message passing mechanism is exposed by the [`propagate`](@ref) function.
 [`propagate`](@ref) takes care of materializing the node features on each edge, applying the message function, performing the
 aggregation, and returning ``\bar{\mathbf{m}}``. 
 It is then left to the user to perform further node and edge updates,
@@ -39,7 +39,7 @@ and [`NNlib.scatter`](@ref) methods.
 The function [`apply_edges`](@ref) can be used to broadcast node data
 on each edge and produce new edge data.
 ```julia
-julia> using GraphNeuralNetworks, Graphs, Statistics
+julia> using GNNlib, Graphs, Statistics
 
 julia> g = rand_graph(10, 20)
 GNNGraph:
@@ -90,9 +90,9 @@ julia> degree(g)
  1
 ```
 
-### Implementing a custom Graph Convolutional Layer
+### Implementing a custom Graph Convolutional Layer using Flux.jl
 
-Let's implement a simple graph convolutional layer using the message passing framework.
+Let's implement a simple graph convolutional layer using the message passing framework using the machine learning framework Flux.jl.
 The convolution reads 
 
 ```math
