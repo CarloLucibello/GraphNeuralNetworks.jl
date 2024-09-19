@@ -22,7 +22,7 @@ providing as input `f` a closure.
 - `g`: A `GNNGraph`.
 - `xi`: An array or a named tuple containing arrays whose last dimension's size 
         is `g.num_nodes`. It will be appropriately materialized on the
-        target node of each edge (see also [`edge_index`]((@ref GNNGraphs.edge_index)).
+        target node of each edge (see also [`edge_index`](@ref GNNGraphs.edge_index)).
 - `xj`: As `xj`, but to be materialized on edges' sources. 
 - `e`: An array or a named tuple containing arrays whose last dimension's size is `g.num_edges`.
 - `fmsg`: A generic function that will be passed over to [`apply_edges`](@ref). 
@@ -100,7 +100,7 @@ such tensors.
 - `g`: An `AbstractGNNGraph`.
 - `xi`: An array or a named tuple containing arrays whose last dimension's size 
         is `g.num_nodes`. It will be appropriately materialized on the
-        target node of each edge (see also [`edge_index`]((@ref GNNGraphs.edge_index)).
+        target node of each edge (see also [`edge_index`](@ref GNNGraphs.edge_index)).
 - `xj`: As `xi`, but now to be materialized on each edge's source node. 
 - `e`: An array or a named tuple containing arrays whose last dimension's size is `g.num_edges`.
 - `fmsg`: A function that takes as inputs the edge-materialized `xi`, `xj`, and `e`.
