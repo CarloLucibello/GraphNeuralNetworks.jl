@@ -134,3 +134,7 @@ for g in train_loader
     # ...
 end
 ```
+
+## Graph convolutions on heterographs
+
+See [`HeteroGraphConv`](@ref) for how to perform convolutions on heterogeneous graphs.

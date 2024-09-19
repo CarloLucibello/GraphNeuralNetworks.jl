@@ -122,6 +122,10 @@ julia> typeof(tg.ndata.x) # vector containing the x feature of each snapshot
 Vector{Matrix{Float64}}
 ```
 
+## Graph convolutions on TemporalSnapshotsGNNGraph
+
+A graph convolutional layer can be applied to each snapshot independently, in the next example we apply a `GINConv` layer to each snapshot of a `TemporalSnapshotsGNNGraph`.  
+
 ```jldoctest
 julia> using GraphNeuralNetworks, Flux
 

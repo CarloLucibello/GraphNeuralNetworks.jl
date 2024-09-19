@@ -123,6 +123,8 @@ g′.e
 
 ## Edge weights
 
+It is common to denote scalar edge features as edge weights. The `GNNGraph` has specific support
+for edge weights: they can be stored as part of internal representations of the graph (COO or adjacency matrix). Some graph convolutional layers, most notably the [`GCNConv`](@ref), can use the edge weights to perform weighted sums over the nodes' neighborhoods.
 
 ```julia
 julia> source = [1, 1, 2, 2, 3, 3];
