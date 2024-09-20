@@ -25,11 +25,11 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "0ff9ce31b1c38b1ea702b36eb2772fbeda1b8bf1d33571ac3902cb721f15e4b9"
+    input_sha = "33f6319bf52620ad6122ffc183f2167efc3646ae0018bd149248c49be7b3de4e"
     julia_version = "1.10.5"
 -->
 
-<div class="markdown"><p>In this tutorial, we will learn how to extend the graph classification task to the case of temporal graphs, i.e., graphs whose topology and features are time-varying.</p><p>We will design and train a simple temporal graph neural network architecture to classify subjects' gender (female or male) using the temporal graphs extracted from their brain fMRI scan signals. Given the large amount of data, we will implement the training so that it can also run on the GPU.</p></div>
+<div class="markdown"><h1>Temporal Graph classification with GraphNeuralNetworks.jl</h1><p>In this tutorial, we will learn how to extend the graph classification task to the case of temporal graphs, i.e., graphs whose topology and features are time-varying.</p><p>We will design and train a simple temporal graph neural network architecture to classify subjects' gender (female or male) using the temporal graphs extracted from their brain fMRI scan signals. Given the large amount of data, we will implement the training so that it can also run on the GPU.</p></div>
 
 
 ```
