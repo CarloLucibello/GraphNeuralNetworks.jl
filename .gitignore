@@ -11,7 +11,7 @@ LocalPreferences.toml
 .DS_Store
 docs/src/democards/gridtheme.css
 test.jl
-/GNNGraphs/docs/build
-/GNNlib/docs/build
-/GNNLux/docs/build
-/multidocs/build
+GNNGraphs/docs/build
+GNNlib/docs/build
+GNNLux/docs/build
+multidocs/build
