@@ -66,7 +66,7 @@ functionality from that library.
 # Examples
 
 ```julia
-using GraphNeuralNetworks
+using GNNGraphs, Graphs
 
 # Construct from adjacency list representation
 data = [[2,3], [1,4,5], [1], [2,5], [2,4]]
