@@ -20,6 +20,11 @@ docs = [
         upstream = joinpath(dirname(@__DIR__), "GNNLux", "docs", "build"),
         path = "gnnlux",
         name = "GNNLux",
+        fix_canonical_url = false), 
+    MultiDocumenter.MultiDocRef(
+        upstream = joinpath(dirname(@__DIR__), "tutorials", "docs", "build"),
+        path = "tutorials",
+        name = "Tutorials",
         fix_canonical_url = false),    
 ]
 
