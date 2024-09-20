@@ -21,10 +21,18 @@ makedocs(;
          plugins = [interlinks],
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
          sitename = "GraphNeuralNetworks.jl",
-         pages = ["Home" => "index.md",
-            "Models" => "models.md",
-            "Dev" => "dev.md",
-            "Gsoc" => "gsoc.md",
+         pages = ["Monorepo" => [ 
+               "Home" => "monorepo.md",
+               "Developer guide" => "dev.md",
+               "Google Summer of Code" => "gsoc.md",
+
+
+            ],
+            "GraphNeuralNetworks.jl" =>[
+            "Home" => "index.md",
+            "Models" => "models.md",],
+            
+            
 
             "API Reference" => [
      
@@ -36,7 +44,6 @@ makedocs(;
           
                 
               ],
-            #  "Developer Notes" => "dev.md",
             
          ],
          )

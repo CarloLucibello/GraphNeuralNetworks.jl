@@ -3,6 +3,6 @@ CurrentModule = GNNLux
 ```
 
 ## GNNLayer
-
+```@docs
 GNNLux.GNNLayer
-
+```
