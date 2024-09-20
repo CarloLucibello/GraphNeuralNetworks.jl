@@ -28,6 +28,8 @@ end;
 
 # ╔═╡ 15136fd8-f9b2-4841-9a95-9de7b8969687
 md"""
+# Graph Classification with Graph Neural Networks
+
 *This Pluto notebook is a julia adaptation of the Pytorch Geometric tutorials that can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html).*
 
 In this tutorial session we will have a closer look at how to apply **Graph Neural Networks (GNNs) to the task of graph classification**.

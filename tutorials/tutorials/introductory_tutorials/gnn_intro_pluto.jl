@@ -26,6 +26,8 @@ end
 
 # ╔═╡ 03a9e023-e682-4ea3-a10b-14c4d101b291
 md"""
+# Hands-on introduction to Graph Neural Networks
+
 *This Pluto notebook is a Julia adaptation of the Pytorch Geometric tutorials that can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html).*
 
 Recently, deep learning on graphs has emerged to one of the hottest research fields in the deep learning community.

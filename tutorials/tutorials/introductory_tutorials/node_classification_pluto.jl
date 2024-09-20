@@ -30,6 +30,8 @@ end;
 
 # ╔═╡ ca2f0293-7eac-4d9a-9a2f-fda47fd95a99
 md"""
+# Node Classification with Graph Neural Networks
+
 In this tutorial, we will be learning how to use Graph Neural Networks (GNNs) for node classification. Given the ground-truth labels of only a small subset of nodes, and want to infer the labels for all the remaining nodes (transductive learning).
 """
 
