@@ -4,7 +4,7 @@ CurrentModule = GraphNeuralNetworks
 
 # Hetero Graph-Convolutional Layers
 
-Convolutions for time-varying graphs (temporal graphs) such as the [`GNNHeteroGraph`](@ref).
+Heterogeneous graph convolutions are implemented in the type `HeteroGraphConv`. `HeteroGraphConv` relies on standard graph convolutional layers to perform message passing on the different relations.
 
 ## Docs
 
