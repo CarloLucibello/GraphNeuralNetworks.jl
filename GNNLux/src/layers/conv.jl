@@ -628,6 +628,68 @@ function Base.show(io::IO, l::GINConv)
     print(io, ")")
 end
 
+@concrete struct GMMConv <: GNNLayer
+    σ
+    ch::Pair{NTuple{2, Int}, Int}
+    K::Int
+    residual::Bool
+    init_weight
+    init_bias
+    use_bias::Bool
+    dense_x
+end
+
+function GMMConv(ch::Pair{NTuple{2, Int}, Int}, 
+                    σ = identity; 
+                    K::Int = 1, 
+                    residual = false,
+                    init_weight = glorot_uniform, 
+                    init_bias = zeros32, 
+                    use_bias = true)
+    dense_x = Dense(ch[1][1] => ch[2] * K, use_bias = false)
+    return GMMConv(σ, ch, K, residual, init_weight, init_bias, use_bias, dense_x)
+end
+
+
+function LuxCore.initialparameters(rng::AbstractRNG, l::GMMConv)
+    ein = l.ch[1][2]
+    mu = l.init_weight(rng, ein, l.K)
+    sigma_inv = l.init_weight(rng, ein, l.K)
+    ps = (; mu, sigma_inv, dense_x = LuxCore.initialparameters(rng, l.dense_x))
+    if l.use_bias
+        bias = l.init_bias(rng, l.ch[2])
+        ps = (; ps..., bias)
+    end
+    return ps
+end
+
+LuxCore.outputsize(l::GMMConv) = (l.ch[2],)
+
+function LuxCore.parameterlength(l::GMMConv)
+    n = 2 * l.ch[1][2] * l.K
+    n += parameterlength(l.dense_x)
+    if l.use_bias
+        n += l.ch[2]
+    end
+    return n
+end
+
+function (l::GMMConv)(g::GNNGraph, x, e, ps, st)
+    dense_x = StatefulLuxLayer{true}(l.dense_x, ps.dense_x, _getstate(st, :dense_x))
+    m = (; ps.mu, ps.sigma_inv, dense_x, l.σ, l.ch, l.K, l.residual, bias = _getbias(ps))
+    return GNNlib.gmm_conv(m, g, x, e), st
+end
+
+function Base.show(io::IO, l::GMMConv)
+    (nin, ein), out = l.ch
+    print(io, "GMMConv((", nin, ",", ein, ")=>", out)
+    l.σ == identity || print(io, ", σ=", l.dense_s.σ)
+    print(io, ", K=", l.K)
+    print(io, ", residual=", l.residual)
+    l.use_bias == true || print(io, ", use_bias=false")
+    print(io, ")")
+end
+
 @concrete struct MEGNetConv{TE, TV, A} <: GNNContainerLayer{(:ϕe, :ϕv)}
     in_dims::Int
     out_dims::Int
@@ -712,6 +774,8 @@ function LuxCore.parameterlength(l::NNConv)
     return n
 end
 
+LuxCore.outputsize(l::NNConv) = (l.out_dims,)
+
 LuxCore.statelength(l::NNConv) = statelength(l.nn)
 
 function (l::NNConv)(g, x, e, ps, st)
@@ -723,7 +787,59 @@ function (l::NNConv)(g, x, e, ps, st)
 end
 
 function Base.show(io::IO, l::NNConv)
-    print(io, "NNConv($(l.nn)")
+    print(io, "NNConv($(l.in_dims) => $(l.out_dims), $(l.nn)")
+    l.σ == identity || print(io, ", ", l.σ)
+    l.use_bias || print(io, ", use_bias=false")
+    print(io, ")")
+end
+
+@concrete struct ResGatedGraphConv <: GNNLayer
+    in_dims::Int
+    out_dims::Int
+    σ
+    init_bias
+    init_weight
+    use_bias::Bool
+end
+
+function ResGatedGraphConv(ch::Pair{Int, Int}, σ = identity; 
+                           init_weight = glorot_uniform, 
+                           init_bias = zeros32, 
+                           use_bias::Bool = true)
+    in_dims, out_dims = ch
+    return ResGatedGraphConv(in_dims, out_dims, σ, init_bias, init_weight, use_bias)
+end
+
+function LuxCore.initialparameters(rng::AbstractRNG, l::ResGatedGraphConv)
+    A = l.init_weight(rng, l.out_dims, l.in_dims)
+    B = l.init_weight(rng, l.out_dims, l.in_dims)
+    U = l.init_weight(rng, l.out_dims, l.in_dims)
+    V = l.init_weight(rng, l.out_dims, l.in_dims)
+    if l.use_bias
+        bias = l.init_bias(rng, l.out_dims)
+        return (; A, B, U, V, bias)
+    else
+        return (; A, B, U, V)
+    end    
+end
+
+function LuxCore.parameterlength(l::ResGatedGraphConv)
+    n = 4 * l.in_dims * l.out_dims
+    if l.use_bias
+        n += l.out_dims
+    end
+    return n
+end
+
+LuxCore.outputsize(l::ResGatedGraphConv) = (l.out_dims,)
+
+function (l::ResGatedGraphConv)(g, x, ps, st)
+    m = (; ps.A, ps.B, ps.U, ps.V, bias = _getbias(ps), l.σ)
+    return GNNlib.res_gated_graph_conv(m, g, x), st
+end
+
+function Base.show(io::IO, l::ResGatedGraphConv)
+    print(io, "ResGatedGraphConv(", l.in_dims, " => ", l.out_dims)
     l.σ == identity || print(io, ", ", l.σ)
     l.use_bias || print(io, ", use_bias=false")
     print(io, ")")

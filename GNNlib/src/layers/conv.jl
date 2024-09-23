@@ -389,7 +389,7 @@ function gmm_conv(l, g::GNNGraph, x::AbstractMatrix, e::AbstractMatrix)
     m = propagate(e_mul_xj, g, mean, xj = xj, e = w)
     m = dropdims(mean(m, dims = 2), dims = 2) # (out, num_nodes)  
 
-    m = l.σ(m .+ l.bias)
+    m = l.σ.(m .+ l.bias)
 
     if l.residual
         if size(x, 1) == size(m, 1)

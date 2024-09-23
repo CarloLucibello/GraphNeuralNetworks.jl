@@ -717,7 +717,9 @@ end
 function Base.show(io::IO, l::NNConv)
     out, in = size(l.weight)
     print(io, "NNConv($in => $out")
-    print(io, ", aggr=", l.aggr)
+    print(io, ", ", l.nn)
+    l.σ == identity || print(io, ", ", l.σ)
+    (l.aggr == +) || print(io, "; aggr=", l.aggr)
     print(io, ")")
 end
 
@@ -1136,7 +1138,7 @@ function Base.show(io::IO, l::GMMConv)
     print(io, "GMMConv((", nin, ",", ein, ")=>", out)
     l.σ == identity || print(io, ", σ=", l.dense_s.σ)
     print(io, ", K=", l.K)
-    l.residual == true || print(io, ", residual=", l.residual)
+    print(io, ", residual=", l.residual)
     print(io, ")")
 end
 
