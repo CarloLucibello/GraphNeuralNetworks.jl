@@ -42,7 +42,11 @@ function test_lux_layer(rng::AbstractRNG, l, g::GNNGraph, x;
         @test size(y) == (outputsize..., g.num_nodes)
     end
     
-    loss = (x, ps) -> sum(first(l(g, x, ps, st)))
+    if e !== nothing
+        loss = (x, ps) -> sum(first(l(g, x, e, ps, st)))
+    else
+        loss = (x, ps) -> sum(first(l(g, x, ps, st)))
+    end
     test_gradients(loss, x, ps; atol, rtol, skip_backends=[AutoReverseDiff(), AutoTracker(), AutoForwardDiff(), AutoEnzyme()])
 end
 

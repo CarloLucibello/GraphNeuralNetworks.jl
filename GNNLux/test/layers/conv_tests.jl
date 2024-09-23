@@ -120,12 +120,18 @@
         l = NNConv(n_in => n_out, nn, tanh, aggr = +)
         x = randn(Float32, n_in, g2.num_nodes)
         e = randn(Float32, n_in_edge, g2.num_edges)
+        test_lux_layer(rng, l, g2, x; outputsize=(n_out,), e, container=true)
+    end
 
-        ps = LuxCore.initialparameters(rng, l)
-        st = LuxCore.initialstates(rng, l)
+    @testset "GMMConv" begin
+        ein_dims = 4 
+        e = randn(rng, Float32, ein_dims, g.num_edges)
+        l = GMMConv((in_dims, ein_dims) => out_dims, tanh; K = 2, residual = false)
+        test_lux_layer(rng, l, g, x; outputsize=(out_dims,), e)
+    end
 
-        y, st′ = l(g2, x, e, ps, st)
-        
-        @test size(y) == (n_out, g2.num_nodes)
-    end    
+    @testset "ResGatedGraphConv" begin
+        l = ResGatedGraphConv(in_dims => out_dims, tanh)
+        test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
+    end
 end
