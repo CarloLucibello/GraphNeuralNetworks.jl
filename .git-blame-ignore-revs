@@ -2,3 +2,5 @@
 3189f38f43d687bf9f4c1414d010c51388c6ccd5
 # rearrange tests
 440ccd92cfe753b67de45a8a4d67c464e554a6df
+# move GraphNeuralNetworks.jl to its own folder
+f9e23a7228e16d4f459b4ec55daed280d92a7c79
