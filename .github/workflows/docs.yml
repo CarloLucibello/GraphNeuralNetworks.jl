@@ -16,9 +16,9 @@ jobs:
         with:
           version: '1.10.4'
       - name: Install dependencies
-        run: julia --project=docs/ -e '
+        run: julia --project=GraphNeuralNetworks/docs/ -e '
           using Pkg;
-          Pkg.develop([PackageSpec(path=pwd()), 
+          Pkg.develop([PackageSpec(path=joinpath(pwd(), "GraphNeuralNetworks")), 
                        PackageSpec(path=joinpath(pwd(), "GNNGraphs")),
                        PackageSpec(path=joinpath(pwd(), "GNNlib"))]);
           Pkg.instantiate();'
@@ -26,4 +26,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-        run: julia --project=docs/ docs/make.jl
+        run: julia --project=GraphNeuralNetworks/docs/ GraphNeuralNetworks/docs/make.jl
