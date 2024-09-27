@@ -7,16 +7,10 @@ assets=[]
 prettyurls = get(ENV, "CI", nothing) == "true"
 mathengine = MathJax3()
 
-interlinks = InterLinks(
-    "GraphNeuralNetworks" => ("https://carlolucibello.github.io/GraphNeuralNetworks.jl/graphneuralnetworks/",  joinpath(dirname(dirname(@__DIR__)), "GraphNeuralNetworks", "docs", "build", "objects.inv")),
-   
-   )
-
 makedocs(;
          modules = [GNNGraphs],
          doctest = false,
          clean = true,
-         plugins = [interlinks],
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
          sitename = "GNNGraphs.jl",
          pages = ["Home" => "index.md",

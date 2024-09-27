@@ -137,4 +137,4 @@ end
 
 ## Graph convolutions on heterographs
 
-See [`HeteroGraphConv`](@ref) for how to perform convolutions on heterogeneous graphs.
+See `HeteroGraphConv` for how to perform convolutions on heterogeneous graphs.

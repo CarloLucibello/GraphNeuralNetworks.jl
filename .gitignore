@@ -6,6 +6,11 @@
 *.swo
 Manifest.toml
 /docs/build/
+GNNGraphs/docs/build/
+GNNlib/docs/build/
+GNNLux/docs/build/
+GraphNeuralNetworks/docs/build/
+tutorials/docs/build/
 .vscode
 LocalPreferences.toml
 .DS_Store

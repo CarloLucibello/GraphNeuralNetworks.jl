@@ -124,7 +124,7 @@ Vector{Matrix{Float64}}
 
 ## Graph convolutions on TemporalSnapshotsGNNGraph
 
-A graph convolutional layer can be applied to each snapshot independently, in the next example we apply a [`GINConv`](@ref) layer to each snapshot of a `TemporalSnapshotsGNNGraph`.  
+A graph convolutional layer can be applied to each snapshot independently, in the next example we apply a `GINConv` layer to each snapshot of a `TemporalSnapshotsGNNGraph`.  
 
 ```jldoctest
 julia> using GNNGraphs, Flux
