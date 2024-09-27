@@ -3,7 +3,7 @@ name: MultiDocumentation
 on:
   push:
     branches:
-      - pages-multidocs
+      - new-multidocs
     tags: '*'
   pull_request:
 
