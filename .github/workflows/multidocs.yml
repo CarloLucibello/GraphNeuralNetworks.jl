@@ -1,0 +1,74 @@
+name: MultiDocumentation
+
+on:
+  push:
+    branches:
+      - pages-multidocs
+    tags: '*'
+  pull_request:
+
+jobs:
+  build_multidocs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: '1.10.4'
+          
+      # Build GNNGraphs docs
+      - name: Install dependencies for GNNGraphs
+        run: julia --project=GNNGraphs/docs/ -e 'using Pkg; Pkg.instantiate();'
+      - name: Build GNNGraphs docs
+        run: julia --project=GNNGraphs/docs/ GNNGraphs/docs/make.jl
+      - name: Check if objects.inv exists for GNNGraphs
+        run: |
+          if [ -f GNNGraphs/docs/build/objects.inv ]; then
+            echo "GNNGraphs: objects.inv exists."
+          else
+            echo "GNNGraphs: objects.inv does not exist!" && exit 1
+          fi
+
+      # Build GNNlib docs
+      - name: Install dependencies for GNNlib
+        run: julia --project=GNNlib/docs/ -e 'using Pkg; Pkg.instantiate();'
+      - name: Build GNNlib docs
+        run: julia --project=GNNlib/docs/ GNNlib/docs/make.jl
+
+      # Build GNNLux docs
+      - name: Install dependencies for GNNLux
+        run: julia --project=GNNLux/docs/ -e '
+            using Pkg;
+            Pkg.develop(PackageSpec(path=joinpath(pwd(), "GNNLux"))); 
+            Pkg.instantiate();'
+      - name: Build GNNLux docs
+        run: julia --project=GNNLux/docs/ GNNLux/docs/make.jl
+
+      # Build main docs
+      - name: Install dependencies for main docs
+        run: julia --project=GraphNeuralNetworks/docs/ -e ' 
+            using Pkg;
+            Pkg.develop(PackageSpec(path=joinpath(pwd(), "GraphNeuralNetworks"))); 
+            Pkg.instantiate();'
+      - name: Build main docs
+        run: julia --project=GraphNeuralNetworks/docs/make.jl
+
+      # Build tutorials
+      - name: Install dependencies for tutorials
+        run: julia --project=tutorials/docs/ -e 'using Pkg; Pkg.instantiate();'
+      - name: Build tutorials
+        run: julia --project=tutorials/docs/ tutorials/docs/make.jl
+
+      # Build and deploy multidocs
+      - name: Install dependencies for multidocs
+        run: julia --project=docs/ -e '
+          using Pkg;
+          Pkg.develop([PackageSpec(path=pwd()), 
+                       PackageSpec(path=joinpath(pwd(), "GNNGraphs")),
+                       PackageSpec(path=joinpath(pwd(), "GNNlib")),]);
+          Pkg.instantiate();'
+      - name: Build and deploy multidocs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --project=docs/ docs/make-multi.jl
