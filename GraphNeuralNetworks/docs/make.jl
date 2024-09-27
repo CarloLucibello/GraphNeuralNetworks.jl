@@ -1,57 +1,52 @@
+using Documenter
 using GraphNeuralNetworks
-using GNNGraphs
-using Flux 
-using NNlib
-using Graphs
-using SparseArrays
-using Pluto, PlutoStaticHTML # for tutorials
-using Documenter, DemoCards
 using DocumenterInterLinks
 
 
-tutorials, tutorials_cb, tutorial_assets = makedemos("tutorials")
-assets = []
-isnothing(tutorial_assets) || push!(assets, tutorial_assets)
-
-interlinks = InterLinks(
-    "NNlib" => "https://fluxml.ai/NNlib.jl/stable/",
-    "Graphs" => "https://juliagraphs.org/Graphs.jl/stable/")
-
-
-DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup,
-                    :(using GraphNeuralNetworks, Graphs, SparseArrays, NNlib, Flux);
-                    recursive = true)
-
+assets=[]
 prettyurls = get(ENV, "CI", nothing) == "true"
 mathengine = MathJax3()
 
+interlinks = InterLinks(
+    "NNlib" => "https://fluxml.ai/NNlib.jl/stable/",
+    "GNNGraphs" => ("https://carlolucibello.github.io/GraphNeuralNetworks.jl/gnngraphs/",  joinpath(dirname(dirname(@__DIR__)),"GraphNeuralNetworks.jl", "GNNGraphs", "docs", "build", "objects.inv")),
+    "GNNlib" => ("https://carlolucibello.github.io/GraphNeuralNetworks.jl/gnnlib/",  joinpath(dirname(dirname(@__DIR__)),"GraphNeuralNetworks.jl", "GNNlib", "docs", "build", "objects.inv"))
+   
+   )
+
 makedocs(;
-         modules = [GraphNeuralNetworks, GNNGraphs, GNNlib],
+         modules = [GraphNeuralNetworks],
          doctest = false,
          clean = true,
          plugins = [interlinks],
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
          sitename = "GraphNeuralNetworks.jl",
-         pages = ["Home" => "index.md",
-             "Graphs" => ["gnngraph.md", "heterograph.md", "temporalgraph.md"],
-             "Message Passing" => "messagepassing.md",
-             "Model Building" => "models.md",
-             "Datasets" => "datasets.md",
-             "Tutorials" => tutorials,
-             "API Reference" => [
-                 "GNNGraph" => "api/gnngraph.md",
-                 "Basic Layers" => "api/basic.md",
-                 "Convolutional Layers" => "api/conv.md",
-                 "Pooling Layers" => "api/pool.md",
-                 "Message Passing" => "api/messagepassing.md",
-                 "Heterogeneous Graphs" => "api/heterograph.md",
-                 "Temporal Graphs" => "api/temporalgraph.md",
-                 "Utils" => "api/utils.md",
-             ],
-             "Developer Notes" => "dev.md",
-             "Summer Of Code" => "gsoc.md",
-         ])
+         pages = ["Monorepo" => [ 
+               "Home" => "index.md",
+               "Developer guide" => "dev.md",
+               "Google Summer of Code" => "gsoc.md",
 
-tutorials_cb()
 
-deploydocs(repo = "github.com/CarloLucibello/GraphNeuralNetworks.jl.git")
+            ],
+            "GraphNeuralNetworks.jl" =>[
+            "Home" => "home.md",
+            "Models" => "models.md",],
+
+            "API Reference" => [
+     
+                  "Basic" => "api/basic.md",
+                  "Convolutional layers" => "api/conv.md",
+                  "Pooling layers" => "api/pool.md",
+                  "Temporal Convolutional layers" => "api/temporalconv.md",
+                  "Hetero Convolutional layers" => "api/heteroconv.md"
+          
+                
+              ],
+            
+         ],
+         )
+         
+         
+
+
+deploydocs(;repo = "https://github.com/CarloLucibello/GraphNeuralNetworks.jl.git", dirname= "GraphNeuralNetworks")
