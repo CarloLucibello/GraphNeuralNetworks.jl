@@ -8,13 +8,12 @@ struct NeighborLoader
     input_nodes::Vector{Int}    # Set of input nodes (starting nodes for sampling)
     num_layers::Int             # Number of layers for neighborhood expansion
     batch_size::Union{Int, Nothing}  # Optional batch size, defaults to the length of input_nodes if not given
-    num_batches::Int            # Number of batches to process
     neighbors_cache::Dict{Int, Vector{Int}}  # Cache neighbors to avoid recomputation
 end
 
 # Constructor for NeighborLoader with optional batch size
-function NeighborLoader(graph::GNNGraph; num_neighbors::Vector{Int}, input_nodes::Vector{Int}, num_layers::Int, batch_size::Union{Int, Nothing}=nothing, num_batches::Int)
-    return NeighborLoader(graph, num_neighbors, input_nodes, num_layers, batch_size === nothing ? length(input_nodes) : batch_size, num_batches, Dict{Int, Vector{Int}}())
+function NeighborLoader(graph::GNNGraph; num_neighbors::Vector{Int}, input_nodes::Vector{Int}, num_layers::Int, batch_size::Union{Int, Nothing}=nothing)
+    return NeighborLoader(graph, num_neighbors, input_nodes, num_layers, batch_size === nothing ? length(input_nodes) : batch_size, Dict{Int, Vector{Int}}())
 end
 
 # Function to get cached neighbors or compute them
@@ -39,18 +38,23 @@ function sample_neighbors(loader::NeighborLoader, node::Int, layer::Int)
     end
 end
 
-### TODO check subsample function
-### TODO write subsample function for universal use
-### TODO factor out to separate PR
-# define a method function Graphs.induced_subgraph(g::GNNGraph, nodes) (rename)
-function create_subgraph(graph::GNNGraph, nodes::Vector{Int})
+function induced_subgraph(graph::GNNGraph, nodes::Vector{Int})
+    if isempty(nodes)
+        return GNNGraph()  # Return empty graph if no nodes are provided
+    end
+
     node_map = Dict(node => i for (i, node) in enumerate(nodes))
 
     # Collect edges to add
     source = Int[]
     target = Int[]
+    backup_gnn = GNNGraph()
     for node in nodes
-        for neighbor in Graphs.neighbors(graph, node, dir = :in)
+        neighbors = Graphs.neighbors(graph, node, dir = :in)
+        if isempty(neighbors)
+            backup_gnn = add_nodes(backup_gnn, 1)
+        end
+        for neighbor in neighbors
             if neighbor in keys(node_map)
                 push!(source, node_map[node])
                 push!(target, node_map[neighbor])
@@ -61,12 +65,17 @@ function create_subgraph(graph::GNNGraph, nodes::Vector{Int})
     # Extract features for the new nodes
     new_features = graph.x[:, nodes]
 
+    if isempty(source) && isempty(target)
+        backup_gnn.ndata.x = new_features
+        return backup_gnn  # Return empty graph if no nodes are provided
+    end
+
     return GNNGraph(source, target, ndata = new_features)  # Return the new GNNGraph with subgraph and features
 end
 
 # Iterator protocol for NeighborLoader with lazy batch loading
 function Base.iterate(loader::NeighborLoader, state=1)
-    if state > length(loader.input_nodes) || (state - 1) // loader.batch_size >= loader.num_batches
+    if state > length(loader.input_nodes) 
         return nothing  # End of iteration if batches are exhausted (state larger than amount of input nodes or current batch no >= batch number)
     end
 
@@ -95,40 +104,13 @@ function Base.iterate(loader::NeighborLoader, state=1)
 
     # Collect subgraph nodes and their features
     subgraph_node_list = collect(subgraph_nodes)
-    mini_batch_gnn = create_subgraph(loader.graph, subgraph_node_list)  # Create a subgraph of the nodes
+
+    if isempty(subgraph_node_list)
+        return GNNGraph(), state + batch_size
+    end
+
+    mini_batch_gnn = induced_subgraph(loader.graph, subgraph_node_list)  # Create a subgraph of the nodes
 
     # Continue iteration for the next batch
     return mini_batch_gnn, state + batch_size
 end
-
-# Example
-source = [1,1,2,2,3,3,3,4,5]
-target = [2,3,1,3,1,2,4,3,5]
-features = rand(3, 5)
-gnn_graph = GNNGraph(source, target, ndata = features)
-
-# Define input nodes (seed nodes) to start sampling
-input_nodes = [1, 2, 3, 4, 5]
-
-# Initialize the NeighborLoader with optional batch_size
-loader = NeighborLoader(gnn_graph; num_neighbors = [0], input_nodes=input_nodes, num_layers = 1, batch_size = 3, num_batches = 3)
-# nn = [0], layers =1, n edges should equal 0, no nodes = mini batch
-
-# Loop through the number of batches for training, using the iterator
-batch_counter = 0
-for mini_batch_gnn in loader
-    batch_counter += 1
-    println("Batch $batch_counter: Nodes in mini-batch graph: $(nv(mini_batch_gnn)), $mini_batch_gnn")
-
-    # Here, you would pass mini_batch_gnn to the GNN model for training
-    # For example: model(mini_batch_gnn)
-
-    # Stop if num_batches is reached
-    if batch_counter >= loader.num_batches
-        break
-    end
-end
-
-### TODO: only batch size, remove batch num
-### TODO: compare pytorch geometric, compare edge cases: batch size = 1, num nodes = 1
-### TODO: think about what tests
