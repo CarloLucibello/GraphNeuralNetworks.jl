@@ -6,7 +6,7 @@ function create_test_graph()
     source = [1, 2, 3, 4]  # Define source nodes of edges
     target = [2, 3, 4, 5]  # Define target nodes of edges
     node_features = rand(Float32, 5, 5)  # Create random node features (5 features for 5 nodes)
-    
+
     return GNNGraph(source, target, ndata = node_features)  # Create a GNNGraph with edges and features
 end
 
@@ -27,9 +27,9 @@ end
 
         num_sampled_nodes = mini_batch_gnn.num_nodes
         println("Number of nodes in mini-batch: ", num_sampled_nodes)
-        
+
         @test num_sampled_nodes == 2
-        
+
         # Test if there are edges in the subgraph
         @test mini_batch_gnn.num_edges > 0
     end
