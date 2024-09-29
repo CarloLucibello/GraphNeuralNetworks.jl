@@ -1,6 +1,3 @@
-using GraphNeuralNetworks
-using Graphs
-
 """
     struct NeighborLoader
 
