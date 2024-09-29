@@ -97,6 +97,7 @@ export rand_graph,
 
 include("sampling.jl")
 export sample_neighbors
+export induced_subgraph
 
 include("operators.jl")
 # Base.intersect

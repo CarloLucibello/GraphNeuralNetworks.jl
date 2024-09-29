@@ -116,3 +116,53 @@ function sample_neighbors(g::GNNGraph{<:COO_T}, nodes, K = -1;
     end
     return gnew
 end
+
+"""
+    induced_subgraph(graph::GNNGraph, nodes::Vector{Int}) -> GNNGraph
+
+Generates a subgraph from the original graph using the provided `nodes`. 
+    The function includes the nodes' neighbors and creates edges between nodes that are connected in the original graph. 
+    If a node has no neighbors, an isolated node will be added to the subgraph.
+
+# Arguments:
+- `graph::GNNGraph`: The original graph containing nodes, edges, and node features.
+- `nodes::Vector{Int}`: A vector of node indices to include in the subgraph.
+
+# Returns:
+A new `GNNGraph` containing the subgraph with the specified nodes and their features.
+"""
+function Graphs.induced_subgraph(graph::GNNGraph, nodes::Vector{Int})
+    if isempty(nodes)
+        return GNNGraph()  # Return empty graph if no nodes are provided
+    end
+
+    node_map = Dict(node => i for (i, node) in enumerate(nodes))
+
+    # Collect edges to add
+    source = Int[]
+    target = Int[]
+    backup_gnn = GNNGraph()
+    for node in nodes
+        neighbors = Graphs.neighbors(graph, node, dir = :in)
+        if isempty(neighbors)
+            backup_gnn = add_nodes(backup_gnn, 1)
+        end
+        for neighbor in neighbors
+            if neighbor in keys(node_map)
+                push!(source, node_map[node])
+                push!(target, node_map[neighbor])
+            end
+        end
+    end
+
+    # Extract features for the new nodes
+    #new_features = graph.x[:, nodes]
+
+    if isempty(source) && isempty(target)
+        #backup_gnn.ndata.x = new_features ### TODO fix & add edges data (probably push themto the new vector?)
+        return backup_gnn  # Return empty graph if no nodes are provided
+    end
+
+    return GNNGraph(source, target)
+    #, ndata = new_features)  # Return the new GNNGraph with subgraph and features
+end

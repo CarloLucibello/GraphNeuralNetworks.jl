@@ -45,4 +45,20 @@ if GRAPH_T == :coo
         @test sg.ndata.x1 == g.ndata.x1[sg.ndata.NID]
         @test length(union(sg.ndata.NID)) == length(sg.ndata.NID)
     end
+
+    @testset "induced_subgraph" begin
+        # Create a simple GNNGraph with two nodes and one edge
+        graph = GNNGraph()  # Initialize graph
+        add_nodes!(graph, 2)  # Add 2 nodes
+        add_edge!(graph, 1, 2)  # Add an edge from node 1 to node 2
+        graph.x = rand(10, 2)  # Assign random features to both nodes (10 features per node)
+    
+        # Induce subgraph on both nodes
+        nodes = [1, 2]
+        subgraph = induced_subgraph(graph, nodes)
+    
+        @test num_nodes(subgraph) == 2  # Subgraph should have 2 nodes
+        @test num_nodes(subgraph) == 1  # Subgraph should have 1 edge
+        ### TODO @test subgraph.ndata.x == graph.x[:, nodes]  # Features should match the original graph
+    end
 end
