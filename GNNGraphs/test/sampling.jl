@@ -57,8 +57,8 @@ if GRAPH_T == :coo
         nodes = [1, 2]
         subgraph = induced_subgraph(graph, nodes)
     
-        @test num_nodes(subgraph) == 2  # Subgraph should have 2 nodes
-        @test num_edges(subgraph) == 1  # Subgraph should have 1 edge
+        @test subgraph.num_nodes == 2  # Subgraph should have 2 nodes
+        @test subgraph.num_edges == 1  # Subgraph should have 1 edge
         ### TODO @test subgraph.ndata.x == graph.x[:, nodes]  # Features should match the original graph
     end
 end
