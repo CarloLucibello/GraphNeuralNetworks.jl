@@ -11,10 +11,10 @@
         e = randn(rng, Float32, ein, g.num_edges)
     
         l = TransformerConv((6, ein) => 8, heads = 2, gating = true, bias_qkv = true)
-        test_lux_layer(rng, l, g, x, outputsize = (8,), e = e, container = true)
+        test_lux_layer(rng, l, g, x, outputsize = (16,), e = e, container = true)
     
         l = TransformerConv((6, ein) => 8, heads = 2, concat = false, skip_connection = true)
-        test_lux_layer(rng, l, g, x, outputsize = (8,), e = e, container = true)
+        test_lux_layer(rng, l, g, x, outputsize = (16,), e = e, container = true)
     end
 
     @testset "GCNConv" begin
