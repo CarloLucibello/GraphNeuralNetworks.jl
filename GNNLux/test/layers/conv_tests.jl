@@ -5,6 +5,18 @@
     out_dims = 5
     x = randn(rng, Float32, in_dims, 10)
 
+    @testset "TransformerConv" begin
+        x = randn(rng, Float32, 6, 10)
+        ein = 2 
+        e = randn(rng, Float32, ein, g.num_edges)
+    
+        l = TransformerConv((6, ein) => 8, heads = 2, gating = true, bias_qkv = true)
+        test_lux_layer(rng, l, g, x, outputsize = (8,), e = e, container = true)
+    
+        l = TransformerConv((6, ein) => 8, heads = 2, concat = false, skip_connection = true)
+        test_lux_layer(rng, l, g, x, outputsize = (8,), e = e, container = true)
+    end
+
     @testset "GCNConv" begin
         l = GCNConv(in_dims => out_dims, tanh)
         test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
@@ -133,17 +145,5 @@
     @testset "ResGatedGraphConv" begin
         l = ResGatedGraphConv(in_dims => out_dims, tanh)
         test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
-    end
-
-    @testset "TransformerConv" begin
-        x = randn(rng, Float32, 6, 10)
-        ein = 2 
-        e = randn(rng, Float32, ein, g.num_edges)
-    
-        l = TransformerConv((6, ein) => 8, heads = 2, gating = true, bias_qkv = true)
-        test_lux_layer(rng, l, g, x, outputsize = (8,), e = e, container = true)
-    
-        l = TransformerConv((6, ein) => 8, heads = 2, concat = false, skip_connection = true)
-        test_lux_layer(rng, l, g, x, outputsize = (8,), e = e, container = true)
     end
 end
