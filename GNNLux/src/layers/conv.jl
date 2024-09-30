@@ -844,3 +844,96 @@ function Base.show(io::IO, l::ResGatedGraphConv)
     l.use_bias || print(io, ", use_bias=false")
     print(io, ")")
 end
+
+@concrete struct TransformerConv <: GNNContainerLayer{(:W1, :W2, :W3, :W4, :W5, :W6, :FF, :BN1, :BN2)}
+    in_dims::NTuple{2, Int}
+    out_dims::Int
+    heads::Int
+    add_self_loops::Bool
+    concat::Bool
+    skip_connection::Bool
+    sqrt_out::Float32
+    W1
+    W2
+    W3
+    W4
+    W5
+    W6
+    FF
+    BN1
+    BN2
+end
+
+function TransformerConv(ch::Pair{Int, Int}, args...; kws...)
+    TransformerConv((ch[1], 0) => ch[2], args...; kws...)
+end
+
+function TransformerConv(ch::Pair{NTuple{2, Int}, Int};
+                         heads::Int = 1,
+                         concat::Bool = true,
+                         init_weight = glorot_uniform,
+                         init_bias = zeros32,
+                         add_self_loops::Bool = false,
+                         bias_qkv = true,
+                         bias_root::Bool = true,
+                         root_weight::Bool = true,
+                         gating::Bool = false,
+                         skip_connection::Bool = false,
+                         batch_norm::Bool = false,
+                         ff_channels::Int = 0)
+    
+    (in, ein), out = ch
+
+    if add_self_loops
+        @assert iszero(ein) "Using edge features and setting add_self_loops=true at the same time is not yet supported."
+    end
+
+    W1 = root_weight ?
+         Dense(in => out * (concat ? heads : 1); use_bias = bias_root, init_weight, init_bias) : nothing
+    W2 = Dense(in => out * heads; use_bias = bias_qkv, init_weight, init_bias)
+    W3 = Dense(in => out * heads; use_bias = bias_qkv, init_weight, init_bias)
+    W4 = Dense(in => out * heads; use_bias = bias_qkv, init_weight, init_bias)
+    out_mha = out * (concat ? heads : 1)
+    W5 = gating ? Dense(3 * out_mha => 1, sigmoid; use_bias = false, init_weight, init_bias) : nothing
+    W6 = ein > 0 ? Dense(ein => out * heads; use_bias = bias_qkv, init_weight, init_bias) : nothing
+    FF = ff_channels > 0 ?
+         Chain(Dense(out_mha => ff_channels, relu; init_weight, init_bias),
+               Dense(ff_channels => out_mha; init_weight, init_bias)) : nothing
+    BN1 = batch_norm ? BatchNorm(out_mha) : nothing
+    BN2 = (batch_norm && ff_channels > 0) ? BatchNorm(out_mha) : nothing
+
+    return TransformerConv((in, ein), out, heads, add_self_loops, concat, 
+                           skip_connection, Float32(√out), W1, W2, W3, W4, W5, W6, FF, BN1, BN2)
+end
+
+LuxCore.outputsize(l::TransformerConv) = (l.out_dims,)
+
+function (l::TransformerConv)(g, x, ps, st) 
+    l(g, x, nothing, ps, st)
+end
+
+function (l::TransformerConv)(g, x, e, ps, st)
+    W1 = l.W1 === nothing ? nothing : 
+            StatefulLuxLayer{true}(l.W1, ps.W1, _getstate(st, :W1))
+    W2 = StatefulLuxLayer{true}(l.W2, ps.W2, _getstate(st, :W2))
+    W3 = StatefulLuxLayer{true}(l.W3, ps.W3, _getstate(st, :W3))
+    W4 = StatefulLuxLayer{true}(l.W4, ps.W4, _getstate(st, :W4))
+    W5 = l.W5 === nothing ? nothing : 
+            StatefulLuxLayer{true}(l.W5, ps.W5, _getstate(st, :W5))
+    W6 = l.W6 === nothing ? nothing : 
+            StatefulLuxLayer{true}(l.W6, ps.W6, _getstate(st, :W6))
+    FF = l.FF === nothing ? nothing : 
+            StatefulLuxLayer{true}(l.FF, ps.FF, _getstate(st, :FF))
+    BN1 = l.BN1 === nothing ? nothing : 
+            StatefulLuxLayer{true}(l.BN1, ps.BN1, _getstate(st, :BN1))
+    BN2 = l.BN2 === nothing ? nothing : 
+            StatefulLuxLayer{true}(l.BN2, ps.BN2, _getstate(st, :BN2))
+    m = (; W1, W2, W3, W4, W5, W6, FF, BN1, BN2, l.sqrt_out, 
+           l.heads, l.concat, l.skip_connection)
+    return GNNlib.transformer_conv(m, g, x, e), st
+end
+
+function Base.show(io::IO, l::TransformerConv)
+    (in, ein), out = (l.in_dims, l.out_dims)
+    print(io, "TransformerConv(($in, $ein) => $out, heads=$(l.heads))")
+end
