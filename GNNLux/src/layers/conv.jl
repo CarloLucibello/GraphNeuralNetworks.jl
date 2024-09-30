@@ -912,6 +912,18 @@ function (l::TransformerConv)(g, x, ps, st)
     l(g, x, nothing, ps, st)
 end
 
+function LuxCore.parameterlength(l::TransformerConv)
+    n = parameterlength(l.W2) + parameterlength(l.W3) + 
+        parameterlength(l.W4) + (l.W6 === nothing ? 0 : parameterlength(l.W6)) 
+
+    n += l.W1 === nothing ? 0 : parameterlength(l.W1)
+    n += l.W5 === nothing ? 0 : parameterlength(l.W5)
+    n += l.FF === nothing ? 0 : parameterlength(l.FF)
+    n += l.BN1 === nothing ? 0 : parameterlength(l.BN1)
+    n += l.BN2 === nothing ? 0 : parameterlength(l.BN2)
+    return n
+end
+
 function (l::TransformerConv)(g, x, e, ps, st)
     W1 = l.W1 === nothing ? nothing : 
             StatefulLuxLayer{true}(l.W1, ps.W1, _getstate(st, :W1))
