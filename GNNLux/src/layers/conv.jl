@@ -928,7 +928,7 @@ function (l::TransformerConv)(g, x, e, ps, st)
     BN2 = l.BN2 === nothing ? nothing : 
             StatefulLuxLayer{true}(l.BN2, ps.BN2, _getstate(st, :BN2))
     m = (; W1, W2, W3, W4, W5, W6, FF, BN1, BN2, l.sqrt_out, 
-           l.heads, l.concat, l.skip_connection, l.add_self_loops, l.in_dims)
+           l.heads, l.concat, l.skip_connection, l.add_self_loops, l.in_dims, l.out_dims)
     return GNNlib.transformer_conv(m, g, x, e), st
 end
 
