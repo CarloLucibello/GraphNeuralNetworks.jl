@@ -146,4 +146,9 @@
         l = ResGatedGraphConv(in_dims => out_dims, tanh)
         test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
     end
+
+    @testset "SAGEConv" begin
+        l = SAGEConv(in_dims => out_dims, tanh)
+        test_lux_layer(rng, l, g, x, outputsize=(out_dims,))
+    end
 end

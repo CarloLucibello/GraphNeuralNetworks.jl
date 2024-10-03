@@ -35,8 +35,8 @@ export AGNNConv,
        MEGNetConv,
        NNConv,
        ResGatedGraphConv,
-       # SAGEConv,
-       SGConv,
+       SAGEConv,
+       SGConv
        # TAGConv,
        TransformerConv
 

@@ -961,3 +961,52 @@ function Base.show(io::IO, l::TransformerConv)
     (in, ein), out = (l.in_dims, l.out_dims)
     print(io, "TransformerConv(($in, $ein) => $out, heads=$(l.heads))")
 end
+      
+      
+@concrete struct SAGEConv <: GNNLayer
+    in_dims::Int
+    out_dims::Int
+    use_bias::Bool
+    init_weight
+    init_bias
+    σ
+    aggr
+end
+
+function SAGEConv(ch::Pair{Int, Int}, σ = identity; 
+                aggr = mean,
+                init_weight = glorot_uniform,
+                init_bias = zeros32, 
+                use_bias::Bool = true)
+    in_dims, out_dims = ch
+    σ = NNlib.fast_act(σ)
+    return SAGEConv(in_dims, out_dims, use_bias, init_weight, init_bias, σ, aggr)
+end
+
+function LuxCore.initialparameters(rng::AbstractRNG, l::SAGEConv)
+    weight = l.init_weight(rng, l.out_dims, 2 * l.in_dims)
+    if l.use_bias
+        bias = l.init_bias(rng, l.out_dims)
+        return (; weight, bias)
+    else
+        return (; weight)
+    end
+end
+
+LuxCore.parameterlength(l::SAGEConv) = l.use_bias ? l.out_dims * 2 * l.in_dims + l.out_dims : 
+                                                  l.out_dims * 2 * l.in_dims
+LuxCore.outputsize(d::SAGEConv) = (d.out_dims,)
+
+function Base.show(io::IO, l::SAGEConv)
+    print(io, "SAGEConv(", l.in_dims, " => ", l.out_dims)
+    (l.σ == identity) || print(io, ", ", l.σ)
+    (l.aggr == mean) || print(io, ", aggr=", l.aggr)
+    l.use_bias || print(io, ", use_bias=false")    
+    print(io, ")")
+end
+
+function (l::SAGEConv)(g, x, ps, st)
+    m = (; ps.weight, bias = _getbias(ps), 
+          l.σ, l.aggr)
+    return GNNlib.sage_conv(m, g, x), st
+end
