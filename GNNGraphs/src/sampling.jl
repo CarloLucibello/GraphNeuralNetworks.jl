@@ -121,8 +121,8 @@ end
     induced_subgraph(graph::GNNGraph, nodes::Vector{Int}) -> GNNGraph
 
 Generates a subgraph from the original graph using the provided `nodes`. 
-    The function includes the nodes' neighbors and creates edges between nodes that are connected in the original graph. 
-    If a node has no neighbors, an isolated node will be added to the subgraph.
+The function includes the nodes' neighbors and creates edges between nodes that are connected in the original graph. 
+If a node has no neighbors, an isolated node will be added to the subgraph.
 
 # Arguments:
 - `graph::GNNGraph`: The original graph containing nodes, edges, and node features.
