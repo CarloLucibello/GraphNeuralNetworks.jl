@@ -12,7 +12,7 @@ using Reexport
 using MLUtils: zeros_like
 
 using GNNGraphs:  induced_subgraph,
-                  COO_T, ADJMAT_T, SPARSE_T,
+                  COO_T, ADJMAT_T, SPARSE_T,321
                   check_num_nodes, check_num_edges,
                   EType, NType # for heteroconvs
 
