@@ -141,28 +141,23 @@ function Graphs.induced_subgraph(graph::GNNGraph, nodes::Vector{Int})
     # Collect edges to add
     source = Int[]
     target = Int[]
-    backup_gnn = GNNGraph()
+    eindices = Int[]
     for node in nodes
         neighbors = Graphs.neighbors(graph, node, dir = :in)
-        if isempty(neighbors)
-            backup_gnn = add_nodes(backup_gnn, 1)
-        end
         for neighbor in neighbors
             if neighbor in keys(node_map)
                 push!(target, node_map[node])
                 push!(source, node_map[neighbor])
+
+                eindex = findfirst(x -> x == [neighbor, node], edge_index(graph))
+                push!(eindices, eindex)
             end
         end
     end
 
     # Extract features for the new nodes
-    #new_features = graph.x[:, nodes]
+    new_ndata = getobs(graph.ndata, nodes)
+    new_edata = getobs(graph.edata, eindices)
 
-    if isempty(source) && isempty(target)
-        #backup_gnn.ndata.x = new_features ### TODO fix & add edges data (probably push themto the new vector?)
-        return backup_gnn  # Return empty graph if no nodes are provided
-    end
-
-    return GNNGraph(source, target, num_nodes = length(node_map))
-    #, ndata = new_features)  # Return the new GNNGraph with subgraph and features
+    return GNNGraph(source, target, num_nodes = length(node_map), ndata = new_ndata, edata = new_edata) 
 end

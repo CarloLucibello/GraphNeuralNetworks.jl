@@ -47,18 +47,26 @@ if GRAPH_T == :coo
     end
 
     @testset "induced_subgraph" begin
-        # Create a simple GNNGraph with two nodes and one edge
-        s = [1]
-        t = [2]
-        ### TODO add data
-        graph = GNNGraph((s, t))
+        s = [1, 2]
+        t = [2, 3]
         
-        # Induce subgraph on both nodes
-        nodes = [1, 2]
-        subgraph = induced_subgraph(graph, nodes)
-    
-        @test subgraph.num_nodes == 2  # Subgraph should have 2 nodes
-        @test subgraph.num_edges == 1  # Subgraph should have 1 edge
-        ### TODO @test subgraph.ndata.x == graph.x[:, nodes]  # Features should match the original graph
+        graph = GNNGraph((s, t), ndata = (; x=rand(Float32, 32, 3), y=rand(Float32, 3)), edata = rand(Float32, 2))
+        
+        nodes = [1, 2, 3]
+        subgraph = Graphs.induced_subgraph(graph, nodes)
+        
+        @test subgraph.num_nodes == 3  
+        @test subgraph.num_edges == 2  
+        @test subgraph.ndata.x == graph.ndata.x
+        @test subgraph.ndata.y == graph.ndata.y
+        @test subgraph.edata == graph.edata
+        
+        graph = GNNGraph(2)
+        graph = add_edges(graph, ([2], [1]))
+        nodes = [1]
+        subgraph = Graphs.induced_subgraph(graph, nodes)
+        
+        @test subgraph.num_nodes == 1 
+        @test subgraph.num_edges == 0 
     end
 end
