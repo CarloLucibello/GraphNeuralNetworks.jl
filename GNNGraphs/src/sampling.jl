@@ -116,3 +116,48 @@ function sample_neighbors(g::GNNGraph{<:COO_T}, nodes, K = -1;
     end
     return gnew
 end
+
+"""
+    Graphs.induced_subgraph(graph::GNNGraph, nodes::Vector{Int}) -> GNNGraph
+
+Generates a subgraph from the original graph using the provided `nodes`. 
+The function includes the nodes' neighbors and creates edges between nodes that are connected in the original graph. 
+If a node has no neighbors, an isolated node will be added to the subgraph.
+
+# Arguments:
+- `graph::GNNGraph`: The original graph containing nodes, edges, and node features.
+- `nodes::Vector{Int}`: A vector of node indices to include in the subgraph.
+
+# Returns:
+A new `GNNGraph` containing the subgraph with the specified nodes and their features.
+"""
+function Graphs.induced_subgraph(graph::GNNGraph, nodes::Vector{Int})
+    if isempty(nodes)
+        return GNNGraph()  # Return empty graph if no nodes are provided
+    end
+
+    node_map = Dict(node => i for (i, node) in enumerate(nodes))
+
+    # Collect edges to add
+    source = Int[]
+    target = Int[]
+    eindices = Int[]
+    for node in nodes
+        neighbors = Graphs.neighbors(graph, node, dir = :in)
+        for neighbor in neighbors
+            if neighbor in keys(node_map)
+                push!(target, node_map[node])
+                push!(source, node_map[neighbor])
+
+                eindex = findfirst(x -> x == [neighbor, node], edge_index(graph))
+                push!(eindices, eindex)
+            end
+        end
+    end
+
+    # Extract features for the new nodes
+    new_ndata = getobs(graph.ndata, nodes)
+    new_edata = getobs(graph.edata, eindices)
+
+    return GNNGraph(source, target, num_nodes = length(node_map), ndata = new_ndata, edata = new_edata) 
+end
