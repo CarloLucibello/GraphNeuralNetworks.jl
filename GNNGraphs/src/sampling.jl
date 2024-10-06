@@ -163,6 +163,6 @@ function Graphs.induced_subgraph(graph::GNNGraph, nodes::Vector{Int})
         return backup_gnn  # Return empty graph if no nodes are provided
     end
 
-    return GNNGraph(source, target)
+    return GNNGraph(source, target, num_nodes = length(node_map))
     #, ndata = new_features)  # Return the new GNNGraph with subgraph and features
 end
