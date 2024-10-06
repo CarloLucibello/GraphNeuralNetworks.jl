@@ -96,7 +96,7 @@ export rand_graph,
        rand_temporal_hyperbolic_graph
 
 include("sampling.jl")
-export sample_neighbors, Graphs.induced_subgraph
+export sample_neighbors, induced_subgraph
 
 include("operators.jl")
 # Base.intersect
