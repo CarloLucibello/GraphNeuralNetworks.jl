@@ -149,8 +149,8 @@ function Graphs.induced_subgraph(graph::GNNGraph, nodes::Vector{Int})
         end
         for neighbor in neighbors
             if neighbor in keys(node_map)
-                push!(source, node_map[node])
-                push!(target, node_map[neighbor])
+                push!(target, node_map[node])
+                push!(source, node_map[neighbor])
             end
         end
     end
