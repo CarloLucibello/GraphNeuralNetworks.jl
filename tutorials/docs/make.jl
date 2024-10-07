@@ -7,8 +7,8 @@ mathengine = MathJax3()
 
 # interlinks = InterLinks(
 #     "NNlib" => "https://fluxml.ai/NNlib.jl/stable/",
-#     "GNNGraphs" => ("https://carlolucibello.github.io/GraphNeuralNetworks.jl/gnngraphs/",  joinpath(dirname(dirname(@__DIR__)), "GNNGraphs", "docs", "build", "objects.inv")),
-#     "GraphNeuralNetworks" => ("https://carlolucibello.github.io/GraphNeuralNetworks.jl/graphneuralnetworks/",  joinpath(dirname(dirname(@__DIR__)), "docs", "build", "objects.inv")),)
+#     "GNNGraphs" => ("https://carlolucibello.github.io/GraphNeuralNetworks.jl/GNNGraphs/",  joinpath(dirname(dirname(@__DIR__)), "GNNGraphs", "docs", "build", "objects.inv")),
+#     "GraphNeuralNetworks" => ("https://carlolucibello.github.io/GraphNeuralNetworks.jl/GraphNeuralNetworks/",  joinpath(dirname(dirname(@__DIR__)), "docs", "build", "objects.inv")),)
 
 makedocs(;
     doctest = false,
