@@ -48,7 +48,7 @@ MultiDocumenter.make(
         index_versions = ["stable"],
         engine = MultiDocumenter.FlexSearch
     ),
-    brand_image = MultiDocumenter.BrandImage("", "logo.svg")
+    brand_image = MultiDocumenter.BrandImage("", "logo.svg"),
     rootpath = "/GraphNeuralNetworks.jl/"
 )
 
