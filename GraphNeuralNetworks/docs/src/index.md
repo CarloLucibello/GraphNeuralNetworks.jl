@@ -1,87 +1,20 @@
-# GraphNeuralNetworks
+# GraphNeuralNetworks Monorepo
 
-This is the documentation page for [GraphNeuralNetworks.jl](https://github.com/CarloLucibello/GraphNeuralNetworks.jl), a graph neural network library written in Julia and based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
-GraphNeuralNetworks.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/), [Deep Graph Library](https://docs.dgl.ai/),
-and [GeometricFlux.jl](https://fluxml.ai/GeometricFlux.jl/stable/).
+This repository is a monorepo that contains all the code for the GraphNeuralNetworks project. The project is organized as a monorepo to facilitate code sharing and reusability across different components of the project. The monorepo contains the following packages:
 
-Among its features:
+- `GraphNeuralNetwork.jl`: Package that contains stateful graph convolutional layers based on the machine learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/). This is fronted package for Flux users. It depends on GNNlib.jl, GNNGraphs.jl, and Flux.jl packages.
 
-* Implements common graph convolutional layers.
-* Supports computations on batched graphs. 
-* Easy to define custom layers.
-* CUDA support.
-* Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
-* [Examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) of node, edge, and graph level machine learning tasks. 
+- `GNNLux.jl`: Package that contains stateless graph convolutional layers based on the machine learning framework [Lux.jl](https://lux.csail.mit.edu/stable/). This is fronted package for Lux users. It depends on GNNlib.jl, GNNGraphs.jl, and Lux.jl packages.
+
+- `GNNlib.jl`: Package that contains the core graph neural network layers and utilities. It depends on GNNGraphs.jl and GNNlib.jl packages and serves for code base for GraphNeuralNetwork.jl and GNNLux.jl packages.
+
+- `GNNGraphs.jl`: Package that contains the graph data structures and helper functions for working with graph data. It depends on Graphs.jl package.
+
+Here is a schema of the dependencies between the packages:
+
+![Monorepo schema](assets/schema.png)
 
 
-## Package overview
 
-Let's give a brief overview of the package by solving a  
-graph regression problem with synthetic data. 
 
-Usage examples on real datasets can be found in the [examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) folder. 
 
-### Data preparation
-
-We create a dataset consisting in multiple random graphs and associated data features. 
-
-```julia
-using GraphNeuralNetworks, Graphs, Flux, CUDA, Statistics, MLUtils
-using Flux: DataLoader
-
-all_graphs = GNNGraph[]
-
-for _ in 1:1000
-    g = rand_graph(10, 40,  
-            ndata=(; x = randn(Float32, 16,10)),  # input node features
-            gdata=(; y = randn(Float32)))         # regression target   
-    push!(all_graphs, g)
-end
-```
-
-### Model building 
-
-We concisely define our model as a [`GNNChain`](@ref) containing two graph convolutional layers. If CUDA is available, our model will live on the gpu.
-
-```julia
-device = CUDA.functional() ? Flux.gpu : Flux.cpu;
-
-model = GNNChain(GCNConv(16 => 64),
-                BatchNorm(64),     # Apply batch normalization on node features (nodes dimension is batch dimension)
-                x -> relu.(x),     
-                GCNConv(64 => 64, relu),
-                GlobalPool(mean),  # aggregate node-wise features into graph-wise features
-                Dense(64, 1)) |> device
-
-opt = Flux.setup(Adam(1f-4), model)
-```
-
-### Training 
-
-Finally, we use a standard Flux training pipeline to fit our dataset.
-We use Flux's `DataLoader` to iterate over mini-batches of graphs 
-that are glued together into a single `GNNGraph` using the [`Flux.batch`](@ref) method. This is what happens under the hood when creating a `DataLoader` with the
-`collate=true` option. 
-
-```julia
-train_graphs, test_graphs = MLUtils.splitobs(all_graphs, at=0.8)
-
-train_loader = DataLoader(train_graphs, 
-                batchsize=32, shuffle=true, collate=true)
-test_loader = DataLoader(test_graphs, 
-                batchsize=32, shuffle=false, collate=true)
-
-loss(model, g::GNNGraph) = mean((vec(model(g, g.x)) - g.y).^2)
-
-loss(model, loader) = mean(loss(model, g |> device) for g in loader)
-
-for epoch in 1:100
-    for g in train_loader
-        g = g |> device
-        grad = gradient(model -> loss(model, g), model)
-        Flux.update!(opt, model, grad[1])
-    end
-
-    @info (; epoch, train_loss=loss(model, train_loader), test_loss=loss(model, test_loader))
-end
-```
