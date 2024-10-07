@@ -1,5 +1,16 @@
 using MultiDocumenter
 
+for (root, dirs, files) in walkdir(".")
+    for file in files
+        filepath = joinpath(root, file)
+        if islink(filepath)
+            linktarget = abspath(dirname(filepath), readlink(filepath))
+            rm(filepath)
+            cp(linktarget, filepath; force=true)
+        end
+    end
+end
+
 docs = [
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__),"GraphNeuralNetworks", "docs", "build"),
@@ -38,6 +49,7 @@ MultiDocumenter.make(
         engine = MultiDocumenter.FlexSearch
     ),
     brand_image = MultiDocumenter.BrandImage("", "logo.svg")
+    rootpath = "/GraphNeuralNetworks.jl/"
 )
 
 cp(joinpath(@__DIR__, "logo.svg"),
