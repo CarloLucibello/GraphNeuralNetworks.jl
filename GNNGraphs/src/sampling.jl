@@ -118,7 +118,7 @@ function sample_neighbors(g::GNNGraph{<:COO_T}, nodes, K = -1;
 end
 
 """
-    Graphs.induced_subgraph(graph::GNNGraph, nodes::Vector{Int}) -> GNNGraph
+    induced_subgraph(graph::GNNGraph, nodes::Vector{Int}) -> GNNGraph
 
 Generates a subgraph from the original graph using the provided `nodes`. 
 The function includes the nodes' neighbors and creates edges between nodes that are connected in the original graph. 
