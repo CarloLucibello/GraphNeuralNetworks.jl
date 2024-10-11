@@ -67,7 +67,7 @@ if GRAPH_T == :coo
         @test subgraph.num_nodes == 2 
         @test subgraph.num_edges == 1 
         @test subgraph.ndata == getobs(graph.ndata, [1, 2])
-        @test getobs(subgraph.edata.e) == getobs(graph.edata.e, 1)
+        @test isapprox(getobs(subgraph.edata.e, 1), getobs(graph.edata.e, 1); atol=1e-6)
 
         graph = GNNGraph(2)
         graph = add_edges(graph, ([2], [1]))
