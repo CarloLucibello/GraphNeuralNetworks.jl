@@ -92,9 +92,3 @@ Private = false
 ```@docs
 Graphs.induced_subgraph(::GNNGraph, ::Vector{Int})
 ```
-
-```@autodocs
-Modules = [GraphNeuralNetworks]
-Pages   = ["samplers.jl"]
-Private = false
-```
