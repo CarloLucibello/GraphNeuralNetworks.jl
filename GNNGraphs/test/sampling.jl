@@ -45,4 +45,36 @@ if GRAPH_T == :coo
         @test sg.ndata.x1 == g.ndata.x1[sg.ndata.NID]
         @test length(union(sg.ndata.NID)) == length(sg.ndata.NID)
     end
+
+    @testset "induced_subgraph" begin
+        s = [1, 2]
+        t = [2, 3]
+        
+        graph = GNNGraph((s, t), ndata = (; x=rand(Float32, 32, 3), y=rand(Float32, 3)), edata = rand(Float32, 2))
+        
+        nodes = [1, 2, 3]
+        subgraph = Graphs.induced_subgraph(graph, nodes)
+        
+        @test subgraph.num_nodes == 3  
+        @test subgraph.num_edges == 2  
+        @test subgraph.ndata.x == graph.ndata.x
+        @test subgraph.ndata.y == graph.ndata.y
+        @test subgraph.edata == graph.edata
+        
+        nodes = [1, 2]
+        subgraph = Graphs.induced_subgraph(graph, nodes)
+
+        @test subgraph.num_nodes == 2 
+        @test subgraph.num_edges == 1 
+        @test subgraph.ndata == getobs(graph.ndata, [1, 2])
+        @test isapprox(getobs(subgraph.edata.e, 1), getobs(graph.edata.e, 1); atol=1e-6)
+
+        graph = GNNGraph(2)
+        graph = add_edges(graph, ([2], [1]))
+        nodes = [1]
+        subgraph = Graphs.induced_subgraph(graph, nodes)
+        
+        @test subgraph.num_nodes == 1 
+        @test subgraph.num_edges == 0 
+    end
 end
