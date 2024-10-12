@@ -95,6 +95,6 @@ Graphs.induced_subgraph(::GNNGraph, ::Vector{Int})
 
 ```@autodocs
 Modules = [GraphNeuralNetworks]
-Pages   = ["samplers"]
+Pages   = ["samplers.jl"]
 Private = false
 ```

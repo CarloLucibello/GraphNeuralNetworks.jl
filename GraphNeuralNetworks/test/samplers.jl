@@ -1,6 +1,3 @@
-using Test
-using GraphNeuralNetworks
-
 # Helper function to create a simple graph with node features using GNNGraph
 function create_test_graph()
     source = [1, 2, 3, 4]  # Define source nodes of edges
