@@ -4,7 +4,7 @@
 A data structure for sampling neighbors from a graph for training Graph Neural Networks (GNNs). 
 It supports multi-layer sampling of neighbors for a batch of input nodes, useful for mini-batch training.
 
-# Fields:
+# Fields
 - `graph::GNNGraph`: The input graph containing nodes and edges, along with node features (from GraphNeuralNetworks.jl).
 - `num_neighbors::Vector{Int}`: A vector specifying the number of neighbors to sample per node at each GNN layer.
 - `input_nodes::Vector{Int}`: A vector containing the starting nodes for neighbor sampling.
@@ -12,7 +12,7 @@ It supports multi-layer sampling of neighbors for a batch of input nodes, useful
 - `batch_size::Union{Int, Nothing}`: The size of the batch. If not specified, it defaults to the number of `input_nodes`.
 - `neighbors_cache::Dict{Int, Vector{Int}}`: A cache to store sampled neighbors for each node, preventing redundant sampling.
 
-# Usage:
+# Usage
 ```julia
 loader = NeighborLoader(graph; num_neighbors=[10, 5], input_nodes=[1, 2, 3], num_layers=2)
 ```
@@ -48,7 +48,7 @@ function NeighborLoader(graph::GNNGraph; num_neighbors::Vector{Int}, input_nodes
 end
 
 """
-    get_neighbors(loader::NeighborLoader, node::Int) -> Vector{Int}
+    get_neighbors(loader::NeighborLoader, node::Int)
 
 Returns the neighbors of a given `node` in the graph from the `NeighborLoader`. 
     It first checks if the neighbors are cached; if not, it retrieves the neighbors from the graph and caches them for future use.
@@ -72,7 +72,7 @@ function get_neighbors(loader::NeighborLoader, node::Int)
 end
 
 """
-    sample_neighbors(loader::NeighborLoader, node::Int, layer::Int) -> Vector{Int}
+    sample_neighbors(loader::NeighborLoader, node::Int, layer::Int)
 
 Samples a specified number of neighbors for the given `node` at a particular `layer` of the GNN. 
     The number of neighbors sampled is defined in `loader.num_neighbors`.
@@ -97,56 +97,7 @@ function sample_neighbors(loader::NeighborLoader, node::Int, layer::Int)
 end
 
 """
-    induced_subgraph(graph::GNNGraph, nodes::Vector{Int}) -> GNNGraph
-
-Generates a subgraph from the original graph using the provided `nodes`. 
-    The function includes the nodes' neighbors and creates edges between nodes that are connected in the original graph. 
-    If a node has no neighbors, an isolated node will be added to the subgraph.
-
-# Arguments:
-- `graph::GNNGraph`: The original graph containing nodes, edges, and node features.
-- `nodes::Vector{Int}`: A vector of node indices to include in the subgraph.
-
-# Returns:
-A new `GNNGraph` containing the subgraph with the specified nodes and their features.
-"""
-function induced_subgraph(graph::GNNGraph, nodes::Vector{Int})
-    if isempty(nodes)
-        return GNNGraph()  # Return empty graph if no nodes are provided
-    end
-
-    node_map = Dict(node => i for (i, node) in enumerate(nodes))
-
-    # Collect edges to add
-    source = Int[]
-    target = Int[]
-    backup_gnn = GNNGraph()
-    for node in nodes
-        neighbors = Graphs.neighbors(graph, node, dir = :in)
-        if isempty(neighbors)
-            backup_gnn = add_nodes(backup_gnn, 1)
-        end
-        for neighbor in neighbors
-            if neighbor in keys(node_map)
-                push!(source, node_map[node])
-                push!(target, node_map[neighbor])
-            end
-        end
-    end
-
-    # Extract features for the new nodes
-    new_features = graph.x[:, nodes]
-
-    if isempty(source) && isempty(target)
-        backup_gnn.ndata.x = new_features
-        return backup_gnn  # Return empty graph if no nodes are provided
-    end
-
-    return GNNGraph(source, target, ndata = new_features)  # Return the new GNNGraph with subgraph and features
-end
-
-"""
-    Base.iterate(loader::NeighborLoader, state::Int=1) -> Tuple{GNNGraph, Int}
+    Base.iterate(loader::NeighborLoader, state::Int=1)
 
 Implements the iterator protocol for `NeighborLoader`, allowing mini-batch processing for neighbor sampling in GNNs. 
     Each call to `iterate` returns a mini-batch subgraph with sampled neighbors for a batch of input nodes, 
@@ -197,7 +148,7 @@ function Base.iterate(loader::NeighborLoader, state=1)
         return GNNGraph(), state + batch_size
     end
 
-    mini_batch_gnn = induced_subgraph(loader.graph, subgraph_node_list)  # Create a subgraph of the nodes
+    mini_batch_gnn = Graphs.induced_subgraph(loader.graph, subgraph_node_list)  # Create a subgraph of the nodes
 
     # Continue iteration for the next batch
     return mini_batch_gnn, state + batch_size
