@@ -46,6 +46,7 @@ makedocs(;
                  "Message Passing" => "api/messagepassing.md",
                  "Heterogeneous Graphs" => "api/heterograph.md",
                  "Temporal Graphs" => "api/temporalgraph.md",
+                 "Samplers" => "api/samplers.md",
                  "Utils" => "api/utils.md",
              ],
              "Developer Notes" => "dev.md",
