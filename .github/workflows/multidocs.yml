@@ -34,6 +34,13 @@ jobs:
         run: julia --project=GNNlib/docs/ -e 'using Pkg; Pkg.instantiate();'
       - name: Build GNNlib docs
         run: julia --project=GNNlib/docs/ GNNlib/docs/make.jl
+      - name: Check if objects.inv exists for GNNlib
+        run: |
+          if [ -f GNNlib/docs/build/objects.inv ]; then
+            echo "GNNlib: objects.inv exists."
+          else
+            echo "GNNlib: objects.inv does not exist!" && exit 1
+          fi
 
       # Build GNNLux docs
       - name: Install dependencies for GNNLux
@@ -43,8 +50,15 @@ jobs:
             Pkg.instantiate();'
       - name: Build GNNLux docs
         run: julia --project=GNNLux/docs/ GNNLux/docs/make.jl
+      - name: Check if objects.inv exists for GNNLux
+        run: |
+          if [ -f GNNLux/docs/build/objects.inv ]; then
+            echo "GNNLux: objects.inv exists."
+          else
+            echo "GNNLux: objects.inv does not exist!" && exit 1
+          fi
 
-      # Build main docs
+      # Build GraphNeuralNetworks docs
       - name: Install dependencies for main docs
         run: julia --project=GraphNeuralNetworks/docs/ -e ' 
             using Pkg;
@@ -52,12 +66,26 @@ jobs:
             Pkg.instantiate();'
       - name: Build main docs
         run: julia --project=GraphNeuralNetworks/docs/make.jl
+      - name: Check if objects.inv exists for GraphNeuralNetworks
+        run: |
+          if [ -f GraphNeuralNetworks/docs/build/objects.inv ]; then
+            echo "GraphNeuralNetworks: objects.inv exists."
+          else
+            echo "GraphNeuralNetworks: objects.inv does not exist!" && exit 1
+          fi
 
       # Build tutorials
       - name: Install dependencies for tutorials
         run: julia --project=tutorials/docs/ -e 'using Pkg; Pkg.instantiate();'
       - name: Build tutorials
         run: julia --project=tutorials/docs/ tutorials/docs/make.jl
+      - name: Check if objects.inv exists for tutorials
+        run: |
+          if [ -f tutorials/docs/build/objects.inv ]; then
+            echo "tutorials: objects.inv exists."
+          else
+            echo "tutorials: objects.inv does not exist!" && exit 1
+          fi
 
       # Build and deploy multidocs
       - name: Install dependencies for multidocs
@@ -68,6 +96,13 @@ jobs:
                       PackageSpec(path=joinpath(pwd(), "GNNlib")),
                       PackageSpec(path=joinpath(pwd(), "GNNLux"))]);
           Pkg.instantiate();'
+      - name: Check if objects.inv exists for GraphNeuralNetworks
+        run: |
+          if [ -f GraphNeuralNetworks/docs/build/objects.inv ]; then
+            echo "GraphNeuralNetworks: objects.inv exists."
+          else
+            echo "GraphNeuralNetworks: objects.inv does not exist!" && exit 1
+          fi
       - name: Build and deploy multidocs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
