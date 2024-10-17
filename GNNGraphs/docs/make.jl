@@ -1,7 +1,8 @@
 using Documenter
 using DocumenterInterLinks
 using GNNGraphs
-using Graphs
+import Graphs
+using Graphs: induced_subgraph
 
 assets=[]
 prettyurls = get(ENV, "CI", nothing) == "true"
