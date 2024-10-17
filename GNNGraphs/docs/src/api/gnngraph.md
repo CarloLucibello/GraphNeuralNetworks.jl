@@ -88,3 +88,7 @@ Modules = [GNNGraphs]
 Pages   = ["sampling.jl"]
 Private = false
 ```
+
+```@docs
+Graphs.induced_subgraph(::GNNGraph, ::Vector{Int})
+```
