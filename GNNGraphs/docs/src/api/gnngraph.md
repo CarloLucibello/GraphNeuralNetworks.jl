@@ -90,5 +90,5 @@ Private = false
 ```
 
 ```@docs
-induced_subgraph(::GNNGraph, ::Vector{Int})
+Graphs.induced_subgraph
 ```
