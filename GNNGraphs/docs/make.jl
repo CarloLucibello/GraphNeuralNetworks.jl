@@ -7,10 +7,14 @@ assets=[]
 prettyurls = get(ENV, "CI", nothing) == "true"
 mathengine = MathJax3()
 
+interlinks = InterLinks(
+    "Graphs" => "http://juliagraphs.org/Graphs.jl/stable/")
+
 makedocs(;
          modules = [GNNGraphs],
          doctest = false,
          clean = true,
+         plugins = [interlinks],
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
          sitename = "GNNGraphs.jl",
          pages = ["Home" => "index.md",
