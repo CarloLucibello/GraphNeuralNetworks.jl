@@ -177,6 +177,8 @@ function Graphs.induced_subgraph(graph::GNNGraph, nodes::Vector{Int})
 
     node_map = Dict(node => i for (i, node) in enumerate(nodes))
 
+    edge_list = [collect(t) for t in zip(edge_index(graph)[1],edge_index(graph)[2])]
+
     # Collect edges to add
     source = Int[]
     target = Int[]
@@ -188,7 +190,7 @@ function Graphs.induced_subgraph(graph::GNNGraph, nodes::Vector{Int})
                 push!(target, node_map[node])
                 push!(source, node_map[neighbor])
 
-                eindex = findfirst(x -> x == [neighbor, node], edge_index(graph))
+                eindex = findfirst(x -> x == [neighbor, node], edge_list)
                 push!(eindices, eindex)
             end
         end
