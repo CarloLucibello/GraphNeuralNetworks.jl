@@ -21,8 +21,8 @@ end
     ds.z = [1:10;]
     @test ds.z == [1:10;]
 
-    # issue #504
-    vec = [DataStore(10, (:x => x,)), DataStore(10, (:x => x, :y => rand(2, 10)))]
+    # issue #504, where vector creation failed
+    @test fill(DataStore(), 3) isa Vector
 end
 
 @testset "setindex!" begin
