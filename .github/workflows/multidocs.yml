@@ -24,6 +24,9 @@ jobs:
           Pkg.develop(PackageSpec(path=joinpath(pwd(), "GNNGraphs")));
           Pkg.instantiate();'
       - name: Build GNNGraphs docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=GNNGraphs/docs/ GNNGraphs/docs/make.jl
       - name: Check if objects.inv exists for GNNGraphs
         run: |
@@ -37,6 +40,9 @@ jobs:
       - name: Install dependencies for GNNlib
         run: julia --project=GNNlib/docs/ -e 'using Pkg; Pkg.instantiate();'
       - name: Build GNNlib docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=GNNlib/docs/ GNNlib/docs/make.jl
       - name: Check if objects.inv exists for GNNlib
         run: |
@@ -60,6 +66,9 @@ jobs:
             Pkg.develop(PackageSpec(path=joinpath(pwd(), "GNNLux"))); 
             Pkg.instantiate();'
       - name: Build GNNLux docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=GNNLux/docs/ GNNLux/docs/make.jl
       - name: Check if objects.inv exists for GNNLux
         run: |
@@ -76,6 +85,9 @@ jobs:
             Pkg.develop(PackageSpec(path=joinpath(pwd(), "GraphNeuralNetworks"))); 
             Pkg.instantiate();'
       - name: Build main docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=GraphNeuralNetworks/docs/make.jl
       - name: Check if objects.inv exists for GraphNeuralNetworks
         run: |
@@ -89,6 +101,9 @@ jobs:
       - name: Install dependencies for tutorials
         run: julia --project=tutorials/docs/ -e 'using Pkg; Pkg.instantiate();'
       - name: Build tutorials
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=tutorials/docs/ tutorials/docs/make.jl
       - name: Check if objects.inv exists for tutorials
         run: |
