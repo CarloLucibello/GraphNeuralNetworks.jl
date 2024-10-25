@@ -19,7 +19,10 @@ jobs:
           
       # Build GNNGraphs docs
       - name: Install dependencies for GNNGraphs
-        run: julia --project=GNNGraphs/docs/ -e 'using Pkg; Pkg.instantiate();'
+        run: julia --project=docs/ -e '
+          using Pkg;
+          Pkg.develop(PackageSpec(path=joinpath(pwd(), "GNNGraphs")));
+          Pkg.instantiate();'
       - name: Build GNNGraphs docs
         run: julia --project=GNNGraphs/docs/ GNNGraphs/docs/make.jl
       - name: Check if objects.inv exists for GNNGraphs
