@@ -45,6 +45,13 @@ jobs:
           else
             echo "GNNlib: objects.inv does not exist!" && exit 1
           fi
+      - name: Check if objects.inv still exists for GNNGraphs
+        run: |
+          if [ -f GNNGraphs/docs/build/objects.inv ]; then
+            echo "GNNGraphs: objects.inv exists."
+          else
+            echo "GNNGraphs: objects.inv does not exist!" && exit 1
+          fi
 
       # Build GNNLux docs
       - name: Install dependencies for GNNLux
