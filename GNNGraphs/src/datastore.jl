@@ -107,6 +107,8 @@ function Base.getproperty(ds::DataStore, s::Symbol)
     end
 end
 
+
+
 function Base.setproperty!(ds::DataStore, s::Symbol, x)
     @assert s != :_n "cannot set _n directly"
     @assert s != :_data "cannot set _data directly"
