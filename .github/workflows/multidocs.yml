@@ -12,9 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@latest
+      - uses: julia-actions/setup-julia@v2
         with:
           version: '1.10.5'
+      - uses: julia-actions/cache@v2
           
       # Build GNNGraphs docs
       - name: Install dependencies for GNNGraphs
