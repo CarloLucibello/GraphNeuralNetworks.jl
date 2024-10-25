@@ -111,4 +111,6 @@ include("gatherscatter.jl")
 include("mldatasets.jl")
 export mldataset2gnngraph
 
+include("deprecations.jl")
+
 end #module
