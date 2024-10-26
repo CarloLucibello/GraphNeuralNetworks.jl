@@ -107,15 +107,7 @@ function Base.getproperty(ds::DataStore, s::Symbol)
     end
 end
 
-function Base.getproperty(vds::Vector{DataStore}, s::Symbol)
-    if s === :_n
-        return [getn(ds) for ds in vds]
-    elseif s === :_data
-        return [getdata(ds) for ds in vds]
-    else
-        return [getdata(ds)[s] for ds in vds]
-    end
-end
+
 
 function Base.setproperty!(ds::DataStore, s::Symbol, x)
     @assert s != :_n "cannot set _n directly"

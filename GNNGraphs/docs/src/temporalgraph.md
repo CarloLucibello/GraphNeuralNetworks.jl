@@ -91,15 +91,15 @@ GNNGraph:
 ```
 
 ## Data Features
-
-Node, edge, and graph features can be added at construction time or later using:
+A temporal graph can stode global feautre for the entire time series in the `tgdata` filed.
+Also, each snapshot can store node, edge, and graph features in the `ndata`, `edata`, and `gdata` fields, respectively. 
 
 ```jldoctest
 julia> snapshots = [rand_graph(10,20; ndata = rand(3,10)), rand_graph(10,14; ndata = rand(4,10)), rand_graph(10,22; ndata = rand(5,10))]; # node features at construction time
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots);
 
-julia> tg.tgdata.y = rand(3,1); # graph features after construction
+julia> tg.tgdata.y = rand(3,1); # add global features after construction
 
 julia> tg
 TemporalSnapshotsGNNGraph:
@@ -109,7 +109,7 @@ TemporalSnapshotsGNNGraph:
   tgdata:
         y = 3×1 Matrix{Float64}
 
-julia> tg.ndata # vector of Datastore for node features
+julia> tg.ndata # vector of DataStore containing node features for each snapshot
 3-element Vector{DataStore}:
  DataStore(10) with 1 element:
   x = 3×10 Matrix{Float64}
@@ -118,8 +118,10 @@ julia> tg.ndata # vector of Datastore for node features
  DataStore(10) with 1 element:
   x = 5×10 Matrix{Float64}
 
-julia> typeof(tg.ndata.x) # vector containing the x feature of each snapshot
-Vector{Matrix{Float64}}
+julia> [ds.x for ds in tg.ndata]; # vector containing the x feature of each snapshot
+
+julia> [g.x for g in tg.snapshots]; # same vector as above, now accessing 
+                                   # the x feature directly from the snapshots
 ```
 
 ## Graph convolutions on TemporalSnapshotsGNNGraph
