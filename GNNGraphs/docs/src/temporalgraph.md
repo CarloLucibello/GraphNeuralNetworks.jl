@@ -91,7 +91,7 @@ GNNGraph:
 ```
 
 ## Data Features
-A temporal graph can stode global feautre for the entire time series in the `tgdata` filed.
+A temporal graph can store global feature for the entire time series in the `tgdata` filed.
 Also, each snapshot can store node, edge, and graph features in the `ndata`, `edata`, and `gdata` fields, respectively. 
 
 ```jldoctest
