@@ -79,6 +79,25 @@ jobs:
           fi
 
       # Build GraphNeuralNetworks docs
+      - name: Install dependencies for GraphNeuralNetworks
+        run: julia --project=GraphNeuralNetworks/docs/ -e '
+            using Pkg;
+            Pkg.develop(PackageSpec(path=joinpath(pwd(), "GraphNeuralNetworks"))); 
+            Pkg.instantiate();'
+      - name: Build GraphNeuralNetworks docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --project=GraphNeuralNetworks/docs/ GraphNeuralNetworks/docs/make.jl
+      - name: Check if objects.inv exists for GraphNeuralNetworks
+        run: |
+          if [ -f GraphNeuralNetworks/docs/build/objects.inv ]; then
+            echo "GraphNeuralNetworks: objects.inv exists."
+          else
+            echo "GraphNeuralNetworks: objects.inv does not exist!" && exit 1
+          fi
+
+      # Build GraphNeuralNetworks docs
       - name: Install dependencies for main docs
         run: julia --project=GraphNeuralNetworks/docs/ -e ' 
             using Pkg;
