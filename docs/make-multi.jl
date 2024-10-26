@@ -58,8 +58,9 @@ cp(joinpath(@__DIR__, "logo.svg"),
 
 @warn "Deploying to GitHub" 
 gitroot = normpath(joinpath(@__DIR__, ".."))
+@info "Root directory: $gitroot"
 run(`git pull`)
-outbranch = "test"
+outbranch = "test-branch"
 has_outbranch = true
 if !success(`git checkout $outbranch`)
     has_outbranch = false
