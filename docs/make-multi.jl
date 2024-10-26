@@ -54,3 +54,25 @@ MultiDocumenter.make(
 
 cp(joinpath(@__DIR__, "logo.svg"),
     joinpath(outpath, "logo.svg"))
+
+#test     
+outbranch = "test"
+has_outbranch = true
+
+if !success(`git checkout --orphan $outbranch`)
+    has_outbranch = false
+    @info "Creating orphaned branch $outbranch"
+    if !success(`git switch --orphan $outbranch`)
+        @error "Cannot create new orphaned branch $outbranch."
+        exit(1)
+    end
+end
+
+run(`git add --all`)
+
+if success(`git commit -m 'Aggregate documentation'`)
+    @info "Pushing updated documentation."
+    run(`git push origin --force $outbranch`)
+else
+    @info "No changes to aggregated documentation."
+end
