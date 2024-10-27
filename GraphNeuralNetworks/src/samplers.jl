@@ -25,40 +25,10 @@ struct NeighborLoader
     neighbors_cache::Dict{Int, Vector{Int}}  # Cache neighbors to avoid recomputation
 end
 
-### `NeighborLoader` constructor
-"""
-    NeighborLoader(graph::GNNGraph; num_neighbors::Vector{Int}, input_nodes::Vector{Int}, num_layers::Int, batch_size::Union{Int, Nothing}=nothing)
-
-Creates a `NeighborLoader` to sample neighbors from the provided `graph` for the training. 
-    The loader supports batching and multi-layer neighbor sampling.
-
-# Arguments:
-- `graph::GNNGraph`: The input graph with node features.
-- `num_neighbors::Vector{Int}`: Number of neighbors to sample per node, per layer.
-- `input_nodes::Vector{Int}`: Set of starting nodes for sampling.
-- `num_layers::Int`: Number of layers to expand neighborhoods for sampling.
-- `batch_size::Union{Int, Nothing}`: Optional batch size. If `nothing`, it defaults to the length of `input_nodes`.
-
-# Returns:
-A `NeighborLoader` object.
-"""
 function NeighborLoader(graph::GNNGraph; num_neighbors::Vector{Int}, input_nodes::Vector{Int}, num_layers::Int, batch_size::Union{Int, Nothing}=nothing)
     return NeighborLoader(graph, num_neighbors, input_nodes, num_layers, batch_size === nothing ? length(input_nodes) : batch_size, Dict{Int, Vector{Int}}())
 end
 
-"""
-    get_neighbors(loader::NeighborLoader, node::Int)
-
-Returns the neighbors of a given `node` in the graph from the `NeighborLoader`. 
-    It first checks if the neighbors are cached; if not, it retrieves the neighbors from the graph and caches them for future use.
-
-# Arguments:
-- `loader::NeighborLoader`: The `NeighborLoader` instance.
-- `node::Int`: The node whose neighbors you want to sample.
-
-# Returns:
-A vector of neighbor node indices.
-"""
 # Function to get cached neighbors or compute them
 function get_neighbors(loader::NeighborLoader, node::Int)
     if haskey(loader.neighbors_cache, node)
@@ -95,22 +65,6 @@ function sample_nbrs(loader::NeighborLoader, node::Int, layer::Int)
     end
 end
 
-"""
-    Base.iterate(loader::NeighborLoader, state::Int=1)
-
-Implements the iterator protocol for `NeighborLoader`, allowing mini-batch processing for neighbor sampling in GNNs. 
-    Each call to `iterate` returns a mini-batch subgraph with sampled neighbors for a batch of input nodes, 
-    expanding their neighborhoods for a specified number of layers.
-
-# Arguments:
-- `loader::NeighborLoader`: The `NeighborLoader` instance to sample neighbors from.
-- `state::Int`: The current position in the input nodes for batching. Defaults to 1.
-
-# Returns:
-A tuple `(mini_batch_gnn, next_state)` where:
-- `mini_batch_gnn::GNNGraph`: The subgraph induced by the sampled nodes and their neighbors for the current mini-batch.
-- `next_state::Int`: The next state (index) for iterating through the input nodes. If the input nodes are exhausted, returns `nothing`.
-"""
 # Iterator protocol for NeighborLoader with lazy batch loading
 function Base.iterate(loader::NeighborLoader, state=1)
     if state > length(loader.input_nodes) 

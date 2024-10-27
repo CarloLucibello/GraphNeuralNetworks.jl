@@ -189,7 +189,6 @@ function Graphs.induced_subgraph(graph::GNNGraph, nodes::Vector{Int})
             if neighbor in keys(node_map)
                 push!(target, node_map[node])
                 push!(source, node_map[neighbor])
-
                 eindex = findfirst(x -> x == [neighbor, node], edge_list)
                 push!(eindices, eindex)
             end
