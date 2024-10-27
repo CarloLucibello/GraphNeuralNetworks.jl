@@ -2,7 +2,9 @@
     struct NeighborLoader
 
 A data structure for sampling neighbors from a graph for training Graph Neural Networks (GNNs). 
-It supports multi-layer sampling of neighbors for a batch of input nodes, useful for mini-batch training.
+It supports multi-layer sampling of neighbors for a batch of input nodes, useful for mini-batch training
+originally introduced in "Inductive Representation Learning on Large Graphs" paper.
+[see https://arxiv.org/abs/1706.02216]
 
 # Fields
 - `graph::GNNGraph`: The input graph containing nodes and edges, along with node features (from GraphNeuralNetworks.jl).
