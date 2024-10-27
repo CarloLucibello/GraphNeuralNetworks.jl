@@ -10,7 +10,6 @@ It supports multi-layer sampling of neighbors for a batch of input nodes, useful
 - `input_nodes::Vector{Int}`: A vector containing the starting nodes for neighbor sampling.
 - `num_layers::Int`: The number of layers for neighborhood expansion (how far to sample neighbors).
 - `batch_size::Union{Int, Nothing}`: The size of the batch. If not specified, it defaults to the number of `input_nodes`.
-- `neighbors_cache::Dict{Int, Vector{Int}}`: A cache to store sampled neighbors for each node, preventing redundant sampling.
 
 # Usage
 ```julia
