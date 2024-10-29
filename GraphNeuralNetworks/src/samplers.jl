@@ -7,7 +7,7 @@ originally introduced in "Inductive Representation Learning on Large Graphs" pap
 [see https://arxiv.org/abs/1706.02216]
 
 # Fields
-- `graph::GNNGraph`: The input graph containing nodes and edges, along with node features (from GraphNeuralNetworks.jl).
+- `graph::GNNGraph`: The input graph.
 - `num_neighbors::Vector{Int}`: A vector specifying the number of neighbors to sample per node at each GNN layer.
 - `input_nodes::Vector{Int}`: A vector containing the starting nodes for neighbor sampling.
 - `num_layers::Int`: The number of layers for neighborhood expansion (how far to sample neighbors).
