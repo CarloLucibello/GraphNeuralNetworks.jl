@@ -1,39 +1,36 @@
 using MultiDocumenter
 
-for (root, dirs, files) in walkdir(".")
-    for file in files
-        filepath = joinpath(root, file)
-        if islink(filepath)
-            linktarget = abspath(dirname(filepath), readlink(filepath))
-            rm(filepath)
-            cp(linktarget, filepath; force=true)
-        end
-    end
-end
+clonedir = ("--temp" in ARGS) ? mktempdir() : joinpath(@__DIR__, "clones")
+outpath = mktempdir()
+@info """
+Cloning packages into: $(clonedir)
+Building aggregate site into: $(outpath)
+"""
+
 
 docs = [
     MultiDocumenter.MultiDocRef(
-        upstream = joinpath(dirname(@__DIR__),"GraphNeuralNetworks", "docs", "build"),
+        upstream = joinpath(clonedir,"GraphNeuralNetworks", "docs", "build"),
         path = "GraphNeuralNetworks",
         name = "GraphNeuralNetworks",
         fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
-        upstream = joinpath(dirname(@__DIR__), "GNNGraphs", "docs", "build"),
+        upstream = joinpath(clonedir, "GNNGraphs", "docs", "build"),
         path = "GNNGraphs",
         name = "GNNGraphs",
         fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
-        upstream = joinpath(dirname(@__DIR__), "GNNlib", "docs", "build"),
+        upstream = joinpath(clonedir, "GNNlib", "docs", "build"),
         path = "GNNlib",
         name = "GNNlib",
         fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
-        upstream = joinpath(dirname(@__DIR__), "GNNLux", "docs", "build"),
+        upstream = joinpath(clonedir, "GNNLux", "docs", "build"),
         path = "GNNLux",
         name = "GNNLux",
         fix_canonical_url = false), 
     MultiDocumenter.MultiDocRef(
-        upstream = joinpath(dirname(@__DIR__), "tutorials", "docs", "build"),
+        upstream = joinpath(clonedir, "tutorials", "docs", "build"),
         path = "tutorials",
         name = "tutorials",
         fix_canonical_url = false),    
