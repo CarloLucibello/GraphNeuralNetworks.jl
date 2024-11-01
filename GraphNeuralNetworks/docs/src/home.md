@@ -41,7 +41,7 @@ end
 
 ### Model building 
 
-We concisely define our model as a [`GNNChain`](@ref) containing two graph convolutional layers. If CUDA is available, our model will live on the gpu.
+We concisely define our model as a [`GraphNeuralNetworks.GNNChain`](@ref) containing two graph convolutional layers. If CUDA is available, our model will live on the gpu.
 
 ```julia
 device = CUDA.functional() ? Flux.gpu : Flux.cpu;

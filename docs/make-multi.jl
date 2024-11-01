@@ -1,35 +1,35 @@
 using MultiDocumenter
 
-# for (root, dirs, files) in walkdir(".")
-#     for file in files
-#         filepath = joinpath(root, file)
-#         if islink(filepath)
-#             linktarget = abspath(dirname(filepath), readlink(filepath))
-#             rm(filepath)
-#             cp(linktarget, filepath; force=true)
-#         end
-#     end
-# end
+for (root, dirs, files) in walkdir(".")
+    for file in files
+        filepath = joinpath(root, file)
+        if islink(filepath)
+            linktarget = abspath(dirname(filepath), readlink(filepath))
+            rm(filepath)
+            cp(linktarget, filepath; force=true)
+        end
+    end
+end
 
 docs = [
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__),"GraphNeuralNetworks", "docs", "build"),
-        path = "GraphNeuralNetworks",
+        path = "graphneuralnetworks",
         name = "GraphNeuralNetworks",
         fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "GNNGraphs", "docs", "build"),
-        path = "GNNGraphs",
+        path = "gnngraphs",
         name = "GNNGraphs",
         fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "GNNlib", "docs", "build"),
-        path = "GNNlib",
+        path = "gnnlib",
         name = "GNNlib",
         fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "GNNLux", "docs", "build"),
-        path = "GNNLux",
+        path = "gnnlux",
         name = "GNNLux",
         fix_canonical_url = false), 
     MultiDocumenter.MultiDocRef(
@@ -54,7 +54,6 @@ MultiDocumenter.make(
 
 cp(joinpath(@__DIR__, "logo.svg"),
     joinpath(outpath, "logo.svg"))
-
 
 @warn "Deploying to GitHub as in DataToolkit" 
 outbranch = "test-branch"
