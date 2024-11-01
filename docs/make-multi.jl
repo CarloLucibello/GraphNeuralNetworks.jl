@@ -66,6 +66,8 @@ if !success(`git checkout --orphan $outbranch`)
         @error "Cannot create new orphaned branch $outbranch."
         exit(1)
     end
+else 
+    @info "Switched to orphaned branch $outbranch"
 end
 
 run(`git add --all`)
