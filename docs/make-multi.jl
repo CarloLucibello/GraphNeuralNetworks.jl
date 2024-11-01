@@ -1,15 +1,15 @@
 using MultiDocumenter
 
-for (root, dirs, files) in walkdir(".")
-    for file in files
-        filepath = joinpath(root, file)
-        if islink(filepath)
-            linktarget = abspath(dirname(filepath), readlink(filepath))
-            rm(filepath)
-            cp(linktarget, filepath; force=true)
-        end
-    end
-end
+# for (root, dirs, files) in walkdir(".")
+#     for file in files
+#         filepath = joinpath(root, file)
+#         if islink(filepath)
+#             linktarget = abspath(dirname(filepath), readlink(filepath))
+#             rm(filepath)
+#             cp(linktarget, filepath; force=true)
+#         end
+#     end
+# end
 
 docs = [
     MultiDocumenter.MultiDocRef(
