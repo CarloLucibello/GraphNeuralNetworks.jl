@@ -1,5 +1,6 @@
 using MultiDocumenter
 
+
 clonedir = ("--temp" in ARGS) ? mktempdir() : joinpath(@__DIR__, "clones")
 outpath = mktempdir()
 @info """
@@ -10,27 +11,27 @@ Building aggregate site into: $(outpath)
 
 docs = [
     MultiDocumenter.MultiDocRef(
-        upstream = joinpath(clonedir,"GraphNeuralNetworks", "docs", "build"),
+        upstream = joinpath(dirname(@__DIR__),"GraphNeuralNetworks", "docs", "build"),
         path = "GraphNeuralNetworks",
         name = "GraphNeuralNetworks",
         fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
-        upstream = joinpath(clonedir, "GNNGraphs", "docs", "build"),
+        upstream = joinpath(dirname(@__DIR__), "GNNGraphs", "docs", "build"),
         path = "GNNGraphs",
         name = "GNNGraphs",
         fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
-        upstream = joinpath(clonedir, "GNNlib", "docs", "build"),
+        upstream = joinpath(dirname(@__DIR__), "GNNlib", "docs", "build"),
         path = "GNNlib",
         name = "GNNlib",
         fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
-        upstream = joinpath(clonedir, "GNNLux", "docs", "build"),
+        upstream = joinpath(dirname(@__DIR__), "GNNLux", "docs", "build"),
         path = "GNNLux",
         name = "GNNLux",
         fix_canonical_url = false), 
     MultiDocumenter.MultiDocRef(
-        upstream = joinpath(clonedir, "tutorials", "docs", "build"),
+        upstream = joinpath(dirname(@__DIR__), "tutorials", "docs", "build"),
         path = "tutorials",
         name = "tutorials",
         fix_canonical_url = false),    
