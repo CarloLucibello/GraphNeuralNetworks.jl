@@ -57,7 +57,7 @@ cp(joinpath(@__DIR__, "logo.svg"),
 
 
 @warn "Deploying to GitHub as in DataToolkit" 
-outbranch = "multidoc-pub"
+outbranch = "test-branch"
 has_outbranch = true
 
 if !success(`git checkout --orphan $outbranch`)
