@@ -1,13 +1,15 @@
 using MultiDocumenter
 
-
-clonedir = ("--temp" in ARGS) ? mktempdir() : joinpath(@__DIR__, "clones")
-outpath = mktempdir()
-@info """
-Cloning packages into: $(clonedir)
-Building aggregate site into: $(outpath)
-"""
-
+for (root, dirs, files) in walkdir(".")
+    for file in files
+        filepath = joinpath(root, file)
+        if islink(filepath)
+            linktarget = abspath(dirname(filepath), readlink(filepath))
+            rm(filepath)
+            cp(linktarget, filepath; force=true)
+        end
+    end
+end
 
 docs = [
     MultiDocumenter.MultiDocRef(
