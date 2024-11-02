@@ -27,8 +27,10 @@ struct NeighborLoader
     neighbors_cache::Dict{Int, Vector{Int}}  # Cache neighbors to avoid recomputation
 end
 
-function NeighborLoader(graph::GNNGraph; num_neighbors::Vector{Int}, input_nodes::Vector{Int}, num_layers::Int, batch_size::Union{Int, Nothing}=nothing)
-    return NeighborLoader(graph, num_neighbors, input_nodes, num_layers, batch_size === nothing ? length(input_nodes) : batch_size, Dict{Int, Vector{Int}}())
+function NeighborLoader(graph::GNNGraph; num_neighbors::Vector{Int}, input_nodes::Vector{Int}=nothing, 
+                        num_layers::Int, batch_size::Union{Int, Nothing}=nothing)
+    return NeighborLoader(graph, num_neighbors, input_nodes === nothing ? collect(1:graph.num_nodes) : input_nodes, num_layers, 
+                            batch_size === nothing ? length(input_nodes) : batch_size, Dict{Int, Vector{Int}}())
 end
 
 # Function to get cached neighbors or compute them
@@ -42,20 +44,6 @@ function get_neighbors(loader::NeighborLoader, node::Int)
     end
 end
 
-"""
-    sample_nbrs(loader::NeighborLoader, node::Int, layer::Int)
-
-Samples a specified number of neighbors for the given `node` at a particular `layer` of the GNN. 
-    The number of neighbors sampled is defined in `loader.num_neighbors`.
-
-# Arguments:
-- `loader::NeighborLoader`: The `NeighborLoader` instance.
-- `node::Int`: The node to sample neighbors for.
-- `layer::Int`: The current GNN layer (used to determine how many neighbors to sample).
-
-# Returns:
-A vector of sampled neighbor node indices.
-"""
 # Function to sample neighbors for a given node at a specific layer
 function sample_nbrs(loader::NeighborLoader, node::Int, layer::Int)
     neighbors = get_neighbors(loader, node)
