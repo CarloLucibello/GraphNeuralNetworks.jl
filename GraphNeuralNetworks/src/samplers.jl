@@ -14,13 +14,13 @@ originally introduced in "Inductive Representation Learning on Large Graphs" pap
 - `batch_size::Union{Int, Nothing}`: The size of the batch. If not specified, it defaults to the number of `input_nodes`.
 
 # Usage
-```julia
-loader = NeighborLoader(graph; num_neighbors=[10, 5], input_nodes=[1, 2, 3], num_layers=2)
+```jldoctest
+julia>  loader = NeighborLoader(graph; num_neighbors=[10, 5], input_nodes=[1, 2, 3], num_layers=2)
 
-batch_counter = 0
-for mini_batch_gnn in loader
-    batch_counter += 1
-    println("Batch $batch_counter: Nodes in mini-batch graph: $(nv(mini_batch_gnn))")
+julia> batch_counter = 0
+julia> for mini_batch_gnn in loader
+            batch_counter += 1
+            println("Batch ", batch_counter, ": Nodes in mini-batch graph: ", nv(mini_batch_gnn))
 ```
 """
 struct NeighborLoader
