@@ -1,5 +1,5 @@
 """
-    struct NeighborLoader
+    NeighborLoader(graph; num_neighbors, input_nodes, num_layers, [batch_size])
 
 A data structure for sampling neighbors from a graph for training Graph Neural Networks (GNNs). 
 It supports multi-layer sampling of neighbors for a batch of input nodes, useful for mini-batch training
