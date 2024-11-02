@@ -10,7 +10,7 @@ using NNlib: scatter, gather
 using ChainRulesCore
 using Reexport
 using MLUtils: zeros_like
-using Graphs
+using Graphs: Graphs
 
 using GNNGraphs:  COO_T, ADJMAT_T, SPARSE_T,
                   check_num_nodes, check_num_edges,
