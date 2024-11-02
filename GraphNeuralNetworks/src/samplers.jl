@@ -16,6 +16,11 @@ originally introduced in "Inductive Representation Learning on Large Graphs" pap
 # Usage
 ```julia
 loader = NeighborLoader(graph; num_neighbors=[10, 5], input_nodes=[1, 2, 3], num_layers=2)
+
+batch_counter = 0
+for mini_batch_gnn in loader
+    batch_counter += 1
+    println("Batch $batch_counter: Nodes in mini-batch graph: $(nv(mini_batch_gnn))")
 ```
 """
 struct NeighborLoader
