@@ -122,4 +122,4 @@ X = randn(Float32, din, 10)
 y = model(X) 
 ```
 
-An example of `WithGraph` usage is given in the graph neural ODE script in the [examples](https://github.com/CarloLucibello/GraphNeuralNetworks.jl/tree/master/examples) folder.
+An example of `WithGraph` usage is given in the graph neural ODE script in the [examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/examples) folder.

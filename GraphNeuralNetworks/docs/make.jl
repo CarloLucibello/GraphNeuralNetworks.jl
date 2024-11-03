@@ -25,8 +25,6 @@ makedocs(;
                "Home" => "index.md",
                "Developer guide" => "dev.md",
                "Google Summer of Code" => "gsoc.md",
-
-
             ],
             "GraphNeuralNetworks.jl" =>[
             "Home" => "home.md",
@@ -38,7 +36,8 @@ makedocs(;
                   "Convolutional layers" => "api/conv.md",
                   "Pooling layers" => "api/pool.md",
                   "Temporal Convolutional layers" => "api/temporalconv.md",
-                  "Hetero Convolutional layers" => "api/heteroconv.md"
+                  "Hetero Convolutional layers" => "api/heteroconv.md",
+                  "Samplers" => "api/samplers.md",
           
                 
               ],
