@@ -48,4 +48,4 @@ makedocs(;
          
 
 
-deploydocs(;repo = "https://github.com/CarloLucibello/GraphNeuralNetworks.jl.git", dirname= "GraphNeuralNetworks")
+deploydocs(;repo = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git", dirname= "GraphNeuralNetworks")

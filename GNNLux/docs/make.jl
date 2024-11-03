@@ -22,5 +22,5 @@ makedocs(;
          
 
 
-deploydocs(;repo = "https://github.com/CarloLucibello/GraphNeuralNetworks.jl.git",
+deploydocs(;repo = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git",
 dirname = "GNNLux")
