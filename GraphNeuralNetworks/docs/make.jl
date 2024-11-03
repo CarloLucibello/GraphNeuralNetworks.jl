@@ -55,4 +55,4 @@ makedocs(;
 
 tutorials_cb()
 
-deploydocs(repo = "github.com/CarloLucibello/GraphNeuralNetworks.jl.git")
+deploydocs(repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git")
