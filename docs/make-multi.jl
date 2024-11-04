@@ -57,26 +57,34 @@ MultiDocumenter.make(
 cp(joinpath(@__DIR__, "logo.svg"),
     joinpath(outpath, "logo.svg"))
 
-@warn "Deploying to GitHub as in DataToolkit" 
+@warn "Deploying to GitHub as MultiDocumenter" 
+gitroot = normpath(joinpath(@__DIR__, ".."))
+run(`git pull`)
 outbranch = "branch-multidoc"
 has_outbranch = true
-
-if !success(`git checkout --orphan $outbranch`)
+if !success(`git checkout $outbranch`)
     has_outbranch = false
-    @info "Creating orphaned branch $outbranch"
     if !success(`git switch --orphan $outbranch`)
         @error "Cannot create new orphaned branch $outbranch."
         exit(1)
     end
-else 
-    @info "Switched to orphaned branch $outbranch"
 end
-
-run(`git add --all`)
-
+for file in readdir(gitroot; join = true)
+    endswith(file, ".git") && continue
+    rm(file; force = true, recursive = true)
+end
+for file in readdir(outpath)
+    cp(joinpath(outpath, file), joinpath(gitroot, file))
+end
+run(`git add .`)
 if success(`git commit -m 'Aggregate documentation'`)
     @info "Pushing updated documentation."
-    run(`git push origin --force $outbranch`)
+    if has_outbranch
+        run(`git push`)
+    else
+        run(`git push -u origin $outbranch`)
+    end
+    run(`git checkout main`)
 else
     @info "No changes to aggregated documentation."
 end
