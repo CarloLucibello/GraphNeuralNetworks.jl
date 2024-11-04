@@ -76,7 +76,7 @@ end
 run(`git status`)
 @info "Cleaning up $gitroot."
 for file in readdir(gitroot; join = true)
-    println(file)
+    if file == "/home/runner/work/GraphNeuralNetworks.jl/GraphNeuralNetworks.jl/docs" && continue
     endswith(file, ".git") && continue
     rm(file; force = true, recursive = true)
 end
