@@ -84,6 +84,7 @@ end
 for file in readdir(outpath)
     cp(joinpath(outpath, file), joinpath(gitroot, file))
 end
+rm("/home/runner/work/GraphNeuralNetworks.jl/GraphNeuralNetworks.jl/docs"; force = true, recursive = true)
 run(`git add .`)
 if success(`git commit -m 'Aggregate documentation'`)
     @info "Pushing updated documentation."
