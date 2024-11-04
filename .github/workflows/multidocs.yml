@@ -21,6 +21,10 @@ jobs:
       - name: Set up
         run: git config --global init.defaultBranch test-multidocs
       
+      - name: Create orphan branch
+        run: |
+          git checkout --orphan dep-multidocs || echo "Branch already exists or cannot be created."
+          git commit --allow-empty -m "Initial commit for documentation build" || echo "No commits to create."
 
 
       # Build GNNGraphs docs

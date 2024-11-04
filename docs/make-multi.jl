@@ -60,7 +60,7 @@ cp(joinpath(@__DIR__, "logo.svg"),
 @warn "Deploying to GitHub as MultiDocumenter" 
 gitroot = normpath(joinpath(@__DIR__, ".."))
 run(`git pull`)
-outbranch = "branch-multidoc"
+outbranch = "dep-multidocs"
 has_outbranch = true
 if !success(`git checkout $outbranch`)
     has_outbranch = false
