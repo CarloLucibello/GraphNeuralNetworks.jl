@@ -1,0 +1,113 @@
+name: MultiDocumentation
+
+on:
+  push:
+    branches:
+      - master
+    tags: '*'
+  pull_request:
+
+jobs:
+  build_multidocs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.10.5'
+      - uses: julia-actions/cache@v2
+          
+      - name: Set up
+        run: git config --global init.defaultBranch master
+      
+      # Build GNNGraphs docs
+      - name: Install dependencies for GNNGraphs
+        run: 
+          julia --project=GNNGraphs/docs/ -e '
+          using Pkg;
+          Pkg.develop(PackageSpec(path=joinpath(pwd(), "GNNGraphs")));
+          Pkg.instantiate();'
+      - name: Build GNNGraphs docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --project=GNNGraphs/docs/ GNNGraphs/docs/make.jl
+    
+      # Build GNNlib docs
+      - name: Install dependencies for GNNlib
+        run: julia --project=GNNlib/docs/ -e 'using Pkg; Pkg.instantiate();'
+      - name: Build GNNlib docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --project=GNNlib/docs/ GNNlib/docs/make.jl
+  
+      # Build GNNLux docs
+      - name: Install dependencies for GNNLux
+        run: julia --project=GNNLux/docs/ -e '
+            using Pkg;
+            Pkg.develop(PackageSpec(path=joinpath(pwd(), "GNNLux"))); 
+            Pkg.instantiate();'
+      - name: Build GNNLux docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --project=GNNLux/docs/ GNNLux/docs/make.jl
+
+      # Build GraphNeuralNetworks docs
+      - name: Install dependencies for GraphNeuralNetworks
+        run: julia --project=GraphNeuralNetworks/docs/ -e '
+            using Pkg;
+            Pkg.develop(PackageSpec(path=joinpath(pwd(), "GraphNeuralNetworks"))); 
+            Pkg.instantiate();'
+      - name: Build GraphNeuralNetworks docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --project=GraphNeuralNetworks/docs/ GraphNeuralNetworks/docs/make.jl
+
+      # Build  multidocs
+      - name: Install dependencies for main docs
+        run: julia --project=GraphNeuralNetworks/docs/ -e ' 
+            using Pkg;
+            Pkg.develop(PackageSpec(path=joinpath(pwd(), "GraphNeuralNetworks"))); 
+            Pkg.instantiate();'
+      - name: Build main docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --project=GraphNeuralNetworks/docs/make.jl
+
+      # Build tutorials
+      - name: Install dependencies for tutorials
+        run: julia --project=tutorials/docs/ -e 'using Pkg; Pkg.instantiate();'
+      - name: Build tutorials
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --project=tutorials/docs/ tutorials/docs/make.jl
+
+      # Build and deploy multidocs
+      - name: Install dependencies for multidocs
+        run: julia --project=docs/ -e '
+          using Pkg;
+          Pkg.develop([PackageSpec(path=joinpath(pwd(), "GraphNeuralNetworks")),
+                      PackageSpec(path=joinpath(pwd(), "GNNGraphs")),
+                      PackageSpec(path=joinpath(pwd(), "GNNlib")),
+                      PackageSpec(path=joinpath(pwd(), "GNNLux"))]);
+          Pkg.instantiate();'
+      - name: Check if objects.inv exists for GraphNeuralNetworks
+        run: |
+          if [ -f GraphNeuralNetworks/docs/build/objects.inv ]; then
+            echo "GraphNeuralNetworks: objects.inv exists."
+          else
+            echo "GraphNeuralNetworks: objects.inv does not exist!" && exit 1
+          fi
+      - name: Build and deploy multidocs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          julia --project=docs/ docs/make-multi.jl 

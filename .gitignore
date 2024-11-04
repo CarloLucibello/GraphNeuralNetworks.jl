@@ -5,9 +5,14 @@
 *.swp
 *.swo
 Manifest.toml
-/docs/build/
 .vscode
 LocalPreferences.toml
 .DS_Store
 docs/src/democards/gridtheme.css
 test.jl
+docs/build
+GNNGraphs/docs/build
+GNNlib/docs/build
+GNNLux/docs/build
+GraphNeuralNetworks/docs/build
+tutorials/docs/build

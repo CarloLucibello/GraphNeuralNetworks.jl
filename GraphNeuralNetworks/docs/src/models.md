@@ -6,7 +6,7 @@ their models.
 
 In what follows, we discuss two different styles for model creation:
 the *explicit modeling* style, more verbose but more flexible, 
-and the *implicit modeling* style based on [`GNNChain`](@ref), more concise but less flexible.
+and the *implicit modeling* style based on [`GraphNeuralNetworks.GNNChain`](@ref), more concise but less flexible.
 
 ## Explicit modeling
 
@@ -62,11 +62,11 @@ grad = gradient(model -> sum(model(g, X)), model)
 ## Implicit modeling with GNNChains
 
 While very flexible, the way in which we defined `GNN` model definition in last section is a bit verbose.
-In order to simplify things, we provide the [`GNNChain`](@ref) type. It is very similar 
+In order to simplify things, we provide the [`GraphNeuralNetworks.GNNChain`](@ref) type. It is very similar 
 to Flux's well known `Chain`. It allows to compose layers in a sequential fashion as Chain
 does, propagating the output of each layer to the next one. In addition, `GNNChain` 
 handles propagates the input graph as well, providing it as a first argument
-to layers subtyping the [`GNNLayer`](@ref) abstract type. 
+to layers subtyping the [`GraphNeuralNetworks.GNNLayer`](@ref) abstract type. 
 
 Using `GNNChain`, the previous example becomes
 
