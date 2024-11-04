@@ -21,11 +21,7 @@ jobs:
       - name: Set up
         run: git config --global init.defaultBranch test-multidocs
       
-      - name: Initialize Git in build folders
-        run: |
-          for dir in GNNGraphs/docs/build GNNLib/docs/build GNNLux/docs/build tutorials/docs/build; do
-            git -C $dir init
-          done
+
 
       # Build GNNGraphs docs
       - name: Install dependencies for GNNGraphs
@@ -142,6 +138,12 @@ jobs:
           else
             echo "tutorials: objects.inv does not exist!" && exit 1
           fi
+
+      - name: Initialize Git in build folders
+        run: |
+          for dir in GNNGraphs/docs/build GNNLib/docs/build GNNLux/docs/build tutorials/docs/build GraphNeuralNetworks/docs/build; do
+            git -C $dir init
+          done
 
       # Build and deploy multidocs
       - name: Install dependencies for multidocs
