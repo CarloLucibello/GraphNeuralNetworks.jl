@@ -11,32 +11,34 @@ for (root, dirs, files) in walkdir(".")
     end
 end
 
+
+
 docs = [
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__),"GraphNeuralNetworks", "docs", "build"),
         path = "graphneuralnetworks",
         name = "GraphNeuralNetworks",
-        fix_canonical_url = false),
+        giturl = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git"),
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "GNNGraphs", "docs", "build"),
         path = "gnngraphs",
         name = "GNNGraphs",
-        fix_canonical_url = false),
+        giturl = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git"),
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "GNNlib", "docs", "build"),
         path = "gnnlib",
         name = "GNNlib",
-        fix_canonical_url = false),
+        giturl = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git"),
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "GNNLux", "docs", "build"),
         path = "gnnlux",
         name = "GNNLux",
-        fix_canonical_url = false), 
+        giturl = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git"), 
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "tutorials", "docs", "build"),
         path = "tutorials",
         name = "tutorials",
-        fix_canonical_url = false),    
+        giturl = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git"),    
 ]
 
 outpath = joinpath(@__DIR__, "build")
