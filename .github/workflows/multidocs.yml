@@ -141,7 +141,7 @@ jobs:
 
       - name: Initialize Git in build folders
         run: |
-          for dir in GNNGraphs/docs/build GNNLib/docs/build GNNLux/docs/build tutorials/docs/build GraphNeuralNetworks/docs/build; do
+          for dir in GNNGraphs/docs/build GNNlib/docs/build GNNLux/docs/build tutorials/docs/build GraphNeuralNetworks/docs/build; do
             git -C $dir init
           done
 
