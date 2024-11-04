@@ -72,7 +72,7 @@ if !success(`git checkout $outbranch`)
         exit(1)
     end
 end
-run(`git stash apply`)
+run(`git stash drop`)
 for file in readdir(gitroot; join = true)
     endswith(file, ".git") && continue
     rm(file; force = true, recursive = true)
