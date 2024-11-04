@@ -19,7 +19,9 @@ jobs:
           
       # Build GNNGraphs docs
       - name: Install dependencies for GNNGraphs
-        run: julia --project=GNNGraphs/docs/ -e '
+        run: 
+          git config --global init.defaultBranch test-multidocs
+          julia --project=GNNGraphs/docs/ -e '
           using Pkg;
           Pkg.develop(PackageSpec(path=joinpath(pwd(), "GNNGraphs")));
           Pkg.instantiate();'

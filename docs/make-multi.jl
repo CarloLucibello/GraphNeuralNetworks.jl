@@ -18,27 +18,27 @@ docs = [
         upstream = joinpath(dirname(@__DIR__),"GraphNeuralNetworks", "docs", "build"),
         path = "graphneuralnetworks",
         name = "GraphNeuralNetworks",
-        giturl = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git"),
+        fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "GNNGraphs", "docs", "build"),
         path = "gnngraphs",
         name = "GNNGraphs",
-        giturl = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git"),
+        fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "GNNlib", "docs", "build"),
         path = "gnnlib",
         name = "GNNlib",
-        giturl = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git"),
+        fix_canonical_url = false),
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "GNNLux", "docs", "build"),
         path = "gnnlux",
         name = "GNNLux",
-        giturl = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git"), 
+        fix_canonical_url = false), 
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__), "tutorials", "docs", "build"),
         path = "tutorials",
         name = "tutorials",
-        giturl = "https://github.com/JuliaGraphs/GraphNeuralNetworks.jl.git"),    
+        fix_canonical_url = false),    
 ]
 
 outpath = joinpath(@__DIR__, "build")
