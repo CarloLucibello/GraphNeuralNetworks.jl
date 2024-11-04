@@ -3,8 +3,7 @@
 
 # GraphNeuralNetworks.jl
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaGraphs.github.io/GraphNeuralNetworks.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaGraphs.github.io/GraphNeuralNetworks.jl/dev)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliagraphs.org/GraphNeuralNetworks.jl/graphneuralnetworks/)
 ![](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl)
 
