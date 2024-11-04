@@ -63,6 +63,7 @@ run(`git pull`)
 
 outbranch = "dep-multidocs"
 has_outbranch = true
+run(`git restore docs/Project.toml`)
 if !success(`git checkout -f $outbranch`)
     has_outbranch = false
     if !success(`git switch --orphan $outbranch`)
