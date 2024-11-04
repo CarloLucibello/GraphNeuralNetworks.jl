@@ -92,7 +92,7 @@ if success(`git commit -m 'Aggregate documentation'`)
     else
         run(`git push -u origin $outbranch`)
     end
-    run(`git checkout main`)
+    run(`git checkout master`)
 else
     @info "No changes to aggregated documentation."
 end
