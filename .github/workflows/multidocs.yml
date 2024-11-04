@@ -17,10 +17,17 @@ jobs:
           version: '1.10.5'
       - uses: julia-actions/cache@v2
           
-      # Build GNNGraphs docs
+      
       - name: Set up
         run: git config --global init.defaultBranch test-multidocs
+      
+      - name: Initialize Git in build folders
+        run: |
+          for dir in GNNGraphs/docs/build GNNLib/docs/build GNNLux/docs/build tutorials/docs/build; do
+            git -C $dir init
+          done
 
+      # Build GNNGraphs docs
       - name: Install dependencies for GNNGraphs
         run: 
           julia --project=GNNGraphs/docs/ -e '
