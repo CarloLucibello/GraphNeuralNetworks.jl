@@ -73,6 +73,7 @@ if !success(`git checkout -f $outbranch`)
         exit(1)
     end
 end
+run(`git status`)
 @info "Cleaning up $gitroot."
 for file in readdir(gitroot; join = true)
     println(file)
