@@ -31,6 +31,6 @@ makedocs(;
 
 
 deploydocs(;repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git",
-devbranch = "test-multidocs",
+devbranch = "master",
 push_preview = true,
 dirname = "tutorials")
