@@ -3,7 +3,7 @@ name: MultiDocumentation
 on:
   push:
     branches:
-      - test-multidocs
+      - master
     tags: '*'
   pull_request:
 
@@ -17,9 +17,8 @@ jobs:
           version: '1.10.5'
       - uses: julia-actions/cache@v2
           
-      
       - name: Set up
-        run: git config --global init.defaultBranch test-multidocs
+        run: git config --global init.defaultBranch master
       
       # Build GNNGraphs docs
       - name: Install dependencies for GNNGraphs
@@ -33,14 +32,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=GNNGraphs/docs/ GNNGraphs/docs/make.jl
-      - name: Check if objects.inv exists for GNNGraphs
-        run: |
-          if [ -f GNNGraphs/docs/build/objects.inv ]; then
-            echo "GNNGraphs: objects.inv exists."
-          else
-            echo "GNNGraphs: objects.inv does not exist!" && exit 1
-          fi
-
+    
       # Build GNNlib docs
       - name: Install dependencies for GNNlib
         run: julia --project=GNNlib/docs/ -e 'using Pkg; Pkg.instantiate();'
@@ -49,21 +41,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=GNNlib/docs/ GNNlib/docs/make.jl
-      - name: Check if objects.inv exists for GNNlib
-        run: |
-          if [ -f GNNlib/docs/build/objects.inv ]; then
-            echo "GNNlib: objects.inv exists."
-          else
-            echo "GNNlib: objects.inv does not exist!" && exit 1
-          fi
-      - name: Check if objects.inv still exists for GNNGraphs
-        run: |
-          if [ -f GNNGraphs/docs/build/objects.inv ]; then
-            echo "GNNGraphs: objects.inv exists."
-          else
-            echo "GNNGraphs: objects.inv does not exist!" && exit 1
-          fi
-
+  
       # Build GNNLux docs
       - name: Install dependencies for GNNLux
         run: julia --project=GNNLux/docs/ -e '
@@ -75,13 +53,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=GNNLux/docs/ GNNLux/docs/make.jl
-      - name: Check if objects.inv exists for GNNLux
-        run: |
-          if [ -f GNNLux/docs/build/objects.inv ]; then
-            echo "GNNLux: objects.inv exists."
-          else
-            echo "GNNLux: objects.inv does not exist!" && exit 1
-          fi
 
       # Build GraphNeuralNetworks docs
       - name: Install dependencies for GraphNeuralNetworks
@@ -94,15 +65,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=GraphNeuralNetworks/docs/ GraphNeuralNetworks/docs/make.jl
-      - name: Check if objects.inv exists for GraphNeuralNetworks
-        run: |
-          if [ -f GraphNeuralNetworks/docs/build/objects.inv ]; then
-            echo "GraphNeuralNetworks: objects.inv exists."
-          else
-            echo "GraphNeuralNetworks: objects.inv does not exist!" && exit 1
-          fi
 
-      # Build GraphNeuralNetworks docs
+      # Build  multidocs
       - name: Install dependencies for main docs
         run: julia --project=GraphNeuralNetworks/docs/ -e ' 
             using Pkg;
@@ -113,13 +77,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=GraphNeuralNetworks/docs/make.jl
-      - name: Check if objects.inv exists for GraphNeuralNetworks
-        run: |
-          if [ -f GraphNeuralNetworks/docs/build/objects.inv ]; then
-            echo "GraphNeuralNetworks: objects.inv exists."
-          else
-            echo "GraphNeuralNetworks: objects.inv does not exist!" && exit 1
-          fi
 
       # Build tutorials
       - name: Install dependencies for tutorials
@@ -129,13 +86,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=tutorials/docs/ tutorials/docs/make.jl
-      - name: Check if objects.inv exists for tutorials
-        run: |
-          if [ -f tutorials/docs/build/objects.inv ]; then
-            echo "tutorials: objects.inv exists."
-          else
-            echo "tutorials: objects.inv does not exist!" && exit 1
-          fi
 
       # Build and deploy multidocs
       - name: Install dependencies for multidocs

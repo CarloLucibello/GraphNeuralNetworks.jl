@@ -11,8 +11,6 @@ for (root, dirs, files) in walkdir(".")
     end
 end
 
-
-
 docs = [
     MultiDocumenter.MultiDocRef(
         upstream = joinpath(dirname(@__DIR__),"GraphNeuralNetworks", "docs", "build"),
@@ -63,28 +61,37 @@ run(`git pull`)
 
 outbranch = "dep-multidocs"
 has_outbranch = true
-run(`git restore docs/Project.toml`)
+
+status_output = read(`git status --porcelain docs/Project.toml`, String)
+if !isempty(status_output)
+    @info "Restoring docs/Project.toml due to changes."
+    run(`git restore docs/Project.toml`)
+else
+    @info "No changes detected in docs/Project.toml."
+end
+
 if !success(`git checkout -f $outbranch`)
     has_outbranch = false
     if !success(`git switch --orphan $outbranch`)
-        run(`git branch`)
-        run(`git status`)
         @error "Cannot create new orphaned branch $outbranch."
         exit(1)
     end
 end
-run(`git status`)
+
 @info "Cleaning up $gitroot."
 for file in readdir(gitroot; join = true)
     file == "/home/runner/work/GraphNeuralNetworks.jl/GraphNeuralNetworks.jl/docs" && continue
     endswith(file, ".git") && continue
     rm(file; force = true, recursive = true)
 end
+
 @info "Copying aggregated documentation to $gitroot."
 for file in readdir(outpath)
     cp(joinpath(outpath, file), joinpath(gitroot, file))
 end
+
 rm("/home/runner/work/GraphNeuralNetworks.jl/GraphNeuralNetworks.jl/docs"; force = true, recursive = true)
+
 run(`git add .`)
 if success(`git commit -m 'Aggregate documentation'`)
     @info "Pushing updated documentation."
