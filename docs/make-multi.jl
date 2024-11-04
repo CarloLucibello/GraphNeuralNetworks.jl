@@ -60,6 +60,7 @@ cp(joinpath(@__DIR__, "logo.svg"),
 @warn "Deploying to GitHub as MultiDocumenter" 
 gitroot = normpath(joinpath(@__DIR__, ".."))
 run(`git pull`)
+run(`git stash`)
 outbranch = "dep-multidocs"
 has_outbranch = true
 if !success(`git checkout $outbranch`)
@@ -71,6 +72,7 @@ if !success(`git checkout $outbranch`)
         exit(1)
     end
 end
+run(`git stash apply`)
 for file in readdir(gitroot; join = true)
     endswith(file, ".git") && continue
     rm(file; force = true, recursive = true)
