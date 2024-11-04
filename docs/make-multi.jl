@@ -75,6 +75,7 @@ if !success(`git checkout -f $outbranch`)
 end
 @info "Cleaning up $gitroot."
 for file in readdir(gitroot; join = true)
+    println(file)
     endswith(file, ".git") && continue
     rm(file; force = true, recursive = true)
 end
