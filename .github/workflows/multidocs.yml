@@ -18,9 +18,11 @@ jobs:
       - uses: julia-actions/cache@v2
           
       # Build GNNGraphs docs
+      - name: Set up
+        run: git config --global init.defaultBranch test-multidocs
+
       - name: Install dependencies for GNNGraphs
         run: 
-          git config --global init.defaultBranch test-multidocs
           julia --project=GNNGraphs/docs/ -e '
           using Pkg;
           Pkg.develop(PackageSpec(path=joinpath(pwd(), "GNNGraphs")));
