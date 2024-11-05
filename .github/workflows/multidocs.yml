@@ -103,11 +103,20 @@ jobs:
           else
             echo "GraphNeuralNetworks: objects.inv does not exist!" && exit 1
           fi
-      - name: Build and deploy multidocs
+      - name: Config git
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          julia --project=docs/ docs/make-multi.jl 
+
+      - name: Build multidocs
+        if: github.event_name == 'pull_request'
+        run: |
+          julia --project=docs/ docs/make-multi.jl PR
+
+      - name: Build and deploy multidocs
+        if: github.event_name != 'pull_request'
+        run: |
+          julia --project=docs/ docs/make-multi.jl
