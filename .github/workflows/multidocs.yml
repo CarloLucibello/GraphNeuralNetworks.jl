@@ -3,7 +3,7 @@ name: MultiDocumentation
 on:
   push:
     branches:
-      - fix-workflows
+      - master
     tags: '*'
   pull_request:
 
@@ -18,7 +18,7 @@ jobs:
       - uses: julia-actions/cache@v2
           
       - name: Set up
-        run: git config --global init.defaultBranch fix-workflows
+        run: git config --global init.defaultBranch master
       
       # Build GNNGraphs docs
       - name: Install dependencies for GNNGraphs
