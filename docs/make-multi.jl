@@ -55,7 +55,7 @@ MultiDocumenter.make(
 cp(joinpath(@__DIR__, "logo.svg"),
     joinpath(outpath, "logo.svg"))
 
-if "PR" not in ARGS
+if !("PR" in ARGS)
     @warn "Deploying to GitHub as MultiDocumenter" 
     gitroot = normpath(joinpath(@__DIR__, ".."))
     run(`git pull`)
