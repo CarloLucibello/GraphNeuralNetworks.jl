@@ -1,6 +1,6 @@
 # GraphNeuralNetworks Monorepo
 
-This repository is a monorepo that contains all the code for the GraphNeuralNetworks project. The project is organized as a monorepo to facilitate code sharing and reusability across different components of the project. The monorepo contains the following packages:
+This is the monorepository for the GraphNeuralNetworks project, bringing together all code into a unified structure to facilitate code sharing and reusability across different project components. It contains the following packages:
 
 - `GraphNeuralNetwork.jl`: Package that contains stateful graph convolutional layers based on the machine learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/). This is fronted package for Flux users. It depends on GNNlib.jl, GNNGraphs.jl, and Flux.jl packages.
 
