@@ -27,7 +27,6 @@ and if names are given, `m[:name] == m[1]` etc.
 
 # Examples
 ```jldoctest
-
 julia> using Lux, GNNLux, Random
 
 julia> rng = Random.default_rng();
