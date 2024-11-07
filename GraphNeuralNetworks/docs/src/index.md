@@ -22,7 +22,7 @@ Among its general features:
 * Easy to define custom layers.
 * CUDA support.
 * Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
-* [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/examples) of node, edge, and graph level machine learning tasks. 
+* [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) of node, edge, and graph level machine learning tasks. 
 * Heterogeneous and temporal graphs. 
 
 ## Installation
