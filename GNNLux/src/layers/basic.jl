@@ -35,7 +35,7 @@ julia> m = GNNChain(GCNConv(2=>5),
                     x -> relu.(x), 
                     Dense(5=>4))
 
-julia> x = randn(Float32, 2, 3);
+julia> x = randn(rng, Float32, 2, 3);
 
 julia> g = rand_graph(3, 6)
 GNNGraph:
