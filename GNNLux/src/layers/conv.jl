@@ -74,7 +74,8 @@ y = l(g, x, w, ps, st; norm_fn = custom_norm_fn)
 
 # Edge weights can also be embedded in the graph.
 g = GNNGraph(s, t, w)
-l = GCNConv(3 => 5, use_edge_weight=true) 
+l = GCNConv(3 => 5, use_edge_weight=true)
+ps, st = Lux.setup(rng, l)
 y = l(g, x, ps, st) # same as l(g, x, w) 
 ```
 """
