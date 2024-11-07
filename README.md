@@ -7,12 +7,21 @@
 ![](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl)
 
+This is the monorepository for the GraphNeuralNetworks project, bringing together all code into a unified structure to facilitate code sharing and reusability across different project components. It contains the following packages:
 
-GraphNeuralNetworks.jl is a graph neural network library written in Julia and based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
+- `GraphNeuralNetwork.jl`: Package that contains stateful graph convolutional layers based on the machine learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/). This is fronted package for Flux users. It depends on GNNlib.jl, GNNGraphs.jl, and Flux.jl packages.
 
-Among its features:
+- `GNNLux.jl`: Package that contains stateless graph convolutional layers based on the machine learning framework [Lux.jl](https://lux.csail.mit.edu/stable/). This is fronted package for Lux users. It depends on GNNlib.jl, GNNGraphs.jl, and Lux.jl packages.
 
-* Implements common graph convolutional layers.
+- `GNNlib.jl`: Package that contains the core graph neural network layers and utilities. It depends on GNNGraphs.jl and GNNlib.jl packages and serves for code base for GraphNeuralNetwork.jl and GNNLux.jl packages.
+
+- `GNNGraphs.jl`: Package that contains the graph data structures and helper functions for working with graph data. It depends on Graphs.jl package.
+
+
+
+Among its general features:
+
+* Implements common graph convolutional layers both in stateful and stateless form.
 * Supports computations on batched graphs. 
 * Easy to define custom layers.
 * CUDA support.
@@ -22,15 +31,17 @@ Among its features:
 
 ## Installation
 
-GraphNeuralNetworks.jl is a registered Julia package. You can easily install it through the package manager:
+GraphNeuralNetworks.jl, GNNlib.jl and GNNGraphs.jl are a registered Julia packages. You can easily install a package, for example GraphNeuralNetworks.jl, through the package manager :
 
 ```julia
 pkg> add GraphNeuralNetworks
 ```
 
+
+
 ## Usage
 
-Usage examples can be found in the [examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/examples) and in the [notebooks](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/notebooks) folder. Also, make sure to read the [documentation](https://JuliaGraphs.github.io/GraphNeuralNetworks.jl/dev) for a comprehensive introduction to the library.
+Usage examples can be found in the [examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) and in the [notebooks](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/notebooks) folder. Also, make sure to read the [documentation](https://juliagraphs.org/GraphNeuralNetworks.jl/graphneuralnetworks/) for a comprehensive introduction to the library and the [tutorials](https://juliagraphs.org/GraphNeuralNetworks.jl/tutorials/).
 
 
 ## Citing
