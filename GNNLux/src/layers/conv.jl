@@ -56,7 +56,7 @@ rng = Random.default_rng()
 s = [1,1,2,3]
 t = [2,3,1,1]
 g = GNNGraph(s, t)
-x = randn(Float32, 3, g.num_nodes)
+x = randn(rng, Float32, 3, g.num_nodes)
 
 # create layer
 l = GCNConv(3 => 5) 
