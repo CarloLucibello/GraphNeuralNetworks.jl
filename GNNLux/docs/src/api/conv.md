@@ -21,7 +21,7 @@ The table below lists all graph convolutional layers implemented in the *GNNLux.
 ## Docs
 
 ```@autodocs
-Modules = [GraphNeuralNetworks]
+Modules = [GNNLux]
 Pages   = ["layers/conv.jl"]
 Private = false
 ```
