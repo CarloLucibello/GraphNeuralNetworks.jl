@@ -13,3 +13,15 @@ It supports three types of graphs:
 
 
 This package depends on the package [Graphs.jl] (https://github.com/JuliaGraphs/Graphs.jl).
+
+
+
+## Installation
+
+The package can be installed with the Julia package manager.
+From the Julia REPL, type `]` to enter the Pkg REPL mode and run:
+    
+```julia
+pkg> add GNNGraphs
+```
+
