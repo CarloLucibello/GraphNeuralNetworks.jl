@@ -10,7 +10,7 @@ Pages   = ["temporalsnapshotsgnngraph.jl"]
 Private = false
 ```
 
-### TemporalSnapshotsGNNGraph random generators
+## TemporalSnapshotsGNNGraph random generators
 
 ```@docs
 rand_temporal_radius_graph
