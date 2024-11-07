@@ -32,8 +32,6 @@ julia> using Lux, GNNLux, Random
 
 julia> rng = Random.default_rng();
 
-julia> Random.seed!(rng, 0);
-
 julia> m = GNNChain(GCNConv(2=>5), 
                     x -> relu.(x), 
                     Dense(5=>4))
