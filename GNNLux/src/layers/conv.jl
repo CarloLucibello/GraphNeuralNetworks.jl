@@ -52,7 +52,6 @@ If `conv_weight` is an `AbstractMatrix` of size `[out, in]`, then the convolutio
 using GNNLux, Lux, Random
 # initialize random number generator
 rng = Random.default_rng()
-Random.seed!(rng, 0)
 # create data
 s = [1,1,2,3]
 t = [2,3,1,1]
