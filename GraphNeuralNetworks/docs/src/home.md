@@ -26,7 +26,7 @@ Usage examples on real datasets can be found in the [examples](https://github.co
 We create a dataset consisting in multiple random graphs and associated data features. 
 
 ```julia
-using GraphNeuralNetworks, Graphs, Flux, CUDA, Statistics, MLUtils
+using GraphNeuralNetworks, Flux, CUDA, Statistics, MLUtils
 using Flux: DataLoader
 
 all_graphs = GNNGraph[]
