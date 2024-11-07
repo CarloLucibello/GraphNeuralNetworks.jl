@@ -44,7 +44,7 @@ GNNGraph:
 
 julia> ps, st = LuxCore.setup(rng, m);
 
-julia> m(g,x,ps,st)     # First entry is the output, second entry is the state of the model
+julia> m(g, x, ps, st)     # First entry is the output, second entry is the state of the model
 (Float32[-0.15594329 -0.15594329 -0.15594329; 0.93431795 0.93431795 0.93431795; 0.27568763 0.27568763 0.27568763; 0.12568939 0.12568939 0.12568939], (layer_1 = NamedTuple(), layer_2 = NamedTuple(), layer_3 = NamedTuple()))
 ```
 """
