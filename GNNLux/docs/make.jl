@@ -1,4 +1,5 @@
 using Documenter
+using DocumenterInterLinks
 using GNNlib
 using GNNLux
 
