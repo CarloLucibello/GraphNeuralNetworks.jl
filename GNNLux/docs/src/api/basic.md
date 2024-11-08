@@ -4,5 +4,6 @@ CurrentModule = GNNLux
 
 ## GNNLayer
 ```@docs
-GNNLux.GNNLayer
+GNNLayer
+GNNChain
 ```

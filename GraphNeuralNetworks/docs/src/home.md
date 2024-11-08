@@ -1,8 +1,8 @@
 # GraphNeuralNetworks
 
-This is the documentation page for [GraphNeuralNetworks.jl](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl), a graph neural network library written in Julia and based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
-GraphNeuralNetworks.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/), [Deep Graph Library](https://docs.dgl.ai/),
-and [GeometricFlux.jl](https://fluxml.ai/GeometricFlux.jl/stable/).
+GraphNeuralNetworks.jl is a graph neural network package based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
+
+It provides a set of stateful graph convolutional layers and utilities to build graph neural networks.
 
 Among its features:
 
@@ -11,30 +11,30 @@ Among its features:
 * Easy to define custom layers.
 * CUDA support.
 * Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
-* [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/examples) of node, edge, and graph level machine learning tasks. 
+* [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) of node, edge, and graph level machine learning tasks. 
+* Heterogeneous and temporal graphs.
 
 
 ## Package overview
 
-Let's give a brief overview of the package by solving a  
-graph regression problem with synthetic data. 
+Let's give a brief overview of the package by solving a graph regression problem with synthetic data. 
 
-Usage examples on real datasets can be found in the [examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/examples) folder. 
+Usage examples on real datasets can be found in the [examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) folder. 
 
 ### Data preparation
 
 We create a dataset consisting in multiple random graphs and associated data features. 
 
 ```julia
-using GraphNeuralNetworks, Graphs, Flux, CUDA, Statistics, MLUtils
+using GraphNeuralNetworks, Flux, CUDA, Statistics, MLUtils
 using Flux: DataLoader
 
 all_graphs = GNNGraph[]
 
 for _ in 1:1000
     g = rand_graph(10, 40,  
-            ndata=(; x = randn(Float32, 16,10)),  # input node features
-            gdata=(; y = randn(Float32)))         # regression target   
+            ndata=(; x = randn(Float32, 16,10)),  # Input node features
+            gdata=(; y = randn(Float32)))         # Regression target   
     push!(all_graphs, g)
 end
 ```
@@ -50,7 +50,7 @@ model = GNNChain(GCNConv(16 => 64),
                 BatchNorm(64),     # Apply batch normalization on node features (nodes dimension is batch dimension)
                 x -> relu.(x),     
                 GCNConv(64 => 64, relu),
-                GlobalPool(mean),  # aggregate node-wise features into graph-wise features
+                GlobalPool(mean),  # Aggregate node-wise features into graph-wise features
                 Dense(64, 1)) |> device
 
 opt = Flux.setup(Adam(1f-4), model)

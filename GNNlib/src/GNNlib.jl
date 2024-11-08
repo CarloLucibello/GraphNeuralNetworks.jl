@@ -2,7 +2,7 @@ module GNNlib
 
 using Statistics: mean
 using LinearAlgebra, Random
-using MLUtils: zeros_like
+using MLUtils: zeros_like, ones_like
 using NNlib
 using NNlib: scatter, gather
 using DataStructures: nlargest

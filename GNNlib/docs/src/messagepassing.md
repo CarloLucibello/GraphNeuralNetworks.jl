@@ -134,7 +134,7 @@ function (l::GCN)(g::GNNGraph, x::AbstractMatrix{T}) where T
 end
 ```
 
-See the `GATConv` implementation [here](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/blob/master/src/layers/conv.jl) for a more complex example.
+See the `GATConv` implementation [here](https://juliagraphs.org/GraphNeuralNetworks.jl/graphneuralnetworks/api/conv/) for a more complex example.
 
 
 ## Built-in message functions

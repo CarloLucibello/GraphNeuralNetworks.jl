@@ -1,6 +1,6 @@
 # GNNGraphs.jl
 
-GNNGraphs.jl is a package that provides graph data structures and helper functions specifically designed for working with graph neural networks. This package allows to store not only the graph structure, but also features associated with nodes, edges, and the graph itself. It is the core foundation for the GNNlib, GraphNeuralNetworks, and GNNLux packages.
+GNNGraphs.jl is a package that provides graph data structures and helper functions specifically designed for working with graph neural networks. This package allows to store not only the graph structure, but also features associated with nodes, edges, and the graph itself. It is the core foundation for the GNNlib.jl, GraphNeuralNetworks.jl, and GNNLux.jl packages.
 
 It supports three types of graphs: 
 
@@ -13,3 +13,15 @@ It supports three types of graphs:
 
 
 This package depends on the package [Graphs.jl] (https://github.com/JuliaGraphs/Graphs.jl).
+
+
+
+## Installation
+
+The package can be installed with the Julia package manager.
+From the Julia REPL, type `]` to enter the Pkg REPL mode and run:
+    
+```julia
+pkg> add GNNGraphs
+```
+
