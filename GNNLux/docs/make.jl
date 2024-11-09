@@ -21,12 +21,12 @@ makedocs(;
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
          sitename = "GNNLux.jl",
          pages = ["Home" => "index.md",
-         "Basic" => "api/basic.md"],
+                   "API Reference" => [
+                                    "Basic" => "api/basic.md",
+                                    "Convolutional layers" => "api/conv.md"]]
          )
          
          
-
-
 deploydocs(;repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git",
 devbranch = "master",
 push_preview = true,
