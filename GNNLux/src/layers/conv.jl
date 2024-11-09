@@ -50,8 +50,10 @@ If `conv_weight` is an `AbstractMatrix` of size `[out, in]`, then the convolutio
 
 ```julia
 using GNNLux, Lux, Random
+
 # initialize random number generator
 rng = Random.default_rng()
+
 # create data
 s = [1,1,2,3]
 t = [2,3,1,1]
@@ -135,7 +137,63 @@ function (l::GCNConv)(g, x, edge_weight, ps, st;
     y = GNNlib.gcn_conv(m, g, x, edge_weight, norm_fn, conv_weight)
     return y, st
 end
+@doc raw"""
+    ChebConv(in => out, k; init_weight = glorot_uniform, init_bias = zeros32, use_bias = true)
 
+Chebyshev spectral graph convolutional layer from
+paper [Convolutional Neural Networks on Graphs with Fast Localized Spectral Filtering](https://arxiv.org/abs/1606.09375).
+
+Implements
+
+```math
+X' = \sum^{K-1}_{k=0}  W^{(k)} Z^{(k)}
+```
+
+where ``Z^{(k)}`` is the ``k``-th term of Chebyshev polynomials, and can be calculated by the following recursive form:
+
+```math
+\begin{aligned}
+Z^{(0)} &= X \\
+Z^{(1)} &= \hat{L} X \\
+Z^{(k)} &= 2 \hat{L} Z^{(k-1)} - Z^{(k-2)}
+\end{aligned}
+```
+
+with ``\hat{L}`` the [`scaled_laplacian`](@ref).
+
+# Arguments
+
+- `in`: The dimension of input features.
+- `out`: The dimension of output features.
+- `k`: The order of Chebyshev polynomial.
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+
+# Examples
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+x = randn(rng, Float32, 3, g.num_nodes)
+
+# create layer
+l = ChebConv(3 => 5, 5)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, ps, st)       # size of the output y:  5 × num_nodes
+```
+"""
 @concrete struct ChebConv <: GNNLayer
     in_dims::Int
     out_dims::Int
@@ -180,7 +238,54 @@ function (l::ChebConv)(g, x, ps, st)
     return y, st
 
 end
+@doc raw"""
+    GraphConv(in => out, σ = identity; aggr = +, init_weight = glorot_uniform,init_bias = zeros32, use_bias = true)
 
+Graph convolution layer from Reference: [Weisfeiler and Leman Go Neural: Higher-order Graph Neural Networks](https://arxiv.org/abs/1810.02244).
+
+Performs:
+```math
+\mathbf{x}_i' = W_1 \mathbf{x}_i + \square_{j \in \mathcal{N}(i)} W_2 \mathbf{x}_j
+```
+
+where the aggregation type is selected by `aggr`.
+
+# Arguments
+
+- `in`: The dimension of input features.
+- `out`: The dimension of output features.
+- `σ`: Activation function.
+- `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+
+# Examples
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = randn(rng, Float32, 3, g.num_nodes)
+
+# create layer
+l = GraphConv(in_channel => out_channel, relu, use_bias = false, aggr = mean)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, ps, st)       # size of the output y:  5 × num_nodes
+```
+"""
 @concrete struct GraphConv <: GNNLayer
     in_dims::Int
     out_dims::Int
@@ -237,7 +342,57 @@ function (l::GraphConv)(g, x, ps, st)
     return GNNlib.graph_conv(m, g, x), st
 end
 
+@doc raw"""
+    AGNNConv(; init_beta=1.0f0, trainable=true, add_self_loops=true)
 
+Attention-based Graph Neural Network layer from paper [Attention-based
+Graph Neural Network for Semi-Supervised Learning](https://arxiv.org/abs/1803.03735).
+
+The forward pass is given by
+```math
+\mathbf{x}_i' = \sum_{j \in N(i)} \alpha_{ij} \mathbf{x}_j
+```
+where the attention coefficients ``\alpha_{ij}`` are given by
+```math
+\alpha_{ij} =\frac{e^{\beta \cos(\mathbf{x}_i, \mathbf{x}_j)}}
+                  {\sum_{j'}e^{\beta \cos(\mathbf{x}_i, \mathbf{x}_{j'})}}
+```
+with the cosine distance defined by
+```math 
+\cos(\mathbf{x}_i, \mathbf{x}_j) = 
+  \frac{\mathbf{x}_i \cdot \mathbf{x}_j}{\lVert\mathbf{x}_i\rVert \lVert\mathbf{x}_j\rVert}
+```
+and ``\beta`` a trainable parameter if `trainable=true`.
+
+# Arguments
+
+- `init_beta`: The initial value of ``\beta``. Default 1.0f0.
+- `trainable`: If true, ``\beta`` is trainable. Default `true`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+
+# Examples:
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+
+# create layer
+l = AGNNConv(init_beta=2.0f0)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, ps, st)   
+```
+"""
 @concrete struct AGNNConv <: GNNLayer
     init_beta <: AbstractVector
     add_self_loops::Bool
@@ -272,6 +427,65 @@ function (l::AGNNConv)(g, x::AbstractMatrix, ps, st)
     return GNNlib.agnn_conv(m, g, x), st
 end
 
+@doc raw"""
+    CGConv((in, ein) => out, act = identity; residual = false,
+                use_bias = true, init_weight = glorot_uniform, init_bias = zeros32)
+    CGConv(in => out, ...)
+
+The crystal graph convolutional layer from the paper
+[Crystal Graph Convolutional Neural Networks for an Accurate and
+Interpretable Prediction of Material Properties](https://arxiv.org/pdf/1710.10324.pdf).
+Performs the operation
+
+```math
+\mathbf{x}_i' = \mathbf{x}_i + \sum_{j\in N(i)}\sigma(W_f \mathbf{z}_{ij} + \mathbf{b}_f)\, act(W_s \mathbf{z}_{ij} + \mathbf{b}_s)
+```
+
+where ``\mathbf{z}_{ij}``  is the node and edge features concatenation 
+``[\mathbf{x}_i; \mathbf{x}_j; \mathbf{e}_{j\to i}]`` 
+and ``\sigma`` is the sigmoid function.
+The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
+as the input size.
+
+# Arguments
+
+- `in`: The dimension of input node features.
+- `ein`: The dimension of input edge features. 
+If `ein` is not given, assumes that no edge features are passed as input in the forward pass.
+- `out`: The dimension of output node features.
+- `act`: Activation function.
+- `residual`: Add a residual connection.
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+
+# Examples 
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create random graph
+g = rand_graph(rng, 5, 6)
+x = rand(rng, Float32, 2, g.num_nodes)
+e = rand(rng, Float32, 3, g.num_edges)
+
+l = CGConv((2, 3) => 4, tanh)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, e, ps, st)    # size: (4, num_nodes)
+
+# No edge features
+l = CGConv(2 => 4, tanh)
+ps, st = LuxCore.setup(rng, l)
+y, st = l(g, x, ps, st)    # size: (4, num_nodes)
+```
+"""
 @concrete struct CGConv <: GNNContainerLayer{(:dense_f, :dense_s)}
     in_dims::NTuple{2, Int}
     out_dims::Int
@@ -303,6 +517,49 @@ function (l::CGConv)(g, x, e, ps, st)
     return GNNlib.cg_conv(m, g, x, e), st
 end
 
+@doc raw"""
+    EdgeConv(nn; aggr=max)
+
+Edge convolutional layer from paper [Dynamic Graph CNN for Learning on Point Clouds](https://arxiv.org/abs/1801.07829).
+
+Performs the operation
+```math
+\mathbf{x}_i' = \square_{j \in N(i)}\, nn([\mathbf{x}_i; \mathbf{x}_j - \mathbf{x}_i])
+```
+
+where `nn` generally denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
+
+# Arguments
+
+- `nn`: A (possibly learnable) function. 
+- `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+
+# Examples:
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = rand(rng, Float32, in_channel, g.num_nodes)
+
+# create layer
+l = EdgeConv(Dense(2 * in_channel, out_channel), aggr = +)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, ps, st)
+```
+"""
 @concrete struct EdgeConv <: GNNContainerLayer{(:nn,)}
     nn <: AbstractLuxLayer
     aggr
@@ -325,7 +582,74 @@ function (l::EdgeConv)(g::AbstractGNNGraph, x, ps, st)
     return y, stnew
 end
 
+@doc raw"""
+    EGNNConv((in, ein) => out; hidden_size=2in, residual=false)
+    EGNNConv(in => out; hidden_size=2in, residual=false)
 
+Equivariant Graph Convolutional Layer from [E(n) Equivariant Graph
+Neural Networks](https://arxiv.org/abs/2102.09844).
+
+The layer performs the following operation:
+
+```math
+\begin{aligned}
+\mathbf{m}_{j\to i} &=\phi_e(\mathbf{h}_i, \mathbf{h}_j, \lVert\mathbf{x}_i-\mathbf{x}_j\rVert^2, \mathbf{e}_{j\to i}),\\
+\mathbf{x}_i' &= \mathbf{x}_i + C_i\sum_{j\in\mathcal{N}(i)}(\mathbf{x}_i-\mathbf{x}_j)\phi_x(\mathbf{m}_{j\to i}),\\
+\mathbf{m}_i &= C_i\sum_{j\in\mathcal{N}(i)} \mathbf{m}_{j\to i},\\
+\mathbf{h}_i' &= \mathbf{h}_i + \phi_h(\mathbf{h}_i, \mathbf{m}_i)
+\end{aligned}
+```
+where ``\mathbf{h}_i``, ``\mathbf{x}_i``, ``\mathbf{e}_{j\to i}`` are invariant node features, equivariant node
+features, and edge features respectively. ``\phi_e``, ``\phi_h``, and
+``\phi_x`` are two-layer MLPs. `C` is a constant for normalization,
+computed as ``1/|\mathcal{N}(i)|``.
+
+
+# Constructor Arguments
+
+- `in`: Number of input features for `h`.
+- `out`: Number of output features for `h`.
+- `ein`: Number of input edge features.
+- `hidden_size`: Hidden representation size.
+- `residual`: If `true`, add a residual connection. Only possible if `in == out`. Default `false`.
+
+# Forward Pass 
+
+    l(g, x, h, e=nothing, ps, st)
+                     
+## Forward Pass Arguments:
+
+- `g` : The graph.
+- `x` : Matrix of equivariant node coordinates.
+- `h` : Matrix of invariant node features.
+- `e` : Matrix of invariant edge features. Default `nothing`.
+- `ps` : Parameters.
+- `st` : State.
+
+Returns updated `h` and `x`.
+
+# Examples
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create random graph
+g = rand_graph(rng, 10, 10)
+h = randn(rng, Float32, 5, g.num_nodes)
+x = randn(rng, Float32, 3, g.num_nodes)
+
+egnn = EGNNConv(5 => 6, 10)
+
+# setup layer
+ps, st = LuxCore.setup(rng, egnn)
+
+# forward pass
+(hnew, xnew), st = egnn(g, h, x, ps, st)
+```
+"""
 @concrete struct EGNNConv <: GNNContainerLayer{(:ϕe, :ϕx, :ϕh)}
     ϕe
     ϕx
@@ -386,6 +710,40 @@ function Base.show(io::IO, l::EGNNConv)
     print(io, ")")
 end
 
+"""
+    DConv(in => out, k; init_weight = glorot_uniform, init_bias = zeros32, use_bias = true)
+
+Diffusion convolution layer from the paper [Diffusion Convolutional Recurrent Neural Networks: Data-Driven Traffic Forecasting](https://arxiv.org/pdf/1707.01926).
+
+# Arguments
+
+- `in`: The dimension of input features.
+- `out`: The dimension of output features.
+- `k`: Number of diffusion steps.
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+
+
+# Examples
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create random graph
+g = GNNGraph(rand(rng, 10, 10), ndata = rand(rng, Float32, 2, 10))
+
+dconv = DConv(2 => 4, 4)
+
+# setup layer
+ps, st = LuxCore.setup(rng, dconv)
+
+# forward pass
+y, st = dconv(g, g.ndata.x, ps, st)   # size: (4, num_nodes)
+```
+"""
 @concrete struct DConv <: GNNLayer
     in_dims::Int
     out_dims::Int
@@ -426,6 +784,69 @@ function Base.show(io::IO, l::DConv)
     print(io, "DConv($(l.in_dims) => $(l.out_dims), k=$(l.k))")
 end
 
+@doc raw"""
+    GATConv(in => out, σ = identity; heads = 1, concat = true, negative_slope = 0.2, init_weight = glorot_uniform, init_bias = zeros32, use_bias = true, add_self_loops = true, dropout=0.0)
+    GATConv((in, ein) => out, ...)
+
+Graph attentional layer from the paper [Graph Attention Networks](https://arxiv.org/abs/1710.10903).
+
+Implements the operation
+```math
+\mathbf{x}_i' = \sum_{j \in N(i) \cup \{i\}} \alpha_{ij} W \mathbf{x}_j
+```
+where the attention coefficients ``\alpha_{ij}`` are given by
+```math
+\alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W \mathbf{x}_i; W \mathbf{x}_j]))
+```
+with ``z_i`` a normalization factor. 
+
+In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
+and the attention coefficients will be calculated as  
+```math
+\alpha_{ij} = \frac{1}{z_i} \exp(LeakyReLU(\mathbf{a}^T [W_e \mathbf{e}_{j\to i}; W \mathbf{x}_i; W \mathbf{x}_j]))
+```
+
+# Arguments
+
+- `in`: The dimension of input node features.
+- `ein`: The dimension of input edge features. Default 0 (i.e. no edge features passed in the forward).
+- `out`: The dimension of output node features.
+- `σ`: Activation function. Default `identity`.
+- `heads`: Number attention heads. Default `1`.
+- `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
+- `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+- `dropout`: Dropout probability on the normalized attention coefficient. Default `0.0`.
+
+# Examples
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = randn(rng, Float32, 3, g.num_nodes)
+
+# create layer
+l = GATConv(in_channel => out_channel; add_self_loops = false, use_bias = false, heads=2, concat=true)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, ps, st)       
+```
+"""
 @concrete struct GATConv <: GNNLayer
     dense_x
     dense_e
@@ -498,6 +919,74 @@ function Base.show(io::IO, l::GATConv)
     print(io, ")")
 end
 
+@doc raw"""
+    GATv2Conv(in => out, σ = identity; heads = 1, concat = true, negative_slope = 0.2, init_weight = glorot_uniform, init_bias = zeros32, use_bias = true, add_self_loops = true, dropout=0.0)
+    GATv2Conv((in, ein) => out, ...)
+
+
+GATv2 attentional layer from the paper [How Attentive are Graph Attention Networks?](https://arxiv.org/abs/2105.14491).
+
+Implements the operation
+```math
+\mathbf{x}_i' = \sum_{j \in N(i) \cup \{i\}} \alpha_{ij} W_1 \mathbf{x}_j
+```
+where the attention coefficients ``\alpha_{ij}`` are given by
+```math
+\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU(W_2 \mathbf{x}_i + W_1 \mathbf{x}_j))
+```
+with ``z_i`` a normalization factor.
+
+In case `ein > 0` is given, edge features of dimension `ein` will be expected in the forward pass 
+and the attention coefficients will be calculated as  
+```math
+\alpha_{ij} = \frac{1}{z_i} \exp(\mathbf{a}^T LeakyReLU(W_3 \mathbf{e}_{j\to i} + W_2 \mathbf{x}_i + W_1 \mathbf{x}_j)).
+```
+
+# Arguments
+
+- `in`: The dimension of input node features.
+- `ein`: The dimension of input edge features. Default 0 (i.e. no edge features passed in the forward).
+- `out`: The dimension of output node features.
+- `σ`: Activation function. Default `identity`.
+- `heads`: Number attention heads. Default `1`.
+- `concat`: Concatenate layer output or not. If not, layer output is averaged over the heads. Default `true`.
+- `negative_slope`: The parameter of LeakyReLU.Default `0.2`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `true`.
+- `dropout`: Dropout probability on the normalized attention coefficient. Default `0.0`.
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+
+
+# Examples
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+ein = 3
+g = GNNGraph(s, t)
+x = randn(rng, Float32, 3, g.num_nodes)
+
+# create layer
+l = GATv2Conv((in_channel, ein) => out_channel, add_self_loops = false)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# edge features
+e = randn(rng, Float32, ein, length(s))
+
+# forward pass
+y, st = l(g, x, e, ps, st)    
+```
+"""
 @concrete struct GATv2Conv <: GNNLayer
     dense_i
     dense_j
@@ -588,6 +1077,63 @@ function Base.show(io::IO, l::GATv2Conv)
     print(io, ")")
 end
 
+@doc raw"""
+    SGConv(int => out, k = 1; init_weight = glorot_uniform, init_bias = zeros32, use_bias = true, add_self_loops = true,use_edge_weight = false)
+                                
+SGC layer from [Simplifying Graph Convolutional Networks](https://arxiv.org/pdf/1902.07153.pdf)
+Performs operation
+```math
+H^{K} = (\tilde{D}^{-1/2} \tilde{A} \tilde{D}^{-1/2})^K X \Theta
+```
+where ``\tilde{A}`` is ``A + I``.
+
+# Arguments
+
+- `in`: Number of input features.
+- `out`: Number of output features.
+- `k` : Number of hops k. Default `1`.
+- `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
+- `use_edge_weight`: If `true`, consider the edge weights in the input graph (if available).
+                     If `add_self_loops=true` the new weights will be set to 1. Default `false`.
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+
+
+# Examples
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+x = randn(rng, Float32, 3, g.num_nodes)
+
+# create layer
+l = SGConv(3 => 5; add_self_loops = true) 
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, ps, st)       # size:  5 × num_nodes
+
+# convolution with edge weights
+w = [1.1, 0.1, 2.3, 0.5]
+y = l(g, x, w, ps, st)
+
+# Edge weights can also be embedded in the graph.
+g = GNNGraph(s, t, w)
+l = SGConv(3 => 5, add_self_loops = true, use_edge_weight=true) 
+ps, st = LuxCore.setup(rng, l)
+y, st = l(g, x, ps, st) # same as l(g, x, w) 
+```
+"""
 @concrete struct SGConv <: GNNLayer
     in_dims::Int
     out_dims::Int
@@ -640,6 +1186,54 @@ function (l::SGConv)(g, x, edge_weight, ps, st)
     return y, st
 end
 
+@doc raw"""
+    GatedGraphConv(out, num_layers; 
+            aggr = +, init_weight = glorot_uniform)
+
+Gated graph convolution layer from [Gated Graph Sequence Neural Networks](https://arxiv.org/abs/1511.05493).
+
+Implements the recursion
+```math
+\begin{aligned}
+\mathbf{h}^{(0)}_i &= [\mathbf{x}_i; \mathbf{0}] \\
+\mathbf{h}^{(l)}_i &= GRU(\mathbf{h}^{(l-1)}_i, \square_{j \in N(i)} W \mathbf{h}^{(l-1)}_j)
+\end{aligned}
+```
+
+where ``\mathbf{h}^{(l)}_i`` denotes the ``l``-th hidden variables passing through GRU. The dimension of input ``\mathbf{x}_i`` needs to be less or equal to `out`.
+
+# Arguments
+
+- `out`: The dimension of output features.
+- `num_layers`: The number of recursion steps.
+- `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+
+# Examples:
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+out_channel = 5
+num_layers = 3
+g = GNNGraph(s, t)
+
+# create layer
+l = GatedGraphConv(out_channel, num_layers)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, ps, st)       # size:  out_channel × num_nodes  
+```
+"""
 @concrete struct GatedGraphConv <: GNNLayer
     gru
     init_weight
@@ -647,7 +1241,6 @@ end
     num_layers::Int
     aggr
 end
-
 
 function GatedGraphConv(dims::Int, num_layers::Int; 
             aggr = +, init_weight = glorot_uniform)
@@ -679,6 +1272,51 @@ function Base.show(io::IO, l::GatedGraphConv)
     print(io, ")")
 end
 
+@doc raw"""
+    GINConv(f, ϵ; aggr=+)
+
+Graph Isomorphism convolutional layer from paper [How Powerful are Graph Neural Networks?](https://arxiv.org/pdf/1810.00826.pdf).
+
+Implements the graph convolution
+```math
+\mathbf{x}_i' = f_\Theta\left((1 + \epsilon) \mathbf{x}_i + \sum_{j \in N(i)} \mathbf{x}_j \right)
+```
+where ``f_\Theta`` typically denotes a learnable function, e.g. a linear layer or a multi-layer perceptron.
+
+# Arguments
+
+- `f`: A (possibly learnable) function acting on node features. 
+- `ϵ`: Weighting factor.
+
+# Examples:
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = randn(rng, Float32, in_channel, g.num_nodes)
+
+# create dense layer
+nn = Dense(in_channel, out_channel)
+
+# create layer
+l = GINConv(nn, 0.01f0, aggr = mean)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, ps, st)       # size:  out_channel × num_nodes
+```
+"""
 @concrete struct GINConv <: GNNContainerLayer{(:nn,)}
     nn <: AbstractLuxLayer
     ϵ <: Real
@@ -701,6 +1339,63 @@ function Base.show(io::IO, l::GINConv)
     print(io, ")")
 end
 
+@doc raw"""
+    GMMConv((in, ein) => out, σ=identity; K = 1, residual = false init_weight = glorot_uniform, init_bias = zeros32, use_bias = true)
+
+Graph mixture model convolution layer from the paper [Geometric deep learning on graphs and manifolds using mixture model CNNs](https://arxiv.org/abs/1611.08402)
+Performs the operation
+```math
+\mathbf{x}_i' = \mathbf{x}_i + \frac{1}{|N(i)|} \sum_{j\in N(i)}\frac{1}{K}\sum_{k=1}^K \mathbf{w}_k(\mathbf{e}_{j\to i}) \odot \Theta_k \mathbf{x}_j
+```
+where ``w^a_{k}(e^a)`` for feature `a` and kernel `k` is given by
+```math
+w^a_{k}(e^a) = \exp(-\frac{1}{2}(e^a - \mu^a_k)^T (\Sigma^{-1})^a_k(e^a - \mu^a_k))
+```
+``\Theta_k, \mu^a_k, (\Sigma^{-1})^a_k`` are learnable parameters.
+
+The input to the layer is a node feature array `x` of size `(num_features, num_nodes)` and
+edge pseudo-coordinate array `e` of size `(num_features, num_edges)`
+The residual ``\mathbf{x}_i`` is added only if `residual=true` and the output size is the same 
+as the input size.
+
+# Arguments 
+
+- `in`: Number of input node features.
+- `ein`: Number of input edge features.
+- `out`: Number of output features.
+- `σ`: Activation function. Default `identity`.
+- `K`: Number of kernels. Default `1`.
+- `residual`: Residual conncetion. Default `false`.
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+
+# Examples
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s,t)
+nin, ein, out, K = 4, 10, 7, 8 
+x = randn(rng, Float32, nin, g.num_nodes)
+e = randn(rng, Float32, ein, g.num_edges)
+
+# create layer
+l = GMMConv((nin, ein) => out, K=K)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, e, ps, st)       # size:  out × num_nodes
+```
+"""
 @concrete struct GMMConv <: GNNLayer
     σ
     ch::Pair{NTuple{2, Int}, Int}
@@ -763,6 +1458,50 @@ function Base.show(io::IO, l::GMMConv)
     print(io, ")")
 end
 
+@doc raw"""
+    MEGNetConv(ϕe, ϕv; aggr=mean)
+    MEGNetConv(in => out; aggr=mean)
+
+Convolution from [Graph Networks as a Universal Machine Learning Framework for Molecules and Crystals](https://arxiv.org/pdf/1812.05055.pdf)
+paper. In the forward pass, takes as inputs node features `x` and edge features `e` and returns
+updated features `x'` and `e'` according to 
+
+```math
+\begin{aligned}
+\mathbf{e}_{i\to j}'  = \phi_e([\mathbf{x}_i;\,  \mathbf{x}_j;\,  \mathbf{e}_{i\to j}]),\\
+\mathbf{x}_{i}'  = \phi_v([\mathbf{x}_i;\, \square_{j\in \mathcal{N}(i)}\,\mathbf{e}_{j\to i}']).
+\end{aligned}
+```
+
+`aggr` defines the aggregation to be performed.
+
+If the neural networks `ϕe` and  `ϕv` are not provided, they will be constructed from
+the `in` and `out` arguments instead as multi-layer perceptron with one hidden layer and `relu` 
+activations.
+
+# Examples
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create a random graph
+g = rand_graph(rng, 10, 30)
+x = randn(rng, Float32, 3, 10)
+e = randn(rng, Float32, 3, 30)
+
+# create a MEGNetConv layer
+m = MEGNetConv(3 => 3)
+
+# setup layer
+ps, st = LuxCore.setup(rng, m)
+
+# forward pass
+(x′, e′), st = m(g, x, e, ps, st)
+```
+"""
 @concrete struct MEGNetConv{TE, TV, A} <: GNNContainerLayer{(:ϕe, :ϕv)}
     in_dims::Int
     out_dims::Int
@@ -805,6 +1544,68 @@ function Base.show(io::IO, l::MEGNetConv)
     print(io, ")")
 end
 
+@doc raw"""
+    NNConv(in => out, f, σ=identity; aggr=+, init_bias = zeros32, use_bias = true, init_weight = glorot_uniform)
+
+The continuous kernel-based convolutional operator from the 
+[Neural Message Passing for Quantum Chemistry](https://arxiv.org/abs/1704.01212) paper. 
+This convolution is also known as the edge-conditioned convolution from the 
+[Dynamic Edge-Conditioned Filters in Convolutional Neural Networks on Graphs](https://arxiv.org/abs/1704.02901) paper.
+
+Performs the operation
+
+```math
+\mathbf{x}_i' = W \mathbf{x}_i + \square_{j \in N(i)} f_\Theta(\mathbf{e}_{j\to i})\,\mathbf{x}_j
+```
+
+where ``f_\Theta``  denotes a learnable function (e.g. a linear layer or a multi-layer perceptron).
+Given an input of batched edge features `e` of size `(num_edge_features, num_edges)`, 
+the function `f` will return an batched matrices array whose size is `(out, in, num_edges)`.
+For convenience, also functions returning a single `(out*in, num_edges)` matrix are allowed.
+
+# Arguments
+
+- `in`: The dimension of input node features.
+- `out`: The dimension of output node features.
+- `f`: A (possibly learnable) function acting on edge features.
+- `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+- `σ`: Activation function.
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+
+# Examples:
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+n_in = 3
+n_in_edge = 10
+n_out = 5
+
+s = [1,1,2,3]
+t = [2,3,1,1]
+g = GNNGraph(s, t)
+x = randn(rng, Float32, n_in, g.num_nodes)
+e = randn(rng, Float32, n_in_edge, g.num_edges)
+
+# create dense layer
+nn = Dense(n_in_edge => n_out * n_in)
+
+# create layer
+l = NNConv(n_in => n_out, nn, tanh, use_bias = true, aggr = +)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, e, ps, st)       # size:  n_out × num_nodes 
+```
+"""
 @concrete struct NNConv <: GNNContainerLayer{(:nn,)}
     nn <: AbstractLuxLayer    
     aggr
@@ -866,6 +1667,58 @@ function Base.show(io::IO, l::NNConv)
     print(io, ")")
 end
 
+@doc raw"""
+    ResGatedGraphConv(in => out, act=identity; init_weight = glorot_uniform, init_bias = zeros32, use_bias = true)
+
+The residual gated graph convolutional operator from the [Residual Gated Graph ConvNets](https://arxiv.org/abs/1711.07553) paper.
+
+The layer's forward pass is given by
+
+```math
+\mathbf{x}_i' = act\big(U\mathbf{x}_i + \sum_{j \in N(i)} \eta_{ij} V \mathbf{x}_j\big),
+```
+where the edge gates ``\eta_{ij}`` are given by
+
+```math
+\eta_{ij} = sigmoid(A\mathbf{x}_i + B\mathbf{x}_j).
+```
+
+# Arguments
+
+- `in`: The dimension of input features.
+- `out`: The dimension of output features.
+- `act`: Activation function.
+- `init_weight`: Weights' initializer. Default `glorot_uniform`.
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+
+
+# Examples:
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = randn(rng, Float32, in_channel, g.num_nodes)
+
+# create layer
+l = ResGatedGraphConv(in_channel => out_channel, tanh, use_bias = true)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, ps, st)       # size:  out_channel × num_nodes  
+```
+"""
 @concrete struct ResGatedGraphConv <: GNNLayer
     in_dims::Int
     out_dims::Int
@@ -918,6 +1771,54 @@ function Base.show(io::IO, l::ResGatedGraphConv)
     print(io, ")")
 end
 
+@doc raw"""
+    SAGEConv(in => out, σ=identity; aggr=mean, init_weight = glorot_uniform, init_bias = zeros32, use_bias=true)
+    
+GraphSAGE convolution layer from paper [Inductive Representation Learning on Large Graphs](https://arxiv.org/pdf/1706.02216.pdf).
+
+Performs:
+```math
+\mathbf{x}_i' = W \cdot [\mathbf{x}_i; \square_{j \in \mathcal{N}(i)} \mathbf{x}_j]
+```
+
+where the aggregation type is selected by `aggr`.
+
+# Arguments
+
+- `in`: The dimension of input features.
+- `out`: The dimension of output features.
+- `σ`: Activation function.
+- `aggr`: Aggregation operator for the incoming messages (e.g. `+`, `*`, `max`, `min`, and `mean`).
+- `init_bias`: Bias initializer. Default `zeros32`.
+- `use_bias`: Add learnable bias. Default `true`.
+
+
+# Examples:
+
+```julia
+using GNNLux, Lux, Random
+
+# initialize random number generator
+rng = Random.default_rng()
+
+# create data
+s = [1,1,2,3]
+t = [2,3,1,1]
+in_channel = 3
+out_channel = 5
+g = GNNGraph(s, t)
+x = rand(rng, Float32, in_channel, g.num_nodes)
+
+# create layer
+l = SAGEConv(in_channel => out_channel, tanh, use_bias = false, aggr = +)
+
+# setup layer
+ps, st = LuxCore.setup(rng, l)
+
+# forward pass
+y, st = l(g, x, ps, st)       # size:  out_channel × num_nodes   
+```
+"""
 @concrete struct SAGEConv <: GNNLayer
     in_dims::Int
     out_dims::Int
