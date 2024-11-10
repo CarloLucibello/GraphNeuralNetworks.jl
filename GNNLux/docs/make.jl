@@ -23,7 +23,8 @@ makedocs(;
          pages = ["Home" => "index.md",
                    "API Reference" => [
                                     "Basic" => "api/basic.md",
-                                    "Convolutional layers" => "api/conv.md"]]
+                                    "Convolutional layers" => "api/conv.md",
+                                    "Temporal Convolutional layers" => "api/temporalconv.md",]]
          )
          
          

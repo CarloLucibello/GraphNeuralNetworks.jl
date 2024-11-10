@@ -2,7 +2,8 @@
 CurrentModule = GNNLux
 ```
 
-## GNNLayer
+## Basic Layers
+
 ```@docs
 GNNLayer
 GNNChain
