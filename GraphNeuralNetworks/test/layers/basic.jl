@@ -18,7 +18,7 @@
 
         Flux.testmode!(gnn)
 
-        test_layer(gnn, g, rtol = 1e-5, exclude_grad_fields = [:μ, :σ²])
+        test_gradients(gnn, g, x, rtol = 1e-5)
 
         @testset "constructor with names" begin
             m = GNNChain(GCNConv(din => d),
@@ -53,7 +53,7 @@
 
             Flux.trainmode!(gnn)
 
-            test_layer(gnn, g, rtol = 1e-4, atol=1e-4, exclude_grad_fields = [:μ, :σ²])
+            test_gradients(gnn, g, x, rtol = 1e-4, atol=1e-4)
         end
     end
 

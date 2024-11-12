@@ -19,7 +19,7 @@
         @test u[:, [1]] ≈ sum(g.ndata.x[:, 1:n], dims = 2)
         @test p(g).gdata.u == u
 
-        test_layer(p, g, rtol = 1e-5, exclude_grad_fields = [:aggr], outtype = :graph)
+        test_gradients(p, g, g.x, rtol = 1e-5)
     end
 end
 
@@ -41,7 +41,8 @@ end
                                     graph_type = GRAPH_T)
                         for i in 1:ng])
 
-        test_layer(p, g, rtol = 1e-5, outtype = :graph, outsize = (chout, ng))
+        @test size(p(g, g.x)) == (chout, ng)
+        test_gradients(p, g, g.x, rtol = 1e-5)
     end
 end
 
@@ -83,7 +84,6 @@ end
         @test size(y) == (2 * n_in, g.num_graphs)
         
         ## TODO the numerical gradient seems to be 3 times smaller than zygote one
-        # test_layer(l, g, rtol = 1e-4, atol=1e-4, outtype = :graph, outsize = (2 * n_in, g.num_graphs), 
-        #         verbose=true, exclude_grad_fields = [:state0, :state])
+        # test_gradients(l, g, g.x, rtol = 1e-4, atol=1e-4)
     end
 end
