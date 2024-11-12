@@ -226,3 +226,30 @@ Adapt.adapt_storage(::GNNEltypeAdaptor{T}, x::AbstractArray{<:Integer}) where T 
 Adapt.adapt_storage(::GNNEltypeAdaptor{T}, x::AbstractArray{<:Number}) where T = convert(AbstractArray{T}, x)
 
 _paramtype(::Type{T}, m) where T = fmap(adapt(GNNEltypeAdaptor{T}()), m)
+
+const D_IN = 3
+const D_OUT = 5
+
+function generate_test_graphs()
+    adj1 = [0 1 0 1
+            1 0 1 0
+            0 1 0 1
+            1 0 1 0]
+
+    g1 = GNNGraph(adj1,
+                    ndata = rand(Float32, D_IN, 4),
+                    graph_type = GRAPH_T)
+
+    adj_single_vertex = [0 0 0 1
+                            0 0 0 0
+                            0 0 0 1
+                            1 0 1 0]
+
+    g_single_vertex = GNNGraph(adj_single_vertex,
+                                ndata = rand(Float32, D_IN, 4),
+                                graph_type = GRAPH_T)
+
+    return (g1, g_single_vertex)
+end
+
+const TEST_GRAPHS = generate_test_graphs()
