@@ -4,11 +4,15 @@ using GraphNeuralNetworks
 using Test
 using Statistics, Random
 using Flux, Functors
+using Graphs
 using ChainRulesTestUtils, FiniteDifferences, Zygote, Adapt, CUDA
 CUDA.allowscalar(false)
 
-export Flux, gradient, Dense, Chain, relu # from other packages 
+# from other packages
+export Flux, gradient, Dense, Chain, relu, random_regular_graph, erdos_renyi,
+       BatchNorm, LayerNorm, Dropout, Parallel
 export mean, randn
+# from this module
 export D_IN, D_OUT, test_layer, ngradient, GRAPH_TYPES, TEST_GRAPHS
 
 const D_IN = 3
