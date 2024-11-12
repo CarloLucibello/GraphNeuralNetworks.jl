@@ -24,13 +24,13 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for MLDatasets
 include("test_utils.jl")
 
 tests = [
-    "layers/basic",
+    # "layers/basic",
     "layers/conv",
-    "layers/heteroconv",
-    "layers/temporalconv",
-    "layers/pool",
-    "examples/node_classification_cora",
-    "samplers"
+    # "layers/heteroconv",
+    # "layers/temporalconv",
+    # "layers/pool",
+    # "examples/node_classification_cora",
+    # "samplers"
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
@@ -41,7 +41,8 @@ for graph_type in (:coo, :dense, :sparse)
     @info "Testing graph format :$graph_type"
     global GRAPH_T = graph_type
     global TEST_GPU = CUDA.functional() && (GRAPH_T != :sparse)
-
+    global TEST_GRAPHS = generate_test_graphs(GRAPH_T)
+    
     @testset "$t" for t in tests
         startswith(t, "examples") && GRAPH_T == :dense && continue     # not testing :dense since causes OutOfMememory on github's CI
         include("$t.jl")

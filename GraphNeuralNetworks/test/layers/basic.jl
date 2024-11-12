@@ -74,17 +74,17 @@ end
     wg = WithGraph(model, g)
     # No need to feed the graph to `wg`
     @test wg(x) == model(g, x)
-    @test Flux.params(wg) == Flux.params(model)
+    @test Flux.trainables(wg) == Flux.trainables(model)
     g2 = GNNGraph([1, 1, 2, 3], [2, 4, 1, 1])
     x2 = rand(Float32, 2, 4)
     # WithGraph will ignore the internal graph if fed with a new one. 
     @test wg(g2, x2) == model(g2, x2)
 
     wg = WithGraph(model, g, traingraph = false)
-    @test length(Flux.params(wg)) == length(Flux.params(model))
+    @test length(Flux.trainables(wg)) == length(Flux.trainables(model))
 
     wg = WithGraph(model, g, traingraph = true)
-    @test length(Flux.params(wg)) == length(Flux.params(model)) + length(Flux.params(g))
+    @test length(Flux.trainables(wg)) == length(Flux.trainables(model)) + length(Flux.trainables(g))
 end
 
 @testset "Flux restructure" begin

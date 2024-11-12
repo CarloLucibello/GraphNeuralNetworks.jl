@@ -4,17 +4,17 @@ ATOL_LOW = 1e-3
 
 @testset "GCNConv" begin
     l = GCNConv(D_IN => D_OUT)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 
     l = GCNConv(D_IN => D_OUT, tanh, bias = false)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 
     l = GCNConv(D_IN => D_OUT, add_self_loops = false)
-    test_layer(l, g1, rtol = RTOL_HIGH, outsize = (D_OUT, g1.num_nodes))
+    test_layer(l, TEST_GRAPHS[1], rtol = RTOL_HIGH, outsize = (D_OUT, TEST_GRAPHS[1].num_nodes))
 
     @testset "edge weights & custom normalization" begin
         s = [2, 3, 1, 3, 1, 2]
@@ -57,39 +57,39 @@ end
     @test size(l.weight) == (D_OUT, D_IN, k)
     @test size(l.bias) == (D_OUT,)
     @test l.k == k
-    for g in test_graphs
+    for g in TEST_GRAPHS
         g = add_self_loops(g)
         test_layer(l, g, rtol = RTOL_HIGH, test_gpu = TEST_GPU,
                     outsize = (D_OUT, g.num_nodes))
     end
 
     @testset "bias=false" begin
-        @test length(Flux.params(ChebConv(2 => 3, 3))) == 2
-        @test length(Flux.params(ChebConv(2 => 3, 3, bias = false))) == 1
+        @test length(Flux.trainables(ChebConv(2 => 3, 3))) == 2
+        @test length(Flux.trainables(ChebConv(2 => 3, 3, bias = false))) == 1
     end
 end
 
 @testset "GraphConv" begin
     l = GraphConv(D_IN => D_OUT)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 
     l = GraphConv(D_IN => D_OUT, tanh, bias = false, aggr = mean)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 
     @testset "bias=false" begin
-        @test length(Flux.params(GraphConv(2 => 3))) == 3
-        @test length(Flux.params(GraphConv(2 => 3, bias = false))) == 2
+        @test length(Flux.trainables(GraphConv(2 => 3))) == 3
+        @test length(Flux.trainables(GraphConv(2 => 3, bias = false))) == 2
     end
 end
 
 @testset "GATConv" begin
     for heads in (1, 2), concat in (true, false)
         l = GATConv(D_IN => D_OUT; heads, concat, dropout=0)
-        for g in test_graphs
+        for g in TEST_GRAPHS
             test_layer(l, g, rtol = RTOL_LOW,
                         exclude_grad_fields = [:negative_slope, :dropout],
                         outsize = (concat ? heads * D_OUT : D_OUT,
@@ -100,7 +100,7 @@ end
     @testset "edge features" begin
         ein = 3
         l = GATConv((D_IN, ein) => D_OUT, add_self_loops = false, dropout=0)
-        g = GNNGraph(g1, edata = rand(Float32, ein, g1.num_edges))
+        g = GNNGraph(TEST_GRAPHS[1], edata = rand(Float32, ein, TEST_GRAPHS[1].num_edges))
         test_layer(l, g, rtol = RTOL_LOW,
                     exclude_grad_fields = [:negative_slope, :dropout],
                     outsize = (D_OUT, g.num_nodes))
@@ -108,18 +108,18 @@ end
 
     @testset "num params" begin
         l = GATConv(2 => 3, add_self_loops = false)
-        @test length(Flux.params(l)) == 3
+        @test length(Flux.trainables(l)) == 3
         l = GATConv((2, 4) => 3, add_self_loops = false)
-        @test length(Flux.params(l)) == 4
+        @test length(Flux.trainables(l)) == 4
         l = GATConv((2, 4) => 3, add_self_loops = false, bias = false)
-        @test length(Flux.params(l)) == 3
+        @test length(Flux.trainables(l)) == 3
     end
 end
 
 @testset "GATv2Conv" begin
     for heads in (1, 2), concat in (true, false)
         l = GATv2Conv(D_IN => D_OUT, tanh; heads, concat, dropout=0)
-        for g in test_graphs
+        for g in TEST_GRAPHS
             test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
                         exclude_grad_fields = [:negative_slope, :dropout],
                         outsize = (concat ? heads * D_OUT : D_OUT,
@@ -130,7 +130,7 @@ end
     @testset "edge features" begin
         ein = 3
         l = GATv2Conv((D_IN, ein) => D_OUT, add_self_loops = false, dropout=0)
-        g = GNNGraph(g1, edata = rand(Float32, ein, g1.num_edges))
+        g = GNNGraph(TEST_GRAPHS[1], edata = rand(Float32, ein, TEST_GRAPHS[1].num_edges))
         test_layer(l, g, rtol = RTOL_LOW, atol=ATOL_LOW,
                     exclude_grad_fields = [:negative_slope, :dropout],
                     outsize = (D_OUT, g.num_nodes))
@@ -138,11 +138,11 @@ end
 
     @testset "num params" begin
         l = GATv2Conv(2 => 3, add_self_loops = false)
-        @test length(Flux.params(l)) == 5
+        @test length(Flux.trainables(l)) == 5
         l = GATv2Conv((2, 4) => 3, add_self_loops = false)
-        @test length(Flux.params(l)) == 6
+        @test length(Flux.trainables(l)) == 6
         l = GATv2Conv((2, 4) => 3, add_self_loops = false, bias = false)
-        @test length(Flux.params(l)) == 4
+        @test length(Flux.trainables(l)) == 4
     end
 end
 
@@ -151,14 +151,14 @@ end
     l = GatedGraphConv(D_OUT, num_layers)
     @test size(l.weight) == (D_OUT, D_OUT, num_layers)
 
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 end
 
 @testset "EdgeConv" begin
     l = EdgeConv(Dense(2 * D_IN, D_OUT), aggr = +)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 end
@@ -167,7 +167,7 @@ end
     nn = Dense(D_IN, D_OUT)
 
     l = GINConv(nn, 0.01f0, aggr = mean)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 
@@ -179,7 +179,7 @@ end
     nn = Dense(edim, D_OUT * D_IN)
 
     l = NNConv(D_IN => D_OUT, nn, tanh, bias = true, aggr = +)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges))
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
@@ -190,14 +190,14 @@ end
     @test l.aggr == mean
 
     l = SAGEConv(D_IN => D_OUT, tanh, bias = false, aggr = +)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 end
 
 @testset "ResGatedGraphConv" begin
     l = ResGatedGraphConv(D_IN => D_OUT, tanh, bias = true)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 end
@@ -205,13 +205,14 @@ end
 @testset "CGConv" begin
     edim = 10
     l = CGConv((D_IN, edim) => D_OUT, tanh, residual = false, bias = true)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges))
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 
     # no edge features
     l1 = CGConv(D_IN => D_OUT, tanh, residual = false, bias = true)
+    g1 = TEST_GRAPHS[1]
     @test l1(g1, g1.ndata.x) == l1(g1).ndata.x
     @test l1(g1, g1.ndata.x, nothing) == l1(g1).ndata.x
 end
@@ -228,14 +229,14 @@ end
     @test l.add_self_loops == true
     @test l.trainable == true 
     Flux.trainable(l) == (; β = [1f0])
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_IN, g.num_nodes))
     end
 end
 
 @testset "MEGNetConv" begin
     l = MEGNetConv(D_IN => D_OUT, aggr = +)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         g = GNNGraph(g, edata = rand(Float32, D_IN, g.num_edges))
         test_layer(l, g, rtol = RTOL_LOW,
                     outtype = :node_edge,
@@ -247,7 +248,7 @@ end
     ein_channel = 10
     K = 5
     l = GMMConv((D_IN, ein_channel) => D_OUT, K = K)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         g = GNNGraph(g, edata = rand(Float32, ein_channel, g.num_edges))
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
@@ -257,12 +258,12 @@ end
     K = [1, 2, 3] # for different number of hops       
     for k in K
         l = SGConv(D_IN => D_OUT, k, add_self_loops = true)
-        for g in test_graphs
+        for g in TEST_GRAPHS
             test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
         end
 
         l = SGConv(D_IN => D_OUT, k, add_self_loops = true)
-        for g in test_graphs
+        for g in TEST_GRAPHS
             test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
         end
     end
@@ -272,12 +273,12 @@ end
     K = [1, 2, 3]
     for k in K
         l = TAGConv(D_IN => D_OUT, k, add_self_loops = true)
-        for g in test_graphs
+        for g in TEST_GRAPHS
             test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
         end
 
         l = TAGConv(D_IN => D_OUT, k, add_self_loops = true)
-        for g in test_graphs
+        for g in TEST_GRAPHS
             test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
         end
     end
@@ -313,7 +314,7 @@ end
     # used like in Shi et al., 2021 
     l = TransformerConv((D_IN, ein) => D_IN; heads, gating = true,
                         bias_qkv = true)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         g = GNNGraph(g, edata = rand(Float32, ein, g.num_edges))
         test_layer(l, g, rtol = RTOL_LOW,
                     exclude_grad_fields = [:negative_slope],
@@ -323,7 +324,7 @@ end
     l = TransformerConv(D_IN => D_IN; heads, concat = false,
                         bias_root = false,
                         root_weight = false)
-    for g in test_graphs
+    for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_LOW,
                     exclude_grad_fields = [:negative_slope],
                     outsize = (D_IN, g.num_nodes))
@@ -334,7 +335,7 @@ end
     K = [1, 2, 3] # for different number of hops       
     for k in K
         l = DConv(D_IN => D_OUT, k)
-        for g in test_graphs
+        for g in TEST_GRAPHS
             test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
         end
     end

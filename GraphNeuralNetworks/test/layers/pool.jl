@@ -29,7 +29,7 @@ end
     fgate = Dense(chin, 1)
     ffeat = Dense(chin, chout)
     p = GlobalAttentionPool(fgate, ffeat)
-    @test length(Flux.params(p)) == 4
+    @test length(Flux.trainables(p)) == 4
 
     g = Flux.batch([GNNGraph(random_regular_graph(n, 4),
                                 ndata = rand(Float32, chin, n),

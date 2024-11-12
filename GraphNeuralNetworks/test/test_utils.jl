@@ -1,6 +1,9 @@
 using ChainRulesTestUtils, FiniteDifferences, Zygote, Adapt, CUDA
 CUDA.allowscalar(false)
 
+const D_IN = 3
+const D_OUT = 5
+
 function ngradient(f, x...)
     fdm = central_fdm(5, 1)
     return FiniteDifferences.grad(fdm, f, x...)
@@ -227,18 +230,15 @@ Adapt.adapt_storage(::GNNEltypeAdaptor{T}, x::AbstractArray{<:Number}) where T =
 
 _paramtype(::Type{T}, m) where T = fmap(adapt(GNNEltypeAdaptor{T}()), m)
 
-const D_IN = 3
-const D_OUT = 5
-
-function generate_test_graphs()
+function generate_test_graphs(graph_type)
     adj1 = [0 1 0 1
             1 0 1 0
             0 1 0 1
             1 0 1 0]
 
     g1 = GNNGraph(adj1,
-                    ndata = rand(Float32, D_IN, 4),
-                    graph_type = GRAPH_T)
+                    ndata = rand(Float32, D_IN, 4);
+                    graph_type)
 
     adj_single_vertex = [0 0 0 1
                             0 0 0 0
@@ -246,10 +246,8 @@ function generate_test_graphs()
                             1 0 1 0]
 
     g_single_vertex = GNNGraph(adj_single_vertex,
-                                ndata = rand(Float32, D_IN, 4),
-                                graph_type = GRAPH_T)
+                                ndata = rand(Float32, D_IN, 4);
+                                graph_type)
 
     return (g1, g_single_vertex)
 end
-
-const TEST_GRAPHS = generate_test_graphs()
