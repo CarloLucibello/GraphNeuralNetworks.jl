@@ -65,6 +65,17 @@ end
     end
 end
 
+
+@testitem "GCNConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    l = GCNConv(D_IN => D_OUT)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
+end
+
 @testitem "ChebConv" setup=[TolSnippet, TestModule] begin
     using .TestModule
     k = 2
@@ -82,6 +93,18 @@ end
         @test length(Flux.trainables(ChebConv(2 => 3, 3))) == 2
         @test length(Flux.trainables(ChebConv(2 => 3, 3, bias = false))) == 1
     end
+end
+
+
+@testitem "ChebConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    k = 2
+    l = ChebConv(D_IN => D_OUT, k)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_LOW, test_gpu = true, compare_finite_diff = false)
+    end   
 end
 
 @testitem "GraphConv" setup=[TolSnippet, TestModule] begin
@@ -103,6 +126,18 @@ end
         @test length(Flux.trainables(GraphConv(2 => 3, bias = false))) == 2
     end
 end
+
+
+@testitem "GraphConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    l = GraphConv(D_IN => D_OUT)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
+end
+
 
 @testitem "GATConv" setup=[TolSnippet, TestModule] begin
     using .TestModule
@@ -129,6 +164,18 @@ end
         @test length(Flux.trainables(l)) == 4
         l = GATConv((2, 4) => 3, add_self_loops = false, bias = false)
         @test length(Flux.trainables(l)) == 3
+    end
+end
+
+@testitem "GATConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    for heads in (1, 2), concat in (true, false)
+        l = GATConv(D_IN => D_OUT; heads, concat, dropout=0)
+        for g in TEST_GRAPHS
+            g.graph isa AbstractSparseMatrix && continue
+            @test size(l(g, g.x)) == (concat ? heads * D_OUT : D_OUT, g.num_nodes)
+            test_gradients(l, g, g.x, rtol = RTOL_LOW, test_gpu = true, compare_finite_diff = false)
+        end
     end
 end
 
@@ -160,6 +207,18 @@ end
     end
 end
 
+@testitem "GATv2Conv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    for heads in (1, 2), concat in (true, false)
+        l = GATv2Conv(D_IN => D_OUT, tanh; heads, concat, dropout=0)
+        for g in TEST_GRAPHS
+            g.graph isa AbstractSparseMatrix && continue
+            @test size(l(g, g.x)) == (concat ? heads * D_OUT : D_OUT, g.num_nodes)
+            test_gradients(l, g, g.x, rtol = RTOL_LOW, atol=ATOL_LOW, test_gpu = true, compare_finite_diff = false)
+        end
+    end
+end
+
 @testitem "GatedGraphConv" setup=[TolSnippet, TestModule] begin
     using .TestModule
     num_layers = 3
@@ -170,6 +229,18 @@ end
         @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
         test_gradients(l, g, g.x, rtol = RTOL_HIGH)
     end
+end
+
+
+@testitem "GatedGraphConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    num_layers = 3
+    l = GatedGraphConv(D_OUT, num_layers)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
 end
 
 @testitem "EdgeConv" setup=[TolSnippet, TestModule] begin
@@ -192,6 +263,30 @@ end
     end
 
     @test !in(:eps, Flux.trainable(l))
+end
+
+@testitem "GINConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    nn = Dense(D_IN, D_OUT)
+    l = GINConv(nn, 0.01, aggr = mean)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
+end
+
+@testitem "NNConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
+    edim = 10
+    nn = Dense(edim, D_OUT * D_IN)
+
+    l = NNConv(D_IN => D_OUT, nn, tanh, bias = true, aggr = +)
+    for g in TEST_GRAPHS
+        g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges))
+        @test size(l(g, g.x, g.e)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, g.e, rtol = RTOL_HIGH)
+    end
 end
 
 @testitem "NNConv" setup=[TolSnippet, TestModule] begin
@@ -219,6 +314,16 @@ end
     end
 end
 
+@testitem "SAGEConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    l = SAGEConv(D_IN => D_OUT)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
+end
+
 @testitem "ResGatedGraphConv" setup=[TolSnippet, TestModule] begin
     using .TestModule
     l = ResGatedGraphConv(D_IN => D_OUT, tanh, bias = true)
@@ -226,6 +331,16 @@ end
         @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
         test_gradients(l, g, g.x, rtol = RTOL_HIGH)
     end
+end
+
+@testitem "ResGatedGraphConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    l = ResGatedGraphConv(D_IN => D_OUT, tanh, bias = true)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
 end
 
 @testitem "CGConv" setup=[TolSnippet, TestModule] begin
@@ -244,6 +359,17 @@ end
     g1 = TEST_GRAPHS[1]
     @test l1(g1, g1.ndata.x) == l1(g1).ndata.x
     @test l1(g1, g1.ndata.x, nothing) == l1(g1).ndata.x
+end
+
+@testitem "CGConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    edim = 10
+    l = CGConv((D_IN, edim) => D_OUT, tanh, residual = false, bias = true)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x, g.e)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, g.e, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
 end
 
 @testitem "AGNNConv" setup=[TolSnippet, TestModule] begin
@@ -265,6 +391,16 @@ end
     end
 end
 
+@testitem "AGNNConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    l = AGNNConv(trainable=false, add_self_loops=false)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_IN, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
+end
+
 @testitem "MEGNetConv" setup=[TolSnippet, TestModule] begin
     using .TestModule
     l = MEGNetConv(D_IN => D_OUT, aggr = +)
@@ -281,6 +417,22 @@ end
     end
 end
 
+@testitem "MEGNetConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    l = MEGNetConv(D_IN => D_OUT, aggr = +)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        y = l(g, g.x, g.e)
+        @test size(y[1]) == (D_OUT, g.num_nodes)
+        @test size(y[2]) == (D_OUT, g.num_edges)
+        function loss(l, g, x, e)
+            y = l(g, x, e)
+            return mean(y[1]) + sum(y[2])
+        end
+        test_gradients(l, g, g.x, g.e, rtol = RTOL_LOW; loss, test_gpu = true, compare_finite_diff = false)
+    end   
+end
+
 @testitem "GMMConv" setup=[TolSnippet, TestModule] begin
     using .TestModule
     ein_channel = 10
@@ -291,6 +443,18 @@ end
         y = l(g, g.x, g.e)
         test_gradients(l, g, g.x, g.e, rtol = RTOL_HIGH)
     end
+end
+
+@testitem "GMMConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    ein_channel = 10
+    K = 5
+    l = GMMConv((D_IN, ein_channel) => D_OUT, K = K)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        y = l(g, g.x, g.e)
+        test_gradients(l, g, g.x, g.e, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
 end
 
 @testitem "SGConv" setup=[TolSnippet, TestModule] begin
@@ -308,6 +472,17 @@ end
             @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
             test_gradients(l, g, g.x, rtol = RTOL_HIGH)
         end
+    end
+end
+
+@testitem "SGConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    k = 2
+    l = SGConv(D_IN => D_OUT, k, add_self_loops = true)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
     end
 end
 
@@ -329,9 +504,21 @@ end
     end
 end
 
+@testitem "TAGConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    k = 2
+    l = TAGConv(D_IN => D_OUT, k, add_self_loops = true)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end
+end
+
 @testitem "EGNNConv" setup=[TolSnippet, TestModule] begin
     using .TestModule
     #TODO test gradient
+    #TODO test gpu
     @testset "EGNNConv $GRAPH_T" for GRAPH_T in GRAPH_TYPES
         hin = 5
         hout = 5
@@ -378,6 +565,22 @@ end
     end
 end
 
+@testitem "TransformerConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    ein = 2
+    heads = 3
+
+    # used like in Shi et al., 2021 
+    l = TransformerConv((D_IN, ein) => D_IN; heads, gating = true,
+                        bias_qkv = true)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x, g.e)) == (D_IN * heads, g.num_nodes)
+        test_gradients(l, g, g.x, g.e, rtol = RTOL_LOW, test_gpu = true, compare_finite_diff = false)
+    end
+end
+
+
 @testitem "DConv" setup=[TolSnippet, TestModule] begin
     using .TestModule
     K = [1, 2, 3] # for different number of hops       
@@ -388,4 +591,14 @@ end
             test_gradients(l, g, g.x, rtol = RTOL_HIGH)
         end
     end
+end
+
+@testitem "DConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    l = DConv(D_IN => D_OUT, 2)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
 end

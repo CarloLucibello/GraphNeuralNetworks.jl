@@ -5,17 +5,39 @@ using Test
 using Statistics, Random
 using Flux, Functors
 using Graphs
-using ChainRulesTestUtils, FiniteDifferences, Zygote, Adapt, CUDA
-CUDA.allowscalar(false)
+using ChainRulesTestUtils, FiniteDifferences, Zygote, Adapt
+using SparseArrays
+using Pkg
+
+## Uncomment below to change the default test settings
+# ENV["GNN_TEST_CPU"] = "false"
+# ENV["GNN_TEST_CUDA"] = "true"
+# ENV["GNN_TEST_AMDGPU"] = "true"
+# ENV["GNN_TEST_Metal"] = "true"
+
+if get(ENV, "GNN_TEST_CUDA", "false") == "true"
+    Pkg.add(["CUDA", "cuDNN"])
+    using CUDA
+    CUDA.allowscalar(false)
+end
+if get(ENV, "GNN_TEST_AMDGPU", "false") == "true"
+    Pkg.add("AMDGPU")
+    using AMDGPU
+end
+if get(ENV, "GNN_TEST_Metal", "true") == "true"
+    Pkg.add("Metal")
+    using Metal
+end
 
 # from other packages
 export Flux, gradient, Dense, Chain, relu, random_regular_graph, erdos_renyi,
        BatchNorm, LayerNorm, Dropout, Parallel
-export mean, randn
+export mean, randn, SparseArrays, AbstractSparseMatrix
 # from this module
 export D_IN, D_OUT, GRAPH_TYPES, TEST_GRAPHS,
        test_gradients, finitediff_withgradient, 
        check_equal_leaves
+
 
 const D_IN = 3
 const D_OUT = 5
