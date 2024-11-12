@@ -1,4 +1,5 @@
-@testset "HeteroGraphConv" begin
+@testitem "HeteroGraphConv" setup=[TestModule] begin
+    using .TestModule
     d, n = 3, 5
     g = rand_bipartite_heterograph((n, 2*n), 15)
     hg = rand_bipartite_heterograph((2,3), 6)

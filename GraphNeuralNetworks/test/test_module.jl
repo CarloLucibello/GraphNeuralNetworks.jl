@@ -1,5 +1,15 @@
+@testmodule TestModule begin
+
+using GraphNeuralNetworks
+using Test
+using Statistics, Random
+using Flux, Functors
 using ChainRulesTestUtils, FiniteDifferences, Zygote, Adapt, CUDA
 CUDA.allowscalar(false)
+
+export Flux, gradient, Dense, Chain, relu # from other packages 
+export mean, randn
+export D_IN, D_OUT, test_layer, ngradient, GRAPH_TYPES, TEST_GRAPHS
 
 const D_IN = 3
 const D_OUT = 5
@@ -27,7 +37,7 @@ end
 function test_layer(l, g::GNNGraph; atol = 1e-5, rtol = 1e-5,
                     exclude_grad_fields = [],
                     verbose = false,
-                    test_gpu = TEST_GPU,
+                    test_gpu = false,
                     outsize = nothing,
                     outtype = :node)
 
@@ -251,3 +261,11 @@ function generate_test_graphs(graph_type)
 
     return (g1, g_single_vertex)
 end
+
+GRAPH_TYPES = [:coo, :dense, :sparse]
+TEST_GRAPHS = [generate_test_graphs(:coo)...,
+               generate_test_graphs(:dense)...,
+               generate_test_graphs(:sparse)...]
+
+end # testmodule
+

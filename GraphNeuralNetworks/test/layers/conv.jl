@@ -1,8 +1,11 @@
-RTOL_LOW = 1e-2
-RTOL_HIGH = 1e-5
-ATOL_LOW = 1e-3
+@testsnippet TolSnippet begin
+    RTOL_LOW = 1e-2
+    RTOL_HIGH = 1e-5
+    ATOL_LOW = 1e-3
+end
 
-@testset "GCNConv" begin
+@testitem "GCNConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     l = GCNConv(D_IN => D_OUT)
     for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
@@ -16,7 +19,7 @@ ATOL_LOW = 1e-3
     l = GCNConv(D_IN => D_OUT, add_self_loops = false)
     test_layer(l, TEST_GRAPHS[1], rtol = RTOL_HIGH, outsize = (D_OUT, TEST_GRAPHS[1].num_nodes))
 
-    @testset "edge weights & custom normalization" begin
+    @testset "edge weights & custom normalization $GRAPH_T" for GRAPH_T in GRAPH_TYPES
         s = [2, 3, 1, 3, 1, 2]
         t = [1, 1, 2, 2, 3, 3]
         w = Float32[1, 2, 3, 4, 5, 6]
@@ -41,7 +44,7 @@ ATOL_LOW = 1e-3
     end
 
     @testset "conv_weight" begin
-         l = GraphNeuralNetworks.GCNConv(D_IN => D_OUT)
+        l = GraphNeuralNetworks.GCNConv(D_IN => D_OUT)
         w = zeros(Float32, D_OUT, D_IN)
         g1 = GNNGraph(TEST_GRAPHS[1], ndata = ones(Float32, D_IN, 4))
         @test l(g1, g1.ndata.x, conv_weight = w) == zeros(Float32, D_OUT, 4)
@@ -51,7 +54,8 @@ ATOL_LOW = 1e-3
     end
 end
 
-@testset "ChebConv" begin
+@testitem "ChebConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     k = 2
     l = ChebConv(D_IN => D_OUT, k)
     @test size(l.weight) == (D_OUT, D_IN, k)
@@ -59,8 +63,7 @@ end
     @test l.k == k
     for g in TEST_GRAPHS
         g = add_self_loops(g)
-        test_layer(l, g, rtol = RTOL_HIGH, test_gpu = TEST_GPU,
-                    outsize = (D_OUT, g.num_nodes))
+        test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 
     @testset "bias=false" begin
@@ -69,7 +72,8 @@ end
     end
 end
 
-@testset "GraphConv" begin
+@testitem "GraphConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     l = GraphConv(D_IN => D_OUT)
     for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
@@ -86,7 +90,8 @@ end
     end
 end
 
-@testset "GATConv" begin
+@testitem "GATConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     for heads in (1, 2), concat in (true, false)
         l = GATConv(D_IN => D_OUT; heads, concat, dropout=0)
         for g in TEST_GRAPHS
@@ -116,7 +121,8 @@ end
     end
 end
 
-@testset "GATv2Conv" begin
+@testitem "GATv2Conv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     for heads in (1, 2), concat in (true, false)
         l = GATv2Conv(D_IN => D_OUT, tanh; heads, concat, dropout=0)
         for g in TEST_GRAPHS
@@ -146,7 +152,8 @@ end
     end
 end
 
-@testset "GatedGraphConv" begin
+@testitem "GatedGraphConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     num_layers = 3
     l = GatedGraphConv(D_OUT, num_layers)
     @test size(l.weight) == (D_OUT, D_OUT, num_layers)
@@ -156,14 +163,16 @@ end
     end
 end
 
-@testset "EdgeConv" begin
+@testitem "EdgeConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     l = EdgeConv(Dense(2 * D_IN, D_OUT), aggr = +)
     for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 end
 
-@testset "GINConv" begin
+@testitem "GINConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     nn = Dense(D_IN, D_OUT)
 
     l = GINConv(nn, 0.01f0, aggr = mean)
@@ -174,7 +183,8 @@ end
     @test !in(:eps, Flux.trainable(l))
 end
 
-@testset "NNConv" begin
+@testitem "NNConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     edim = 10
     nn = Dense(edim, D_OUT * D_IN)
 
@@ -185,7 +195,8 @@ end
     end
 end
 
-@testset "SAGEConv" begin
+@testitem "SAGEConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     l = SAGEConv(D_IN => D_OUT)
     @test l.aggr == mean
 
@@ -195,14 +206,17 @@ end
     end
 end
 
-@testset "ResGatedGraphConv" begin
+@testitem "ResGatedGraphConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     l = ResGatedGraphConv(D_IN => D_OUT, tanh, bias = true)
     for g in TEST_GRAPHS
         test_layer(l, g, rtol = RTOL_HIGH, outsize = (D_OUT, g.num_nodes))
     end
 end
 
-@testset "CGConv" begin
+@testitem "CGConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
+
     edim = 10
     l = CGConv((D_IN, edim) => D_OUT, tanh, residual = false, bias = true)
     for g in TEST_GRAPHS
@@ -217,7 +231,8 @@ end
     @test l1(g1, g1.ndata.x, nothing) == l1(g1).ndata.x
 end
 
-@testset "AGNNConv" begin
+@testitem "AGNNConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     l = AGNNConv(trainable=false, add_self_loops=false)
     @test l.β == [1.0f0]
     @test l.add_self_loops == false
@@ -234,7 +249,8 @@ end
     end
 end
 
-@testset "MEGNetConv" begin
+@testitem "MEGNetConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     l = MEGNetConv(D_IN => D_OUT, aggr = +)
     for g in TEST_GRAPHS
         g = GNNGraph(g, edata = rand(Float32, D_IN, g.num_edges))
@@ -244,7 +260,8 @@ end
     end
 end
 
-@testset "GMMConv" begin
+@testitem "GMMConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     ein_channel = 10
     K = 5
     l = GMMConv((D_IN, ein_channel) => D_OUT, K = K)
@@ -254,7 +271,8 @@ end
     end
 end
 
-@testset "SGConv" begin
+@testitem "SGConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     K = [1, 2, 3] # for different number of hops       
     for k in K
         l = SGConv(D_IN => D_OUT, k, add_self_loops = true)
@@ -269,7 +287,8 @@ end
     end
 end
 
-@testset "TAGConv" begin
+@testitem "TAGConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     K = [1, 2, 3]
     for k in K
         l = TAGConv(D_IN => D_OUT, k, add_self_loops = true)
@@ -284,20 +303,25 @@ end
     end
 end
 
-@testset "EGNNConv" begin
-    hin = 5
-    hout = 5
-    hidden = 5
-    l = EGNNConv(hin => hout, hidden)
-    g = rand_graph(10, 20, graph_type = GRAPH_T)
-    x = rand(Float32, D_IN, g.num_nodes)
-    h = randn(Float32, hin, g.num_nodes)
-    hnew, xnew = l(g, h, x)
-    @test size(hnew) == (hout, g.num_nodes)
-    @test size(xnew) == (D_IN, g.num_nodes)
+@testitem "EGNNConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
+    #TODO test gradient
+    @testset "EGNNConv $GRAPH_T" for GRAPH_T in GRAPH_TYPES
+        hin = 5
+        hout = 5
+        hidden = 5
+        l = EGNNConv(hin => hout, hidden)
+        g = rand_graph(10, 20, graph_type = GRAPH_T)
+        x = rand(Float32, D_IN, g.num_nodes)
+        h = randn(Float32, hin, g.num_nodes)
+        hnew, xnew = l(g, h, x)
+        @test size(hnew) == (hout, g.num_nodes)
+        @test size(xnew) == (D_IN, g.num_nodes)
+    end
 end
 
-@testset "TransformerConv" begin
+@testitem "TransformerConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     ein = 2
     heads = 3
     # used like in Kool et al., 2019
@@ -306,7 +330,7 @@ end
                         batch_norm = false)
     # batch_norm=false here for tests to pass; true in paper
     for g in TEST_GRAPHS
-        g = GNNGraph(g, ndata = rand(Float32, D_IN * heads, g.num_nodes), graph_type = GRAPH_T)
+        g = GNNGraph(g, ndata = rand(Float32, D_IN * heads, g.num_nodes))
         test_layer(l, g, rtol = RTOL_LOW,
                     exclude_grad_fields = [:negative_slope],
                     outsize = (D_IN * heads, g.num_nodes))
@@ -331,7 +355,8 @@ end
     end
 end
 
-@testset "DConv" begin
+@testitem "DConv" setup=[TolSnippet, TestModule] begin
+    using .TestModule
     K = [1, 2, 3] # for different number of hops       
     for k in K
         l = DConv(D_IN => D_OUT, k)
