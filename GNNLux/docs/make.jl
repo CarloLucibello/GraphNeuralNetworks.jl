@@ -28,7 +28,4 @@ makedocs(;
          )
          
          
-deploydocs(;repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git",
-devbranch = "master",
-push_preview = true,
-dirname = "GNNLux")
+deploydocs(;repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git", devbranch = "master", dirname = "GNNLux")
