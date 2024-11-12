@@ -1,3 +1,3 @@
-using TestItemsRunner
+using TestItemRunner
 
 @run_package_tests
