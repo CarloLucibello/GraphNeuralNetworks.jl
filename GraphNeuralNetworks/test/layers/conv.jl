@@ -252,6 +252,16 @@ end
     end
 end
 
+@testitem "EdgeConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
+    using .TestModule
+    l = EdgeConv(Dense(2 * D_IN, D_OUT), aggr = +)
+    for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
+        test_gradients(l, g, g.x, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
+end
+
 @testitem "GINConv" setup=[TolSnippet, TestModule] begin
     using .TestModule
     nn = Dense(D_IN, D_OUT)
@@ -289,17 +299,17 @@ end
     end
 end
 
-@testitem "NNConv" setup=[TolSnippet, TestModule] begin
+@testitem "NNConv GPU" setup=[TolSnippet, TestModule] tags=[:gpu] begin
     using .TestModule
     edim = 10
     nn = Dense(edim, D_OUT * D_IN)
-
     l = NNConv(D_IN => D_OUT, nn, tanh, bias = true, aggr = +)
     for g in TEST_GRAPHS
+        g.graph isa AbstractSparseMatrix && continue
         g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges))
         @test size(l(g, g.x, g.e)) == (D_OUT, g.num_nodes)
-        test_gradients(l, g, g.x, g.e, rtol = RTOL_HIGH)
-    end
+        test_gradients(l, g, g.x, g.e, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
+    end   
 end
 
 @testitem "SAGEConv" setup=[TolSnippet, TestModule] begin

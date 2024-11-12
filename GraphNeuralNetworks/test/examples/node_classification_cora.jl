@@ -1,14 +1,11 @@
-@testitem "Training Example" setup=[TestModule] begin
-    using .TestModule
+@testmodule TrainingExampleModule begin
     using Flux
     using Flux: onecold, onehotbatch
     using Flux.Losses: logitcrossentropy
     using GraphNeuralNetworks
     using MLDatasets: Cora
     using Statistics, Random
-    using CUDA
-    CUDA.allowscalar(false)
-
+    
     function eval_loss_accuracy(X, y, ids, model, g)
         ŷ = model(g, X)
         l = logitcrossentropy(ŷ[:, ids], y[:, ids])
@@ -21,7 +18,7 @@
         η = 5.0f-3            # learning rate
         epochs = 10         # number of epochs
         seed = 17           # set seed > 0 for reproducibility
-        usecuda = false     # if true use cuda (if available)
+        use_gpu = false     # if true use gpu (if available)
         nhidden = 64        # dimension of hidden features
     end
 
@@ -29,11 +26,11 @@
         args = Args(; kws...)
         args.seed > 0 && Random.seed!(args.seed)
 
-        if args.usecuda && CUDA.functional()
-            device = Flux.gpu
-            args.seed > 0 && CUDA.seed!(args.seed)
+        if args.use_gpu
+            device = gpu_device(force=true)
+            Random.seed!(default_device_rng(device))
         else
-            device = Flux.cpu
+            device = cpu_device()
         end
 
         # LOAD DATA
@@ -41,7 +38,7 @@
         classes = dataset.metadata["classes"]
         g = mldataset2gnngraph(dataset) |> device
         X = g.ndata.features
-        y = onehotbatch(g.ndata.targets |> cpu, classes) |> device # remove when https://github.com/FluxML/Flux.jl/pull/1959 tagged
+        y = onehotbatch(g.ndata.targets, classes)
         train_mask = g.ndata.train_mask
         test_mask = g.ndata.test_mask
         ytrain = y[:, train_mask]
@@ -78,7 +75,7 @@
         return train_res, test_res
     end
 
-    function train_many(; usecuda = false)
+    function train_many(; use_gpu = false)
         for (layer, Layer) in [
             ("GCNConv", (nin, nout) -> GCNConv(nin => nout, relu)),
             ("ResGatedGraphConv", (nin, nout) -> ResGatedGraphConv(nin => nout, relu)),
@@ -96,16 +93,21 @@
             ## ("EdgeConv",(nin, nout) -> EdgeConv(Dense(2nin, nout, relu))), # Fits the training set but does not generalize well
         ]
             @show layer
-            @time train_res, test_res = train(Layer; usecuda, verbose = false)
+            @time train_res, test_res = train(Layer; use_gpu, verbose = false)
             # @show train_res, test_res
             @test train_res.acc > 94
             @test test_res.acc > 69
         end
     end
+end # module
 
-    train_many(usecuda = false)
-    # #TODO
-    # if TEST_GPU
-    #     train_many(usecuda = true)
-    # end
+@testitem "training example" setup=[TrainingExampleModule] begin
+    using .TrainingExampleModule
+    train_many()
 end
+
+@testitem "training example GPU" setup=[TrainingExampleModule] begin
+    using .TrainingExampleModule
+    train_many(use_gpu = true)
+end
+

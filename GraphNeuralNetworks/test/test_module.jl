@@ -11,7 +11,7 @@ using Pkg
 
 ## Uncomment below to change the default test settings
 # ENV["GNN_TEST_CPU"] = "false"
-# ENV["GNN_TEST_CUDA"] = "true"
+ENV["GNN_TEST_CUDA"] = "true"
 # ENV["GNN_TEST_AMDGPU"] = "true"
 # ENV["GNN_TEST_Metal"] = "true"
 
@@ -24,7 +24,7 @@ if get(ENV, "GNN_TEST_AMDGPU", "false") == "true"
     Pkg.add("AMDGPU")
     using AMDGPU
 end
-if get(ENV, "GNN_TEST_Metal", "true") == "true"
+if get(ENV, "GNN_TEST_Metal", "false") == "true"
     Pkg.add("Metal")
     using Metal
 end
