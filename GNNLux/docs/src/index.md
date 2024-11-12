@@ -8,27 +8,31 @@ Let's give a brief overview of the package by solving a graph regression problem
 
 ### Data preparation
 
-We create a dataset consisting in multiple random graphs and associated data features. 
+We generate a dataset of multiple random graphs with associated data features, then split it into training and testing sets.
 
 ```julia
 using GNNLux, Lux, Statistics, MLUtils, Random
 using Zygote, Optimisers
 
+rng = Random.default_rng()
+
 all_graphs = GNNGraph[]
 
 for _ in 1:1000
-    g = rand_graph(10, 40,  
-            ndata=(; x = randn(Float32, 16,10)),  # Input node features
-            gdata=(; y = randn(Float32)))         # Regression target   
+    g = rand_graph(rng, 10, 40,  
+            ndata=(; x = randn(rng, Float32, 16,10)),  # Input node features
+            gdata=(; y = randn(rng, Float32)))         # Regression target   
     push!(all_graphs, g)
 end
 
 train_graphs, test_graphs = MLUtils.splitobs(all_graphs, at=0.8)
+```
 
-# g = rand_graph(10, 40, ndata=(; x = randn(Float32, 16,10)), gdata=(; y = randn(Float32))) 
+### Model building 
 
-rng = Random.default_rng()
+We concisely define our model as a [`GNNLux.GNNChain`](@ref) containing two graph convolutional layers and initialize the model's parameters and state.
 
+```julia
 model = GNNChain(GCNConv(16 => 64),
                 x -> relu.(x),    
                 Dropout(0.6), 
@@ -37,13 +41,17 @@ model = GNNChain(GCNConv(16 => 64),
                 Dense(64, 1)) 
 
 ps, st = LuxCore.setup(rng, model)
+```
+### Training 
 
-function custom_loss(model, ps,st,tuple)
+Finally, we use a standard Lux training pipeline to fit our dataset.
+
+```julia
+function custom_loss(model, ps, st, tuple)
     g,x,y = tuple
     y_pred,st = model(g, x, ps, st)  
     return MSELoss()(y_pred, y), (layers = st,), 0
 end
-
 
 function train_model!(model, ps, st, train_graphs, test_graphs)
     train_state = Lux.Training.TrainState(model, ps, st, Adam(0.0001f0))
@@ -53,8 +61,10 @@ function train_model!(model, ps, st, train_graphs, test_graphs)
             _, loss, _, train_state = Lux.Training.single_train_step!(AutoZygote(), custom_loss,(g, g.x, g.y), train_state)
             train_loss += loss
         end
+
         train_loss = train_loss/length(train_graphs)
-        if iter % 10 == 0 || iter == 100
+
+        if iter % 10 == 0
             st_ = Lux.testmode(train_state.states)
             test_loss =0
             for g in test_graphs
@@ -63,6 +73,7 @@ function train_model!(model, ps, st, train_graphs, test_graphs)
                 test_loss += MSELoss()(g.y,ŷ)
             end
             test_loss = test_loss/length(test_graphs)
+
             @info (; iter, train_loss, test_loss)
         end
     end
@@ -71,3 +82,4 @@ function train_model!(model, ps, st, train_graphs, test_graphs)
 end
 
 train_model!(model, ps, st, train_graphs, test_graphs)
+```
