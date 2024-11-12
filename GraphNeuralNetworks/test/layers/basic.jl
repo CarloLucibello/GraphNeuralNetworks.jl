@@ -1,57 +1,60 @@
-@testset "GNNChain" begin
-    n, din, d, dout = 10, 3, 4, 2
-    deg = 4
+@testitem "GNNChain" setup=[TestModule] begin
+    using .TestModule
+    @testset "GNNChain $GRAPH_T" for GRAPH_T in GRAPH_TYPES
+        n, din, d, dout = 10, 3, 4, 2
+        deg = 4
 
-    g = GNNGraph(random_regular_graph(n, deg),
-                    graph_type = GRAPH_T,
-                    ndata = randn(Float32, din, n))
-    x = g.ndata.x
+        g = GNNGraph(random_regular_graph(n, deg),
+                        graph_type = GRAPH_T,
+                        ndata = randn(Float32, din, n))
+        x = g.ndata.x
 
-    gnn = GNNChain(GCNConv(din => d),
-                    LayerNorm(d),
-                    x -> tanh.(x),
-                    GraphConv(d => d, tanh),
-                    Dropout(0.5),
-                    Dense(d, dout))
-
-    testmode!(gnn)
-
-    test_layer(gnn, g, rtol = 1e-5, exclude_grad_fields = [:μ, :σ²])
-
-    @testset "constructor with names" begin
-        m = GNNChain(GCNConv(din => d),
+        gnn = GNNChain(GCNConv(din => d),
                         LayerNorm(d),
                         x -> tanh.(x),
+                        GraphConv(d => d, tanh),
+                        Dropout(0.5),
                         Dense(d, dout))
 
-        m2 = GNNChain(enc = m,
-                        dec = DotDecoder())
+        Flux.testmode!(gnn)
 
-        @test m2[:enc] === m
-        @test m2(g, x) == m2[:dec](g, m2[:enc](g, x))
-    end
+        test_layer(gnn, g, rtol = 1e-5, exclude_grad_fields = [:μ, :σ²])
 
-    @testset "constructor with vector" begin
-        m = GNNChain(GCNConv(din => d),
-                        LayerNorm(d),
-                        x -> tanh.(x),
-                        Dense(d, dout))
-        m2 = GNNChain([m.layers...])
-        @test m2(g, x) == m(g, x)
-    end
+        @testset "constructor with names" begin
+            m = GNNChain(GCNConv(din => d),
+                            LayerNorm(d),
+                            x -> tanh.(x),
+                            Dense(d, dout))
 
-    @testset "Parallel" begin
-        AddResidual(l) = Parallel(+, identity, l)
+            m2 = GNNChain(enc = m,
+                            dec = DotDecoder())
 
-        gnn = GNNChain(GraphConv(din => d, tanh),
-                        LayerNorm(d),
-                        AddResidual(GraphConv(d => d, tanh)),
-                        BatchNorm(d),
-                        Dense(d, dout))
+            @test m2[:enc] === m
+            @test m2(g, x) == m2[:dec](g, m2[:enc](g, x))
+        end
 
-        trainmode!(gnn)
+        @testset "constructor with vector" begin
+            m = GNNChain(GCNConv(din => d),
+                            LayerNorm(d),
+                            x -> tanh.(x),
+                            Dense(d, dout))
+            m2 = GNNChain([m.layers...])
+            @test m2(g, x) == m(g, x)
+        end
 
-        test_layer(gnn, g, rtol = 1e-4, atol=1e-4, exclude_grad_fields = [:μ, :σ²])
+        @testset "Parallel" begin
+            AddResidual(l) = Parallel(+, identity, l)
+
+            gnn = GNNChain(GraphConv(din => d, tanh),
+                            LayerNorm(d),
+                            AddResidual(GraphConv(d => d, tanh)),
+                            BatchNorm(d),
+                            Dense(d, dout))
+
+            Flux.trainmode!(gnn)
+
+            test_layer(gnn, g, rtol = 1e-4, atol=1e-4, exclude_grad_fields = [:μ, :σ²])
+        end
     end
 
     @testset "Only graph input" begin
@@ -67,27 +70,29 @@
     end
 end
 
-@testset "WithGraph" begin
+@testitem "WithGraph" setup=[TestModule] begin
+    using .TestModule
     x = rand(Float32, 2, 3)
     g = GNNGraph([1, 2, 3], [2, 3, 1], ndata = x)
     model = SAGEConv(2 => 3)
     wg = WithGraph(model, g)
     # No need to feed the graph to `wg`
     @test wg(x) == model(g, x)
-    @test Flux.params(wg) == Flux.params(model)
+    @test Flux.trainables(wg) == Flux.trainables(model)
     g2 = GNNGraph([1, 1, 2, 3], [2, 4, 1, 1])
     x2 = rand(Float32, 2, 4)
     # WithGraph will ignore the internal graph if fed with a new one. 
     @test wg(g2, x2) == model(g2, x2)
 
     wg = WithGraph(model, g, traingraph = false)
-    @test length(Flux.params(wg)) == length(Flux.params(model))
+    @test length(Flux.trainables(wg)) == length(Flux.trainables(model))
 
     wg = WithGraph(model, g, traingraph = true)
-    @test length(Flux.params(wg)) == length(Flux.params(model)) + length(Flux.params(g))
+    @test length(Flux.trainables(wg)) == length(Flux.trainables(model)) + length(Flux.trainables(g))
 end
 
-@testset "Flux restructure" begin
+@testitem "Flux.restructure" setup=[TestModule] begin
+    using .TestModule
     chain = GNNChain(GraphConv(2 => 2))
     params, restructure = Flux.destructure(chain)
     @test restructure(params) isa GNNChain
