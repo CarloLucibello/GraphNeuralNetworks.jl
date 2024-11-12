@@ -30,7 +30,8 @@ train_graphs, test_graphs = MLUtils.splitobs(all_graphs, at=0.8)
 rng = Random.default_rng()
 
 model = GNNChain(GCNConv(16 => 64),
-                x -> relu.(x),     
+                x -> relu.(x),    
+                Dropout(0.6), 
                 GCNConv(64 => 64, relu),
                 x -> mean(x, dims=2),
                 Dense(64, 1)) 
@@ -46,11 +47,13 @@ end
 
 function train_model!(model, ps, st, train_graphs, test_graphs)
     train_state = Lux.Training.TrainState(model, ps, st, Adam(0.0001f0))
-    loss=0
+    train_loss=0
     for iter in 1:100
         for g in train_graphs
             _, loss, _, train_state = Lux.Training.single_train_step!(AutoZygote(), custom_loss,(g, g.x, g.y), train_state)
+            train_loss += loss
         end
+        train_loss = train_loss/length(train_graphs)
         if iter % 10 == 0 || iter == 100
             st_ = Lux.testmode(train_state.states)
             test_loss =0
@@ -60,7 +63,7 @@ function train_model!(model, ps, st, train_graphs, test_graphs)
                 test_loss += MSELoss()(g.y,ŷ)
             end
             test_loss = test_loss/length(test_graphs)
-            @info (; iter, loss, test_loss)
+            @info (; iter, train_loss, test_loss)
         end
     end
 
