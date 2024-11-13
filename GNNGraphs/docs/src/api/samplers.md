@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = GraphNeuralNetworks
+CurrentModule = GNNGraphs
 ```
 
 # Samplers
@@ -8,7 +8,7 @@ CurrentModule = GraphNeuralNetworks
 ## Docs
 
 ```@autodocs
-Modules = [GraphNeuralNetworks]
+Modules = [GNNGraphs]
 Pages   = ["samplers.jl"]
 Private = false
 ```
