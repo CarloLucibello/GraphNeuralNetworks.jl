@@ -67,7 +67,4 @@ export GlobalPool,
 
 include("deprecations.jl")
 
-include("samplers.jl")
-export NeighborLoader
-
 end

@@ -3,8 +3,7 @@
 
 A data structure for sampling neighbors from a graph for training Graph Neural Networks (GNNs). 
 It supports multi-layer sampling of neighbors for a batch of input nodes, useful for mini-batch training
-originally introduced in "Inductive Representation Learning on Large Graphs" paper.
-[see https://arxiv.org/abs/1706.02216]
+originally introduced in ["Inductive Representation Learning on Large Graphs"}(https://arxiv.org/abs/1706.02216) paper.
 
 # Fields
 - `graph::GNNGraph`: The input graph.
@@ -21,6 +20,7 @@ julia> batch_counter = 0
 julia> for mini_batch_gnn in loader
             batch_counter += 1
             println("Batch ", batch_counter, ": Nodes in mini-batch graph: ", nv(mini_batch_gnn))
+        end
 ```
 """
 struct NeighborLoader
