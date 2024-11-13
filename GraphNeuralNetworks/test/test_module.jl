@@ -1,5 +1,22 @@
+@testmodule TestModule begin
+
+using GraphNeuralNetworks
+using Test
+using Statistics, Random
+using Flux, Functors
+using Graphs
 using ChainRulesTestUtils, FiniteDifferences, Zygote, Adapt, CUDA
 CUDA.allowscalar(false)
+
+# from other packages
+export Flux, gradient, Dense, Chain, relu, random_regular_graph, erdos_renyi,
+       BatchNorm, LayerNorm, Dropout, Parallel
+export mean, randn
+# from this module
+export D_IN, D_OUT, test_layer, ngradient, GRAPH_TYPES, TEST_GRAPHS
+
+const D_IN = 3
+const D_OUT = 5
 
 function ngradient(f, x...)
     fdm = central_fdm(5, 1)
@@ -24,7 +41,7 @@ end
 function test_layer(l, g::GNNGraph; atol = 1e-5, rtol = 1e-5,
                     exclude_grad_fields = [],
                     verbose = false,
-                    test_gpu = TEST_GPU,
+                    test_gpu = false,
                     outsize = nothing,
                     outtype = :node)
 
@@ -226,3 +243,33 @@ Adapt.adapt_storage(::GNNEltypeAdaptor{T}, x::AbstractArray{<:Integer}) where T 
 Adapt.adapt_storage(::GNNEltypeAdaptor{T}, x::AbstractArray{<:Number}) where T = convert(AbstractArray{T}, x)
 
 _paramtype(::Type{T}, m) where T = fmap(adapt(GNNEltypeAdaptor{T}()), m)
+
+function generate_test_graphs(graph_type)
+    adj1 = [0 1 0 1
+            1 0 1 0
+            0 1 0 1
+            1 0 1 0]
+
+    g1 = GNNGraph(adj1,
+                    ndata = rand(Float32, D_IN, 4);
+                    graph_type)
+
+    adj_single_vertex = [0 0 0 1
+                            0 0 0 0
+                            0 0 0 1
+                            1 0 1 0]
+
+    g_single_vertex = GNNGraph(adj_single_vertex,
+                                ndata = rand(Float32, D_IN, 4);
+                                graph_type)
+
+    return (g1, g_single_vertex)
+end
+
+GRAPH_TYPES = [:coo, :dense, :sparse]
+TEST_GRAPHS = [generate_test_graphs(:coo)...,
+               generate_test_graphs(:dense)...,
+               generate_test_graphs(:sparse)...]
+
+end # testmodule
+
