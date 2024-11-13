@@ -37,7 +37,8 @@ tests = [
     "gnnheterograph",
     "temporalsnapshotsgnngraph",
     "mldatasets",
-    "ext/SimpleWeightedGraphs"
+    "ext/SimpleWeightedGraphs",
+    "samplers"
 ]
 
 !CUDA.functional() && @warn("CUDA unavailable, not testing GPU support")
