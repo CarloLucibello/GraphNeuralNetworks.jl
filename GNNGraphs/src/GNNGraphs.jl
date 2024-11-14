@@ -113,4 +113,7 @@ export mldataset2gnngraph
 
 include("deprecations.jl")
 
+include("samplers.jl")
+export NeighborLoader
+
 end #module

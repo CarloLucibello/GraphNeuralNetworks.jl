@@ -37,7 +37,6 @@ makedocs(;
                   "Pooling layers" => "api/pool.md",
                   "Temporal Convolutional layers" => "api/temporalconv.md",
                   "Hetero Convolutional layers" => "api/heteroconv.md",
-                  "Samplers" => "api/samplers.md",
           
                 
               ],
