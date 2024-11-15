@@ -33,10 +33,4 @@ makedocs(;
          ]
          )
          
-         
-
-
-deploydocs(;repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git",
-devbranch = "master",
-push_preview = true,
-dirname = "GNNlib")
+deploydocs(;repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git", devbranch = "master", dirname = "GNNlib")
