@@ -43,6 +43,6 @@ jobs:
         with:
           # directories: ./GNNLux/src, ./GNNLux/ext
           directories: ./GNNLux/src
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         with:
           files: lcov.info
