@@ -43,6 +43,6 @@ jobs:
         with:
           # directories: ./GraphNeuralNetworks/src, ./GraphNeuralNetworks/ext
           directories: ./GraphNeuralNetworks/src
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         with:
           files: lcov.info
