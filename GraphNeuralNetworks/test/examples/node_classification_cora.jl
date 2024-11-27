@@ -6,6 +6,7 @@
     using MLDatasets: Cora
     using Statistics, Random
     using Test
+    ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
     
     function eval_loss_accuracy(X, y, ids, model, g)
         ŷ = model(g, X)
