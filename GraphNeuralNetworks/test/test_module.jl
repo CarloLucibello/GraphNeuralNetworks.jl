@@ -1,17 +1,9 @@
 @testmodule TestModule begin
 
-using GraphNeuralNetworks
-using Test
-using Statistics, Random
-using Flux, Functors
-using Graphs
-using ChainRulesTestUtils, FiniteDifferences, Zygote, Adapt
-using SparseArrays
-using Pkg
-
+using Pkg   
 ## Uncomment below to change the default test settings
 # ENV["GNN_TEST_CPU"] = "false"
-# ENV["GNN_TEST_CUDA"] = "true"
+ENV["GNN_TEST_CUDA"] = "true"
 # ENV["GNN_TEST_AMDGPU"] = "true"
 # ENV["GNN_TEST_Metal"] = "true"
 
@@ -31,7 +23,20 @@ if get(ENV, "GNN_TEST_Metal", "false") == "true"
     Metal.allowscalar(false)
 end
 
-# from Bse
+using GraphNeuralNetworks
+using Test
+using Statistics, Random
+using Flux
+using Functors: fmapstructure_with_path
+using Graphs
+using ChainRulesTestUtils, FiniteDifferences
+using Zygote
+using SparseArrays
+using Pkg
+
+
+
+# from Base
 export mean, randn, SparseArrays, AbstractSparseMatrix
 
 # from other packages

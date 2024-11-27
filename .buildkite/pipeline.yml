@@ -1,0 +1,51 @@
+steps:
+  - label: "GNN CUDA"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
+      - JuliaCI/julia-coverage#v1:
+          dirs:
+            - GraphNeuralNetworks/src
+    command: |
+      julia --color=yes --depwarn=yes --project=GraphNeuralNetworks/test -e '
+        import Pkg
+        dev_pkgs = Pkg.PackageSpec[]
+        for pkg in ("GNNGraphs", "GNNlib", "GraphNeuralNetworks")
+          push!(dev_pkgs, Pkg.PackageSpec(path=pkg));
+        end
+        Pkg.develop(dev_pkgs)
+        Pkg.add(["CUDA", "cuDNN"])
+        Pkg.test("GraphNeuralNetworks")'
+    agents:
+      queue: "juliagpu"
+      cuda: "*"
+    env:
+      GNN_TEST_CUDA: "true"
+      GNN_TEST_CPU: "false"
+    timeout_in_minutes: 60
+
+  - label: "GNN AMDGPU"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
+      - JuliaCI/julia-coverage#v1:
+          dirs:
+            - GraphNeuralNetworks/src
+    command: |
+      julia --color=yes --depwarn=yes --project=GraphNeuralNetworks/test -e '
+        import Pkg
+        dev_pkgs = Pkg.PackageSpec[]
+        for pkg in ("GNNGraphs", "GNNlib", "GraphNeuralNetworks")
+          push!(dev_pkgs, Pkg.PackageSpec(path=pkg));
+        end
+        Pkg.develop(dev_pkgs)
+        Pkg.add(["AMDGPU"])
+        Pkg.test("GraphNeuralNetworks")'
+    agents:
+      queue: "juliagpu"
+      cuda: "*"
+    env:
+      GNN_TEST_AMDGPU: "true"
+      GNN_TEST_CPU: "false"
+    timeout_in_minutes: 60
+    

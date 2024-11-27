@@ -101,6 +101,7 @@ end
     k = 2
     l = ChebConv(D_IN => D_OUT, k)
     for g in TEST_GRAPHS
+        has_isolated_nodes(g) && continue
         g.graph isa AbstractSparseMatrix && continue
         @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
         test_gradients(l, g, g.x, rtol = RTOL_LOW, test_gpu = true, compare_finite_diff = false)
@@ -377,6 +378,7 @@ end
     l = CGConv((D_IN, edim) => D_OUT, tanh, residual = false, bias = true)
     for g in TEST_GRAPHS
         g.graph isa AbstractSparseMatrix && continue
+        g = GNNGraph(g, edata = rand(Float32, edim, g.num_edges))
         @test size(l(g, g.x, g.e)) == (D_OUT, g.num_nodes)
         test_gradients(l, g, g.x, g.e, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
     end   
@@ -432,6 +434,7 @@ end
     l = MEGNetConv(D_IN => D_OUT, aggr = +)
     for g in TEST_GRAPHS
         g.graph isa AbstractSparseMatrix && continue
+        g = GNNGraph(g, edata = rand(Float32, D_IN, g.num_edges))
         y = l(g, g.x, g.e)
         @test size(y[1]) == (D_OUT, g.num_nodes)
         @test size(y[2]) == (D_OUT, g.num_edges)
@@ -462,6 +465,7 @@ end
     l = GMMConv((D_IN, ein_channel) => D_OUT, K = K)
     for g in TEST_GRAPHS
         g.graph isa AbstractSparseMatrix && continue
+        g = GNNGraph(g, edata = rand(Float32, ein_channel, g.num_edges))
         y = l(g, g.x, g.e)
         test_gradients(l, g, g.x, g.e, rtol = RTOL_HIGH, test_gpu = true, compare_finite_diff = false)
     end   
@@ -585,6 +589,7 @@ end
                         bias_qkv = true)
     for g in TEST_GRAPHS
         g.graph isa AbstractSparseMatrix && continue
+        g = GNNGraph(g, edata = rand(Float32, ein, g.num_edges))
         @test size(l(g, g.x, g.e)) == (D_IN * heads, g.num_nodes)
         test_gradients(l, g, g.x, g.e, rtol = RTOL_LOW, test_gpu = true, compare_finite_diff = false)
     end

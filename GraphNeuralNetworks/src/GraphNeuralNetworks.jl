@@ -6,11 +6,9 @@ using Flux
 using Flux: glorot_uniform, leakyrelu, GRUCell, batch
 using MacroTools: @forward
 using NNlib
-using NNlib: scatter, gather
 using ChainRulesCore
-using Reexport
+using Reexport: @reexport
 using MLUtils: zeros_like
-using Graphs: Graphs
 
 using GNNGraphs:  COO_T, ADJMAT_T, SPARSE_T,
                   check_num_nodes, check_num_edges,

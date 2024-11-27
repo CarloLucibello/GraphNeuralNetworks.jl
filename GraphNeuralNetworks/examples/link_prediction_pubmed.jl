@@ -3,7 +3,6 @@
 # See the comparison paper https://arxiv.org/pdf/2102.12557.pdf for more details
 
 using Flux
-using Flux: onecold, onehotbatch
 using Flux.Losses: logitbinarycrossentropy
 using GraphNeuralNetworks
 using MLDatasets: PubMed

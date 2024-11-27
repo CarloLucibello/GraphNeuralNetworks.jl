@@ -16,7 +16,7 @@ dataset = Cora()
 classes = dataset.metadata["classes"]
 g = mldataset2gnngraph(dataset) |> device
 X = g.ndata.features
-y = onehotbatch(g.ndata.targets |> cpu, classes) |> device # remove when https://github.com/FluxML/Flux.jl/pull/1959 tagged
+y = onehotbatch(g.ndata.targets |> cpu, classes) |> device # https://github.com/FluxML/OneHotArrays.jl/issues/16
 (; train_mask, val_mask, test_mask) = g.ndata
 ytrain = y[:, train_mask]
 
