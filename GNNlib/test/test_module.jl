@@ -1,4 +1,4 @@
-@testsetup module SharedTestSetup
+@testmodule TestModuleNNlib begin
 
 import Reexport: @reexport
 
@@ -9,4 +9,4 @@ import Reexport: @reexport
 @reexport using SparseArrays
 @reexport using Test, Random, Statistics
 
-end
+end # module

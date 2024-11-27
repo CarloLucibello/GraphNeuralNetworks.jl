@@ -1,4 +1,5 @@
-@testitem "msgpass" setup=[SharedTestSetup] begin
+@testitem "msgpass" setup=[TestModuleNNlib] begin
+    using .TestModuleNNlib
     #TODO test all graph types
     GRAPH_T = :coo
     in_channel = 10
