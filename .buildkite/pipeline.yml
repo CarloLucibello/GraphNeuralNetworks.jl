@@ -39,7 +39,7 @@ steps:
           push!(dev_pkgs, Pkg.PackageSpec(path=pkg));
         end
         Pkg.develop(dev_pkgs)
-        Pkg.add(["ADMGPU"])
+        Pkg.add(["AMDGPU"])
         Pkg.test("GraphNeuralNetworks")'
     agents:
       queue: "juliagpu"
