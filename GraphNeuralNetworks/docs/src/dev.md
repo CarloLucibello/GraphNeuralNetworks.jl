@@ -1,10 +1,10 @@
 # Developer Notes
 
-## Develop and Managing the Monorepo
 
-### Development Enviroment
+## Development Enviroment
 GraphNeuralNetworks.jl is package hosted in a monorepo that contains multiple packages. 
-The GraphNeuralNetworks.jl package depends on GNNGraphs.jl, also hosted in the same monorepo.
+The GraphNeuralNetworks.jl package depends on GNNGraphs.jl and GNNlib.jl, also hosted in the same monorepo.
+In order 
 
 ```julia
 pkg> activate .
@@ -12,19 +12,51 @@ pkg> activate .
 pkg> dev ./GNNGraphs
 ```
 
-### Add a New Layer 
+## Add a New Layer 
 
 To add a new graph convolutional layer and make it available in both the Flux-based frontend (GraphNeuralNetworks.jl) and the Lux-based frontend (GNNLux), you need to:
+
 1. Add the functional version to GNNlib
 2. Add the stateful version to GraphNeuralNetworks
 3. Add the stateless version to GNNLux
 4. Add the layer to the table in docs/api/conv.md
 
-### Versions and Tagging
+We suggest to start with implementing a self-contained Flux layer in GraphNeuralNetworks.jl, add the corresponding tests, and then when everything is working, move the implementation of the forward pass to GNNlib.jl. At this point, you can add the stateless version to GNNLux.jl.
+
+It could also be convenient to use the `@structdef` macro from [Autostruct.jl](https://github.com/CarloLucibello/AutoStructs.jl) to simultaneously generate the struct and the constructor for the layer.
+For example, the Flux implementation of [`MEGNetConv`](@ref) layer can be written as follows:
+
+```julia
+using Flux, GraphNeuralNetworks, AutoStructs
+
+@structdef function MEGNetConv(ch::Pair{Int, Int}; aggr = mean)
+    nin, nout = ch
+    ϕe = Chain(Dense(3nin, nout, relu),
+               Dense(nout, nout))
+
+    ϕv = Chain(Dense(nin + nout, nout, relu),
+               Dense(nout, nout))
+
+    return MEGNetConv(ϕe, ϕv, aggr)
+end
+
+Flux.@layer MEGNetConv
+
+function (l::MEGNetConv)(g::AbstractGraph, x::AbstractMatrix, e::AbstractMatrix)
+    ē = apply_edges(g, xi = x, xj = x, e = e) do xi, xj, e
+        l.ϕe(vcat(xi, xj, e))
+    end
+    xᵉ = aggregate_neighbors(g, l.aggr, ē)
+    x̄ = l.ϕv(vcat(x, xᵉ))
+    return x̄, ē
+end
+```
+
+## Versions and Tagging
 Each PR should update the version number in the Porject.toml file of each involved package if needed by semnatic versioning. For instance, when adding new features GNNGraphs could move from "1.17.5" to "1.18.0-DEV". The "DEV" will be removed when the package is tagged and released. Pay also attention to updating
 the compat bounds, e.g. GraphNeuralNetworks might require a newer version of GNNGraphs.
 
-### Generate Documentation Locally
+## Generate Documentation Locally
 For generating the documentation locally
 ```
 cd docs
