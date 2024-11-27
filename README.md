@@ -7,27 +7,30 @@
 ![](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl)
 
-This is the monorepository for the GraphNeuralNetworks project, bringing together all code into a unified structure to facilitate code sharing and reusability across different project components. It contains the following packages:
+Libraries for deep learning on graphs in Julia, using either [Flux.jl](https://fluxml.ai/Flux.jl/stable/) or [Lux.jl](https://lux.csail.mit.edu/stable/) as backend framework.
 
-- `GraphNeuralNetwork.jl`: Package that contains stateful graph convolutional layers based on the machine learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/). This is the fronted package for Flux users. It depends on GNNlib.jl, GNNGraphs.jl, and Flux.jl packages.
+This monorepo contains the following packages:
 
-- `GNNLux.jl`: Package that contains stateless graph convolutional layers based on the machine learning framework [Lux.jl](https://lux.csail.mit.edu/stable/). This is fronted package for Lux users. It depends on GNNlib.jl, GNNGraphs.jl, and Lux.jl packages.
+- `GraphNeuralNetworks.jl`: Graph convolutional layers based on the deep learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/). This is the fronted package for Flux users. 
 
-- `GNNlib.jl`: Package that contains the core graph neural network layers and utilities. It depends on GNNGraphs.jl and GNNlib.jl packages and serves for code base for GraphNeuralNetwork.jl and GNNLux.jl packages.
+- `GNNLux.jl`: Graph convolutional layers based on the deep learning framework [Lux.jl](https://lux.csail.mit.edu/stable/). This is the fronted package for Lux users. This package is still under development and it is not yet registered.
+
+- `GNNlib.jl`: Contains the message passing framework based on the gather/scatter mechanism or on
+  sparse matrix multiplication. It also contained the shared implementation for the layers of the two fronted packages. This package is not meant to be used directly by the user, but its functionalities
+  are used and re-exported by the fronted packages.
 
 - `GNNGraphs.jl`: Package that contains the graph data structures and helper functions for working with graph data. It depends on Graphs.jl package.
 
 
+Both `GraphNeuralNetworks.jl` and `GNNLux.jl` enjoy several features:
 
-Among its general features:
-
-* Implements common graph convolutional layers both in stateful and stateless form.
-* Supports computations on batched graphs. 
+* Implement common graph convolutional layers.
+* Support computations on batched graphs. 
 * Easy to define custom layers.
-* CUDA support.
+* CUDA and AMDGPU support.
 * Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
 * [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) of node, edge, and graph level machine learning tasks. 
-* Heterogeneous and temporal graphs. 
+* Heterogeneous and temporal graphs support. 
 
 ## Installation
 
