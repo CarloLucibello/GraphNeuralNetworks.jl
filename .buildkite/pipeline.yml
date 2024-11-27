@@ -23,4 +23,4 @@ steps:
     env:
       GNN_TEST_CUDA: "true"
       GNN_TEST_CPU: "false"
-  - timeout_in_minutes: 60
+    timeout_in_minutes: 60
