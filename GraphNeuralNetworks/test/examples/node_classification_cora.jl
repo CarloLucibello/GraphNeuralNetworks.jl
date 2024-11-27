@@ -40,7 +40,7 @@
         classes = dataset.metadata["classes"]
         g = mldataset2gnngraph(dataset) |> device
         X = g.ndata.features
-        y = onehotbatch(g.ndata.targets, classes)
+        y = onehotbatch(g.ndata.targets |> cpu, classes) |> device # https://github.com/FluxML/OneHotArrays.jl/issues/16
         train_mask = g.ndata.train_mask
         test_mask = g.ndata.test_mask
         ytrain = y[:, train_mask]

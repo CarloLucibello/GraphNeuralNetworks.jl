@@ -1,14 +1,5 @@
 @testmodule TestModule begin
 
-using GraphNeuralNetworks
-using Test
-using Statistics, Random
-using Flux
-using Functors: fmapstructure_with_path
-using Graphs
-using ChainRulesTestUtils, FiniteDifferences
-using Zygote
-using SparseArrays
 using Pkg
 
 ## Uncomment below to change the default test settings
@@ -18,20 +9,30 @@ using Pkg
 # ENV["GNN_TEST_Metal"] = "true"
 
 if get(ENV, "GNN_TEST_CUDA", "false") == "true"
-    # Pkg.add(["CUDA", "cuDNN"])
+    Pkg.add(["CUDA", "cuDNN"])
     using CUDA
     CUDA.allowscalar(false)
 end
 if get(ENV, "GNN_TEST_AMDGPU", "false") == "true"
-    # Pkg.add("AMDGPU")
+    Pkg.add("AMDGPU")
     using AMDGPU
     AMDGPU.allowscalar(false)
 end
 if get(ENV, "GNN_TEST_Metal", "false") == "true"
-    # Pkg.add("Metal")
+    Pkg.add("Metal")
     using Metal
     Metal.allowscalar(false)
 end
+
+using GraphNeuralNetworks
+using Test
+using Statistics, Random
+using Flux
+using Functors: fmapstructure_with_path
+using Graphs
+using ChainRulesTestUtils, FiniteDifferences
+using Zygote
+using SparseArrays
 
 
 # from Base
