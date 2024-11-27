@@ -253,7 +253,6 @@ function gin_conv(l, g::AbstractGNNGraph, x)
     xj, xi = expand_srcdst(g, x) 
  
     m = propagate(copy_xj, g, l.aggr, xj = xj)
-    
     return l.nn((1 .+ ofeltype(xi, l.ϵ)) .* xi .+ m)
 end
 
