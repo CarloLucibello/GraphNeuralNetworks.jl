@@ -3,9 +3,11 @@
 using GraphNeuralNetworks
 using Test
 using Statistics, Random
-using Flux, Functors
+using Flux
+using Functors: fmapstructure_with_path
 using Graphs
-using ChainRulesTestUtils, FiniteDifferences, Zygote, Adapt
+using ChainRulesTestUtils, FiniteDifferences
+using Zygote
 using SparseArrays
 using Pkg
 
@@ -32,7 +34,7 @@ if get(ENV, "GNN_TEST_Metal", "false") == "true"
 end
 
 
-# from Bse
+# from Base
 export mean, randn, SparseArrays, AbstractSparseMatrix
 
 # from other packages

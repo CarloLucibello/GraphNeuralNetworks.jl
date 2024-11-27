@@ -6,10 +6,8 @@ version = "0.6.22"
 [deps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
-Functors = "d9f16b24-f501-4c13-a1f2-28368ffc5196"
 GNNGraphs = "aed8fd31-079b-4b5a-b342-a13352159b8c"
 GNNlib = "a6a84749-d869-43f8-aacc-be26a1996e48"
-Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MLUtils = "f1d291b0-491e-4a28-83b9-f70985020b54"
 MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
@@ -18,17 +16,11 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
-[weakdeps]
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
-
 [compat]
-CUDA = "4, 5"
 ChainRulesCore = "1"
 Flux = "0.14"
-Functors = "0.4.1"
 GNNGraphs = "1.0"
 GNNlib = "0.2"
-Graphs = "1.12"
 LinearAlgebra = "1"
 MLUtils = "0.4"
 MacroTools = "0.5"
@@ -37,22 +29,4 @@ Pkg = "1"
 Random = "1"
 Reexport = "1"
 Statistics = "1"
-TestItemRunner = "1.0.5"
 julia = "1.10"
-
-[extras]
-Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-ChainRulesTestUtils = "cdddcdb0-9152-4a09-a978-84456f9df70a"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
-Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
-InlineStrings = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
-MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
-Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
-Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
-
-[targets]
-test = ["Test", "TestItemRunner", "Pkg", "MLDatasets", "Adapt", "DataFrames", "InlineStrings", "SparseArrays", "Graphs", "Zygote", "FiniteDifferences", "ChainRulesTestUtils"]

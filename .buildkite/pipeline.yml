@@ -7,10 +7,8 @@ steps:
           dirs:
             - GraphNeuralNetworks/src
     command: |
-      julia --color=yes --depwarn=yes --project=monorepo -e '
+      julia --color=yes --depwarn=yes --project=GraphNeuralNetworks/test -e '
         import Pkg
-        Pkg.Registry.update()
-        dev_pkgs = Pkg.PackageSpec[]
         for pkg in ("GNNGraphs", "GNNlib", "GraphNeuralNetworks")
           push!(dev_pkgs, Pkg.PackageSpec(path=pkg));
         end
