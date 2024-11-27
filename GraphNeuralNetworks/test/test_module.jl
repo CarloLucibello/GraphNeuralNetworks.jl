@@ -23,16 +23,21 @@ end
 if get(ENV, "GNN_TEST_AMDGPU", "false") == "true"
     Pkg.add("AMDGPU")
     using AMDGPU
+    AMDGPU.allowscalar(false)
 end
 if get(ENV, "GNN_TEST_Metal", "false") == "true"
     Pkg.add("Metal")
     using Metal
+    Metal.allowscalar(false)
 end
+
+# from Bse
+export mean, randn, SparseArrays, AbstractSparseMatrix
 
 # from other packages
 export Flux, gradient, Dense, Chain, relu, random_regular_graph, erdos_renyi,
        BatchNorm, LayerNorm, Dropout, Parallel
-export mean, randn, SparseArrays, AbstractSparseMatrix
+
 # from this module
 export D_IN, D_OUT, GRAPH_TYPES, TEST_GRAPHS,
        test_gradients, finitediff_withgradient, 
