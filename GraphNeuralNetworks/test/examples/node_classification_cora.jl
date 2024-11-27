@@ -5,6 +5,7 @@
     using GraphNeuralNetworks
     using MLDatasets: Cora
     using Statistics, Random
+    using Test
     
     function eval_loss_accuracy(X, y, ids, model, g)
         ŷ = model(g, X)
@@ -103,11 +104,11 @@ end # module
 
 @testitem "training example" setup=[TrainingExampleModule] begin
     using .TrainingExampleModule
-    train_many()
+    TrainingExampleModule.train_many()
 end
 
 @testitem "training example GPU" setup=[TrainingExampleModule] begin
     using .TrainingExampleModule
-    train_many(use_gpu = true)
+    TrainingExampleModule.train_many(use_gpu = true)
 end
 
