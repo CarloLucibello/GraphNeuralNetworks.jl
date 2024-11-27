@@ -108,7 +108,7 @@ end # module
     TrainingExampleModule.train_many()
 end
 
-@testitem "training example GPU" setup=[TrainingExampleModule] begin
+@testitem "training example GPU" setup=[TrainingExampleModule] tags=[:gpu] begin
     using .TrainingExampleModule
     TrainingExampleModule.train_many(use_gpu = true)
 end
