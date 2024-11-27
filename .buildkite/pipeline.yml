@@ -9,6 +9,7 @@ steps:
     command: |
       julia --color=yes --depwarn=yes --project=GraphNeuralNetworks/test -e '
         import Pkg
+        dev_pkgs = []
         for pkg in ("GNNGraphs", "GNNlib", "GraphNeuralNetworks")
           push!(dev_pkgs, Pkg.PackageSpec(path=pkg));
         end
