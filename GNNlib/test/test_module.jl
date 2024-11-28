@@ -1,4 +1,4 @@
-@testmodule TestModuleNNlib begin
+@testmodule TestModuleGNNlib begin
 
 import Reexport: @reexport
 

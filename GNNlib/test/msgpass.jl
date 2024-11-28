@@ -1,5 +1,5 @@
 @testitem "msgpass" setup=[TestModuleNNlib] begin
-    using .TestModuleNNlib
+    using .TestModuleGNNlib
     #TODO test all graph types
     GRAPH_T = :coo
     in_channel = 10
