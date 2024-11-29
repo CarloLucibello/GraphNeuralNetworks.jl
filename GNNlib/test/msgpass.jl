@@ -1,33 +1,19 @@
-@testitem "msgpass" setup=[TestModuleNNlib] begin
+@testitem "msgpass" setup=[TestModuleGNNlib] begin
     using .TestModuleGNNlib
     #TODO test all graph types
-    GRAPH_T = :coo
-    in_channel = 10
-    out_channel = 5
-    num_V = 6
-    num_E = 14
-    T = Float32
-
-    adj = [0 1 0 0 0 0
-            1 0 0 1 1 1
-            0 0 0 0 0 1
-            0 1 0 0 1 0
-            0 1 0 1 0 1
-            0 1 1 0 1 0]
-
-    X = rand(T, in_channel, num_V)
-    E = rand(T, in_channel, num_E)
-
-    g = GNNGraph(adj, graph_type = GRAPH_T)
+    g = TEST_GRAPHS[1]
+    out_channel = 10
+    num_V = g.num_nodes
+    num_E = g.num_edges
 
     @testset "propagate" begin
         function message(xi, xj, e)
             @test xi === nothing
             @test e === nothing
-            ones(T, out_channel, size(xj, 2))
+            ones(Float32, out_channel, size(xj, 2))
         end
 
-        m = propagate(message, g, +, xj = X)
+        m = propagate(message, g, +, xj = g.x)
 
         @test size(m) == (out_channel, num_V)
 
@@ -40,7 +26,7 @@
     end
 
     @testset "apply_edges" begin
-        m = apply_edges(g, e = E) do xi, xj, e
+        m = apply_edges(g, e = g.e) do xi, xj, e
             @test xi === nothing
             @test xj === nothing
             ones(out_channel, size(e, 2))
@@ -49,7 +35,7 @@
         @test m == ones(out_channel, num_E)
 
         # With NamedTuple input
-        m = apply_edges(g, xj = (; a = X, b = 2X), e = E) do xi, xj, e
+        m = apply_edges(g, xj = (; a = g.x, b = 2g.x), e = g.e) do xi, xj, e
             @test xi === nothing
             @test xj.b == 2 * xj.a
             @test size(xj.a, 2) == size(xj.b, 2) == size(e, 2)
@@ -57,7 +43,7 @@
         end
 
         # NamedTuple output
-        m = apply_edges(g, e = E) do xi, xj, e
+        m = apply_edges(g, e = g.e) do xi, xj, e
             @test xi === nothing
             @test xj === nothing
             (; a = ones(out_channel, size(e, 2)))
@@ -85,7 +71,7 @@
         Adj = map(x -> x > 0 ? 1 : 0, A)
         X = rand(10, n)
 
-        g = GNNGraph(A, ndata = X, graph_type = GRAPH_T)
+        g = GNNGraph(A, ndata = X, graph_type = :coo)
 
         function spmm_copyxj_fused(g)
             propagate(copy_xj,
@@ -107,7 +93,7 @@
         Adj = map(x -> x > 0 ? 1 : 0, A)
         X = rand(10, n)
 
-        g = GNNGraph(A, ndata = X, edata = A.nzval, graph_type = GRAPH_T)
+        g = GNNGraph(A, ndata = X, edata = A.nzval, graph_type = :coo)
 
         function spmm_unfused(g)
             propagate((xi, xj, e) -> reshape(e, 1, :) .* xj,
@@ -138,4 +124,13 @@
         end
     end
 
+end
+
+@testitem "msgpass GPU" setup=[TestModuleGNNlib] begin
+    using .TestModuleGNNlib
+    n, m = 10, 20
+    g = rand_graph(n, m, graph_type = :coo)
+    x = rand(Float32, 2, n)    
+    f(g, x) = propagate(copy_xj, g, +, xj = x)
+    test_gradients(f, g, x; test_gpu=true, test_grad_f=false, compare_finite_diff=false)
 end
