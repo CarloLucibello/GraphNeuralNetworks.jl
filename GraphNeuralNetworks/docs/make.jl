@@ -21,25 +21,19 @@ makedocs(;
          plugins = [interlinks],
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
          sitename = "GraphNeuralNetworks.jl",
-         pages = ["Monorepo" => [ 
-               "Home" => "index.md",
-               "Developer guide" => "dev.md",
-               "Google Summer of Code" => "gsoc.md",
+         pages = [
+            "Home" => "index.md",
+            "Guides" => [
+                "Models" => "models.md",
             ],
-            "GraphNeuralNetworks.jl" =>[
-            "Home" => "home.md",
-            "Models" => "models.md",],
-
             "API Reference" => [
-     
                   "Basic" => "api/basic.md",
                   "Convolutional layers" => "api/conv.md",
                   "Pooling layers" => "api/pool.md",
                   "Temporal Convolutional layers" => "api/temporalconv.md",
                   "Hetero Convolutional layers" => "api/heteroconv.md",
-          
-                
               ],
+              "Developer guide" => "dev.md",
             
          ],
          )
