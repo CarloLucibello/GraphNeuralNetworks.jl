@@ -6,8 +6,8 @@ Intersect two graphs by keeping only the common edges.
 """
 function Base.intersect(g1::GNNGraph, g2::GNNGraph)
     @assert g1.num_nodes == g2.num_nodes
-    @assert graph_type_symbol(g1) == graph_type_symbol(g2)
-    graph_type = graph_type_symbol(g1)
+    @assert get_graph_type(g1) == get_graph_type(g2)
+    graph_type = get_graph_type(g1)
     num_nodes = g1.num_nodes
 
     idx1, _ = edge_encoding(edge_index(g1)..., num_nodes)

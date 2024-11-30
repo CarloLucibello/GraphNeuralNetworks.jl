@@ -59,15 +59,20 @@ function finitediff_withgradient(f, x...)
 end
 
 function check_equal_leaves(a, b; rtol=1e-4, atol=1e-4)
+    equal = true
     fmapstructure_with_path(a, b) do kp, x, y
         if x isa AbstractArray
             # @show kp
-            @assert x ≈ y rtol=rtol atol=atol
+            # @assert x ≈ y rtol=rtol atol=atol
+            if !isapprox(x, y; rtol, atol)
+                equal = false
+            end
         # elseif x isa Number
         #     @show kp
         #     @assert x ≈ y rtol=rtol atol=atol
         end
     end
+    @assert equal
 end
 
 function test_gradients(
