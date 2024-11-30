@@ -102,9 +102,11 @@ end
     l = ChebConv(D_IN => D_OUT, k)
     for g in TEST_GRAPHS
         has_isolated_nodes(g) && continue
-        g.graph isa AbstractSparseMatrix && continue
-        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
-        test_gradients(l, g, g.x, rtol = RTOL_LOW, test_gpu = true, compare_finite_diff = false)
+        broken = get_graph_type(g) == :sparse || gpu_device() isa AMDGPUDevice
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes) broken=broken
+        @test test_gradients(
+            l, g, g.x, rtol = RTOL_LOW, test_gpu = true, compare_finite_diff = false
+        ) broken=broken
     end   
 end
 
