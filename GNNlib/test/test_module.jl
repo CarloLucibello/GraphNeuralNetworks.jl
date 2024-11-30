@@ -6,7 +6,7 @@ using Pkg
 # tried to put this in __init__ but is not executed for some reason
 
 ## Uncomment below to change the default test settings
-ENV["GNN_TEST_CUDA"] = "true"
+# ENV["GNN_TEST_CUDA"] = "true"
 # ENV["GNN_TEST_AMDGPU"] = "true"
 # ENV["GNN_TEST_Metal"] = "true"
 
@@ -20,6 +20,9 @@ for (backend, deps) in deps_dict
             Pkg.add(deps)
         end
         @eval using $backend
+        if backend == :CUDA
+            @eval using cuDNN
+        end
         @eval $backend.allowscalar(false)
     end
 end
@@ -35,10 +38,9 @@ import Reexport: @reexport
 @reexport using Test, Random, Statistics
 @reexport using MLDataDevices
 using Functors: fmapstructure_with_path
-using Graphs
-using ChainRulesTestUtils, FiniteDifferences
-using Zygote
-using SparseArrays
+using FiniteDifferences: FiniteDifferences
+using Zygote: Zygote
+using Flux: Flux
 
 # from this module
 export D_IN, D_OUT, GRAPH_TYPES, TEST_GRAPHS,
@@ -60,10 +62,10 @@ function check_equal_leaves(a, b; rtol=1e-4, atol=1e-4)
     fmapstructure_with_path(a, b) do kp, x, y
         if x isa AbstractArray
             # @show kp
-            @test x ≈ y rtol=rtol atol=atol
+            @assert x ≈ y rtol=rtol atol=atol
         # elseif x isa Number
         #     @show kp
-        #     @test x ≈ y rtol=rtol atol=atol
+        #     @assert x ≈ y rtol=rtol atol=atol
         end
     end
 end
@@ -87,7 +89,7 @@ function test_gradients(
 
     ## Let's make sure first that the forward pass works.
     l = loss(f, graph, xs...)
-    @test l isa Number
+    @assert l isa Number
     if test_gpu
         gpu_dev = gpu_device(force=true)
         cpu_dev = cpu_device()
@@ -95,7 +97,7 @@ function test_gradients(
         xs_gpu = xs |> gpu_dev
         f_gpu = f |> gpu_dev
         l_gpu = loss(f_gpu, graph_gpu, xs_gpu...)
-        @test l_gpu isa Number
+        @assert l_gpu isa Number
     end
 
     if test_grad_x
@@ -107,15 +109,15 @@ function test_gradients(
             f64 = f |> Flux.f64
             xs64 = xs .|> Flux.f64
             y_fd, g_fd = finitediff_withgradient((xs...) -> loss(f64, graph, xs...), xs64...)
-            @test y ≈ y_fd rtol=rtol atol=atol
+            @assert y ≈ y_fd rtol=rtol atol=atol
             check_equal_leaves(g, g_fd; rtol, atol)
         end
 
         if test_gpu
             # Zygote gradient with respect to input on GPU.
             y_gpu, g_gpu = Zygote.withgradient((xs...) -> loss(f_gpu, graph_gpu, xs...), xs_gpu...)
-            @test get_device(g_gpu) == get_device(xs_gpu)
-            @test y_gpu ≈ y rtol=rtol atol=atol
+            @assert get_device(g_gpu) == get_device(xs_gpu)
+            @assert y_gpu ≈ y rtol=rtol atol=atol
             check_equal_leaves(g_gpu |> cpu_dev, g; rtol, atol)
         end
     end
@@ -130,19 +132,20 @@ function test_gradients(
             ps, re = Flux.destructure(f64)
             y_fd, g_fd = finitediff_withgradient(ps -> loss(re(ps),graph, xs...), ps)
             g_fd = (re(g_fd[1]),)
-            @test y ≈ y_fd rtol=rtol atol=atol
+            @assert y ≈ y_fd rtol=rtol atol=atol
             check_equal_leaves(g, g_fd; rtol, atol)
         end
 
         if test_gpu
             # Zygote gradient with respect to f on GPU.
             y_gpu, g_gpu = Zygote.withgradient(f -> loss(f,graph_gpu, xs_gpu...), f_gpu)
-            # @test get_device(g_gpu) == get_device(xs_gpu)
-            @test y_gpu ≈ y rtol=rtol atol=atol
+            # @assert get_device(g_gpu) == get_device(xs_gpu)
+            @assert y_gpu ≈ y rtol=rtol atol=atol
             check_equal_leaves(g_gpu |> cpu_dev, g; rtol, atol)
         end
     end
-    return true
+    @test true # if we reach here, the test passed
+    return true # return true in case we want to put a @test_broken in the caller
 end
 
 
@@ -157,9 +160,9 @@ function generate_test_graphs(graph_type)
                     graph_type)
 
     adj_single_vertex = [0 0 0 1
-                            0 0 0 0
-                            0 0 0 1
-                            1 0 1 0]
+                         0 0 0 0
+                         0 0 0 1
+                         1 0 1 0]
 
     g_single_vertex = GNNGraph(adj_single_vertex,
                                 ndata = rand(Float32, D_IN, 4);

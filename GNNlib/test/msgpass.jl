@@ -2,10 +2,11 @@
     using .TestModuleGNNlib
     #TODO test all graph types
     g = TEST_GRAPHS[1]
-    out_channel = 10
+    out_channel = size(g.x, 1)
     num_V = g.num_nodes
     num_E = g.num_edges
-
+    g = GNNGraph(g, edata = rand(Float32, size(g.x, 1), g.num_edges))
+    
     @testset "propagate" begin
         function message(xi, xj, e)
             @test xi === nothing
@@ -20,7 +21,7 @@
         @testset "isolated nodes" begin
             x1 = rand(1, 6)
             g1 = GNNGraph(collect(1:5), collect(1:5), num_nodes = 6)
-            y1 = propagate((xi, xj, e) -> xj, g, +, xj = x1)
+            y1 = propagate((xi, xj, e) -> xj, g1, +, xj = x1)
             @test size(y1) == (1, 6)
         end
     end
@@ -123,14 +124,80 @@
             @test_throws AssertionError aggregate_neighbors(g, +, m)
         end
     end
-
 end
 
-@testitem "msgpass GPU" setup=[TestModuleGNNlib] begin
+@testitem "propagate" setup=[TestModuleGNNlib] begin
     using .TestModuleGNNlib
-    n, m = 10, 20
-    g = rand_graph(n, m, graph_type = :coo)
-    x = rand(Float32, 2, n)    
-    f(g, x) = propagate(copy_xj, g, +, xj = x)
-    test_gradients(f, g, x; test_gpu=true, test_grad_f=false, compare_finite_diff=false)
+
+    @testset "copy_xj +" begin
+        for g in TEST_GRAPHS
+            f(g, x) = propagate(copy_xj, g, +, xj = x)
+            test_gradients(f, g, g.x; test_grad_f=false)
+        end
+    end
+
+    @testset "copy_xj mean" begin
+        for g in TEST_GRAPHS
+            f(g, x) = propagate(copy_xj, g, mean, xj = x)
+            test_gradients(f, g, g.x; test_grad_f=false)
+        end
+    end
+
+    @testset "e_mul_xj +" begin
+        for g in TEST_GRAPHS
+            e = rand(Float32, size(g.x, 1), g.num_edges)
+            f(g, x, e) = propagate(e_mul_xj, g, +; xj = x, e)
+            test_gradients(f, g, g.x, e; test_grad_f=false)
+        end
+    end
+
+    @testset "w_mul_xj +" begin
+        for g in TEST_GRAPHS
+            w = rand(Float32, g.num_edges)
+            function f(g, x, w)
+                g = set_edge_weight(g, w)
+                return propagate(w_mul_xj, g, +, xj = x)
+            end
+            test_gradients(f, g, g.x, w; test_grad_f=false)
+        end
+    end
+end
+
+@testitem "propagate GPU" setup=[TestModuleGNNlib] tags=[:gpu] begin
+    using .TestModuleGNNlib
+
+    @testset "copy_xj +" begin
+        for g in TEST_GRAPHS
+            f(g, x) = propagate(copy_xj, g, +, xj = x)
+            test_gradients(f, g, g.x; test_gpu=true, test_grad_f=false, compare_finite_diff=false)
+        end
+    end
+
+    @testset "copy_xj mean" begin
+        for g in TEST_GRAPHS
+            f(g, x) = propagate(copy_xj, g, mean, xj = x)
+            test_gradients(f, g, g.x; test_gpu=true, test_grad_f=false, compare_finite_diff=false)
+        end
+    end
+
+    @testset "e_mul_xj +" begin
+        for g in TEST_GRAPHS
+            e = rand(Float32, size(g.x, 1), g.num_edges)
+            f(g, x, e) = propagate(e_mul_xj, g, +; xj = x, e)
+            test_gradients(f, g, g.x, e; test_gpu=true, test_grad_f=false, compare_finite_diff=false)
+        end
+    end
+
+    @testset "w_mul_xj +" begin
+        for g in TEST_GRAPHS
+            w = rand(Float32, g.num_edges)
+            function f(g, x, w)
+                g = set_edge_weight(g, w)
+                return propagate(w_mul_xj, g, +, xj = x)
+            end
+            @test test_gradients(
+                f, g, g.x, w; test_gpu=true, test_grad_f=false, compare_finite_diff=false
+            ) broken=true
+        end
+    end
 end
