@@ -195,9 +195,11 @@ end
                 g = set_edge_weight(g, w)
                 return propagate(w_mul_xj, g, +, xj = x)
             end
+            dev = gpu_device(force=true)
+            broken = get_graph_type(g) == :sparse && dev isa AMDGPUDevice
             @test test_gradients(
                 f, g, g.x, w; test_gpu=true, test_grad_f=false, compare_finite_diff=false
-            ) broken=true
+            ) broken=broken
         end
     end
 end
