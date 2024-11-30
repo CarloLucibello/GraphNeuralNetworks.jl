@@ -1,6 +1,6 @@
 module GNNlibAMDGPUExt
 
-using AMDGPU
+using AMDGPU: AnyROCMatrix
 using Random, Statistics, LinearAlgebra
 using GNNlib: GNNlib, propagate, copy_xj, e_mul_xj, w_mul_xj
 using GNNGraphs: GNNGraph, COO_T, SPARSE_T
