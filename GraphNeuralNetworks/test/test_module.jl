@@ -63,13 +63,10 @@ function check_equal_leaves(a, b; rtol=1e-4, atol=1e-4)
     fmapstructure_with_path(a, b) do kp, x, y
         if x isa AbstractArray
             # @show kp
-            # @assert x ≈ y rtol=rtol atol=atol
+            # @assert isapprox(x, y; rtol, atol)
             if !isapprox(x, y; rtol, atol)
                 equal = false
             end
-        # elseif x isa Number
-        #     @show kp
-        #     @assert x ≈ y rtol=rtol atol=atol
         end
     end
     @assert equal
@@ -114,7 +111,7 @@ function test_gradients(
             f64 = f |> Flux.f64
             xs64 = xs .|> Flux.f64
             y_fd, g_fd = finitediff_withgradient((xs...) -> loss(f64, graph, xs...), xs64...)
-            @assert y ≈ y_fd rtol=rtol atol=atol
+            @assert isapprox(y, y_fd; rtol, atol)
             check_equal_leaves(g, g_fd; rtol, atol)
         end
 
@@ -122,7 +119,7 @@ function test_gradients(
             # Zygote gradient with respect to input on GPU.
             y_gpu, g_gpu = Zygote.withgradient((xs...) -> loss(f_gpu, graph_gpu, xs...), xs_gpu...)
             @assert get_device(g_gpu) == get_device(xs_gpu)
-            @assert y_gpu ≈ y rtol=rtol atol=atol
+            @assert isapprox(y_gpu, y; rtol, atol)
             check_equal_leaves(g_gpu |> cpu_dev, g; rtol, atol)
         end
     end
@@ -137,7 +134,7 @@ function test_gradients(
             ps, re = Flux.destructure(f64)
             y_fd, g_fd = finitediff_withgradient(ps -> loss(re(ps),graph, xs...), ps)
             g_fd = (re(g_fd[1]),)
-            @assert y ≈ y_fd rtol=rtol atol=atol
+            @assert isapprox(y, y_fd; rtol, atol)
             check_equal_leaves(g, g_fd; rtol, atol)
         end
 
@@ -145,7 +142,7 @@ function test_gradients(
             # Zygote gradient with respect to f on GPU.
             y_gpu, g_gpu = Zygote.withgradient(f -> loss(f,graph_gpu, xs_gpu...), f_gpu)
             # @assert get_device(g_gpu) == get_device(xs_gpu)
-            @assert y_gpu ≈ y rtol=rtol atol=atol
+            @assert isapprox(y_gpu, y; rtol, atol)
             check_equal_leaves(g_gpu |> cpu_dev, g; rtol, atol)
         end
     end
