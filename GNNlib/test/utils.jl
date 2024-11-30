@@ -1,4 +1,5 @@
-@testitem "utils" setup=[SharedTestSetup] begin
+@testitem "utils" setup=[TestModuleGNNlib] begin
+    using .TestModuleGNNlib
     # TODO test all graph types
     GRAPH_T = :coo
     De, Dx = 3, 2

@@ -1,3 +1,6 @@
+# TODO test that the graph type is preserved
+# when constructing a GNNGraph from another
+
 @testset "Constructor: adjacency matrix" begin
     A = sprand(10, 10, 0.5)
     sA, tA, vA = findnz(A)

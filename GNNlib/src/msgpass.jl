@@ -184,7 +184,7 @@ xj_sub_xi(xi, xj, e) = xj .- xi
 """
     e_mul_xj(xi, xj, e) = reshape(e, (...)) .* xj
 
-Reshape `e` into broadcast compatible shape with `xj`
+Reshape `e` into a broadcast compatible shape with `xj`
 (by prepending singleton dimensions) then perform
 broadcasted multiplication.
 """

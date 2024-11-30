@@ -731,6 +731,7 @@ end
 Set `w` as edge weights in the returned graph. 
 """
 function set_edge_weight(g::GNNGraph, w::AbstractVector)
+    # TODO preserve the representation instead of converting to COO
     s, t = edge_index(g)
     @assert length(w) == length(s)
 

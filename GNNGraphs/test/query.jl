@@ -257,3 +257,20 @@ if GRAPH_T == :coo
     end
 end       
 
+@testset "get_graph_type" begin
+    g = rand_graph(10, 20, graph_type = GRAPH_T)
+    @test get_graph_type(g) == GRAPH_T
+
+    gsparse = GNNGraph(g, graph_type=:sparse)
+    @test get_graph_type(gsparse) == :sparse
+    @test gsparse.graph isa SparseMatrixCSC
+
+    gcoo = GNNGraph(g, graph_type=:coo)
+    @test get_graph_type(gcoo) == :coo
+    @test gcoo.graph[1:2] isa Tuple{Vector{Int}, Vector{Int}}
+
+
+    gdense = GNNGraph(g, graph_type=:dense)
+    @test get_graph_type(gdense) == :dense
+    @test gdense.graph isa Matrix{Int}
+end

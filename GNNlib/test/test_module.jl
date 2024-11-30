@@ -1,6 +1,9 @@
-@testmodule TestModule begin
+@testmodule TestModuleGNNlib begin
 
 using Pkg
+
+### GPU backends settings ############
+# tried to put this in __init__ but is not executed for some reason
 
 ## Uncomment below to change the default test settings
 # ENV["GNN_TEST_CUDA"] = "true"
@@ -23,24 +26,21 @@ for (backend, deps) in deps_dict
         @eval $backend.allowscalar(false)
     end
 end
+######################################
 
-using GraphNeuralNetworks
-using Test
-using Statistics, Random
-using Flux
+import Reexport: @reexport
+
+@reexport using GNNlib
+@reexport using GNNGraphs
+@reexport using NNlib
+@reexport using MLUtils
+@reexport using SparseArrays
+@reexport using Test, Random, Statistics
+@reexport using MLDataDevices
 using Functors: fmapstructure_with_path
-using Graphs
-using ChainRulesTestUtils, FiniteDifferences
-using Zygote
-using SparseArrays
-
-
-# from Base
-export mean, randn, SparseArrays, AbstractSparseMatrix
-
-# from other packages
-export Flux, gradient, Dense, Chain, relu, random_regular_graph, erdos_renyi,
-       BatchNorm, LayerNorm, Dropout, Parallel
+using FiniteDifferences: FiniteDifferences
+using Zygote: Zygote
+using Flux: Flux
 
 # from this module
 export D_IN, D_OUT, GRAPH_TYPES, TEST_GRAPHS,
@@ -150,7 +150,6 @@ function test_gradients(
     return true
 end
 
-
 function generate_test_graphs(graph_type)
     adj1 = [0 1 0 1
             1 0 1 0
@@ -162,9 +161,9 @@ function generate_test_graphs(graph_type)
                     graph_type)
 
     adj_single_vertex = [0 0 0 1
-                            0 0 0 0
-                            0 0 0 1
-                            1 0 1 0]
+                         0 0 0 0
+                         0 0 0 1
+                         1 0 1 0]
 
     g_single_vertex = GNNGraph(adj_single_vertex,
                                 ndata = rand(Float32, D_IN, 4);
@@ -178,5 +177,4 @@ TEST_GRAPHS = [generate_test_graphs(:coo)...,
                generate_test_graphs(:dense)...,
                generate_test_graphs(:sparse)...]
 
-end # testmodule
-
+end # module

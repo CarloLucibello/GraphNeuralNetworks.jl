@@ -47,6 +47,7 @@ include("query.jl")
 export adjacency_list,
        edge_index,
        get_edge_weight,
+       get_graph_type,
        graph_indicator,
        has_multi_edges,
        is_directed,
