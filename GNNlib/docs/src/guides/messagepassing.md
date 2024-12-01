@@ -28,8 +28,8 @@ manipulating arrays of size ``D_{node} \times num\_nodes`` and
 1. [`apply_edges`](@ref) materializes node features on edges and applies the message function. 
 2. [`aggregate_neighbors`](@ref) applies a reduction operator on the messages coming from the neighborhood of each node.
 
-The whole propagation mechanism internally relies on the [`NNlib.gather`](@ref) 
-and [`NNlib.scatter`](@ref) methods.
+The whole propagation mechanism internally relies on the [`NNlib.gather`](@extref) 
+and [`NNlib.scatter`](@extref) methods.
 
 
 ## Examples
