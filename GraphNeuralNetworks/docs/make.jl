@@ -15,7 +15,7 @@ interlinks = InterLinks(
    )
 
 # Copy the guides from GNNGraphs and GNNlib
-dest_guides_dir = joinpath(@__DIR__, "src/guides")
+dest_guides_dir = joinpath(@__DIR__, "src/other")
 gnngraphs_guides_dir = joinpath(@__DIR__, "../../GNNGraphs/docs/src/guides")
 gnnlib_guides_dir = joinpath(@__DIR__, "../../GNNlib/docs/src/guides") 
 for file in readdir(gnngraphs_guides_dir)
@@ -37,10 +37,10 @@ makedocs(;
     "Home" => "index.md",
     
     "Guides" => [
-        "Graphs" => ["guides/gnngraph.md", "guides/heterograph.md", "guides/temporalgraph.md"],
-        "Message Passing" => "guides/messagepassing.md",
+        "Graphs" => ["other/gnngraph.md", "other/heterograph.md", "other/temporalgraph.md"],
+        "Message Passing" => "other/messagepassing.md",
         "Models" => "guides/models.md",
-        "Datasets" => "guides/datasets.md",
+        "Datasets" => "other/datasets.md",
     ],
 
     "API Reference" => [
