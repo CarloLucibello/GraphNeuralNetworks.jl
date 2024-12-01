@@ -16,8 +16,10 @@ makedocs(;
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
          sitename = "GNNGraphs.jl",
          pages = ["Home" => "index.md",
-            "Graphs" => ["gnngraph.md", "heterograph.md", "temporalgraph.md"],
-            "Datasets" => "datasets.md",
+            "Guides" => [
+               "Graphs" => ["guides/gnngraph.md", "guides/heterograph.md", "guides/temporalgraph.md"],
+               "Datasets" => "guides/datasets.md",
+            ],
             "API Reference" => [
                  "GNNGraph" => "api/gnngraph.md",
                  "GNNHeteroGraph" => "api/heterograph.md",

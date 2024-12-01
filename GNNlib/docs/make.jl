@@ -21,7 +21,7 @@ makedocs(;
          format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
          sitename = "GNNlib.jl",
          pages = ["Home" => "index.md",
-            "Message Passing" => "messagepassing.md",
+            "Message Passing" => "guides/messagepassing.md",
 
             "API Reference" => [
      
