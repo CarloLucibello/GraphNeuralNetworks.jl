@@ -23,9 +23,9 @@ jobs:
       - name: Build GNNGraphs docs
         run: 
           julia --project=GNNGraphs/docs/ -e '
-          using Pkg
-          pkg"dev ./GNNGraphs"
-          Pkg.instantiate()
+          using Pkg;
+          pkg"dev ./GNNGraphs";
+          Pkg.instantiate();
           include("GNNGraphs/docs/make.jl")'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
@@ -33,9 +33,9 @@ jobs:
     
       - name: Build GNNlib docs
         run: julia --project=GNNlib/docs/ -e '
-          using Pkg
-          pkg"dev ./GNNlib ./GNNGraphs"
-          Pkg.instantiate()
+          using Pkg;
+          pkg"dev ./GNNlib ./GNNGraphs";
+          Pkg.instantiate();
           include("GNNlib/docs/make.jl")'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
@@ -43,9 +43,9 @@ jobs:
   
       - name: Build GNNLux docs
         run: julia --project=GNNLux/docs/ -e '
-            using Pkg
-            pkg"dev ./GNNLux ./GNNlib ./GNNGraphs"
-            Pkg.instantiate()
+            using Pkg;
+            pkg"dev ./GNNLux ./GNNlib ./GNNGraphs";
+            Pkg.instantiate();
             include("GNNLux/docs/make.jl")'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
@@ -53,9 +53,9 @@ jobs:
 
       - name: Build GraphNeuralNetworks docs
         run: julia --project=GraphNeuralNetworks/docs/ -e '
-            using Pkg
-            pkg"dev ./GraphNeuralNetworks ./GNNlib ./GNNGraphs"
-            Pkg.instantiate()
+            using Pkg;
+            pkg"dev ./GraphNeuralNetworks ./GNNlib ./GNNGraphs";
+            Pkg.instantiate();
             include("GraphNeuralNetworks/docs/make.jl")'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
@@ -64,9 +64,9 @@ jobs:
       # Build tutorials
       - name: Install dependencies for tutorials
         run: julia --project=tutorials/docs/ -e '
-          using Pkg
-          pkg"dev ./GraphNeuralNetworks ./GNNlib ./GNNGraphs"
-          Pkg.instantiate()
+          using Pkg;
+          pkg"dev ./GraphNeuralNetworks ./GNNlib ./GNNGraphs";
+          Pkg.instantiate();
           include("tutorials/docs/make.jl")'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
@@ -76,7 +76,7 @@ jobs:
       - name: Install dependencies for multidocs
         run: julia --project=docs/ -e '
           using Pkg;
-          pkg"dev ./GraphNeuralNetworks ./GNNlib ./GNNGraphs ./GNNLux"
+          pkg"dev ./GraphNeuralNetworks ./GNNlib ./GNNGraphs ./GNNLux";
           Pkg.instantiate();'
       - name: Check if objects.inv exists for GraphNeuralNetworks
         run: |
