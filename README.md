@@ -22,7 +22,7 @@ This repository contains the following packages:
 - **GNNGraphs.jl**: Package that contains the graph data structures and helper functions for working with graph data.
 
 
-Both GraphNeuralNetworks.jl and GNNLux.jl enjoy several features:
+Both GraphNeuralNetworks.jl and GNNLux.jl display several features:
 
 * Implement common graph convolutional layers.
 * Support computations on batched graphs. 
@@ -34,7 +34,7 @@ Both GraphNeuralNetworks.jl and GNNLux.jl enjoy several features:
 
 ## Installation
 
-GraphNeuralNetworks.jl, GNNlib.jl and GNNGraphs.jl are a registered Julia packages. You can easily install a package, e.g. GraphNeuralNetworks.jl, through the package manager :
+GraphNeuralNetworks.jl, GNNlib.jl and GNNGraphs.jl are registered Julia packages. You can easily install any of them through the package manager :
 
 ```julia
 pkg> add GraphNeuralNetworks
