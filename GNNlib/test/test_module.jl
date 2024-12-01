@@ -45,7 +45,7 @@ using Flux: Flux
 # from this module
 export D_IN, D_OUT, GRAPH_TYPES, TEST_GRAPHS,
        test_gradients, finitediff_withgradient, 
-       check_equal_leaves
+       check_equal_leaves, gpu_backend
 
 
 const D_IN = 3
@@ -176,5 +176,19 @@ GRAPH_TYPES = [:coo, :dense, :sparse]
 TEST_GRAPHS = [generate_test_graphs(:coo)...,
                generate_test_graphs(:dense)...,
                generate_test_graphs(:sparse)...]
+
+
+function gpu_backend()
+    dev = gpu_device()
+    if dev isa CUDADevice
+        return "CUDA"
+    elseif dev isa AMDGPUDevice
+        return "AMDGPU"
+    elseif dev isa MetalDevice
+        return "Metal"
+    else
+        return "Unknown"
+    end
+end
 
 end # module

@@ -102,9 +102,20 @@ end
     l = ChebConv(D_IN => D_OUT, k)
     for g in TEST_GRAPHS
         has_isolated_nodes(g) && continue
-        g.graph isa AbstractSparseMatrix && continue
-        @test size(l(g, g.x)) == (D_OUT, g.num_nodes)
-        test_gradients(l, g, g.x, rtol = RTOL_LOW, test_gpu = true, compare_finite_diff = false)
+
+        broken = gpu_backend() == "AMDGPU"
+        @test size(l(g, g.x)) == (D_OUT, g.num_nodes) broken=broken
+        
+        if gpu_backend() == "AMDGPU"
+            broken = true
+        elseif gpu_backend() == "CUDA" && get_graph_type(g) == :sparse
+            broken = true
+        else
+            broken = false
+        end
+        @test test_gradients(
+            l, g, g.x, rtol = RTOL_LOW, test_gpu = true, compare_finite_diff = false
+        ) broken=broken
     end   
 end
 
