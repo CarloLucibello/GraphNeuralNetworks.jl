@@ -66,7 +66,7 @@ functionality from that library.
 # Examples
 
 ```julia
-using GraphNeuralNetworks
+using GNNGraphs
 
 # Construct from adjacency list representation
 data = [[2,3], [1,4,5], [1], [2,5], [2,4]]
@@ -101,11 +101,8 @@ g.edata.e # or just g.e
 # Both source and target are vectors of length num_edges
 source, target = edge_index(g)
 ```
-A `GNNGraph` can be sent to the GPU using e.g. Flux's `gpu` function:
-```
-# Send to gpu
-using Flux, CUDA
-g = g |> Flux.gpu
+A `GNNGraph` can be sent to the GPU, for example by using Flux.jl's `gpu` function
+or MLDataDevices.jl's utilities. 
 ```
 """
 struct GNNGraph{T <: Union{COO_T, ADJMAT_T}} <: AbstractGNNGraph{T}

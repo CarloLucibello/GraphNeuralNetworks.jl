@@ -37,7 +37,7 @@ It is similar to [`GNNGraph`](@ref) but nodes and edges are of different types.
 # Examples
 
 ```julia
-julia> using GraphNeuralNetworks
+julia> using GNNGraphs
 
 julia> nA, nB = 10, 20;
 

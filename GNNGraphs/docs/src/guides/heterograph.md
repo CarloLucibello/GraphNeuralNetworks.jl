@@ -13,7 +13,9 @@ the type [`GNNHeteroGraph`](@ref).
 ## Creating a Heterograph
 
 A heterograph can be created empty or by passing pairs `edge_type => data` to the constructor.
-```jldoctest
+```jldoctest hetero
+julia> using GNNGraphs
+
 julia> g = GNNHeteroGraph()
 GNNHeteroGraph:
   num_nodes: Dict()
@@ -31,7 +33,7 @@ GNNHeteroGraph:
   num_edges: Dict((:user, :rate, :movie) => 4)
 ```
 New relations, possibly with new node types, can be added with the function [`add_edges`](@ref).
-```jldoctest
+```jldoctest hetero
 julia> g = add_edges(g, (:user, :like, :actor) => ([1,2,3,3,3], [3,5,1,9,4]))
 GNNHeteroGraph:
   num_nodes: Dict(:actor => 9, :movie => 13, :user => 3)
@@ -40,7 +42,7 @@ GNNHeteroGraph:
 See [`rand_heterograph`](@ref), [`rand_bipartite_heterograph`](@ref)
 for generating random heterographs. 
 
-```jldoctest
+```jldoctest hetero
 julia> g = rand_bipartite_heterograph((10, 15), 20)
 GNNHeteroGraph:
   num_nodes: Dict(:A => 10, :B => 15)
@@ -50,7 +52,7 @@ GNNHeteroGraph:
 ## Basic Queries
 
 Basic queries are similar to those for homogeneous graphs:
-```jldoctest
+```jldoctest hetero
 julia> g = GNNHeteroGraph((:user, :rate, :movie) => ([1,1,2,3], [7,13,5,7]))
 GNNHeteroGraph:
   num_nodes: Dict(:movie => 13, :user => 3)
@@ -84,7 +86,7 @@ julia> g.etypes
 ## Data Features
 
 Node, edge, and graph features can be added at construction time or later using:
-```jldoctest
+```jldoctest hetero
 # equivalent to g.ndata[:user][:x] = ...
 julia> g[:user].x = rand(Float32, 64, 3);
 
@@ -106,10 +108,10 @@ GNNHeteroGraph:
 
 ## Batching
 Similarly to graphs, also heterographs can be batched together.
-```jldoctest
+```jldoctest hetero
 julia> gs = [rand_bipartite_heterograph((5, 10), 20) for _ in 1:32];
 
-julia> Flux.batch(gs)
+julia> MLUtils.batch(gs)
 GNNHeteroGraph:
   num_nodes: Dict(:A => 160, :B => 320)
   num_edges: Dict((:A, :to, :B) => 640, (:B, :to, :A) => 640)
@@ -118,7 +120,7 @@ GNNHeteroGraph:
 Batching is automatically performed by the [`DataLoader`](https://fluxml.ai/Flux.jl/stable/data/mlutils/#MLUtils.DataLoader) iterator
 when the `collate` option is set to `true`.
 
-```jldoctest
+```jldoctest hetero
 using Flux: DataLoader
 
 data = [rand_bipartite_heterograph((5, 10), 20, 

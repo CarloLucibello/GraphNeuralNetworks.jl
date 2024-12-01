@@ -19,7 +19,7 @@ mathengine = MathJax3(Dict(:loader => Dict("load" => ["[tex]/require", "[tex]/ma
 
 makedocs(;
     modules = [GNNGraphs],
-    doctest = false, # TODO enable doctest
+    doctest = true, # TODO enable doctest
     format = Documenter.HTML(; mathengine, 
                     prettyurls = get(ENV, "CI", nothing) == "true", 
                     assets = [],
@@ -30,9 +30,9 @@ makedocs(;
     
     "Guides" => [
         "Graphs" => [
-        "guides/gnngraph.md", 
-        "guides/heterograph.md", 
-        "guides/temporalgraph.md"
+            "guides/gnngraph.md", 
+            "guides/heterograph.md", 
+            "guides/temporalgraph.md"
         ],
         "Datasets" => "guides/datasets.md",
     ],

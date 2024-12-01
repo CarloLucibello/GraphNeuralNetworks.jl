@@ -155,11 +155,10 @@ that contains the total number of the original nodes
 and where the original graphs are disjoint subgraphs.
 
 ```julia
-using Flux
-using Flux: DataLoader
+using MLUtils
 
 data = [rand_graph(10, 30, ndata=rand(Float32, 3, 10)) for _ in 1:160]
-gall = Flux.batch(data)
+gall = MLUtils.batch(data)
 
 # gall is a GNNGraph containing many graphs
 @assert gall.num_graphs == 160 
@@ -172,7 +171,7 @@ g23 = getgraph(gall, 2:3)
 @assert g23.num_nodes == 20   # 10 nodes x 2 graphs
 @assert g23.num_edges == 60  # 30 undirected edges X 2 graphs
 
-# We can pass a GNNGraph to Flux's DataLoader
+# We can pass a GNNGraph to MLUtils' DataLoader
 train_loader = DataLoader(gall, batchsize=16, shuffle=true)
 
 for g in train_loader
@@ -193,7 +192,7 @@ an option for mini-batch iteration, the recommended way for better performance i
 to pass an array of graphs directly and set the `collate` option to `true`:
 
 ```julia
-using Flux: DataLoader
+using MLUtils: DataLoader
 
 data = [rand_graph(10, 30, ndata=rand(Float32, 3, 10)) for _ in 1:320]
 
@@ -220,7 +219,7 @@ g′ = add_edges(g, [1, 2], [2, 3]) # add edges 1->2 and 2->3
 Move a `GNNGraph` to a CUDA device using `Flux.gpu` method. 
 
 ```julia
-using CUDA, Flux
+using Flux, CUDA # or using Metal or using AMDGPU 
 
 g_gpu = g |> Flux.gpu
 ```

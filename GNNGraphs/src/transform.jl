@@ -170,7 +170,7 @@ A new GNNGraph with the specified edges removed.
 
 # Example
 ```julia
-julia> using GraphNeuralNetworks
+julia> using GNNGraphs
 
 # Construct a GNNGraph
 julia> g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
@@ -275,7 +275,7 @@ A new GNNGraph with the specified nodes and all edges associated with these node
 
 # Example
 ```julia
-using GraphNeuralNetworks
+using GNNGraphs
 
 g = GNNGraph([1, 1, 2, 2, 3], [2, 3, 1, 3, 1])
 
@@ -621,17 +621,17 @@ julia> e = [10.0, 20.0, 30.0, 40.0, 50.0];
 
 julia> g = GNNGraph(s, t, w, edata = e)
 GNNGraph:
-    num_nodes = 4
-    num_edges = 5
-    edata:
-        e => (5,)
+  num_nodes: 4
+  num_edges: 5
+  edata:
+        e = 5-element Vector{Float64}
 
 julia> g2 = to_bidirected(g)
 GNNGraph:
-    num_nodes = 4
-    num_edges = 7
-    edata:
-        e => (7,)
+  num_nodes: 4
+  num_edges: 7
+  edata:
+        e = 7-element Vector{Float64}
 
 julia> edge_index(g2)
 ([1, 2, 2, 3, 3, 4, 4], [2, 1, 3, 2, 4, 3, 4])
