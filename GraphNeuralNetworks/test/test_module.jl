@@ -38,9 +38,15 @@ using SparseArrays
 # from Base
 export mean, randn, SparseArrays, AbstractSparseMatrix
 
-# from other packages
-export Flux, gradient, Dense, Chain, relu, random_regular_graph, erdos_renyi,
-       BatchNorm, LayerNorm, Dropout, Parallel
+# from Flux.jl
+export Flux, gradient, Dense, Chain, relu
+       BatchNorm, LayerNorm, Dropout, Parallel,
+       gpu_device, cpu_device, get_device,
+       CPUDevice, CUDADevice, AMDGPUDevice, MetalDevice,
+       gpu_backend
+
+# from Graphs.jl
+export random_regular_graph, erdos_renyi
 
 # from this module
 export D_IN, D_OUT, GRAPH_TYPES, TEST_GRAPHS,
@@ -177,6 +183,20 @@ GRAPH_TYPES = [:coo, :dense, :sparse]
 TEST_GRAPHS = [generate_test_graphs(:coo)...,
                generate_test_graphs(:dense)...,
                generate_test_graphs(:sparse)...]
+
+
+function gpu_backend()
+    dev = gpu_device()
+    if dev isa CUDADevice
+        return "CUDA"
+    elseif dev isa AMDGPUDevice
+        return "AMDGPU"
+    elseif dev isa MetalDevice
+        return "Metal"
+    else
+        return "Unknown"
+    end
+end
 
 end # testmodule
 
