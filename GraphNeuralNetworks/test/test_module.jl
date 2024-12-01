@@ -3,7 +3,7 @@
 using Pkg
 
 ## Uncomment below to change the default test settings
-# ENV["GNN_TEST_CUDA"] = "true"
+ENV["GNN_TEST_CUDA"] = "true"
 # ENV["GNN_TEST_AMDGPU"] = "true"
 # ENV["GNN_TEST_Metal"] = "true"
 
@@ -39,7 +39,7 @@ using SparseArrays
 export mean, randn, SparseArrays, AbstractSparseMatrix
 
 # from Flux.jl
-export Flux, gradient, Dense, Chain, relu
+export Flux, gradient, Dense, Chain, relu,
        BatchNorm, LayerNorm, Dropout, Parallel,
        gpu_device, cpu_device, get_device,
        CPUDevice, CUDADevice, AMDGPUDevice, MetalDevice
