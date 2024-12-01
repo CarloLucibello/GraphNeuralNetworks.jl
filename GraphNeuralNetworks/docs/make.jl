@@ -19,15 +19,15 @@ dest_guides_dir = joinpath(@__DIR__, "src/other")
 gnngraphs_guides_dir = joinpath(@__DIR__, "../../GNNGraphs/docs/src/guides")
 gnnlib_guides_dir = joinpath(@__DIR__, "../../GNNlib/docs/src/guides") 
 for file in readdir(gnngraphs_guides_dir)
-    cp(joinpath(gnngraphs_guides_dir, file), joinpath(dest_guides_dir, file))
+    cp(joinpath(gnngraphs_guides_dir, file), joinpath(dest_guides_dir, file), force=true)
 end
 for file in readdir(gnnlib_guides_dir)
-    cp(joinpath(gnnlib_guides_dir, file), joinpath(dest_guides_dir, file))
+    cp(joinpath(gnnlib_guides_dir, file), joinpath(dest_guides_dir, file), force=true)
 end
 
 makedocs(;
     modules = [GraphNeuralNetworks],
-    doctest = false,
+    doctest = false, # TODO: enable doctest
     clean = true,
     plugins = [interlinks],
     format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),

@@ -42,16 +42,15 @@ export mean, randn, SparseArrays, AbstractSparseMatrix
 export Flux, gradient, Dense, Chain, relu
        BatchNorm, LayerNorm, Dropout, Parallel,
        gpu_device, cpu_device, get_device,
-       CPUDevice, CUDADevice, AMDGPUDevice, MetalDevice,
-       gpu_backend
-
+       CPUDevice, CUDADevice, AMDGPUDevice, MetalDevice
+    
 # from Graphs.jl
 export random_regular_graph, erdos_renyi
 
 # from this module
 export D_IN, D_OUT, GRAPH_TYPES, TEST_GRAPHS,
        test_gradients, finitediff_withgradient, 
-       check_equal_leaves
+       check_equal_leaves, gpu_backend
 
 
 const D_IN = 3
