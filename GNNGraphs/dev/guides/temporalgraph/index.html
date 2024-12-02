@@ -23,7 +23,7 @@ julia&gt; new_tg = remove_snapshot(tg, 2) # remove snapshot at time 2
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10]
   num_edges: [20, 22]
-  num_snapshots: 2</code></pre><p>See <a href="../../api/temporalgraph/#GNNGraphs.rand_temporal_radius_graph"><code>rand_temporal_radius_graph</code></a> and <a href="../../api/temporalgraph/#GNNGraphs.rand_temporal_hyperbolic_graph"><code>rand_temporal_hyperbolic_graph</code></a> for generating random temporal graphs. </p><pre><code class="language-julia-repl hljs">julia&gt; tg = rand_temporal_radius_graph(10, 3, 0.1, 0.5)
+  num_snapshots: 2</code></pre><p>See <a href="../../api/temporalgraph/#GNNGraphs.rand_temporal_radius_graph"><code>rand_temporal_radius_graph</code></a> and <a href="../../api/temporalgraph/#GNNGraphs.rand_temporal_hyperbolic_graph"><code>rand_temporal_hyperbolic_graph</code></a> for generating random temporal graphs. </p><pre><code class="language-julia hljs">julia&gt; tg = rand_temporal_radius_graph(10, 3, 0.1, 0.5)
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10, 10]
   num_edges: [32, 30, 34]
@@ -59,11 +59,13 @@ julia&gt; tg.snapshots         # list of snapshots
 julia&gt; tg.snapshots[1]      # first snapshot, same as tg[1]
 GNNGraph:
   num_nodes: 10
-  num_edges: 20</code></pre><h2 id="Data-Features"><a class="docs-heading-anchor" href="#Data-Features">Data Features</a><a id="Data-Features-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Features" title="Permalink"></a></h2><p>A temporal graph can store global feature for the entire time series in the <code>tgdata</code> filed. Also, each snapshot can store node, edge, and graph features in the <code>ndata</code>, <code>edata</code>, and <code>gdata</code> fields, respectively. </p><pre><code class="language-julia-repl hljs">julia&gt; snapshots = [rand_graph(10,20; ndata = rand(3,10)), rand_graph(10,14; ndata = rand(4,10)), rand_graph(10,22; ndata = rand(5,10))]; # node features at construction time
+  num_edges: 20</code></pre><h2 id="Data-Features"><a class="docs-heading-anchor" href="#Data-Features">Data Features</a><a id="Data-Features-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Features" title="Permalink"></a></h2><p>A temporal graph can store global feature for the entire time series in the <code>tgdata</code> filed. Also, each snapshot can store node, edge, and graph features in the <code>ndata</code>, <code>edata</code>, and <code>gdata</code> fields, respectively. </p><pre><code class="language-julia-repl hljs">julia&gt; snapshots = [rand_graph(10, 20; ndata = rand(Float32, 3, 10)), 
+                    rand_graph(10, 14; ndata = rand(Float32, 4, 10)), 
+                    rand_graph(10, 22; ndata = rand(Float32, 5, 10))]; # node features at construction time
 
 julia&gt; tg = TemporalSnapshotsGNNGraph(snapshots);
 
-julia&gt; tg.tgdata.y = rand(3,1); # add global features after construction
+julia&gt; tg.tgdata.y = rand(Float32, 3, 1); # add global features after construction
 
 julia&gt; tg
 TemporalSnapshotsGNNGraph:
@@ -71,18 +73,18 @@ TemporalSnapshotsGNNGraph:
   num_edges: [20, 14, 22]
   num_snapshots: 3
   tgdata:
-        y = 3×1 Matrix{Float64}
+        y = 3×1 Matrix{Float32}
 
 julia&gt; tg.ndata # vector of DataStore containing node features for each snapshot
 3-element Vector{DataStore}:
  DataStore(10) with 1 element:
-  x = 3×10 Matrix{Float64}
+  x = 3×10 Matrix{Float32}
  DataStore(10) with 1 element:
-  x = 4×10 Matrix{Float64}
+  x = 4×10 Matrix{Float32}
  DataStore(10) with 1 element:
-  x = 5×10 Matrix{Float64}
+  x = 5×10 Matrix{Float32}
 
 julia&gt; [ds.x for ds in tg.ndata]; # vector containing the x feature of each snapshot
 
 julia&gt; [g.x for g in tg.snapshots]; # same vector as above, now accessing 
-                                   # the x feature directly from the snapshots</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../heterograph/">« Heterogeneous Graphs</a><a class="docs-footer-nextpage" href="../datasets/">Datasets »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 2 December 2024 12:29">Monday 2 December 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+                                   # the x feature directly from the snapshots</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../heterograph/">« Heterogeneous Graphs</a><a class="docs-footer-nextpage" href="../datasets/">Datasets »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 2 December 2024 15:02">Monday 2 December 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

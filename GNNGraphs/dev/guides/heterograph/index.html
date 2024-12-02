@@ -18,7 +18,7 @@ GNNHeteroGraph:
   num_edges: Dict((:user, :rate, :movie) =&gt; 4)</code></pre><p>New relations, possibly with new node types, can be added with the function <a href="../../api/gnngraph/#GNNGraphs.add_edges-Tuple{GNNGraph{&lt;:Tuple{T, T, V} where {T&lt;:(AbstractVector{&lt;:Integer}), V&lt;:Union{Nothing, AbstractVector}}}, AbstractVector, AbstractVector}"><code>add_edges</code></a>.</p><pre><code class="language-julia-repl hljs">julia&gt; g = add_edges(g, (:user, :like, :actor) =&gt; ([1,2,3,3,3], [3,5,1,9,4]))
 GNNHeteroGraph:
   num_nodes: Dict(:actor =&gt; 9, :movie =&gt; 13, :user =&gt; 3)
-  num_edges: Dict((:user, :like, :actor) =&gt; 5, (:user, :rate, :movie) =&gt; 4)</code></pre><p>See <a href="../../api/gnngraph/#GNNGraphs.rand_heterograph"><code>rand_heterograph</code></a>, <a href="../../api/gnngraph/#GNNGraphs.rand_bipartite_heterograph-Tuple{Any, Any}"><code>rand_bipartite_heterograph</code></a> for generating random heterographs. </p><pre><code class="language-julia-repl hljs">julia&gt; g = rand_bipartite_heterograph((10, 15), 20)
+  num_edges: Dict((:user, :like, :actor) =&gt; 5, (:user, :rate, :movie) =&gt; 4)</code></pre><p>See <a href="../../api/heterograph/#GNNGraphs.rand_heterograph"><code>rand_heterograph</code></a>, <a href="../../api/heterograph/#GNNGraphs.rand_bipartite_heterograph-Tuple{Any, Any}"><code>rand_bipartite_heterograph</code></a> for generating random heterographs. </p><pre><code class="language-julia-repl hljs">julia&gt; g = rand_bipartite_heterograph((10, 15), 20)
 GNNHeteroGraph:
   num_nodes: Dict(:A =&gt; 10, :B =&gt; 15)
   num_edges: Dict((:A, :to, :B) =&gt; 20, (:B, :to, :A) =&gt; 20)</code></pre><h2 id="Basic-Queries"><a class="docs-heading-anchor" href="#Basic-Queries">Basic Queries</a><a id="Basic-Queries-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Queries" title="Permalink"></a></h2><p>Basic queries are similar to those for homogeneous graphs:</p><pre><code class="language-julia-repl hljs">julia&gt; g = GNNHeteroGraph((:user, :rate, :movie) =&gt; ([1,1,2,3], [7,13,5,7]))
@@ -35,18 +35,15 @@ julia&gt; g.num_edges
 Dict{Tuple{Symbol, Symbol, Symbol}, Int64} with 1 entry:
   (:user, :rate, :movie) =&gt; 4
 
-# source and target node for a given relation
-julia&gt; edge_index(g, (:user, :rate, :movie))
+julia&gt; edge_index(g, (:user, :rate, :movie)) # source and target node for a given relation
 ([1, 1, 2, 3], [7, 13, 5, 7])
 
-# node types
-julia&gt; g.ntypes
+julia&gt; g.ntypes  # node types
 2-element Vector{Symbol}:
  :user
  :movie
 
-# edge types
-julia&gt; g.etypes
+julia&gt; g.etypes  # edge types
 1-element Vector{Tuple{Symbol, Symbol, Symbol}}:
  (:user, :rate, :movie)</code></pre><h2 id="Data-Features"><a class="docs-heading-anchor" href="#Data-Features">Data Features</a><a id="Data-Features-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Features" title="Permalink"></a></h2><p>Node, edge, and graph features can be added at construction time or later using:</p><pre><code class="language-julia-repl hljs"># equivalent to g.ndata[:user][:x] = ...
 julia&gt; g[:user].x = rand(Float32, 64, 3);
@@ -70,7 +67,7 @@ julia&gt; MLUtils.batch(gs)
 GNNHeteroGraph:
   num_nodes: Dict(:A =&gt; 160, :B =&gt; 320)
   num_edges: Dict((:A, :to, :B) =&gt; 640, (:B, :to, :A) =&gt; 640)
-  num_graphs: 32</code></pre><p>Batching is automatically performed by the <a href="https://fluxml.ai/Flux.jl/stable/data/mlutils/#MLUtils.DataLoader"><code>DataLoader</code></a> iterator when the <code>collate</code> option is set to <code>true</code>.</p><pre><code class="language-julia hljs">using Flux: DataLoader
+  num_graphs: 32</code></pre><p>Batching is automatically performed by the <a href="https://fluxml.ai/Flux.jl/stable/data/mlutils/#MLUtils.DataLoader"><code>DataLoader</code></a> iterator when the <code>collate</code> option is set to <code>true</code>.</p><pre><code class="language-julia hljs">using MLUtils: DataLoader
 
 data = [rand_bipartite_heterograph((5, 10), 20, 
             ndata=Dict(:A=&gt;rand(Float32, 3, 5))) 
@@ -83,4 +80,4 @@ for g in train_loader
     @assert g.num_nodes[:A] == 80
     @assert size(g.ndata[:A].x) == (3, 80)    
     # ...
-end</code></pre><h2 id="Graph-convolutions-on-heterographs"><a class="docs-heading-anchor" href="#Graph-convolutions-on-heterographs">Graph convolutions on heterographs</a><a id="Graph-convolutions-on-heterographs-1"></a><a class="docs-heading-anchor-permalink" href="#Graph-convolutions-on-heterographs" title="Permalink"></a></h2><p>See <code>HeteroGraphConv</code> for how to perform convolutions on heterogeneous graphs.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gnngraph/">« Static Graphs</a><a class="docs-footer-nextpage" href="../temporalgraph/">Temporal Graphs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 2 December 2024 12:29">Monday 2 December 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><h2 id="Graph-convolutions-on-heterographs"><a class="docs-heading-anchor" href="#Graph-convolutions-on-heterographs">Graph convolutions on heterographs</a><a id="Graph-convolutions-on-heterographs-1"></a><a class="docs-heading-anchor-permalink" href="#Graph-convolutions-on-heterographs" title="Permalink"></a></h2><p>See <code>HeteroGraphConv</code> for how to perform convolutions on heterogeneous graphs.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gnngraph/">« Static Graphs</a><a class="docs-footer-nextpage" href="../temporalgraph/">Temporal Graphs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 2 December 2024 15:02">Monday 2 December 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
