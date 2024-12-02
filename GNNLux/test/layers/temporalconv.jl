@@ -1,4 +1,5 @@
-@testitem "layers/temporalconv" setup=[SharedTestSetup] begin
+@testitem "layers/temporalconv" setup=[TestModuleLux] begin
+    using .TestModuleLux
     using LuxTestUtils: test_gradients, AutoReverseDiff, AutoTracker, AutoForwardDiff, AutoEnzyme
 
     rng = StableRNG(1234)
