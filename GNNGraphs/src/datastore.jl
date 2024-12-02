@@ -37,7 +37,7 @@ DataStore() with 2 elements:
 The `DataStore` has an interface similar to both dictionaries and named tuples.
 Arrays can be accessed and added using either the indexing or the property syntax:
 
-```jldoctest
+```jldoctest datastore
 julia> ds = DataStore(x = ones(Float32, 2, 3), y = zeros(Float32, 3))
 DataStore() with 2 elements:
   y = 3-element Vector{Float32}
@@ -49,20 +49,21 @@ julia> ds.x   # same as `ds[:x]`
  1.0  1.0  1.0
 
 julia> ds.z = zeros(Float32, 3)  # Add new feature array `z`. Same as `ds[:z] = rand(Float32, 3)`
-3-element Vector{Float64}:
-0.0
-0.0
-0.0
+3-element Vector{Float32}:
+ 0.0
+ 0.0
+ 0.0
 ```
 
 The `DataStore` can be iterated over, and the keys and values can be accessed
 using `keys(ds)` and `values(ds)`. `map(f, ds)` applies the function `f`
 to each feature array:
 
-```jldoctest
-julia> ds = DataStore(a = zeros(2), b = zeros(2));
-
+```jldoctest datastore
 julia> ds2 = map(x -> x .+ 1, ds)
+DataStore() with 2 elements:
+  a = 2-element Vector{Float64}
+  b = 2-element Vector{Float64}
 
 julia> ds2.a
 2-element Vector{Float64}:
