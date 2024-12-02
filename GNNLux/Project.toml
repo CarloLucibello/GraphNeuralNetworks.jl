@@ -17,11 +17,14 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 ConcreteStructs = "0.2.3"
-Lux = "1.0"
-LuxCore = "1.0"
+GNNGraphs = "1.3"
+GNNlib = "0.2.3"
+Lux = "1"
+LuxCore = "1"
 NNlib = "0.9.21"
 Reexport = "1.2"
 Static = "1.1"
+Statistics = "1"
 julia = "1.10"
 
 [extras]
