@@ -19,8 +19,8 @@ Additional keyword arguments will be passed to the [`GNNHeteroGraph`](@ref) cons
 julia> g = rand_heterograph((:user => 10, :movie => 20),
                             (:user, :rate, :movie) => 30)
 GNNHeteroGraph:
-  num_nodes: (:user => 10, :movie => 20)         
-  num_edges: ((:user, :rate, :movie) => 30,)
+  num_nodes: Dict(:movie => 20, :user => 10)
+  num_edges: Dict((:user, :rate, :movie) => 30)
 ```
 """
 function rand_heterograph end
