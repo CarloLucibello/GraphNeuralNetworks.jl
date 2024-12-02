@@ -39,7 +39,7 @@ outpath = joinpath(@__DIR__, "build")
 MultiDocumenter.make(
     outpath,
     docs;
-    search_engine = false,
+    search_engine = MultiDocumenter.SearchConfig(),
     # search_engine = MultiDocumenter.SearchConfig(
     #     index_versions = ["stable"],
     #     engine = MultiDocumenter.FlexSearch
