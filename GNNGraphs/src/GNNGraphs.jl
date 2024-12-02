@@ -4,7 +4,7 @@ using SparseArrays
 using Functors: @functor
 import Graphs
 using Graphs: AbstractGraph, outneighbors, inneighbors, adjacency_matrix, degree, 
-              has_self_loops, is_directed, induced_subgraph
+              has_self_loops, is_directed, induced_subgraph, has_edge
 import NearestNeighbors
 import NNlib
 import StatsBase
@@ -59,8 +59,9 @@ export adjacency_list,
 # from Graphs
        adjacency_matrix,
        degree,
-       has_self_loops,
+       has_edge, 
        has_isolated_nodes,
+       has_self_loops,
        inneighbors,
        outneighbors,
        khop_adj

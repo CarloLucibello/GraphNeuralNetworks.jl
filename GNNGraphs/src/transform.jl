@@ -384,13 +384,13 @@ GNNGraph:
 ```jldoctest
 julia> g = GNNGraph()
 GNNGraph:
-    num_nodes: 0
-    num_edges: 0
+  num_nodes: 0
+  num_edges: 0
 
 julia> add_edges(g, [1,2], [2,3])
 GNNGraph:
-    num_nodes: 3
-    num_edges: 2
+  num_nodes: 3
+  num_edges: 2
 ```
 """
 add_edges(g::GNNGraph{<:COO_T}, snew::AbstractVector, tnew::AbstractVector; kws...) = add_edges(g, (snew, tnew, nothing); kws...)
@@ -804,38 +804,33 @@ See also [`MLUtils.unbatch`](@ref).
 # Examples
 
 ```jldoctest
-julia> g1 = rand_graph(4, 6, ndata=ones(8, 4))
+julia> g1 = rand_graph(4, 4, ndata=ones(Float32, 3, 4))
 GNNGraph:
-    num_nodes = 4
-    num_edges = 6
-    ndata:
-        x => (8, 4)
+  num_nodes: 4
+  num_edges: 4
+  ndata:
+        x = 3×4 Matrix{Float32}
 
-julia> g2 = rand_graph(7, 4, ndata=zeros(8, 7))
+julia> g2 = rand_graph(5, 4, ndata=zeros(Float32, 3, 5))
 GNNGraph:
-    num_nodes = 7
-    num_edges = 4
-    ndata:
-        x => (8, 7)
+  num_nodes: 5
+  num_edges: 4
+  ndata:
+        x = 3×5 Matrix{Float32}
 
 julia> g12 = MLUtils.batch([g1, g2])
 GNNGraph:
-    num_nodes = 11
-    num_edges = 10
-    num_graphs = 2
-    ndata:
-        x => (8, 11)
+  num_nodes: 9
+  num_edges: 8
+  num_graphs: 2
+  ndata:
+        x = 3×9 Matrix{Float32}
 
 julia> g12.ndata.x
-8×11 Matrix{Float64}:
- 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+3×9 Matrix{Float32}:
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  1.0  0.0  0.0  0.0  0.0  0.0
 ```
 """
 function MLUtils.batch(gs::AbstractVector{<:GNNGraph})
@@ -961,25 +956,19 @@ See also [`MLUtils.batch`](@ref) and [`getgraph`](@ref).
 # Examples
 
 ```jldoctest
+julia> using MLUtils
+
 julia> gbatched = MLUtils.batch([rand_graph(5, 6), rand_graph(10, 8), rand_graph(4,2)])
 GNNGraph:
-    num_nodes = 19
-    num_edges = 16
-    num_graphs = 3
+  num_nodes: 19
+  num_edges: 16
+  num_graphs: 3
 
 julia> MLUtils.unbatch(gbatched)
 3-element Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}:
- GNNGraph:
-    num_nodes = 5
-    num_edges = 6
-
- GNNGraph:
-    num_nodes = 10
-    num_edges = 8
-
- GNNGraph:
-    num_nodes = 4
-    num_edges = 2
+ GNNGraph(5, 6) with no data
+ GNNGraph(10, 8) with no data
+ GNNGraph(4, 2) with no data
 ```
 """
 function MLUtils.unbatch(g::GNNGraph{T}) where {T <: COO_T}

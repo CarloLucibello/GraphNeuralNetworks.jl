@@ -1,3 +1,7 @@
+```@meta
+CurrentModule = GNNGraphs
+```
+
 # Heterogeneous Graphs
 
 Heterogeneous graphs (also called heterographs), are graphs where each node has a type,
@@ -67,18 +71,15 @@ julia> g.num_edges
 Dict{Tuple{Symbol, Symbol, Symbol}, Int64} with 1 entry:
   (:user, :rate, :movie) => 4
 
-# source and target node for a given relation
-julia> edge_index(g, (:user, :rate, :movie))
+julia> edge_index(g, (:user, :rate, :movie)) # source and target node for a given relation
 ([1, 1, 2, 3], [7, 13, 5, 7])
 
-# node types
-julia> g.ntypes
+julia> g.ntypes  # node types
 2-element Vector{Symbol}:
  :user
  :movie
 
-# edge types
-julia> g.etypes
+julia> g.etypes  # edge types
 1-element Vector{Tuple{Symbol, Symbol, Symbol}}:
  (:user, :rate, :movie)
 ```
@@ -120,8 +121,8 @@ GNNHeteroGraph:
 Batching is automatically performed by the [`DataLoader`](https://fluxml.ai/Flux.jl/stable/data/mlutils/#MLUtils.DataLoader) iterator
 when the `collate` option is set to `true`.
 
-```jldoctest hetero
-using Flux: DataLoader
+```julia
+using MLUtils: DataLoader
 
 data = [rand_bipartite_heterograph((5, 10), 20, 
             ndata=Dict(:A=>rand(Float32, 3, 5))) 

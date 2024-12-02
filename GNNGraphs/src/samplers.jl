@@ -12,11 +12,13 @@ originally introduced in ["Inductive Representation Learning on Large Graphs"}(h
 - `num_layers::Int`: The number of layers for neighborhood expansion (how far to sample neighbors).
 - `batch_size::Union{Int, Nothing}`: The size of the batch. If not specified, it defaults to the number of `input_nodes`.
 
-# Usage
-```jldoctest
-julia>  loader = NeighborLoader(graph; num_neighbors=[10, 5], input_nodes=[1, 2, 3], num_layers=2)
+# Examples
+
+```julia
+julia> loader = NeighborLoader(graph; num_neighbors=[10, 5], input_nodes=[1, 2, 3], num_layers=2)
 
 julia> batch_counter = 0
+
 julia> for mini_batch_gnn in loader
             batch_counter += 1
             println("Batch ", batch_counter, ": Nodes in mini-batch graph: ", nv(mini_batch_gnn))

@@ -65,8 +65,8 @@ Return `true` if there is an edge of type `edge_t` from node `i` to node `j` in 
 ```jldoctest
 julia> g = rand_bipartite_heterograph((2, 2), (4, 0), bidirected=false)
 GNNHeteroGraph:
-  num_nodes: (:A => 2, :B => 2)
-  num_edges: ((:A, :to, :B) => 4, (:B, :to, :A) => 0)
+  num_nodes: Dict(:A => 2, :B => 2)
+  num_edges: Dict((:A, :to, :B) => 4, (:B, :to, :A) => 0)
 
 julia> has_edge(g, (:A,:to,:B), 1, 1)
 true
