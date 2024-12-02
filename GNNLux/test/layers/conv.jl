@@ -1,4 +1,6 @@
-@testitem "layers/conv" setup=[SharedTestSetup] begin
+@testitem "layers/conv" setup=[TestModuleLux] begin
+    using .TestModuleLux
+    
     rng = StableRNG(1234)
     g = rand_graph(rng, 10, 40)
     in_dims = 3

@@ -1,4 +1,6 @@
-@testitem "layers/basic" setup=[SharedTestSetup] begin
+@testitem "layers/basic" setup=[TestModuleLux] begin
+    using .TestModuleLux
+    
     rng = StableRNG(17)
     g = rand_graph(rng, 10, 40)
     x = randn(rng, Float32, 3, 10)        
