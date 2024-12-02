@@ -1,7 +1,6 @@
 using Documenter
 using GraphNeuralNetworks
-using Flux, GNNGraphs, GNNlib, Graphs, NNlib
-# using GNNGraphs, GNNlib # no need to load since they are re-exported by GraphNeuralNetworks
+using Flux, GNNGraphs, GNNlib, Graphs
 using DocumenterInterLinks
 
 DocMeta.setdocmeta!(GraphNeuralNetworks, :DocTestSetup, :(using GraphNeuralNetworks); recursive = true)
