@@ -1,5 +1,6 @@
 ```@meta
 CurrentModule = GNNLux
+CollapsedDocStrings = true
 ```
 
 # Temporal Graph-Convolutional Layers

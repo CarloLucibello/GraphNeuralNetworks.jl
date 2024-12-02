@@ -1,5 +1,6 @@
 ```@meta
 CurrentModule = GraphNeuralNetworks
+CollapsedDocStrings = true
 ```
 
 # Temporal Graph-Convolutional Layers

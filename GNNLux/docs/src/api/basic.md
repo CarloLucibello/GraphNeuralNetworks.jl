@@ -1,5 +1,6 @@
 ```@meta
 CurrentModule = GNNLux
+CollapsedDocStrings = true
 ```
 
 ## Basic Layers

@@ -1,11 +1,9 @@
 ```@meta
 CurrentModule = GNNGraphs
+CollapsedDocStrings = true
 ```
 
 # Samplers
-
-
-## Docs
 
 ```@autodocs
 Modules = [GNNGraphs]

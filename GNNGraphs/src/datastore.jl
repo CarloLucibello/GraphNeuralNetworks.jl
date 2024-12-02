@@ -15,29 +15,12 @@ DataStore(3) with 2 elements:
   x = 2×3 Matrix{Float32}
 
 julia> ds = DataStore(3, Dict(:x => rand(Float32, 2, 3), :y => rand(Float32, 3))); # equivalent to above
-
-julia> ds = DataStore(3, (x = rand(Float32, 2, 3), y = rand(Float32, 30)))
-ERROR: AssertionError: DataStore: data[y] has 30 observations, but n = 3
-Stacktrace:
- [1] DataStore(n::Int64, data::Dict{Symbol, Any})
-   @ GNNGraphs ~/.julia/dev/GNNGraphs/datastore.jl:54
- [2] DataStore(n::Int64, data::NamedTuple{(:x, :y), Tuple{Matrix{Float32}, Vector{Float32}}})
-   @ GNNGraphs ~/.julia/dev/GNNGraphs/datastore.jl:73
- [3] top-level scope
-   @ REPL[13]:1
-
-julia> ds = DataStore(x = randFloat32, 2, 3), y = rand(Float32, 30)) # no checks
-DataStore() with 2 elements:
-  y = 30-element Vector{Float32}
-  x = 2×3 Matrix{Float32}
-  y = 30-element Vector{Float64}
-  x = 2×3 Matrix{Float64}
 ```
 
 The `DataStore` has an interface similar to both dictionaries and named tuples.
 Arrays can be accessed and added using either the indexing or the property syntax:
 
-```jldoctest datastore
+```jldoctest docstr_datastore
 julia> ds = DataStore(x = ones(Float32, 2, 3), y = zeros(Float32, 3))
 DataStore() with 2 elements:
   y = 3-element Vector{Float32}
@@ -59,14 +42,16 @@ The `DataStore` can be iterated over, and the keys and values can be accessed
 using `keys(ds)` and `values(ds)`. `map(f, ds)` applies the function `f`
 to each feature array:
 
-```jldoctest datastore
+```jldoctest docstr_datastore
 julia> ds2 = map(x -> x .+ 1, ds)
-DataStore() with 2 elements:
-  a = 2-element Vector{Float64}
-  b = 2-element Vector{Float64}
+DataStore() with 3 elements:
+  y = 3-element Vector{Float32}
+  z = 3-element Vector{Float32}
+  x = 2×3 Matrix{Float32}
 
-julia> ds2.a
-2-element Vector{Float64}:
+julia> ds2.z
+3-element Vector{Float32}:
+ 1.0
  1.0
  1.0
 ```

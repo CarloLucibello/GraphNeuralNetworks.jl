@@ -1,3 +1,8 @@
+```@meta
+CurrentModule = GNNGraphs
+CollapsedDocStrings = true
+```
+
 # Temporal Graphs
 
 ## TemporalSnapshotsGNNGraph
@@ -10,7 +15,7 @@ Pages   = ["temporalsnapshotsgnngraph.jl"]
 Private = false
 ```
 
-## TemporalSnapshotsGNNGraph random generators
+## Random Generators
 
 ```@docs
 rand_temporal_radius_graph

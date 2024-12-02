@@ -61,16 +61,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
 
-      # Build tutorials
-      - name: Install dependencies for tutorials
-        run: julia --project=tutorials/docs/ -e '
-          using Pkg;
-          pkg"dev ./GraphNeuralNetworks ./GNNlib ./GNNGraphs";
-          Pkg.instantiate();
-          include("tutorials/docs/make.jl")'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
       
       # Build and deploy multidocs
       - name: Install dependencies for multidocs

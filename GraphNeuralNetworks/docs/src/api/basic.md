@@ -1,15 +1,9 @@
 ```@meta
 CurrentModule = GraphNeuralNetworks
+CollapsedDocStrings = true
 ```
 
 # Basic Layers
-
-## Index
-
-```@index
-Modules = [GraphNeuralNetworks]
-Pages = ["basic.md"]
-```
 
 ## Docs
 

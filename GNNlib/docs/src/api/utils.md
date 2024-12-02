@@ -1,20 +1,11 @@
 ```@meta
 CurrentModule = GNNlib
+CollapsedDocStrings = true
 ```
 
 # Utility Functions
 
-## Index
-
-```@index
-Order = [:type, :function]
-Pages   = ["utils.md"]
-```
-
-## Docs
-
-
-### Graph-wise operations 
+## Graph-wise operations 
 
 ```@docs
 reduce_nodes
@@ -25,13 +16,13 @@ broadcast_nodes
 broadcast_edges
 ```
 
-### Neighborhood operations
+## Neighborhood operations
 
 ```@docs
 softmax_edge_neighbors
 ```
 
-### NNlib's gather and scatter functions
+## NNlib's gather and scatter functions
 
 Primitive functions for message passing implemented in [NNlib.jl](https://fluxml.ai/NNlib.jl/stable/reference/#Gather-and-Scatter):
 

@@ -291,19 +291,19 @@ function Base.show(io::IO, ::MIME"text/plain", g::GNNGraph)
         if !isempty(g.ndata)
             print(io, "\n  ndata:")
             for k in keys(g.ndata)
-                print(io, "\n\t$k = $(shortsummary(g.ndata[k]))")
+                print(io, "\n    $k = $(shortsummary(g.ndata[k]))")
             end
         end
         if !isempty(g.edata)
             print(io, "\n  edata:")
             for k in keys(g.edata)
-                print(io, "\n\t$k = $(shortsummary(g.edata[k]))")
+                print(io, "\n    $k = $(shortsummary(g.edata[k]))")
             end
         end
         if !isempty(g.gdata)
             print(io, "\n  gdata:")
             for k in keys(g.gdata)
-                print(io, "\n\t$k = $(shortsummary(g.gdata[k]))")
+                print(io, "\n    $k = $(shortsummary(g.gdata[k]))")
             end
         end
     end

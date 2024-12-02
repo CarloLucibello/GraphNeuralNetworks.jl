@@ -1,15 +1,9 @@
 ```@meta
 CurrentModule = GNNlib
+CollapsedDocStrings = true
 ```
 
 # Message Passing
-
-## Index
-
-```@index
-Order = [:type, :function]
-Pages   = ["messagepassing.md"]
-```
 
 ## Interface
 
