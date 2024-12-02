@@ -20,3 +20,26 @@ Private = false
 Graphs.has_edge(::GNNHeteroGraph, ::Tuple{Symbol, Symbol, Symbol}, ::Integer, ::Integer)
 ```
 
+## Query
+
+```@autodocs
+Modules = [GNNGraphs]
+Pages   = ["gnnheterograph/query.jl"]
+Private = false
+```
+
+## Transform
+
+```@autodocs
+Modules = [GNNGraphs]
+Pages   = ["gnnheterograph/transform.jl"]
+Private = false
+```
+
+## Generate
+
+```@autodocs
+Modules = [GNNGraphs]
+Pages   = ["gnnheterograph/generate.jl"]
+Private = false
+```

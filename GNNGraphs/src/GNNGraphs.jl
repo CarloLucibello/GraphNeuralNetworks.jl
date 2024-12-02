@@ -30,7 +30,7 @@ export GNNGraph,
        edge_features,
        graph_features
 
-include("gnnheterograph.jl")
+include("gnnheterograph/gnnheterograph.jl")
 export GNNHeteroGraph,
        num_edge_types,
        num_node_types,
@@ -44,6 +44,7 @@ export TemporalSnapshotsGNNGraph,
        # remove_snapshot!
 
 include("query.jl")
+include("gnnheterograph/query.jl")
 export adjacency_list,
        edge_index,
        get_edge_weight,
@@ -65,6 +66,7 @@ export adjacency_list,
        khop_adj
 
 include("transform.jl")
+include("gnnheterograph/transform.jl")
 export add_nodes,
        add_edges,
        add_self_loops,
@@ -88,6 +90,7 @@ export add_nodes,
        blockdiag
 
 include("generate.jl")
+include("gnnheterograph/generate.jl")
 export rand_graph,
        rand_heterograph,
        rand_bipartite_heterograph,
@@ -104,6 +107,7 @@ include("operators.jl")
 
 include("convert.jl")
 include("utils.jl")
+include("gnnheterograph/utils.jl")
 export sort_edge_index, color_refinement
 
 include("gatherscatter.jl")

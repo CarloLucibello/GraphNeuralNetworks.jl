@@ -35,6 +35,7 @@ Pages   = ["query.jl"]
 Private = false
 ```
 
+
 ```@docs
 Graphs.neighbors(::GNNGraph, ::Integer)
 ```
