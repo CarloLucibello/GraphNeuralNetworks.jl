@@ -102,11 +102,10 @@ julia&gt; get_edge_weight(g)
  2.1
  2.3
  4.0
- 4.1</code></pre><h2 id="Batches-and-Subgraphs"><a class="docs-heading-anchor" href="#Batches-and-Subgraphs">Batches and Subgraphs</a><a id="Batches-and-Subgraphs-1"></a><a class="docs-heading-anchor-permalink" href="#Batches-and-Subgraphs" title="Permalink"></a></h2><p>Multiple <code>GNNGraph</code>s can be batched together into a single graph that contains the total number of the original nodes  and where the original graphs are disjoint subgraphs.</p><pre><code class="language-julia hljs">using Flux
-using Flux: DataLoader
+ 4.1</code></pre><h2 id="Batches-and-Subgraphs"><a class="docs-heading-anchor" href="#Batches-and-Subgraphs">Batches and Subgraphs</a><a id="Batches-and-Subgraphs-1"></a><a class="docs-heading-anchor-permalink" href="#Batches-and-Subgraphs" title="Permalink"></a></h2><p>Multiple <code>GNNGraph</code>s can be batched together into a single graph that contains the total number of the original nodes  and where the original graphs are disjoint subgraphs.</p><pre><code class="language-julia hljs">using MLUtils
 
 data = [rand_graph(10, 30, ndata=rand(Float32, 3, 10)) for _ in 1:160]
-gall = Flux.batch(data)
+gall = MLUtils.batch(data)
 
 # gall is a GNNGraph containing many graphs
 @assert gall.num_graphs == 160 
@@ -119,7 +118,7 @@ g23 = getgraph(gall, 2:3)
 @assert g23.num_nodes == 20   # 10 nodes x 2 graphs
 @assert g23.num_edges == 60  # 30 undirected edges X 2 graphs
 
-# We can pass a GNNGraph to Flux&#39;s DataLoader
+# We can pass a GNNGraph to MLUtils&#39; DataLoader
 train_loader = DataLoader(gall, batchsize=16, shuffle=true)
 
 for g in train_loader
@@ -130,7 +129,7 @@ for g in train_loader
 end
 
 # Access the nodes&#39; graph memberships 
-graph_indicator(gall)</code></pre><h2 id="DataLoader-and-mini-batch-iteration"><a class="docs-heading-anchor" href="#DataLoader-and-mini-batch-iteration">DataLoader and mini-batch iteration</a><a id="DataLoader-and-mini-batch-iteration-1"></a><a class="docs-heading-anchor-permalink" href="#DataLoader-and-mini-batch-iteration" title="Permalink"></a></h2><p>While constructing a batched graph and passing it to the <code>DataLoader</code> is always  an option for mini-batch iteration, the recommended way for better performance is to pass an array of graphs directly and set the <code>collate</code> option to <code>true</code>:</p><pre><code class="language-julia hljs">using Flux: DataLoader
+graph_indicator(gall)</code></pre><h2 id="DataLoader-and-mini-batch-iteration"><a class="docs-heading-anchor" href="#DataLoader-and-mini-batch-iteration">DataLoader and mini-batch iteration</a><a id="DataLoader-and-mini-batch-iteration-1"></a><a class="docs-heading-anchor-permalink" href="#DataLoader-and-mini-batch-iteration" title="Permalink"></a></h2><p>While constructing a batched graph and passing it to the <code>DataLoader</code> is always  an option for mini-batch iteration, the recommended way for better performance is to pass an array of graphs directly and set the <code>collate</code> option to <code>true</code>:</p><pre><code class="language-julia hljs">using MLUtils: DataLoader
 
 data = [rand_graph(10, 30, ndata=rand(Float32, 3, 10)) for _ in 1:320]
 
@@ -143,7 +142,7 @@ for g in train_loader
     # .....
 end</code></pre><h2 id="Graph-Manipulation"><a class="docs-heading-anchor" href="#Graph-Manipulation">Graph Manipulation</a><a id="Graph-Manipulation-1"></a><a class="docs-heading-anchor-permalink" href="#Graph-Manipulation" title="Permalink"></a></h2><pre><code class="language-julia hljs">g′ = add_self_loops(g)
 g′ = remove_self_loops(g)
-g′ = add_edges(g, [1, 2], [2, 3]) # add edges 1-&gt;2 and 2-&gt;3</code></pre><h2 id="GPU-movement"><a class="docs-heading-anchor" href="#GPU-movement">GPU movement</a><a id="GPU-movement-1"></a><a class="docs-heading-anchor-permalink" href="#GPU-movement" title="Permalink"></a></h2><p>Move a <code>GNNGraph</code> to a CUDA device using <code>Flux.gpu</code> method. </p><pre><code class="language-julia hljs">using CUDA, Flux
+g′ = add_edges(g, [1, 2], [2, 3]) # add edges 1-&gt;2 and 2-&gt;3</code></pre><h2 id="GPU-movement"><a class="docs-heading-anchor" href="#GPU-movement">GPU movement</a><a id="GPU-movement-1"></a><a class="docs-heading-anchor-permalink" href="#GPU-movement" title="Permalink"></a></h2><p>Move a <code>GNNGraph</code> to a CUDA device using <code>Flux.gpu</code> method. </p><pre><code class="language-julia hljs">using Flux, CUDA # or using Metal or using AMDGPU 
 
 g_gpu = g |&gt; Flux.gpu</code></pre><h2 id="Integration-with-Graphs.jl"><a class="docs-heading-anchor" href="#Integration-with-Graphs.jl">Integration with Graphs.jl</a><a id="Integration-with-Graphs.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Integration-with-Graphs.jl" title="Permalink"></a></h2><p>Since <code>GNNGraph &lt;: Graphs.AbstractGraph</code>, we can use any functionality from <a href="https://github.com/JuliaGraphs/Graphs.jl">Graphs.jl</a> for querying and analyzing the graph structure.  Moreover, a <code>GNNGraph</code> can be easily constructed from a <code>Graphs.Graph</code> or a <code>Graphs.DiGraph</code>:</p><pre><code class="language-julia hljs">julia&gt; import Graphs
 
@@ -167,4 +166,4 @@ julia&gt; gd = Graphs.erdos_renyi(10, 20, is_directed=true)
 julia&gt; GNNGraph(gd)
 GNNGraph:
   num_nodes: 10
-  num_edges: 20</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../heterograph/">Heterogeneous Graphs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Sunday 1 December 2024 14:10">Sunday 1 December 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  num_edges: 20</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../heterograph/">Heterogeneous Graphs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 2 December 2024 06:26">Monday 2 December 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
