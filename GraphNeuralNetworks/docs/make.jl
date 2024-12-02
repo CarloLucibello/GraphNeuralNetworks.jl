@@ -51,15 +51,34 @@ makedocs(;
         "Datasets" => "GNNGraphs/guides/datasets.md",
     ],
 
+    "Tutorials" => [
+        "Introductory tutorials" => [
+            "Hands on" => "tutorials/gnn_intro_pluto.md",
+            "Node classification" => "tutorials/node_classification_pluto.md", 
+            "Graph classification" => "tutorials/graph_classification_pluto.md"
+            ],
+        "Temporal graph neural networks" =>[
+            "Node autoregression" => "tutorials/traffic_prediction.md",
+            "Temporal graph classification" => "tutorials/temporal_graph_classification_pluto.md"
+        ],
+    ],
+
     "API Reference" => [
+        "Graphs (GNNGraphs.jl)" => [
+        ]
+
+        "Message Passing (GNNlib.jl)" => [
             "Message Passing" => "GNNlib/api/messagepassing.md",
-            "Utils" => "GNNlib/api/utils.md",
-            "Basic" => "api/basic.md",
+            "Other Operators" => "GNNlib/api/utils.md",
+        ]
+
+        "Layers" => [
+            "Basic layers" => "api/basic.md",
             "Convolutional layers" => "api/conv.md",
             "Pooling layers" => "api/pool.md",
             "Temporal Convolutional layers" => "api/temporalconv.md",
             "Hetero Convolutional layers" => "api/heteroconv.md",
-
+        ]
         ],
     
     "Developer guide" => "dev.md",

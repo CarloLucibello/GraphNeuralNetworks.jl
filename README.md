@@ -27,7 +27,7 @@ Both **GraphNeuralNetworks.jl** and **GNNLux.jl** support the following features
 - Implementation of common graph convolutional layers.
 - Computation on batched graphs.
 - Custom layer definitions.
-- Support for NVIDIA CUDA GPUs.
+- Support for CUDA and AMDGPU.
 - Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
 - [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) of node, edge, and graph-level machine learning tasks.
 - Support for heterogeneous and temporal graphs.
