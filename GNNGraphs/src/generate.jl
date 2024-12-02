@@ -16,26 +16,26 @@ Additional keyword arguments will be passed to the [`GNNGraph`](@ref) constructo
 
 # Examples
 
-```jldoctest
+```julia
 julia> g = rand_graph(5, 4, bidirected=false)
 GNNGraph:
-    num_nodes = 5
-    num_edges = 4
+  num_nodes: 5
+  num_edges: 4
 
 julia> edge_index(g)
-([1, 3, 3, 4], [5, 4, 5, 2])
+([4, 3, 2, 1], [5, 4, 3, 2])
 
 # In the bidirected case, edge data will be duplicated on the reverse edges if needed.
 julia> g = rand_graph(5, 4, edata=rand(Float32, 16, 2))
 GNNGraph:
-    num_nodes = 5
-    num_edges = 4
-    edata:
-        e => (16, 4)
+  num_nodes: 5
+  num_edges: 4
+  edata:
+        e = 16×4 Matrix{Float32}
 
 # Each edge has a reverse
 julia> edge_index(g)
-([1, 3, 3, 4], [3, 4, 1, 3])
+([1, 1, 5, 3], [5, 3, 1, 1])
 ```
 """
 function rand_graph(n::Integer, m::Integer; seed=-1, kws...)
@@ -85,8 +85,8 @@ Additional keyword arguments will be passed to the [`GNNHeteroGraph`](@ref) cons
 julia> g = rand_heterograph((:user => 10, :movie => 20),
                             (:user, :rate, :movie) => 30)
 GNNHeteroGraph:
-  num_nodes: (:user => 10, :movie => 20)         
-  num_edges: ((:user, :rate, :movie) => 30,)
+  num_nodes: Dict(:movie => 20, :user => 10)         
+  num_edges: Dict((:user, :rate, :movie) => 30)
 ```
 """
 function rand_heterograph end
@@ -161,7 +161,7 @@ See [`rand_heterograph`](@ref) for a more general version.
 
 # Examples
 
-```julia-repl
+```julia
 julia> g = rand_bipartite_heterograph((10, 15), 20)
 GNNHeteroGraph:
   num_nodes: (:A => 10, :B => 15)
@@ -214,7 +214,7 @@ to its `k` closest `points`.
 
 # Examples
 
-```jldoctest
+```julia
 julia> n, k = 10, 3;
 
 julia> x = rand(Float32, 3, n);
@@ -231,7 +231,6 @@ GNNGraph:
     num_nodes = 10
     num_edges = 30
     num_graphs = 2
-
 ```
 """
 function knn_graph(points::AbstractMatrix, k::Int;
@@ -295,7 +294,7 @@ to its neighbors within a given distance `r`.
 
 # Examples
 
-```jldoctest
+```julia
 julia> n, r = 10, 0.75;
 
 julia> x = rand(Float32, 3, n);
@@ -312,9 +311,10 @@ GNNGraph:
     num_nodes = 10
     num_edges = 20
     num_graphs = 2
-
 ```
+
 # References
+
 Section B paragraphs 1 and 2 of the paper [Dynamic Hidden-Variable Network Models](https://arxiv.org/pdf/2101.00414.pdf)
 """
 function radius_graph(points::AbstractMatrix, r::AbstractFloat;
@@ -447,7 +447,7 @@ First, the positions of the nodes are generated with a quasi-uniform distributio
 
 # Example
 
-```jldoctest
+```julia
 julia> n, snaps, α, R, speed, ζ = 10, 5, 1.0, 4.0, 0.1, 1.0;
 
 julia> thg = rand_temporal_hyperbolic_graph(n, snaps; α, R, speed, ζ)

@@ -1,3 +1,7 @@
+```@meta
+CurrentModule = GNNGraphs
+```
+
 # Temporal Graphs
 
 Temporal Graphs are graphs with time varying topologies and  features. In GNNGraphs.jl, temporal graphs with fixed number of nodes over time are supported by the [`TemporalSnapshotsGNNGraph`](@ref) type.
@@ -45,7 +49,7 @@ TemporalSnapshotsGNNGraph:
 
 See [`rand_temporal_radius_graph`](@ref) and [`rand_temporal_hyperbolic_graph`](@ref) for generating random temporal graphs. 
 
-```jldoctest temporal
+```julia
 julia> tg = rand_temporal_radius_graph(10, 3, 0.1, 0.5)
 TemporalSnapshotsGNNGraph:
   num_nodes: [10, 10, 10]
@@ -97,11 +101,13 @@ A temporal graph can store global feature for the entire time series in the `tgd
 Also, each snapshot can store node, edge, and graph features in the `ndata`, `edata`, and `gdata` fields, respectively. 
 
 ```jldoctest temporal
-julia> snapshots = [rand_graph(10,20; ndata = rand(3,10)), rand_graph(10,14; ndata = rand(4,10)), rand_graph(10,22; ndata = rand(5,10))]; # node features at construction time
+julia> snapshots = [rand_graph(10, 20; ndata = rand(Float32, 3, 10)), 
+                    rand_graph(10, 14; ndata = rand(Float32, 4, 10)), 
+                    rand_graph(10, 22; ndata = rand(Float32, 5, 10))]; # node features at construction time
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots);
 
-julia> tg.tgdata.y = rand(3,1); # add global features after construction
+julia> tg.tgdata.y = rand(Float32, 3, 1); # add global features after construction
 
 julia> tg
 TemporalSnapshotsGNNGraph:
@@ -109,16 +115,16 @@ TemporalSnapshotsGNNGraph:
   num_edges: [20, 14, 22]
   num_snapshots: 3
   tgdata:
-        y = 3×1 Matrix{Float64}
+        y = 3×1 Matrix{Float32}
 
 julia> tg.ndata # vector of DataStore containing node features for each snapshot
 3-element Vector{DataStore}:
  DataStore(10) with 1 element:
-  x = 3×10 Matrix{Float64}
+  x = 3×10 Matrix{Float32}
  DataStore(10) with 1 element:
-  x = 4×10 Matrix{Float64}
+  x = 4×10 Matrix{Float32}
  DataStore(10) with 1 element:
-  x = 5×10 Matrix{Float64}
+  x = 5×10 Matrix{Float32}
 
 julia> [ds.x for ds in tg.ndata]; # vector containing the x feature of each snapshot
 
