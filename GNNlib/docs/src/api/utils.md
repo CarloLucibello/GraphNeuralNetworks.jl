@@ -5,7 +5,6 @@ CollpasedDocString = true
 
 # Utility Functions
 
-
 ## Graph-wise operations 
 
 ```@docs

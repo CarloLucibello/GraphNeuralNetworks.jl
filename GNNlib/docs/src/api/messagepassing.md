@@ -5,13 +5,6 @@ CollapsedDocString = true
 
 # Message Passing
 
-## Index
-
-```@index
-Order = [:type, :function]
-Pages   = ["messagepassing.md"]
-```
-
 ## Interface
 
 ```@docs
