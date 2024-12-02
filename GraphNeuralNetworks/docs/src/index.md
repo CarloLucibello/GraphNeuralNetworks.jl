@@ -16,7 +16,7 @@ Among its features:
 
 The package is part of a larger ecosystem of packages that includes [GNNlib.jl](https://juliagraphs.org/GraphNeuralNetworks.jl/gnnlib), [GNNGraphs.jl](https://juliagraphs.org/GraphNeuralNetworks.jl/gnngraphs), and [GNNLux.jl](https://juliagraphs.org/GraphNeuralNetworks.jl/gnnlux). 
 
-GraphNeuralNetworks.jl is the fronted package for Flux.jl users. [Lux.jl](https://lux.csail.mit.edu/stable/) users instead, can relyi on GNNLux.jl (still in development).
+GraphNeuralNetworks.jl is the fronted package for Flux.jl users. [Lux.jl](https://lux.csail.mit.edu/stable/) users instead, can rely on GNNLux.jl (still in development).
 
 ## Installation
 
@@ -52,11 +52,11 @@ end
 
 ### Model building 
 
-We concisely define our model as a [`GraphNeuralNetworks.GNNChain`](@ref) containing two graph convolutional layers. If CUDA is available, our model will live on the gpu.
+We concisely define our model as a [`GNNChain`](@ref) containing two graph convolutional layers. If CUDA is available, our model will live on the gpu.
 
 
 ```julia
-device = CUDA.functional() ? Flux.gpu : Flux.cpu;
+device = gpu_device()
 
 model = GNNChain(GCNConv(16 => 64),
                 BatchNorm(64),     # Apply batch normalization on node features (nodes dimension is batch dimension)

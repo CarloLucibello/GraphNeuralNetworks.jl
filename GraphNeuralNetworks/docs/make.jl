@@ -36,7 +36,7 @@ makedocs(;
                             prettyurls = get(ENV, "CI", nothing) == "true", 
                             assets = [],
                             size_threshold=nothing, 
-                            size_threshold_warn=200000),
+                            size_threshold_warn=2000000),
     sitename = "GraphNeuralNetworks.jl",
     pages = [
     
@@ -65,6 +65,10 @@ makedocs(;
 
     "API Reference" => [
         "Graphs (GNNGraphs.jl)" => [
+            "GNNGraph" => "GNNGraphs/api/gnngraph.md",
+            "GNNHeteroGraph" => "GNNGraphs/api/heterograph.md",
+            "TemporalSnapshotsGNNGraph" => "GNNGraphs/api/temporalgraph.md",
+            "Samplers" => "GNNGraphs/api/samplers.md",
         ]
 
         "Message Passing (GNNlib.jl)" => [

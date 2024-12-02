@@ -1,6 +1,6 @@
 ```@meta
 CurrentModule = GNNlib
-CollpasedDocString = true
+CollapsedDocStrings = true
 ```
 
 # Utility Functions

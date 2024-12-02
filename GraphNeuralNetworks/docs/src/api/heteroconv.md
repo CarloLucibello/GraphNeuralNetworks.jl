@@ -1,6 +1,6 @@
 ```@meta
 CurrentModule = GraphNeuralNetworks
-CollapsedDocString = true
+CollapsedDocStrings = true
 ```
 
 # Hetero Graph-Convolutional Layers
