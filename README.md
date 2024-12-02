@@ -7,44 +7,44 @@
 ![](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl)
 
-Libraries for deep learning on graphs in Julia, using either [Flux.jl](https://fluxml.ai/Flux.jl/stable/) or [Lux.jl](https://lux.csail.mit.edu/stable/) as backend framework.
+
+**Libraries for deep learning on graphs in Julia**, using either [Flux.jl](https://fluxml.ai/Flux.jl/stable/) or [Lux.jl](https://lux.csail.mit.edu/stable/) as backend frameworks.
 
 This repository contains the following packages:
 
-- **GraphNeuralNetworks.jl**: Graph convolutional layers based on the deep learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/). This is the fronted package for Flux users. 
+- **GraphNeuralNetworks.jl**: Provides graph convolutional layers based on the deep learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/). This is the frontend package for Flux users.
 
-- **GNNLux.jl**: Graph convolutional layers based on the deep learning framework [Lux.jl](https://lux.csail.mit.edu/stable/). This is the fronted package for Lux users. This package is still under development and not yet registered.
+- **GNNLux.jl**: Offers graph convolutional layers based on the deep learning framework [Lux.jl](https://lux.csail.mit.edu/stable/). This is the frontend package for Lux users. Note: This package is still under development and not yet registered.
 
-- **GNNlib.jl**: Contains the message-passing framework based on the gather/scatter mechanism or on
-  sparse matrix multiplication. It also contains the shared implementation for the layers of the two fronted packages. This package is not meant to be used directly by the user, but its functionalities
-  are used and re-exported by the fronted packages.
+- **GNNGraphs.jl**: Provides graph data structures and helper functions for working with graph data. This package is re-exported by the frontend packages.
 
-- **GNNGraphs.jl**: Package that contains the graph data structures and helper functions for working with graph data.
+- **GNNlib.jl**: Implements the message-passing framework based on the gather/scatter mechanism or sparse matrix multiplication. It also includes shared implementations for the layers used by the two frontend packages. This package is not intended for direct use by end-users but is re-exported by the frontend packages.
 
+### Features
 
-Both GraphNeuralNetworks.jl and GNNLux.jl display several features:
+Both **GraphNeuralNetworks.jl** and **GNNLux.jl** support the following features:
 
-* Implement common graph convolutional layers.
-* Support computations on batched graphs. 
-* Easy to define custom layers.
-* CUDA and AMDGPU support.
-* Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
-* [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) of node, edge, and graph level machine learning tasks. 
-* Heterogeneous and temporal graphs support. 
+- Implementation of common graph convolutional layers.
+- Computation on batched graphs.
+- Custom layer definitions.
+- Support for NVIDIA CUDA GPUs.
+- Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
+- [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) of node, edge, and graph-level machine learning tasks.
+- Support for heterogeneous and temporal graphs.
 
 ## Installation
 
-GraphNeuralNetworks.jl, GNNlib.jl and GNNGraphs.jl are registered Julia packages. You can easily install any of them through the package manager :
+**GraphNeuralNetworks.jl**, **GNNlib.jl**, and **GNNGraphs.jl** are registered Julia packages. You can install them easily through the package manager:
 
 ```julia
 pkg> add GraphNeuralNetworks
 ```
 
-
-
 ## Usage
 
-Usage examples can be found in the [examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) and in the [notebooks](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/notebooks) folder. Also, make sure to read the [documentation](https://juliagraphs.org/GraphNeuralNetworks.jl/graphneuralnetworks/) and the [tutorials](https://juliagraphs.org/GraphNeuralNetworks.jl/tutorials/) for a comprehensive introduction to the library.
+Usage examples can be found in the [examples folder](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) and the [notebooks folder](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/notebooks). 
+
+For a comprehensive introduction to the library, refer to the [Documentation](https://juliagraphs.org/GraphNeuralNetworks.jl/graphneuralnetworks/) and the [Tutorials](https://juliagraphs.org/GraphNeuralNetworks.jl/tutorials/)
 
 ## Citing
 
