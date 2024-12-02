@@ -36,7 +36,8 @@ window.MathJax = {
       "base",
       "ams",
       "autoload",
-      "mhchem"
+      "mathtools",
+      "require"
     ],
     "inlineMath": [
       [
@@ -47,8 +48,13 @@ window.MathJax = {
         "\\(",
         "\\)"
       ]
-    ],
-    "tags": "ams"
+    ]
+  },
+  "loader": {
+    "load": [
+      "[tex]/require",
+      "[tex]/mathtools"
+    ]
   },
   "options": {
     "ignoreHtmlClass": "tex2jax_ignore",
