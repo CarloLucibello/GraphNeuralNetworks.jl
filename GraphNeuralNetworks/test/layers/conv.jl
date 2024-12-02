@@ -102,7 +102,7 @@ end
     l = ChebConv(D_IN => D_OUT, k)
     for g in TEST_GRAPHS
         has_isolated_nodes(g) && continue
-        gpu_backend() == "AMDGPU" && continue # TODO skipping since julia crashes 
+        gpu_backend() == "AMDGPU" && continue # TODO skipping since julia crashes
         broken = gpu_backend() == "AMDGPU"
         @test size(l(g, g.x)) == (D_OUT, g.num_nodes) broken=broken
         
