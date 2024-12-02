@@ -1,5 +1,6 @@
 ```@meta
 CurrentModule = GNNlib
+CollapsedDocString = true
 ```
 
 # Message Passing
