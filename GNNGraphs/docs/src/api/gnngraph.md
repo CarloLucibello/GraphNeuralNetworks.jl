@@ -31,10 +31,9 @@ Private = false
 
 ```@autodocs
 Modules = [GNNGraphs]
-Pages   = ["query.jl"]
+Pages   = ["src/query.jl"]
 Private = false
 ```
-
 
 ```@docs
 Graphs.neighbors(::GNNGraph, ::Integer)
@@ -44,7 +43,7 @@ Graphs.neighbors(::GNNGraph, ::Integer)
 
 ```@autodocs
 Modules = [GNNGraphs]
-Pages   = ["transform.jl"]
+Pages   = ["src/transform.jl"]
 Private = false
 ```
 
@@ -59,17 +58,16 @@ GNNGraphs.color_refinement
 
 ```@autodocs
 Modules = [GNNGraphs]
-Pages   = ["generate.jl"]
+Pages   = ["src/generate.jl"]
 Private = false
 Filter = t -> typeof(t) <: Function && t!=rand_temporal_radius_graph && t!=rand_temporal_hyperbolic_graph
-
 ```
 
 ## Operators
 
 ```@autodocs
 Modules = [GNNGraphs]
-Pages   = ["operators.jl"]
+Pages   = ["src/operators.jl"]
 Private = false
 ```
 
@@ -81,7 +79,7 @@ Base.intersect
 
 ```@autodocs
 Modules = [GNNGraphs]
-Pages   = ["sampling.jl"]
+Pages   = ["src/sampling.jl"]
 Private = false
 ```
 
