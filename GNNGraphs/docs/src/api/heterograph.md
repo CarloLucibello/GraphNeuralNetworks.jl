@@ -1,3 +1,8 @@
+```@meta
+CurrentModule = GNNGraphs
+CollapsedDocStrings = true
+```
+
 # Heterogeneous Graphs
 
 

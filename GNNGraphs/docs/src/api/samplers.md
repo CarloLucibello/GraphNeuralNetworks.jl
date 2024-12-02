@@ -1,5 +1,6 @@
 ```@meta
 CurrentModule = GNNGraphs
+CollapsedDocStrings = true
 ```
 
 # Samplers

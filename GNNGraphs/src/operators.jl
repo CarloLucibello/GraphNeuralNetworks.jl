@@ -1,5 +1,5 @@
 # 2 or more args graph operators
-""""
+"""
     intersect(g1::GNNGraph, g2::GNNGraph)
 
 Intersect two graphs by keeping only the common edges.

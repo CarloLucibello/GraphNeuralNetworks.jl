@@ -1,5 +1,6 @@
 ```@meta
 CurrentModule = GNNGraphs
+CollapsedDocStrings = true
 ```
 
 # GNNGraph
@@ -10,12 +11,12 @@ Besides the methods documented here, one can rely on the large set of functional
 given by [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl) thanks to the fact
 that `GNNGraph` inherits from `Graphs.AbstractGraph`.
 
-## Index 
+<!-- ## Index 
 
 ```@index
 Order = [:type, :function]
 Pages   = ["gnngraph.md"]
-```
+``` -->
 
 ## GNNGraph type
 
