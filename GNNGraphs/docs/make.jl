@@ -47,4 +47,5 @@ makedocs(;
          
 deploydocs(repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git", 
          devbranch = "master", 
-         dirname = "GNNGraphs")
+         dirname = "GNNGraphs",
+         tag_prefix="GNNGraphs-")

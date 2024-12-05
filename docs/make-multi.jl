@@ -39,11 +39,10 @@ outpath = joinpath(@__DIR__, "build")
 MultiDocumenter.make(
     outpath,
     docs;
-    search_engine = MultiDocumenter.SearchConfig(),
-    # search_engine = MultiDocumenter.SearchConfig(
-    #     index_versions = ["stable"],
-    #     engine = MultiDocumenter.FlexSearch
-    # ),
+    search_engine = MultiDocumenter.SearchConfig(
+        index_versions = ["stable"],
+        engine = MultiDocumenter.FlexSearch
+    ),
     brand_image = MultiDocumenter.BrandImage("", "logo.svg"),
     rootpath = "/GraphNeuralNetworks.jl/"
 )

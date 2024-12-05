@@ -82,4 +82,5 @@ rm(joinpath(@__DIR__, "src/GNNlib"), force=true, recursive=true)
          
 deploydocs(repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git", 
         devbranch = "master", 
-        dirname = "GNNLux")
+        dirname = "GNNLux",
+        tag_prefix="GNNLux-")
