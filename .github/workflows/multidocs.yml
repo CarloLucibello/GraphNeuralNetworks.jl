@@ -86,7 +86,7 @@ jobs:
       - name: Build multidocs
         if: github.event_name == 'pull_request'
         run: |
-          julia --project=docs/ docs/make-multi.jl 
+          julia --project=docs/ docs/make-multi.jl PR
 
       - name: Build and deploy multidocs
         if: github.event_name != 'pull_request'
