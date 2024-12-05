@@ -2,21 +2,21 @@
 
 GraphNeuralNetworks.jl is a graph neural network package based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
 
-It provides a set of stateful graph convolutional layers and utilities to build graph neural networks.
+It provides a set of  graph convolutional layers and utilities to build graph neural networks.
 
 Among its features:
 
 * Implements common graph convolutional layers.
 * Supports computations on batched graphs. 
 * Easy to define custom layers.
-* CUDA support.
+* CUDA and AMDGPU support.
 * Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
 * [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) of node, edge, and graph level machine learning tasks. 
 * Heterogeneous and temporal graphs.
 
 The package is part of a larger ecosystem of packages that includes [GNNlib.jl](https://juliagraphs.org/GraphNeuralNetworks.jl/gnnlib), [GNNGraphs.jl](https://juliagraphs.org/GraphNeuralNetworks.jl/gnngraphs), and [GNNLux.jl](https://juliagraphs.org/GraphNeuralNetworks.jl/gnnlux). 
 
-GraphNeuralNetworks.jl is the fronted package for Flux.jl users. [Lux.jl](https://lux.csail.mit.edu/stable/) users instead, can rely on GNNLux.jl (still in development).
+GraphNeuralNetworks.jl is the fronted package for Flux.jl users. [Lux.jl](https://lux.csail.mit.edu/stable/) users instead, can rely on [GNNLux.jl](https://juliagraphs.org/GraphNeuralNetworks.jl/gnnlux/)
 
 ## Installation
 

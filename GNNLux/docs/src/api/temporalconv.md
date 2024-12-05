@@ -7,8 +7,6 @@ CollapsedDocStrings = true
 
 Convolutions for time-varying graphs (temporal graphs) such as the [`TemporalSnapshotsGNNGraph`](@ref).
 
-## Docs
-
 ```@autodocs
 Modules = [GNNLux]
 Pages   = ["layers/temporalconv.jl"]

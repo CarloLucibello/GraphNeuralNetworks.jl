@@ -1,10 +1,22 @@
 # GNNLux.jl 
 
-GNNLux.jl is a work-in-progress package that implements stateless graph convolutional layers, fully compatible with the [Lux.jl](https://lux.csail.mit.edu/stable/) machine learning framework. It is built on top of the GNNGraphs.jl, GNNlib.jl, and Lux.jl packages.
+GNNLux.jl is a package that implements graph convolutional layers fully compatible with the [Lux.jl](https://lux.csail.mit.edu/stable/) deep learning framework. It is built on top of the GNNGraphs.jl, GNNlib.jl, and Lux.jl packages.
+
+See [GraphNeuralNetworks.jl](https://juliagraphs.org/GraphNeuralNetworks.jl/graphneuralnetworks/) instead for a 
+[Flux.jl](https://fluxml.ai/Flux.jl/stable/)-based implementation of graph neural networks.
+
+## Installation
+
+GNNLux.jl is a registered Julia package. You can easily install it through the package manager :
+
+```julia
+pkg> add GNNLux
+```
 
 ## Package overview
 
 Let's give a brief overview of the package by solving a graph regression problem with synthetic data. 
+
 
 ### Data preparation
 

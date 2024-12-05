@@ -12,8 +12,6 @@ Order = [:type, :function]
 Pages   = ["pool.md"]
 ```
 
-## Docs
-
 ```@autodocs
 Modules = [GraphNeuralNetworks]
 Pages   = ["layers/pool.jl"]
