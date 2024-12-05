@@ -38,7 +38,6 @@ The table below lists all graph convolutional layers implemented in the *GraphNe
 | [`TransformerConv`](@ref)   |          |           |     ✓       |              |                           |
 
 
-## Docs
 
 ```@autodocs
 Modules = [GraphNeuralNetworks]

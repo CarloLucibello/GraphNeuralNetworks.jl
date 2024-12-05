@@ -3,7 +3,7 @@ CurrentModule = GNNLux
 CollapsedDocStrings = true
 ```
 
-## Basic Layers
+# Basic Layers
 
 ```@docs
 GNNLayer

@@ -43,12 +43,12 @@ makedocs(;
     "Home" => "index.md",
     
     "Guides" => [
-        "Graphs" => ["GNNGraphs/guides/gnngraph.md", 
-                    "GNNGraphs/guides/heterograph.md", 
-                    "GNNGraphs/guides/temporalgraph.md"],
+        "Graphs" => "GNNGraphs/guides/gnngraph.md",
         "Message Passing" => "GNNlib/guides/messagepassing.md",
         "Models" => "guides/models.md",
         "Datasets" => "GNNGraphs/guides/datasets.md",
+        "Heterogeneous Graphs" => "GNNGraphs/guides/heterograph.md",
+        "Temporal Graphs" => "GNNGraphs/guides/temporalgraph.md",
     ],
 
     "Tutorials" => [

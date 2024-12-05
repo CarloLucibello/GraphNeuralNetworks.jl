@@ -35,7 +35,6 @@ The table below lists all graph convolutional layers implemented in the *GNNLux.
 | [`SAGEConv`](@ref)          |     ✓    |           |             |       ✓      |             ✓               |
 | [`SGConv`](@ref)            |     ✓    |           |             |              |             ✓             |
 
-## Docs
 
 ```@autodocs
 Modules = [GNNLux]

@@ -30,11 +30,9 @@ makedocs(;
     "Home" => "index.md",
     
     "Guides" => [
-        "Graphs" => [
-            "guides/gnngraph.md", 
-            "guides/heterograph.md", 
-            "guides/temporalgraph.md"
-        ],
+        "Graphs" => "guides/gnngraph.md", 
+        "Heterogeneous Graphs" => "guides/heterograph.md",
+        "Temporal Graphs" => "guides/temporalgraph.md",
         "Datasets" => "guides/datasets.md",
     ],
 

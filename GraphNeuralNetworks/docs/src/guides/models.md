@@ -33,7 +33,7 @@ end
 Flux.@layer GNN                         # step 2
 
 function GNN(din::Int, d::Int, dout::Int) # step 3    
-    GNN(GCNConv(din => d),
+    GNN(GraphConv(din => d),
         BatchNorm(d),
         GraphConv(d => d, relu),
         Dropout(0.5),
@@ -64,23 +64,16 @@ grad = gradient(model -> sum(model(g, X)), model)
 While very flexible, the way in which we defined `GNN` model definition in last section is a bit verbose.
 In order to simplify things, we provide the [`GraphNeuralNetworks.GNNChain`](@ref) type. It is very similar 
 to Flux's well known `Chain`. It allows to compose layers in a sequential fashion as Chain
-does, propagating the output of each layer to the next one. In addition, `GNNChain` 
-handles propagates the input graph as well, providing it as a first argument
+does, propagating the output of each layer to the next one. In addition, `GNNChain` propagates the input graph as well, providing it as a first argument
 to layers subtyping the [`GraphNeuralNetworks.GNNLayer`](@ref) abstract type. 
 
-Using `GNNChain`, the previous example becomes
+Using `GNNChain`, the model definition becomes more concise:
 
 ```julia
-using Flux, Graphs, GraphNeuralNetworks
-
-din, d, dout = 3, 4, 2 
-g = rand_graph(10, 30)
-X = randn(Float32, din, 10)
-
-model = GNNChain(GCNConv(din => d),
+model = GNNChain(GraphConv(din => d),
                  BatchNorm(d),
                  x -> relu.(x),
-                 GCNConv(d => d, relu),
+                 GraphConv(d => d, relu),
                  Dropout(0.5),
                  Dense(d, dout))
 ```
