@@ -1,6 +1,6 @@
 # # Hands-on introduction to Graph Neural Networks
 # 
-# *This Pluto notebook is a Julia adaptation of the Pytorch Geometric tutorials that can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html).*
+# *This tutorial is a Julia adaptation of one of the [Pytorch Geometric tutorials](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html).*
 # 
 # Recently, deep learning on graphs has emerged to be one of the hottest research fields in the deep learning community.
 # Here, **Graph Neural Networks (GNNs)** aim to generalize classical deep learning concepts to irregular structured data (in contrast to images or texts) and to enable neural networks to reason about objects and their relations.
