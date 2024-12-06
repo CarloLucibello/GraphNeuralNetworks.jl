@@ -34,11 +34,12 @@ Both **GraphNeuralNetworks.jl** and **GNNLux.jl** support the following features
 
 ## Installation
 
-**GraphNeuralNetworks.jl**, **GNNlib.jl**, and **GNNGraphs.jl** are registered Julia packages. You can install them easily through the package manager:
+**GraphNeuralNetworks.jl**, **GNNLux.jl**, **GNNlib.jl**, and **GNNGraphs.jl** are registered Julia packages. You can install them easily through the package manager:
 
 ```julia
 pkg> add GraphNeuralNetworks
 ```
+
 
 ## Usage
 
