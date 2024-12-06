@@ -1,7 +1,3 @@
-```@meta
-EditURL = "gnn_intro.jl"
-```
-
 # Hands-on introduction to Graph Neural Networks
 
 *This Pluto notebook is a Julia adaptation of the Pytorch Geometric tutorials that can be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html).*
