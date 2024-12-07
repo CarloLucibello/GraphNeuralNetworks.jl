@@ -21,8 +21,10 @@ jobs:
         run: git config --global init.defaultBranch master
       
       - name: Build GNNGraphs docs
-        run: 
-          julia --project=GNNGraphs/docs/ GNNGraphs/docs/make.jl
+        run: julia --project=GNNGraphs/docs/ -e'
+          using Pkg;
+          Pkg.instantiate();
+          include("GNNGraphs/docs/make.jl")'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
