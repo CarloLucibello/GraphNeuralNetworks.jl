@@ -32,7 +32,6 @@ jobs:
       - name: Build GNNlib docs
         run: julia --project=GNNlib/docs/ -e '
           using Pkg;
-          pkg"dev ./GNNlib ./GNNGraphs";
           Pkg.instantiate();
           include("GNNlib/docs/make.jl")'
         env:
@@ -42,7 +41,6 @@ jobs:
       - name: Build GNNLux docs
         run: julia --project=GNNLux/docs/ -e '
             using Pkg;
-            pkg"dev ./GNNLux ./GNNlib ./GNNGraphs";
             Pkg.instantiate();
             include("GNNLux/docs/make.jl")'
         env:
@@ -52,7 +50,6 @@ jobs:
       - name: Build GraphNeuralNetworks docs
         run: julia --project=GraphNeuralNetworks/docs/ -e '
             using Pkg;
-            pkg"dev ./GraphNeuralNetworks ./GNNlib ./GNNGraphs";
             Pkg.instantiate();
             include("GraphNeuralNetworks/docs/make.jl")'
         env:
@@ -64,7 +61,6 @@ jobs:
       - name: Install dependencies for multidocs
         run: julia --project=docs/ -e '
           using Pkg;
-          pkg"dev ./GraphNeuralNetworks ./GNNlib ./GNNGraphs ./GNNLux";
           Pkg.instantiate();'
      
       - name: Config git
