@@ -51,6 +51,12 @@ makedocs(;
         "Temporal Graphs" => "GNNGraphs/guides/temporalgraph.md",
     ],
 
+    "Tutorials" => [
+        "Introductory tutorials" => [
+            "Hands on" => "tutorials/gnn_intro.md",
+            ],
+        ],
+
     "API Reference" => [
         "Graphs (GNNGraphs.jl)" => [
             "GNNGraph" => "GNNGraphs/api/gnngraph.md",
