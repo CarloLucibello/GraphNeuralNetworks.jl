@@ -12,7 +12,7 @@ edge_index(g::GNNHeteroGraph{<:COO_T}) = only(g.graph)[2][1:2]
 get_edge_weight(g::GNNHeteroGraph{<:COO_T}, edge_t::EType) = g.graph[edge_t][3]
 
 """
-    has_edge(g::GNNHeteroGraph, edge_t, i, j)
+    Graphs.has_edge(g::GNNHeteroGraph, edge_t::EType, i::Integer, j::Integer)
 
 Return `true` if there is an edge of type `edge_t` from node `i` to node `j` in `g`.
 
