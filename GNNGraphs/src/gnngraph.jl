@@ -116,8 +116,6 @@ struct GNNGraph{T <: Union{COO_T, ADJMAT_T}} <: AbstractGNNGraph{T}
     gdata::DataStore
 end
 
-@functor GNNGraph
-
 function GNNGraph(data::D;
                   num_nodes = nothing,
                   graph_indicator = nothing,
