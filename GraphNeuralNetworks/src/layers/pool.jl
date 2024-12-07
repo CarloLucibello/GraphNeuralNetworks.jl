@@ -149,24 +149,19 @@ end
 Flux.@layer Set2Set
 
 function Set2Set(n_in::Int, n_iters::Int, n_layers::Int = 1)
-    @assert n_layers >= 1
+    @assert n_layers == 1 "multiple layers not implemented yet" #TODO
     n_out = 2 * n_in
-
-    if n_layers == 1
-        lstm = LSTM(n_out => n_in)
-    else
-        layers = [LSTM(n_out => n_in)]
-        for _ in 2:n_layers
-            push!(layers, LSTM(n_in => n_in))
-        end
-        lstm = Chain(layers...)
-    end
-
+    lstm = LSTMCell(n_out => n_in)
     return Set2Set(lstm, n_iters)
 end
 
+function initialstates(cell::LSTMCell)
+    h = zeros_like(cell.Wh, size(cell.Wh, 2))
+    c = zeros_like(cell.Wh, size(cell.Wh, 2))
+    return h, c
+end
+
 function (l::Set2Set)(g, x)
-    Flux.reset!(l.lstm)
     return GNNlib.set2set_pool(l, g, x)
 end
 
