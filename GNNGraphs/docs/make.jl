@@ -2,7 +2,7 @@ using Documenter
 using DocumenterInterLinks
 using GNNGraphs
 using MLUtils # this is needed by setdocmeta!
-using Graphs: induced_subgraph, has_edge
+using Graphs
 
 
 DocMeta.setdocmeta!(GNNGraphs, :DocTestSetup, :(using GNNGraphs, MLUtils); recursive = true)
