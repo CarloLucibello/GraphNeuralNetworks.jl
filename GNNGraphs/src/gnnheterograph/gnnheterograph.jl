@@ -95,8 +95,6 @@ struct GNNHeteroGraph{T <: Union{COO_T, ADJMAT_T}} <: AbstractGNNGraph{T}
     etypes::Vector{EType}
 end
 
-@functor GNNHeteroGraph
-
 GNNHeteroGraph(data; kws...) = GNNHeteroGraph(Dict(data); kws...)
 GNNHeteroGraph(data::Pair...; kws...) = GNNHeteroGraph(Dict(data...); kws...)
 
