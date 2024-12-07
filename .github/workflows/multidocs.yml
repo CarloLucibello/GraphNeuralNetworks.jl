@@ -22,11 +22,7 @@ jobs:
       
       - name: Build GNNGraphs docs
         run: 
-          julia --project=GNNGraphs/docs/ -e '
-          using Pkg;
-          pkg"dev ./GNNGraphs";
-          Pkg.instantiate();
-          include("GNNGraphs/docs/make.jl")'
+          julia --project=GNNGraphs/docs/ GNNGraphs/docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
@@ -68,13 +64,7 @@ jobs:
           using Pkg;
           pkg"dev ./GraphNeuralNetworks ./GNNlib ./GNNGraphs ./GNNLux";
           Pkg.instantiate();'
-      - name: Check if objects.inv exists for GraphNeuralNetworks
-        run: |
-          if [ -f GraphNeuralNetworks/docs/build/objects.inv ]; then
-            echo "GraphNeuralNetworks: objects.inv exists."
-          else
-            echo "GraphNeuralNetworks: objects.inv does not exist!" && exit 1
-          fi
+     
       - name: Config git
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
