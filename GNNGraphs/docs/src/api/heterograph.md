@@ -22,6 +22,7 @@ Modules = [GNNGraphs]
 Pages   = ["gnnheterograph/query.jl"]
 Private = false
 ```
+
 ```@docs
 Graphs.has_edge(g::GNNHeteroGraph, edge_t::EType, i::Integer, j::Integer)
 ```
