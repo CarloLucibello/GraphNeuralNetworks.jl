@@ -70,8 +70,6 @@ struct DataStore
     end
 end
 
-@functor DataStore
-
 DataStore(data) = DataStore(-1, data)
 DataStore(n::Int, data::NamedTuple) = DataStore(n, Dict{Symbol, Any}(pairs(data)))
 DataStore(n::Int, data) = DataStore(n, Dict{Symbol, Any}(data))

@@ -1,19 +1,18 @@
-# Adapting Flux.Recur to work with GNNGraphs
-function (m::Flux.Recur)(g::GNNGraph, x)
-    m.state, y = m.cell(m.state, g, x)
-    return y
-end
+# # Adapting Flux.Recur to work with GNNGraphs
+# function (m::Flux.Recur)(g::GNNGraph, x)
+#     m.state, y = m.cell(m.state, g, x)
+#     return y
+# end
     
-function (m::Flux.Recur)(g::GNNGraph, x::AbstractArray{T, 3}) where T
-    h = [m(g, x_t) for x_t in Flux.eachlastdim(x)]
-    sze = size(h[1])
-    reshape(reduce(hcat, h), sze[1], sze[2], length(h))
-end
+# function (m::Flux.Recur)(g::GNNGraph, x::AbstractArray{T, 3}) where T
+#     h = [m(g, x_t) for x_t in Flux.eachlastdim(x)]
+#     sze = size(h[1])
+#     reshape(reduce(hcat, h), sze[1], sze[2], length(h))
+# end
 
 struct TGCNCell <: GNNLayer
     conv::GCNConv
     gru::Flux.GRUv3Cell
-    state0
     in::Int
     out::Int
 end
@@ -23,21 +22,18 @@ Flux.@layer TGCNCell
 function TGCNCell(ch::Pair{Int, Int};
                   bias::Bool = true,
                   init = Flux.glorot_uniform,
-                  init_state = Flux.zeros32,
                   add_self_loops = false,
                   use_edge_weight = true)
     in, out = ch
-    conv = GCNConv(in => out, sigmoid; init, bias, add_self_loops,
-                   use_edge_weight)
-    gru = Flux.GRUv3Cell(out, out)
-    state0 = init_state(out,1)
-    return TGCNCell(conv, gru, state0, in,out)
+    conv = GCNConv(in => out, sigmoid; init, bias, add_self_loops, use_edge_weight)
+    gru = Flux.GRUCell(out => out)
+    return TGCNCell(conv, gru, in, out)
 end
 
-function (tgcn::TGCNCell)(h, g::GNNGraph, x::AbstractArray)
-    x̃ = tgcn.conv(g, x)
-    h, x̃ = tgcn.gru(h, x̃)
-    return h, x̃
+function (tgcn::TGCNCell)(g::GNNGraph, x::AbstractVecOrMat, h::AbstractVecOrMat)
+    x = tgcn.conv(g, x)
+    x, h = tgcn.gru(x, h)
+    return x, h
 end
 
 function Base.show(io::IO, tgcn::TGCNCell)
@@ -45,7 +41,7 @@ function Base.show(io::IO, tgcn::TGCNCell)
 end
 
 """
-    TGCN(in => out; [bias, init, init_state, add_self_loops, use_edge_weight])
+    TGCN(in => out; [bias, init, add_self_loops, use_edge_weight])
 
 Temporal Graph Convolutional Network (T-GCN) recurrent layer from the paper [T-GCN: A Temporal Graph Convolutional Network for Traffic Prediction](https://arxiv.org/pdf/1811.05320.pdf).
 
@@ -57,12 +53,20 @@ Performs a layer of GCNConv to model spatial dependencies, followed by a Gated R
 - `out`: Number of output features.
 - `bias`: Add learnable bias. Default `true`.
 - `init`: Weights' initializer. Default `glorot_uniform`.
-- `init_state`: Initial state of the hidden stat of the GRU layer. Default `zeros32`.
 - `add_self_loops`: Add self loops to the graph before performing the convolution. Default `false`.
 - `use_edge_weight`: If `true`, consider the edge weights in the input graph (if available).
                      If `add_self_loops=true` the new weights will be set to 1. 
                      This option is ignored if the `edge_weight` is explicitly provided in the forward pass.
                      Default `false`.
+
+# Forward 
+
+    tgcn(g::GNNGraph, x, [h])
+
+- `x`: The input to the TGCN. It should be a matrix size `in x timesteps` or an array of size `in x timesteps x num_nodes`.
+- `h`: The initial hidden state of the GRU cell. If given, it is a vector of size `out` or a matrix of size `out x num_nodes`.
+       If not provided, it is assumed to be a vector of zeros.
+
 # Examples
 
 ```jldoctest
@@ -78,30 +82,43 @@ Recur(
 )         # Total: 8 trainable arrays, 264 parameters,
           # plus 1 non-trainable, 6 parameters, summarysize 1.492 KiB.
 
-julia> g, x = rand_graph(5, 10), rand(Float32, 2, 5);
+julia> g = rand_graph(5, 10);
+
+julia> x = rand(Float32, 2, 5);
 
 julia> y = tgcn(g, x);
 
 julia> size(y)
 (6, 5)
 
-julia> Flux.reset!(tgcn);
-
-julia> tgcn(rand_graph(5, 10), rand(Float32, 2, 5, 20)) |> size # batch size of 20
+julia> tgcn(g, rand(Float32, 2, 5, 20)) |> size # batch size of 20
 (6, 5, 20)
 ```
-
-!!! warning "Batch size changes"
-    Failing to call `reset!` when the input batch size changes can lead to unexpected behavior.
 """
-TGCN(ch; kwargs...) = Flux.Recur(TGCNCell(ch; kwargs...))
+struct TGCN
+    tgcn::TGCNCell
+end
 
-Flux.Recur(tgcn::TGCNCell) = Flux.Recur(tgcn, tgcn.state0)
+Flux.@layer TGCN
 
-# make TGCN compatible with GNNChain
-(l::Flux.Recur{TGCNCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
-_applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph, x) = l(g, x)
-_applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph) = l(g)
+TGCN(ch::Pair{Int, Int}; kws...) = TGCN(TGCNCell(ch; kws...))
+
+function (tgcn::TGCN)(g::GNNGraph, x::AbstractArray, h)
+    for i in 1:size(x, 2)
+        x, h = tgcn.tgcn(g, x[:, i], h)
+    end
+    return x
+end
+    
+
+# TGCN(ch; kwargs...) = Flux.Recur(TGCNCell(ch; kwargs...))
+
+# Flux.Recur(tgcn::TGCNCell) = Flux.Recur(tgcn, tgcn.state0)
+
+# # make TGCN compatible with GNNChain
+# (l::Flux.Recur{TGCNCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
+# _applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph, x) = l(g, x)
+# _applylayer(l::Flux.Recur{TGCNCell}, g::GNNGraph) = l(g)
 
 
 """
@@ -149,7 +166,7 @@ julia> size(y)
     Failing to call `reset!` when the input batch size changes can lead to unexpected behavior.
 """
 struct A3TGCN <: GNNLayer
-    tgcn::Flux.Recur{TGCNCell}
+    tgcn::TGCN
     dense1::Dense
     dense2::Dense
     in::Int
@@ -272,12 +289,12 @@ julia> size(z)
 (5, 5, 30)
 ```
 """ 
-GConvGRU(ch, k, n; kwargs...) = Flux.Recur(GConvGRUCell(ch, k, n; kwargs...))
-Flux.Recur(ggru::GConvGRUCell) = Flux.Recur(ggru, ggru.state0)
+# GConvGRU(ch, k, n; kwargs...) = Flux.Recur(GConvGRUCell(ch, k, n; kwargs...))
+# Flux.Recur(ggru::GConvGRUCell) = Flux.Recur(ggru, ggru.state0)
 
-(l::Flux.Recur{GConvGRUCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
-_applylayer(l::Flux.Recur{GConvGRUCell}, g::GNNGraph, x) = l(g, x)
-_applylayer(l::Flux.Recur{GConvGRUCell}, g::GNNGraph) = l(g)
+# (l::Flux.Recur{GConvGRUCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
+# _applylayer(l::Flux.Recur{GConvGRUCell}, g::GNNGraph, x) = l(g, x)
+# _applylayer(l::Flux.Recur{GConvGRUCell}, g::GNNGraph) = l(g)
 
 struct GConvLSTMCell <: GNNLayer
     conv_x_i::ChebConv
@@ -394,12 +411,12 @@ julia> size(z)
 (5, 5, 30)
 ```
 """
-GConvLSTM(ch, k, n; kwargs...) = Flux.Recur(GConvLSTMCell(ch, k, n; kwargs...))
-Flux.Recur(tgcn::GConvLSTMCell) = Flux.Recur(tgcn, tgcn.state0)
+# GConvLSTM(ch, k, n; kwargs...) = Flux.Recur(GConvLSTMCell(ch, k, n; kwargs...))
+# Flux.Recur(tgcn::GConvLSTMCell) = Flux.Recur(tgcn, tgcn.state0)
 
-(l::Flux.Recur{GConvLSTMCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
-_applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph, x) = l(g, x)
-_applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph) = l(g)
+# (l::Flux.Recur{GConvLSTMCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
+# _applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph, x) = l(g, x)
+# _applylayer(l::Flux.Recur{GConvLSTMCell}, g::GNNGraph) = l(g)
 
 struct DCGRUCell
     in::Int
@@ -477,12 +494,12 @@ julia> size(z)
 (5, 5, 30)
 ```
 """
-DCGRU(ch, k, n; kwargs...) = Flux.Recur(DCGRUCell(ch, k, n; kwargs...))
-Flux.Recur(dcgru::DCGRUCell) = Flux.Recur(dcgru, dcgru.state0)
+# DCGRU(ch, k, n; kwargs...) = Flux.Recur(DCGRUCell(ch, k, n; kwargs...))
+# Flux.Recur(dcgru::DCGRUCell) = Flux.Recur(dcgru, dcgru.state0)
 
-(l::Flux.Recur{DCGRUCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
-_applylayer(l::Flux.Recur{DCGRUCell}, g::GNNGraph, x) = l(g, x)
-_applylayer(l::Flux.Recur{DCGRUCell}, g::GNNGraph) = l(g)
+# (l::Flux.Recur{DCGRUCell})(g::GNNGraph) = GNNGraph(g, ndata = l(g, node_features(g)))
+# _applylayer(l::Flux.Recur{DCGRUCell}, g::GNNGraph, x) = l(g, x)
+# _applylayer(l::Flux.Recur{DCGRUCell}, g::GNNGraph) = l(g)
 
 """
     EvolveGCNO(ch; bias = true, init = glorot_uniform, init_state = Flux.zeros32)
@@ -539,8 +556,6 @@ struct EvolveGCNO
     Bc
 end
  
-Flux.@functor EvolveGCNO
-
 function EvolveGCNO(ch; bias = true, init = glorot_uniform, init_state = Flux.zeros32)
     in, out = ch
     W = init(out, in)
@@ -579,52 +594,4 @@ end
  
 function Base.show(io::IO, egcno::EvolveGCNO)
     print(io, "EvolveGCNO($(egcno.in) => $(egcno.out))")
-end
-
-function (l::GINConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::ChebConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::GATConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::GATv2Conv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::GatedGraphConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::CGConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::SGConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::TransformerConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::GCNConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::ResGatedGraphConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::SAGEConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
-end
-
-function (l::GraphConv)(tg::TemporalSnapshotsGNNGraph, x::AbstractVector)
-    return l.(tg.snapshots, x)
 end
