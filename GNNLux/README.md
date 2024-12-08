@@ -1,2 +1,0 @@
-# GNNLux.jl
-
