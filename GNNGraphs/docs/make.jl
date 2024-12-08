@@ -1,3 +1,8 @@
+using Pkg
+Pkg.activate(@__DIR__)
+Pkg.develop(path=joinpath(@__DIR__, ".."))
+Pkg.instantiate()
+
 using Documenter
 using DocumenterInterLinks
 using GNNGraphs
@@ -27,25 +32,28 @@ makedocs(;
                     size_threshold=nothing, 
                     size_threshold_warn=200000),sitename = "GNNGraphs.jl",
     pages = [
-    "Home" => "index.md",
-    
-    "Guides" => [
-        "Graphs" => "guides/gnngraph.md", 
-        "Heterogeneous Graphs" => "guides/heterograph.md",
-        "Temporal Graphs" => "guides/temporalgraph.md",
-        "Datasets" => "guides/datasets.md",
-    ],
+        "Home" => "index.md",
+        
+        "Guides" => [
+            "Graphs" => "guides/gnngraph.md", 
+            "Heterogeneous Graphs" => "guides/heterograph.md",
+            "Temporal Graphs" => "guides/temporalgraph.md",
+            "Datasets" => "guides/datasets.md",
+        ],
 
-    "API Reference" => [
-        "GNNGraph" => "api/gnngraph.md",
-        "GNNHeteroGraph" => "api/heterograph.md",
-        "TemporalSnapshotsGNNGraph" => "api/temporalgraph.md",
-        "Samplers" => "api/samplers.md",
+        "API Reference" => [
+            "GNNGraph" => "api/gnngraph.md",
+            "GNNHeteroGraph" => "api/heterograph.md",
+            "TemporalSnapshotsGNNGraph" => "api/temporalgraph.md",
+            "Samplers" => "api/samplers.md",
         ],      
     ]
 )
-         
-deploydocs(repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git", 
-         devbranch = "master", 
-         dirname = "GNNGraphs",
-         tag_prefix="GNNGraphs-")
+
+deploydocs(
+    repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl", 
+    target = "build",
+    branch = "docs-gnngraphs",
+    devbranch = "master", 
+    tag_prefix="GNNGraphs-",
+)
