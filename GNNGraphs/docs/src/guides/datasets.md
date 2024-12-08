@@ -5,6 +5,3 @@ For graphs with static structures and temporal features, datasets such as METRLA
 
 GraphNeuralNetworks.jl provides the [`mldataset2gnngraph`](@ref) method for interfacing with MLDatasets.jl.
 
-```@docs
-mldataset2gnngraph
-```

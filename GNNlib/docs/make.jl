@@ -1,8 +1,14 @@
+using Pkg
+Pkg.activate(@__DIR__)
+Pkg.develop(path=joinpath(@__DIR__, "..", "..", "GNNGraphs"))
+Pkg.develop(path=joinpath(@__DIR__, ".."))
+Pkg.instantiate()
+
 using Documenter
 using GNNlib
 using GNNGraphs
+import Graphs
 using DocumenterInterLinks
-
 
 assets=[]
 prettyurls = get(ENV, "CI", nothing) == "true"
@@ -10,30 +16,41 @@ mathengine = MathJax3()
 
 interlinks = InterLinks(
     "NNlib" => "https://fluxml.ai/NNlib.jl/stable/",
-    "GNNGraphs" => ("https://carlolucibello.github.io/GraphNeuralNetworks.jl/GNNGraphs/",  joinpath(dirname(dirname(@__DIR__)), "GNNGraphs", "docs", "build", "objects.inv")))
+)
 
+# Copy the docs from GNNGraphs. Will be removed at the end of the script
+cp(joinpath(@__DIR__, "../../GNNGraphs/docs/src/"),
+   joinpath(@__DIR__, "src/GNNGraphs/"), force=true)
 
 makedocs(;
-         modules = [GNNlib],
-         doctest = false,
-         clean = true,
-         plugins = [interlinks],
-         format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
-         sitename = "GNNlib.jl",
-         pages = ["Home" => "index.md",
-            "Message Passing" => "guides/messagepassing.md",
+    modules = [GNNlib, GNNGraphs],
+    doctest = false, # TODO enable doctest
+    plugins = [interlinks],
+    format = Documenter.HTML(; mathengine, prettyurls, assets = assets, size_threshold=nothing),
+    sitename = "GNNlib.jl",
+    pages = [
+        "Home" => "index.md",
+        "Message Passing" => "guides/messagepassing.md",
+        "API Reference" => [
+            "Graphs (GNNGraphs.jl)" => [
+                "GNNGraph" => "GNNGraphs/api/gnngraph.md",
+                "GNNHeteroGraph" => "GNNGraphs/api/heterograph.md",
+                "TemporalSnapshotsGNNGraph" => "GNNGraphs/api/temporalgraph.md",
+                "Samplers" => "GNNGraphs/api/samplers.md",
+                "Datasets" => "GNNGraphs/api/datasets.md",
+            ],
+            "Message Passing" => "api/messagepassing.md",
+            "Utils" => "api/utils.md",
+        ]
+    ]
+)
 
-            "API Reference" => [
-     
-                  "Message Passing" => "api/messagepassing.md",
-          
-                "Utils" => "api/utils.md",
-              ]
-            
-         ]
-         )
-         
-deploydocs(;repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl.git", 
-          devbranch = "master", 
-          dirname = "GNNlib",
-          tag_prefix="GNNlib-")
+rm(joinpath(@__DIR__, "src/GNNGraphs"), force=true, recursive=true)
+
+deploydocs(
+    repo = "github.com/JuliaGraphs/GraphNeuralNetworks.jl", 
+    target = "build",
+    branch = "docs-gnnlib",
+    devbranch = "master", 
+    tag_prefix="GNNlib-",
+)
