@@ -21,7 +21,7 @@ Base.copy
 
 ## DataStore
 
-```@autodocs
+```@autodocs; canonical = true
 Modules = [GNNGraphs]
 Pages   = ["datastore.jl"]
 Private = false
@@ -29,19 +29,19 @@ Private = false
 
 ## Query
 
-```@autodocs
+```@autodocs; canonical = true
 Modules = [GNNGraphs]
 Pages   = ["src/query.jl"]
 Private = false
 ```
 
-```@docs
+```@docs; canonical = true
 Graphs.neighbors(::GNNGraph, ::Integer)
 ```
 
 ## Transform
 
-```@autodocs
+```@autodocs; canonical = true
 Modules = [GNNGraphs]
 Pages   = ["src/transform.jl"]
 Private = false
@@ -49,14 +49,14 @@ Private = false
 
 ## Utils
 
-```@docs
+```@docs; canonical = true
 GNNGraphs.sort_edge_index
 GNNGraphs.color_refinement
 ``` 
 
 ## Generate
 
-```@autodocs
+```@autodocs; canonical = true
 Modules = [GNNGraphs]
 Pages   = ["src/generate.jl"]
 Private = false
@@ -65,24 +65,24 @@ Filter = t -> typeof(t) <: Function && t!=rand_temporal_radius_graph && t!=rand_
 
 ## Operators
 
-```@autodocs
+```@autodocs; canonical = true
 Modules = [GNNGraphs]
 Pages   = ["src/operators.jl"]
 Private = false
 ```
 
-```@docs
+```@docs; canonical = true
 Base.intersect
 ```
 
 ## Sampling 
 
-```@autodocs
+```@autodocs; canonical = true
 Modules = [GNNGraphs]
 Pages   = ["src/sampling.jl"]
 Private = false
 ```
 
-```@docs
+```@docs; canonical = true
 Graphs.induced_subgraph(::GNNGraph, ::Vector{Int})
 ```
