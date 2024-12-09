@@ -1,9 +1,9 @@
-<img align="right" width="300px" src="https://raw.githubusercontent.com/JuliaGraphs/GraphNeuralNetworks.jl/master/GraphNeuralNetworks/docs/src/assets/logo.svg">
+<img align="right" width="300px" src="https://raw.githubusercontent.com/JuliaGraphs/GraphNeuralNetworks.jl/master/docs/logo.svg">
 
 
 # GraphNeuralNetworks.jl
 
-[![](https://img.shields.io/badge/docs-Flux-blue.svg)](https://juliagraphs.org/GraphNeuralNetworks.jl/)
+[![](https://img.shields.io/badge/docs-Flux-blue.svg)](https://juliagraphs.org/GraphNeuralNetworks.jl/docs/GraphNeuralNetworks.jl/)
 [![](https://img.shields.io/badge/docs-Lux-blue.svg)](https://juliagraphs.org/GraphNeuralNetworks.jl/docs/GNNLux.jl/)
 ![](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl)
