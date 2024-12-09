@@ -27,8 +27,6 @@ docs = [
 ]
 
 outpath = joinpath(@__DIR__, "build")
-mkpath(outpath)
-cp(joinpath(@__DIR__, "logo.svg"), joinpath(outpath, "logo.svg"))
 
 MultiDocumenter.make(
     outpath,
@@ -37,6 +35,9 @@ MultiDocumenter.make(
     brand_image = MultiDocumenter.BrandImage("", "logo.svg"),
     rootpath = "/GraphNeuralNetworks.jl/"
 )
+
+# Copy after make since make cleans the directory
+cp(joinpath(@__DIR__, "logo.svg"), joinpath(outpath, "logo.svg"))
 
 Documenter.deploydocs(
     target = outpath,
