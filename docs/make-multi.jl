@@ -21,9 +21,9 @@ end
 
 docs = [
     package("GraphNeuralNetworks.jl", branch = "docs-graphneuralnetworks"),
-    package("GNNLux", branch = "docs-gnnlux"),
-    package("GNNGraphs", branch = "docs-gnngraphs"),
-    package("GNNlib", branch = "docs-gnnlib"),
+    package("GNNLux.jl", branch = "docs-gnnlux"),
+    package("GNNGraphs.jl", branch = "docs-gnngraphs"),
+    package("GNNlib.jl", branch = "docs-gnnlib"),
 ]
 
 outpath = joinpath(@__DIR__, "build")
@@ -31,11 +31,8 @@ outpath = joinpath(@__DIR__, "build")
 MultiDocumenter.make(
     outpath,
     docs;
-    search_engine = MultiDocumenter.SearchConfig(
-        index_versions = ["stable"],
-        engine = MultiDocumenter.FlexSearch
-    ),
-    brand_image = MultiDocumenter.BrandImage("", "logo.svg"),
+    # search_engine = false, # https://github.com/JuliaComputing/MultiDocumenter.jl/issues/82
+    brand_image = MultiDocumenter.BrandImage(@__DIR__, "logo.svg"),
     rootpath = "/GraphNeuralNetworks.jl/"
 )
 

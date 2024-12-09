@@ -1,4 +1,4 @@
-# GraphNeuralNetworks
+# GraphNeuralNetworks.jl
 
 GraphNeuralNetworks.jl is a graph neural network package based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
 
