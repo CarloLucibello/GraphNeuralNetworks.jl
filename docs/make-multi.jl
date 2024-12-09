@@ -3,6 +3,7 @@
 # This script is executed after building the docs for each package
 # See the pipeling in .github/workflows/multidocs.yml
 
+using Documenter
 using MultiDocumenter
 
 clonedir = mktempdir()
