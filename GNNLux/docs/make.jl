@@ -1,8 +1,10 @@
 using Pkg
 Pkg.activate(@__DIR__)
-Pkg.develop(path=joinpath(@__DIR__, "..", "..", "GNNGraphs"))
-Pkg.develop(path=joinpath(@__DIR__, "..", "..", "GNNlib"))
-Pkg.develop(path=joinpath(@__DIR__, ".."))
+Pkg.develop([
+    PackageSpec(path=joinpath(@__DIR__, "..", "..", "GNNGraphs")), 
+    PackageSpec(path=joinpath(@__DIR__, "..", "..", "GNNlib")), 
+    PackageSpec(path=joinpath(@__DIR__, "..")),
+])
 Pkg.instantiate()
 
 using Documenter
