@@ -31,12 +31,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ssh: ${{ secrets.DOCUMENTER_KEY }}
           subdir: GraphNeuralNetworks
-      - name: Tag GNNLib
+      - name: Tag GNNlib
         uses: JuliaRegistries/TagBot@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ssh: ${{ secrets.DOCUMENTER_KEY }}
-          subdir: GNNLib
+          subdir: GNNlib
       - name: Tag GNNGraphs
         uses: JuliaRegistries/TagBot@v1
         with:
