@@ -27,8 +27,8 @@ docs = [
 ]
 
 outpath = joinpath(@__DIR__, "build")
-
-cp(joinpath(@__DIR__, "logo.svg"), joinpath(outpath, "logo.svg"), force=true)
+mkpath(outpath)
+cp(joinpath(@__DIR__, "logo.svg"), joinpath(outpath, "logo.svg"))
 
 MultiDocumenter.make(
     outpath,
