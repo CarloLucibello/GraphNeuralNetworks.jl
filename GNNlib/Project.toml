@@ -28,10 +28,10 @@ GNNlibCUDAExt = "CUDA"
 
 [compat]
 AMDGPU = "1"
-CUDA = "4, 5"
+CUDA = "5"
 ChainRulesCore = "1.24"
 DataStructures = "0.18"
-GNNGraphs = "1.0"
+GNNGraphs = "1.4"
 GPUArraysCore = "0.1"
 LinearAlgebra = "1"
 MLUtils = "0.4"
