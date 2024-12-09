@@ -15,7 +15,7 @@ This repository contains the following packages:
 
 - **GraphNeuralNetworks.jl**: Provides graph convolutional layers based on the deep learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/). This is the frontend package for Flux users.
 
-- **GNNLux.jl**: Offers graph convolutional layers based on the deep learning framework [Lux.jl](https://lux.csail.mit.edu/stable/). This is the frontend package for Lux users. Note: This package is still under development and not yet registered.
+- **GNNLux.jl**: Offers graph convolutional layers based on the deep learning framework [Lux.jl](https://lux.csail.mit.edu/stable/). This is the frontend package for Lux users.
 
 - **GNNGraphs.jl**: Provides graph data structures and helper functions for working with graph data. This package is re-exported by the frontend packages.
 
@@ -33,14 +33,21 @@ Both **GraphNeuralNetworks.jl** and **GNNLux.jl** support the following features
 - [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) of node, edge, and graph-level machine learning tasks.
 - Support for heterogeneous and temporal graphs.
 
-## Installation
+## Installation  
 
-**GraphNeuralNetworks.jl**, **GNNLux.jl**, **GNNlib.jl**, and **GNNGraphs.jl** are registered Julia packages. You can install them easily through the package manager:
+All packages are registered in the General registry, making them easy to install via the Julia package manager.
 
+For *Flux* users, run:
 ```julia
 pkg> add GraphNeuralNetworks
 ```
 
+For *Lux* users, run:
+```julia
+pkg> add GNNLux
+```
+
+There is no need to install **GNNGraphs** or **GNNlib** directly, as their functionality is re-exported by the frontend packages.
 
 ## Usage
 
