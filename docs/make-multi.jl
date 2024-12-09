@@ -1,7 +1,7 @@
-# We use the MultiDocumenter package, followoing the build and deployment approach
+# We use the MultiDocumenter package, following the build and deployment approach
 # used in https://github.com/JuliaAstro/EphemerisSources.jl
 # This script is executed after building the docs for each package
-# See the pipeling in .github/workflows/multidocs.yml
+# See the pipeline in .github/workflows/multidocs.yml
 
 using Documenter
 using MultiDocumenter
@@ -28,7 +28,7 @@ docs = [
 
 outpath = joinpath(@__DIR__, "build")
 
-cp(joinpath(@__DIR__, "logo.svg"), joinpath(outpath, "logo.svg"))
+cp(joinpath(@__DIR__, "logo.svg"), joinpath(outpath, "logo.svg"), force=true)
 
 MultiDocumenter.make(
     outpath,
