@@ -28,11 +28,13 @@ docs = [
 
 outpath = joinpath(@__DIR__, "build")
 
+cp(joinpath(@__DIR__, "logo.svg"), joinpath(outpath, "logo.svg"))
+
 MultiDocumenter.make(
     outpath,
     docs;
     # search_engine = false, # https://github.com/JuliaComputing/MultiDocumenter.jl/issues/82
-    brand_image = MultiDocumenter.BrandImage(@__DIR__, "logo.svg"),
+    brand_image = MultiDocumenter.BrandImage("", "logo.svg"),
     rootpath = "/GraphNeuralNetworks.jl/"
 )
 
