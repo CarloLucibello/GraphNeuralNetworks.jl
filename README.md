@@ -3,7 +3,7 @@
 
 # GraphNeuralNetworks.jl
 
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliagraphs.org/GraphNeuralNetworks.jl/graphneuralnetworks/)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliagraphs.org/GraphNeuralNetworks.jl/)
 ![](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl)
 
@@ -45,7 +45,7 @@ pkg> add GraphNeuralNetworks
 
 Usage examples can be found in the [examples folder](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) and the [notebooks folder](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/notebooks). 
 
-For a comprehensive introduction to the library, refer to the [Documentation](https://juliagraphs.org/GraphNeuralNetworks.jl/graphneuralnetworks/) and the [Tutorials](https://juliagraphs.org/GraphNeuralNetworks.jl/tutorials/)
+For a comprehensive introduction to the library, refer to the [Documentation](https://juliagraphs.org/GraphNeuralNetworks.jl/).
 
 ## Citing
 
