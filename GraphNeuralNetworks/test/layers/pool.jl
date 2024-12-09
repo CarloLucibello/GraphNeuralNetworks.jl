@@ -76,7 +76,7 @@ end
             
         n_in = 3
         n_iters = 2
-        n_layers = 1
+        n_layers = 1 #TODO test with more layers
         g = batch([rand_graph(10, 40, graph_type = GRAPH_T) for _ in 1:5])
         g = GNNGraph(g, ndata = rand(Float32, n_in, g.num_nodes))
         l = Set2Set(n_in, n_iters, n_layers)

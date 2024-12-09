@@ -1,7 +1,7 @@
 using CUDA, cuDNN
 using GNNGraphs
 using GNNGraphs: getn, getdata
-using Functors
+using Functors: Functors
 using LinearAlgebra, Statistics, Random
 using NNlib
 import MLUtils

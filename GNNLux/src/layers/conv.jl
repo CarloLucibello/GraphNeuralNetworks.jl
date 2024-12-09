@@ -1261,7 +1261,7 @@ LuxCore.parameterlength(l::GatedGraphConv) = parameterlength(l.gru) + l.dims^2*l
 
 function (l::GatedGraphConv)(g, x, ps, st)
     gru = StatefulLuxLayer{true}(l.gru, ps.gru, _getstate(st, :gru))
-    fgru = (h, x) -> gru((x, (h,)))  # make the forward compatible with Flux.GRUCell style
+    fgru = (x, h) -> gru((x, (h,)))[1]  # make the forward compatible with Flux.GRUCell style
     m = (; gru=fgru, ps.weight, l.num_layers, l.aggr, l.dims)
     return GNNlib.gated_graph_conv(m, g, x), st
 end

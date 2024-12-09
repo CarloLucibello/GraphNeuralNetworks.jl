@@ -31,7 +31,7 @@ using Flux
 using Functors: fmapstructure_with_path
 using Graphs
 using ChainRulesTestUtils, FiniteDifferences
-using Zygote
+using Zygote: Zygote
 using SparseArrays
 
 
