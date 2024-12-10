@@ -44,7 +44,7 @@ Let us start off by importing some libraries. We will be using Flux.jl and `Grap
 # ╔═╡ 0d556a7c-d4b6-4cef-806c-3e1712de0791
 md"""
 ## Visualize
-We want to visualize the the outputs of the results using t-distributed stochastic neighbor embedding (tsne) to embed our output embeddings onto a 2D plane.
+We want to visualize the outputs of the results using t-distributed stochastic neighbor embedding (tsne) to embed our output embeddings onto a 2D plane.
 """
 
 # ╔═╡ 997b5387-3811-4998-a9d1-7981b58b9e09
