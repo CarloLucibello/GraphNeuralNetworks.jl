@@ -59,7 +59,7 @@ end;</code></pre>
 ## Visualize
 ```@raw html
 <div class="markdown">
-<p>We want to visualize the the outputs of the results using t-distributed stochastic neighbor embedding (tsne) to embed our output embeddings onto a 2D plane.</p></div>
+<p>We want to visualize the outputs of the results using t-distributed stochastic neighbor embedding (tsne) to embed our output embeddings onto a 2D plane.</p></div>
 
 <pre class='language-julia'><code class='language-julia'>function visualize_tsne(out, targets)
     z = tsne(out, 2)
