@@ -3,12 +3,13 @@ module GraphNeuralNetworks
 using Statistics: mean
 using LinearAlgebra, Random
 using Flux
-using Flux: glorot_uniform, leakyrelu, GRUCell, batch
+using Flux: glorot_uniform, leakyrelu, GRUCell, batch, initialstates
 using MacroTools: @forward
 using NNlib
 using ChainRulesCore
 using Reexport: @reexport
 using MLUtils: zeros_like
+using ConcreteStructs: @concrete
 
 using GNNGraphs:  COO_T, ADJMAT_T, SPARSE_T,
                   check_num_nodes, check_num_edges,
@@ -49,10 +50,10 @@ include("layers/heteroconv.jl")
 export HeteroGraphConv
 
 include("layers/temporalconv.jl")
-export TGCN,
+export GConvGRU, GConvGRUCell,
+       TGCN,
        A3TGCN,
        GConvLSTM,
-       GConvGRU,
        DCGRU,
        EvolveGCNO
 

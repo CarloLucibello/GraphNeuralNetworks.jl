@@ -155,12 +155,6 @@ function Set2Set(n_in::Int, n_iters::Int, n_layers::Int = 1)
     return Set2Set(lstm, n_iters)
 end
 
-function initialstates(cell::LSTMCell)
-    h = zeros_like(cell.Wh, size(cell.Wh, 2))
-    c = zeros_like(cell.Wh, size(cell.Wh, 2))
-    return h, c
-end
-
 function (l::Set2Set)(g, x)
     return GNNlib.set2set_pool(l, g, x)
 end

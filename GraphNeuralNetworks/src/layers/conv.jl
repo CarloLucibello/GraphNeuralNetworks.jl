@@ -1,3 +1,9 @@
+# The implementations of the forward pass of the graph convolutional layers are in the `GNNlib` module,
+# in the src/layers/conv.jl file. The `GNNlib` module is re-exported in the GraphNeuralNetworks module.
+# This annoying for the readability of the code, as the user has to look at two different files to understand
+# the implementation of a single layer, 
+# but it is done for GraphNeuralNetworks.jl and GNNLux.jl to be able to share the same code.
+
 @doc raw"""
     GCNConv(in => out, σ=identity; [bias, init, add_self_loops, use_edge_weight])
 
