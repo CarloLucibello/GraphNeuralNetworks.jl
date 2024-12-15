@@ -51,9 +51,9 @@ export HeteroGraphConv
 
 include("layers/temporalconv.jl")
 export GConvGRU, GConvGRUCell,
+       GConvLSTM, GConvLSTMCell,
        TGCN,
        A3TGCN,
-       GConvLSTM,
        DCGRU,
        EvolveGCNO
 
