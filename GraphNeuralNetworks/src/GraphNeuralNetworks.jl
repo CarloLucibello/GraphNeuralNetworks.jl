@@ -50,11 +50,12 @@ include("layers/heteroconv.jl")
 export HeteroGraphConv
 
 include("layers/temporalconv.jl")
-export GConvGRU, GConvGRUCell,
+export GNNRecurrence,
+       GConvGRU, GConvGRUCell,
        GConvLSTM, GConvLSTMCell,
+       DCGRU, DCGRUCell,
        TGCN,
        A3TGCN,
-       DCGRU,
        EvolveGCNO
 
 include("layers/pool.jl")
