@@ -1,13 +1,3 @@
-function scan(cell, g, x, state)
-    y = []
-    for x_t in eachslice(x, dims = 2)
-        yt, state = cell(g, x_t, state)
-        y = vcat(y, [yt])
-    end
-    return stack(y, dims = 2)
-end
-
-
 struct TGCNCell{C,G} <: GNNLayer
     conv::C
     gru::G
@@ -179,97 +169,97 @@ function Base.show(io::IO, a3tgcn::A3TGCN)
 end
 
 
-# """
-#     EvolveGCNO(ch; bias = true, init = glorot_uniform, init_state = Flux.zeros32)
+"""
+    EvolveGCNO(ch; bias = true, init = glorot_uniform, init_state = Flux.zeros32)
 
-# Evolving Graph Convolutional Network (EvolveGCNO) layer from the paper [EvolveGCN: Evolving Graph Convolutional Networks for Dynamic Graphs](https://arxiv.org/pdf/1902.10191).
+Evolving Graph Convolutional Network (EvolveGCNO) layer from the paper [EvolveGCN: Evolving Graph Convolutional Networks for Dynamic Graphs](https://arxiv.org/pdf/1902.10191).
 
-# Perfoms a Graph Convolutional layer with parameters derived from a Long Short-Term Memory (LSTM) layer across the snapshots of the temporal graph.
+Perfoms a Graph Convolutional layer with parameters derived from a Long Short-Term Memory (LSTM) layer across the snapshots of the temporal graph.
 
 
-# # Arguments
+# Arguments
 
-# - `in`: Number of input features.
-# - `out`: Number of output features.
-# - `bias`: Add learnable bias. Default `true`.
-# - `init`: Weights' initializer. Default `glorot_uniform`.
-# - `init_state`: Initial state of the hidden stat of the LSTM layer. Default `zeros32`.
+- `in`: Number of input features.
+- `out`: Number of output features.
+- `bias`: Add learnable bias. Default `true`.
+- `init`: Weights' initializer. Default `glorot_uniform`.
+- `init_state`: Initial state of the hidden stat of the LSTM layer. Default `zeros32`.
 
-# # Examples
+# Examples
 
-# ```jldoctest
-# julia> tg = TemporalSnapshotsGNNGraph([rand_graph(10,20; ndata = rand(4,10)), rand_graph(10,14; ndata = rand(4,10)), rand_graph(10,22; ndata = rand(4,10))])
-# TemporalSnapshotsGNNGraph:
-#   num_nodes: [10, 10, 10]
-#   num_edges: [20, 14, 22]
-#   num_snapshots: 3
+```jldoctest
+julia> tg = TemporalSnapshotsGNNGraph([rand_graph(10,20; ndata = rand(4,10)), rand_graph(10,14; ndata = rand(4,10)), rand_graph(10,22; ndata = rand(4,10))])
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10, 10]
+  num_edges: [20, 14, 22]
+  num_snapshots: 3
 
-# julia> ev = EvolveGCNO(4 => 5)
-# EvolveGCNO(4 => 5)
+julia> ev = EvolveGCNO(4 => 5)
+EvolveGCNO(4 => 5)
 
-# julia> size(ev(tg, tg.ndata.x))
-# (3,)
+julia> size(ev(tg, tg.ndata.x))
+(3,)
 
-# julia> size(ev(tg, tg.ndata.x)[1])
-# (5, 10)
-# ```
-# """
-# struct EvolveGCNO
-#     conv
-#     W_init
-#     init_state
-#     in::Int
-#     out::Int
-#     Wf
-#     Uf
-#     Bf
-#     Wi
-#     Ui
-#     Bi
-#     Wo
-#     Uo
-#     Bo
-#     Wc
-#     Uc
-#     Bc
-# end
+julia> size(ev(tg, tg.ndata.x)[1])
+(5, 10)
+```
+"""
+struct EvolveGCNO
+    conv
+    W_init
+    init_state
+    in::Int
+    out::Int
+    Wf
+    Uf
+    Bf
+    Wi
+    Ui
+    Bi
+    Wo
+    Uo
+    Bo
+    Wc
+    Uc
+    Bc
+end
  
-# function EvolveGCNO(ch; bias = true, init = glorot_uniform, init_state = Flux.zeros32)
-#     in, out = ch
-#     W = init(out, in)
-#     conv = GCNConv(ch; bias = bias, init = init)
-#     Wf = init(out, in)
-#     Uf = init(out, in)
-#     Bf = bias ? init(out, in) : nothing
-#     Wi = init(out, in)
-#     Ui = init(out, in)
-#     Bi = bias ? init(out, in) : nothing
-#     Wo = init(out, in)
-#     Uo = init(out, in)
-#     Bo = bias ? init(out, in) : nothing
-#     Wc = init(out, in)
-#     Uc = init(out, in)
-#     Bc = bias ? init(out, in) : nothing
-#     return EvolveGCNO(conv, W, init_state, in, out, Wf, Uf, Bf, Wi, Ui, Bi, Wo, Uo, Bo, Wc, Uc, Bc)
-# end
+function EvolveGCNO(ch; bias = true, init = glorot_uniform, init_state = Flux.zeros32)
+    in, out = ch
+    W = init(out, in)
+    conv = GCNConv(ch; bias = bias, init = init)
+    Wf = init(out, in)
+    Uf = init(out, in)
+    Bf = bias ? init(out, in) : nothing
+    Wi = init(out, in)
+    Ui = init(out, in)
+    Bi = bias ? init(out, in) : nothing
+    Wo = init(out, in)
+    Uo = init(out, in)
+    Bo = bias ? init(out, in) : nothing
+    Wc = init(out, in)
+    Uc = init(out, in)
+    Bc = bias ? init(out, in) : nothing
+    return EvolveGCNO(conv, W, init_state, in, out, Wf, Uf, Bf, Wi, Ui, Bi, Wo, Uo, Bo, Wc, Uc, Bc)
+end
 
-# function (egcno::EvolveGCNO)(tg::TemporalSnapshotsGNNGraph, x)
-#     H = egcno.init_state(egcno.out, egcno.in)
-#     C = egcno.init_state(egcno.out, egcno.in)
-#     W = egcno.W_init
-#     X = map(1:tg.num_snapshots) do i
-#         F = Flux.sigmoid_fast.(egcno.Wf .* W + egcno.Uf .* H + egcno.Bf)
-#         I = Flux.sigmoid_fast.(egcno.Wi .* W + egcno.Ui .* H + egcno.Bi)
-#         O = Flux.sigmoid_fast.(egcno.Wo .* W + egcno.Uo .* H + egcno.Bo)
-#         C̃ = Flux.tanh_fast.(egcno.Wc .* W + egcno.Uc .* H + egcno.Bc)
-#         C = F .* C + I .* C̃
-#         H = O .* tanh_fast.(C)
-#         W = H
-#         egcno.conv(tg.snapshots[i], x[i]; conv_weight = H)
-#     end
-#     return X
-# end
+function (egcno::EvolveGCNO)(tg::TemporalSnapshotsGNNGraph, x)
+    H = egcno.init_state(egcno.out, egcno.in)
+    C = egcno.init_state(egcno.out, egcno.in)
+    W = egcno.W_init
+    X = map(1:tg.num_snapshots) do i
+        F = Flux.sigmoid_fast.(egcno.Wf .* W + egcno.Uf .* H + egcno.Bf)
+        I = Flux.sigmoid_fast.(egcno.Wi .* W + egcno.Ui .* H + egcno.Bi)
+        O = Flux.sigmoid_fast.(egcno.Wo .* W + egcno.Uo .* H + egcno.Bo)
+        C̃ = Flux.tanh_fast.(egcno.Wc .* W + egcno.Uc .* H + egcno.Bc)
+        C = F .* C + I .* C̃
+        H = O .* tanh_fast.(C)
+        W = H
+        egcno.conv(tg.snapshots[i], x[i]; conv_weight = H)
+    end
+    return X
+end
  
-# function Base.show(io::IO, egcno::EvolveGCNO)
-#     print(io, "EvolveGCNO($(egcno.in) => $(egcno.out))")
-# end
+function Base.show(io::IO, egcno::EvolveGCNO)
+    print(io, "EvolveGCNO($(egcno.in) => $(egcno.out))")
+end
