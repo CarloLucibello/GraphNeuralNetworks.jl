@@ -748,3 +748,51 @@ julia> size(y[end]) # (d_out, num_nodes[end])
 ```
 """
 EvolveGCNO(args...; kws...) = GNNRecurrence(EvolveGCNOCell(args...; kws...))
+
+
+
+@concrete struct TGCNCell <: GNNLayer
+    in::Int
+    out::Int
+    conv_z
+    dense_z
+    conv_r
+    dense_r
+    conv_h
+    dense_h
+end
+
+Flux.@layer :noexpand TGCNCell
+
+function TGCNCell((in, out)::Pair{Int, Int}; kws...)
+    conv_z = GNNChain(GCNConv(in => out, relu; kws...), GCNConv(out => out; kws...))
+    dense_z = Dense(2*out => out, sigmoid)
+    conv_r = GNNChain(GCNConv(in => out, relu; kws...), GCNConv(out => out; kws...))
+    dense_r = Dense(2*out => out, sigmoid)
+    conv_h = GNNChain(GCNConv(in => out, relu; kws...), GCNConv(out => out; kws...))
+    dense_h = Dense(2*out => out, tanh)
+    return TGCNCell(in, out, conv_z, dense_z, conv_r, dense_r, conv_h, dense_h)
+end
+
+Flux.initialstates(cell::TGCNCell) = zeros_like(cell.dense_z.weight, cell.out)
+
+(cell::TGCNCell)(g::GNNGraph, x::AbstractMatrix) = cell(g, x, initialstates(cell))
+
+function (cell::TGCNCell)(g::GNNGraph, x::AbstractMatrix, h::AbstractVector)
+    return cell(g, x, repeat(h, 1, g.num_nodes))
+end
+
+function (cell::TGCNCell)(g::GNNGraph, x::AbstractMatrix, h::AbstractMatrix)
+    z = cell.conv_z(g, x)
+    z = cell.dense_z(vcat(z, h))
+    r = cell.conv_r(g, x)
+    r = cell.dense_r(vcat(r, h))
+    h̃ = cell.conv_h(g, x)
+    h̃ = cell.dense_h(vcat(h̃, r .* h))
+    h = (1 .- z) .* h .+ z .* h̃
+    return h, h
+end
+
+function Base.show(io::IO, cell::TGCNCell)
+    print(io, "TGCNCell($(cell.in) => $(cell.out))")
+end

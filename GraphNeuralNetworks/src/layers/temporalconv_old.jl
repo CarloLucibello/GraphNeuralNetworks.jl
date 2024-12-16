@@ -7,11 +7,10 @@ end
 
 Flux.@layer :noexpand TGCNCell
 
-function TGCNCell(ch::Pair{Int, Int};
+function TGCNCell((in, out)::Pair{Int, Int};
                   bias::Bool = true,
                   init = Flux.glorot_uniform,
                   add_self_loops = false)
-    in, out = ch
     conv = GCNConv(in => out, sigmoid; init, bias, add_self_loops)
     gru = GRUCell(out => out)
     return TGCNCell(conv, gru, in, out)
