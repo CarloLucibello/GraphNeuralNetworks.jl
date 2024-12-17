@@ -31,9 +31,9 @@ function set2set_pool(l, g::GNNGraph, x::AbstractMatrix)
     qstar = zeros_like(x, (2*n_in, g.num_graphs))
     h = zeros_like(l.lstm.Wh, size(l.lstm.Wh, 2))
     c = zeros_like(l.lstm.Wh, size(l.lstm.Wh, 2))
+    state = (h, c)
     for t in 1:l.num_iters
-        h, c = l.lstm(qstar, (h, c))                     # [n_in, n_graphs]
-        q = h
+        q, state = l.lstm(qstar, state)                     # [n_in, n_graphs]
         qn = broadcast_nodes(g, q)                    # [n_in, n_nodes]
         α = softmax_nodes(g, sum(qn .* x, dims = 1))  # [1, n_nodes]
         r = reduce_nodes(+, g, x .* α)               # [n_in, n_graphs]
