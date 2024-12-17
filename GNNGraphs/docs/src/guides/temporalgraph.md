@@ -56,6 +56,7 @@ TemporalSnapshotsGNNGraph:
   num_edges: [32, 30, 34]
   num_snapshots: 3
 ``` 
+
 ## Indexing
 
 Snapshots in a temporal graph can be accessed using indexing:
@@ -85,6 +86,7 @@ GNNGraph:
   num_nodes: 10
   num_edges: 16
 ```
+
 ## Iteration and Broadcasting
 
 Iteration and broadcasting over a temporal graph is similar to that of a vector of snapshots:

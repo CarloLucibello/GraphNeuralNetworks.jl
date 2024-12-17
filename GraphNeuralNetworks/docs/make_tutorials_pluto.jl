@@ -22,14 +22,14 @@ build_notebooks(bopt,
 move_tutorials("src_tutorials/introductory_tutorials/", "src/tutorials/")
 
 # Build temporal tutorials
-bopt_temp = BuildOptions("src_tutorials/temporalconv_tutorials/";
+bopt_temp = BuildOptions("src_tutorials/";
     output_format = documenter_output, use_distributed = false)
 
 build_notebooks(
     BuildOptions(bopt_temp;
         output_format = documenter_output),
-    ["temporal_graph_classification_pluto.jl", "traffic_prediction.jl"],
+    ["traffic_prediction.jl"],
     OutputOptions()
 )
 
-move_tutorials("src_tutorials/temporalconv_tutorials/", "src/tutorials/")
+move_tutorials("src_tutorials/", "src/tutorials/")
