@@ -227,8 +227,7 @@ function gated_graph_conv(l, g::GNNGraph, x::AbstractMatrix)
     for i in 1:(l.num_layers)
         m = view(l.weight, :, :, i) * h
         m = propagate(copy_xj, g, l.aggr; xj = m)
-        # in gru forward, hidden state is first argument, input is second
-        h = l.gru(m, h)
+        _, h = l.gru(m, h)
     end
     return h
 end
