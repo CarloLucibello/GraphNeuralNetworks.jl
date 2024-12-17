@@ -220,7 +220,7 @@ visualize_embeddings(emb_init, colors = labels)
 # If you are not new to Lux, this scheme should appear familiar to you.
 
 # Note that our semi-supervised learning scenario is achieved by the following line:
-# ```
+# ```julia
 # logitcrossentropy(ŷ[:,train_mask], y[:,train_mask])
 # ```
 # While we compute node embeddings for all of our nodes, we **only make use of the training nodes for computing the loss**.
