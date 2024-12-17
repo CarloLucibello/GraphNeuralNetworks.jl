@@ -4,7 +4,7 @@ CurrentModule = GNNGraphs
 
 # Temporal Graphs
 
-Temporal Graphs are graphs with time-varying topologies and features. In GNNGraphs.jl, temporal graphs with are represented by the [`TemporalSnapshotsGNNGraph`](@ref) type.
+Temporal graphs are graphs with time-varying topologies and features. In GNNGraphs.jl, they are represented by the [`TemporalSnapshotsGNNGraph`](@ref) type.
 
 ## Creating a TemporalSnapshotsGNNGraph
 
