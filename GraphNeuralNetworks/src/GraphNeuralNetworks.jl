@@ -55,8 +55,7 @@ export GNNRecurrence,
        GConvLSTM, GConvLSTMCell,
        DCGRU, DCGRUCell,
        EvolveGCNO, EvolveGCNOCell,
-       TGCN,
-       A3TGCN
+       TGCN, TGCNCell
 
 include("layers/pool.jl")
 export GlobalPool,
