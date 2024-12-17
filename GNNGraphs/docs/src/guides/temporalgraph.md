@@ -4,7 +4,7 @@ CurrentModule = GNNGraphs
 
 # Temporal Graphs
 
-Temporal Graphs are graphs with time varying topologies and  features. In GNNGraphs.jl, temporal graphs with fixed number of nodes over time are supported by the [`TemporalSnapshotsGNNGraph`](@ref) type.
+Temporal Graphs are graphs with time-varying topologies and features. In GNNGraphs.jl, temporal graphs with are represented by the [`TemporalSnapshotsGNNGraph`](@ref) type.
 
 ## Creating a TemporalSnapshotsGNNGraph
 
@@ -13,7 +13,7 @@ A temporal graph can be created by passing a list of snapshots to the constructo
 ```jldoctest temporal
 julia> using GNNGraphs
 
-julia> snapshots = [rand_graph(10,20) for i in 1:5];
+julia> snapshots = [rand_graph(10, 20) for i in 1:5];
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots)
 TemporalSnapshotsGNNGraph:
@@ -56,24 +56,53 @@ TemporalSnapshotsGNNGraph:
   num_edges: [32, 30, 34]
   num_snapshots: 3
 ``` 
+## Indexing
+
+Snapshots in a temporal graph can be accessed using indexing:
+
+```jldoctest temporal
+julia> snapshots = [rand_graph(10, 20), rand_graph(10, 14), rand_graph(10, 22)];
+
+julia> tg = TemporalSnapshotsGNNGraph(snapshots)
+
+julia> tg[1] # first snapshot
+GNNGraph:
+  num_nodes: 10
+  num_edges: 20
+
+julia> tg[2:3] # snapshots 2 and 3
+TemporalSnapshotsGNNGraph:
+  num_nodes: [10, 10]
+  num_edges: [14, 22]
+  num_snapshots: 2
+```
+
+A snapshot can be modified by assigning a new snapshot to the temporal graph:
+
+```jldoctest temporal
+julia> tg[1] = rand_graph(10, 16) # replace first snapshot
+GNNGraph:
+  num_nodes: 10
+  num_edges: 16
+```
 
 ## Basic Queries
 
 Basic queries are similar to those for [`GNNGraph`](@ref)s:
 ```jldoctest temporal
-julia> snapshots = [rand_graph(10,20), rand_graph(10,14), rand_graph(10,22)];
+julia> snapshots = [rand_graph(10,20), rand_graph(12,14), rand_graph(14,22)];
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots)
 TemporalSnapshotsGNNGraph:
-  num_nodes: [10, 10, 10]
+  num_nodes: [10, 12, 14]
   num_edges: [20, 14, 22]
   num_snapshots: 3
 
 julia> tg.num_nodes         # number of nodes in each snapshot
 3-element Vector{Int64}:
  10
- 10
- 10
+ 12
+ 14
 
 julia> tg.num_edges         # number of edges in each snapshot
 3-element Vector{Int64}:
@@ -87,8 +116,8 @@ julia> tg.num_snapshots     # number of snapshots
 julia> tg.snapshots         # list of snapshots
 3-element Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}:
  GNNGraph(10, 20) with no data
- GNNGraph(10, 14) with no data
- GNNGraph(10, 22) with no data
+ GNNGraph(12, 14) with no data
+ GNNGraph(14, 22) with no data
 
 julia> tg.snapshots[1]      # first snapshot, same as tg[1]
 GNNGraph:
@@ -97,7 +126,7 @@ GNNGraph:
 ```
 
 ## Data Features
-A temporal graph can store global feature for the entire time series in the `tgdata` filed.
+A temporal graph can store global feature for the entire time series in the `tgdata` field.
 Also, each snapshot can store node, edge, and graph features in the `ndata`, `edata`, and `gdata` fields, respectively. 
 
 ```jldoctest temporal
@@ -131,5 +160,3 @@ julia> [ds.x for ds in tg.ndata]; # vector containing the x feature of each snap
 julia> [g.x for g in tg.snapshots]; # same vector as above, now accessing 
                                    # the x feature directly from the snapshots
 ```
-
-

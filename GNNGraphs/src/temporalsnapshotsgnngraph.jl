@@ -46,6 +46,11 @@ TemporalSnapshotsGNNGraph:
   num_nodes: [20, 30]
   num_edges: [40, 60]
   num_snapshots: 2
+
+julia> tg[1] = rand_graph(10, 16)
+GNNGraph:
+  num_nodes: 10
+  num_edges: 16
 ```
 """
 struct TemporalSnapshotsGNNGraph{G<:GNNGraph, D<:DataStore}
