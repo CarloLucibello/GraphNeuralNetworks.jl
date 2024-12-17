@@ -696,6 +696,8 @@ function Flux.initialstates(cell::EvolveGCNOCell)
     return (; weight, lstm)
 end
 
+(cell::EvolveGCNOCell)(g::GNNGraph, x::AbstractMatrix) = cell(g, x, initialstates(cell))
+
 function (cell::EvolveGCNOCell)(g::GNNGraph, x::AbstractMatrix, state)
     weight, state_lstm = cell.lstm(state.weight, state.lstm)
     x = cell.conv(g, x, conv_weight = reshape(weight, (cell.out, cell.in)))

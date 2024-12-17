@@ -71,6 +71,7 @@ function check_equal_leaves(a, b; rtol=1e-4, atol=1e-4)
             # @assert isapprox(x, y; rtol, atol)
             if !isapprox(x, y; rtol, atol)
                 equal = false
+                # @show x y
             end
         end
     end
