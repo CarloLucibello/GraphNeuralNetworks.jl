@@ -225,9 +225,7 @@ function Base.getproperty(tg::TemporalSnapshotsGNNGraph, prop::Symbol)
 end
 
 function Base.show(io::IO, tsg::TemporalSnapshotsGNNGraph)
-    print(io, "TemporalSnapshotsGNNGraph($(tsg.num_snapshots)) with ")
-    print_feature_t(io, tsg.tgdata)
-    print(io, " data")
+    print(io, "TemporalSnapshotsGNNGraph($(tsg.num_snapshots))")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", tsg::TemporalSnapshotsGNNGraph)
