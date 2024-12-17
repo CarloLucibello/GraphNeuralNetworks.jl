@@ -1,55 +1,68 @@
 """
-    TemporalSnapshotsGNNGraph(snapshots::AbstractVector{<:GNNGraph})
+    TemporalSnapshotsGNNGraph(snapshots)
 
-A type representing a temporal graph as a sequence of snapshots. In this case a snapshot is a [`GNNGraph`](@ref).
+A type representing a time-varying graph as a sequence of snapshots,
+each snapshot being a [`GNNGraph`](@ref).
 
-`TemporalSnapshotsGNNGraph` can store the feature array associated to the graph itself as a [`DataStore`](@ref) object, 
-and it uses the [`DataStore`](@ref) objects of each snapshot for the node and edge features.
-The features can be passed at construction time or added later.
+The argument `snapshots` is a collection of `GNNGraph`s with arbitrary 
+number of nodes and edges each. 
 
-# Constructor Arguments
+Calling `tg` the temporal graph, `tg[t]` returns the `t`-th snapshot.
 
-- `snapshot`: a vector of snapshots, where each snapshot must have the same number of nodes.
+The snapshots can contain node/edge/graph features, while global features for the
+whole temporal sequence can be stored in `tg.tgdata`.
+
+See [`add_snapshot`](@ref) and [`remove_snapshot`](@ref) for adding and removing snapshots.
 
 # Examples
 
-```julia
-julia> using GNNGraphs
-
-julia> snapshots = [rand_graph(10,20) for i in 1:5];
+```jldoctest
+julia> snapshots = [rand_graph(i , 2*i) for i in 10:10:50];
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots)
 TemporalSnapshotsGNNGraph:
-  num_nodes: [10, 10, 10, 10, 10]
-  num_edges: [20, 20, 20, 20, 20]
+  num_nodes: [10, 20, 30, 40, 50]
+  num_edges: [20, 40, 60, 80, 100]
   num_snapshots: 5
 
-julia> tg.tgdata.x = rand(4); # add temporal graph feature
+julia> tg.num_snapshots
+5
 
-julia> tg # show temporal graph with new feature
+julia> tg.num_nodes
+5-element Vector{Int64}:
+ 10
+ 20
+ 30
+ 40
+ 50
+
+julia> tg[1]
+GNNGraph:
+  num_nodes: 10
+  num_edges: 20
+
+julia> tg[2:3]
 TemporalSnapshotsGNNGraph:
-  num_nodes: [10, 10, 10, 10, 10]
-  num_edges: [20, 20, 20, 20, 20]
-  num_snapshots: 5
-  tgdata:
-        x = 4-element Vector{Float64}
+  num_nodes: [20, 30]
+  num_edges: [40, 60]
+  num_snapshots: 2
 ```
 """
-struct TemporalSnapshotsGNNGraph
-    num_nodes::AbstractVector{Int}   
-    num_edges::AbstractVector{Int}
+struct TemporalSnapshotsGNNGraph{G<:GNNGraph, D<:DataStore}
+    num_nodes::Vector{Int}   
+    num_edges::Vector{Int}
     num_snapshots::Int
-    snapshots::AbstractVector{<:GNNGraph}
-    tgdata::DataStore   
+    snapshots::Vector{G}
+    tgdata::D   
 end
 
-function TemporalSnapshotsGNNGraph(snapshots::AbstractVector{<:GNNGraph})
-    @assert all([s.num_nodes == snapshots[1].num_nodes for s in snapshots]) "all snapshots must have the same number of nodes"
+function TemporalSnapshotsGNNGraph(snapshots)
+    snapshots = collect(snapshots)
     return TemporalSnapshotsGNNGraph(
         [s.num_nodes for s in snapshots],
         [s.num_edges for s in snapshots],
         length(snapshots),
-        snapshots,
+        collect(snapshots),
         DataStore()
     )
 end
@@ -67,7 +80,19 @@ function Base.getindex(tg::TemporalSnapshotsGNNGraph, t::Int)
 end
 
 function Base.getindex(tg::TemporalSnapshotsGNNGraph, t::AbstractVector)
-    return TemporalSnapshotsGNNGraph(tg.num_nodes[t], tg.num_edges[t], length(t), tg.snapshots[t], tg.tgdata)
+    return TemporalSnapshotsGNNGraph(tg.num_nodes[t], tg.num_edges[t], 
+                length(t), tg.snapshots[t], tg.tgdata)
+end
+
+function Base.length(tg::TemporalSnapshotsGNNGraph)
+    return tg.num_snapshots
+end
+
+function Base.setindex!(tg::TemporalSnapshotsGNNGraph, g::GNNGraph, t::Int)
+    tg.snapshots[t] = g
+    tg.num_nodes[t] = g.num_nodes
+    tg.num_edges[t] = g.num_edges
+    return tg
 end
 
 """
@@ -78,8 +103,6 @@ Return a `TemporalSnapshotsGNNGraph` created starting from `tg` by adding the sn
 # Examples
 
 ```jldoctest
-julia> using GNNGraphs
-
 julia> snapshots = [rand_graph(10, 20) for i in 1:5];
 
 julia> tg = TemporalSnapshotsGNNGraph(snapshots)
@@ -185,14 +208,8 @@ end
 function Base.getproperty(tg::TemporalSnapshotsGNNGraph, prop::Symbol)
     if prop ∈ fieldnames(TemporalSnapshotsGNNGraph)
         return getfield(tg, prop)
-    elseif prop == :ndata
-        return [s.ndata for s in tg.snapshots]
-    elseif prop == :edata
-        return [s.edata for s in tg.snapshots]
-    elseif prop == :gdata
-        return [s.gdata for s in tg.snapshots]
-    else 
-        return [getproperty(s,prop) for s in tg.snapshots]
+    else
+        return [getproperty(s, prop) for s in tg.snapshots]
     end
 end
 
@@ -204,39 +221,15 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", tsg::TemporalSnapshotsGNNGraph)
     if get(io, :compact, false)
-        print(io, "TemporalSnapshotsGNNGraph($(tsg.num_snapshots)) with ")
-        print_feature_t(io, tsg.tgdata)
-        print(io, " data")
+        print(io, "TemporalSnapshotsGNNGraph($(tsg.num_snapshots))")
     else
         print(io,
               "TemporalSnapshotsGNNGraph:\n  num_nodes: $(tsg.num_nodes)\n  num_edges: $(tsg.num_edges)\n  num_snapshots: $(tsg.num_snapshots)")
         if !isempty(tsg.tgdata)
             print(io, "\n  tgdata:")
             for k in keys(tsg.tgdata)
-                print(io, "\n\t$k = $(shortsummary(tsg.tgdata[k]))")
+                print(io, "\n    $k = $(shortsummary(tsg.tgdata[k]))")
             end
         end
-    end
-end
-
-function print_feature_t(io::IO, feature)
-    if !isempty(feature)
-        if length(keys(feature)) == 1
-            k = first(keys(feature))
-            v = first(values(feature))
-            print(io, "$(k): $(dims2string(size(v)))")
-        else
-            print(io, "(")
-            for (i, (k, v)) in enumerate(pairs(feature))
-                print(io, "$k: $(dims2string(size(v)))")
-                if i == length(feature)
-                    print(io, ")")
-                else
-                    print(io, ", ")
-                end
-            end
-        end
-    else 
-        print(io, "no")
     end
 end

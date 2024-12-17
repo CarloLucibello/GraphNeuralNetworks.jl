@@ -1,10 +1,15 @@
 @testset "Constructor array TemporalSnapshotsGNNGraph" begin
     snapshots = [rand_graph(10, 20) for i in 1:5]
-    tsg = TemporalSnapshotsGNNGraph(snapshots)
-    @test tsg.num_nodes == [10 for i in 1:5]
-    @test tsg.num_edges == [20 for i in 1:5]
-    wrsnapshots = [rand_graph(10,20), rand_graph(12,22)]
-    @test_throws AssertionError TemporalSnapshotsGNNGraph(wrsnapshots)
+    tg = TemporalSnapshotsGNNGraph(snapshots)
+    @test tg.num_nodes == [10 for i in 1:5]
+    @test tg.num_edges == [20 for i in 1:5]
+    @test tg.num_snapshots == 5
+    
+    snapshots = [rand_graph(i, 2*i) for i in 10:10:50]
+    tg = TemporalSnapshotsGNNGraph(snapshots)
+    @test tg.num_nodes == [i for i in 10:10:50]
+    @test tg.num_edges == [2*i for i in 10:10:50]
+    @test tg.num_snapshots == 5
 end
 
 @testset "==" begin
@@ -22,6 +27,17 @@ end
     tsg = TemporalSnapshotsGNNGraph(snapshots)
     @test tsg[3] == snapshots[3]
     @test tsg[[1,2]] == TemporalSnapshotsGNNGraph([10,10], [20,20], 2, snapshots[1:2], tsg.tgdata)
+end
+
+@testset "setindex!" begin
+    snapshots = [rand_graph(10, 20) for i in 1:5]
+    tsg = TemporalSnapshotsGNNGraph(snapshots)
+    g = rand_graph(20, 40)
+    tsg[3] = g
+    @test tsg.snapshots[3] === g
+    @test tsg.num_nodes == [10, 10, 20, 10, 10]
+    @test tsg.num_edges == [20, 20, 40, 20, 20]
+    @test_throws MethodError tsg[3:4] = g
 end
 
 @testset "getproperty" begin
