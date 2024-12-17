@@ -91,7 +91,13 @@ end
 
 function Base.length(tg::TemporalSnapshotsGNNGraph)
     return tg.num_snapshots
-end
+end 
+
+# Allow broadcasting over the temporal snapshots
+Base.broadcastable(tg::TemporalSnapshotsGNNGraph) = tg.snapshots
+
+Base.iterate(tg::TemporalSnapshotsGNNGraph) = Base.iterate(tg.snapshots)
+Base.iterate(tg::TemporalSnapshotsGNNGraph, i) = Base.iterate(tg.snapshots, i)
 
 function Base.setindex!(tg::TemporalSnapshotsGNNGraph, g::GNNGraph, t::Int)
     tg.snapshots[t] = g

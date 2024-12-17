@@ -85,6 +85,29 @@ GNNGraph:
   num_nodes: 10
   num_edges: 16
 ```
+## Iteration and Broadcasting
+
+Iteration and broadcasting over a temporal graph is similar to that of a vector of snapshots:
+
+```jldoctest temporal
+julia> snapshots = [rand_graph(10, 20), rand_graph(10, 14), rand_graph(10, 22)];
+
+julia> tg = TemporalSnapshotsGNNGraph(snapshots);
+
+julia> [g for g in tg] # iterate over snapshots
+3-element Vector{GNNGraph{Tuple{Vector{Int64}, Vector{Int64}, Nothing}}}:
+ GNNGraph(10, 20) with no data
+ GNNGraph(10, 14) with no data
+ GNNGraph(10, 22) with no data
+
+julia> f(g) = g isa GNNGraph;
+
+julia> f.(tg) # broadcast over snapshots
+3-element BitVector:
+ 1
+ 1
+ 1
+```
 
 ## Basic Queries
 
