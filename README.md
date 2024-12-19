@@ -9,13 +9,13 @@
 [![codecov](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl)
 
 
-**Libraries for deep learning on graphs in Julia**, using either [Flux.jl](https://fluxml.ai/Flux.jl/stable/) or [Lux.jl](https://lux.csail.mit.edu/stable/) as backend frameworks.
+**Libraries for deep learning on graphs in Julia**, using either [Flux.jl](https://fluxml.ai/) or [Lux.jl](https://lux.csail.mit.edu/stable/) as backend frameworks.
 
 This repository contains the following packages:
 
-- **GraphNeuralNetworks.jl**: Provides graph convolutional layers based on the deep learning framework [Flux.jl](https://fluxml.ai/Flux.jl/stable/). This is the frontend package for Flux users.
+- **GraphNeuralNetworks.jl**: Provides graph convolutional layers based on the deep learning framework [Flux.jl](https://fluxml.ai/). This is the frontend package for Flux users.
 
-- **GNNLux.jl**: Offers graph convolutional layers based on the deep learning framework [Lux.jl](https://lux.csail.mit.edu/stable/). This is the frontend package for Lux users.
+- **GNNLux.jl**: Offers graph convolutional layers based on the deep learning framework [Lux.jl](https://lux.csail.mit.edu/). This is the frontend package for Lux users.
 
 - **GNNGraphs.jl**: Provides graph data structures and helper functions for working with graph data. This package is re-exported by the frontend packages.
 
@@ -31,7 +31,7 @@ Both **GraphNeuralNetworks.jl** and **GNNLux.jl** support the following features
 - Support for CUDA and AMDGPU.
 - Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
 - [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) of node, edge, and graph-level machine learning tasks.
-- Support for heterogeneous and temporal graphs.
+- Heterogeneous and dynamical graphs and convolutions.
 
 ## Installation  
 
@@ -57,14 +57,16 @@ For a comprehensive introduction to the library, refer to the [Documentation](ht
 
 ## Citing
 
-If you use GraphNeuralNetworks.jl in a scientific publication, we would appreciate the following reference:
+If you use GraphNeuralNetworks.jl in a scientific publication, we would appreciate a reference
+to [our paper](https://arxiv.org/abs/2412.06354):
 
 ```
-@misc{Lucibello2021GNN,
-  author       = {Carlo Lucibello and other contributors},
-  title        = {GraphNeuralNetworks.jl: a geometric deep learning library for the Julia programming language},
-  year         = 2021,
-  url          = {https://github.com/JuliaGraphs/GraphNeuralNetworks.jl}
+@article{lucibello2024graphneuralnetworks,
+  title={GraphNeuralNetworks.jl: Deep Learning on Graphs with Julia},
+  author={Lucibello, Carlo and Rossi, Aurora},
+  journal={arXiv preprint arXiv:2412.06354},
+  url={https://arxiv.org/abs/2412.06354},
+  year={2024}
 }
 ```
 

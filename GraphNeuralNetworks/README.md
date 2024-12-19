@@ -1,29 +1,28 @@
-<img align="right" width="300px" src="https://raw.githubusercontent.com/JuliaGraphs/GraphNeuralNetworks.jl/master/docs/src/assets/logo.svg">
-
+<img align="right" width="300px" src="https://raw.githubusercontent.com/JuliaGraphs/GraphNeuralNetworks.jl/master/docs/logo.svg">
 
 # GraphNeuralNetworks.jl
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaGraphs.github.io/GraphNeuralNetworks.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaGraphs.github.io/GraphNeuralNetworks.jl/dev)
-![](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/actions/workflows/ci.yml/badge.svg)
-[![codecov](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaGraphs/GraphNeuralNetworks.jl)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliagraphs.org/GraphNeuralNetworks.jl/docs/GraphNeuralNetworks.jl/)
+
+Graph convolutional layers based on the deep learning framework [Flux.jl](https://fluxml.ai/). 
+This is the frontend package for Flux users of the [GraphNeuralNetworks.jl ecosystem](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl).
 
 
-GraphNeuralNetworks.jl is a graph neural network library written in Julia and based on the deep learning framework [Flux.jl](https://github.com/FluxML/Flux.jl).
+### Features
 
-Among its features:
+**GraphNeuralNetworks.jl** supports the following features:
 
-* Implements common graph convolutional layers.
-* Supports computations on batched graphs. 
-* Easy to define custom layers.
-* CUDA support.
-* Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
-* [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/examples) of node, edge, and graph level machine learning tasks. 
-* Heterogeneous and temporal graphs. 
+- Implementation of common graph convolutional layers.
+- Computation on batched graphs.
+- Custom layer definitions.
+- Support for CUDA and AMDGPU.
+- Integration with [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl).
+- [Examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/GraphNeuralNetworks/examples) of node, edge, and graph-level machine learning tasks.
+- Heterogeneous and dynamical graphs and convolutions.
 
-## Installation
+## Installation  
 
-GraphNeuralNetworks.jl is a registered Julia package. You can easily install it through the package manager:
+Install the package through the Julia package manager.
 
 ```julia
 pkg> add GraphNeuralNetworks
@@ -31,25 +30,19 @@ pkg> add GraphNeuralNetworks
 
 ## Usage
 
-Usage examples can be found in the [examples](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/examples) and in the [notebooks](https://github.com/JuliaGraphs/GraphNeuralNetworks.jl/tree/master/notebooks) folder. Also, make sure to read the [documentation](https://JuliaGraphs.github.io/GraphNeuralNetworks.jl/dev) for a comprehensive introduction to the library.
-
+For a comprehensive introduction to the library, refer to the [Documentation](https://juliagraphs.org/GraphNeuralNetworks.jl/docs/GraphNeuralNetworks.jl/).
 
 ## Citing
 
-If you use GraphNeuralNetworks.jl in a scientific publication, we would appreciate the following reference:
+If you use GraphNeuralNetworks.jl in a scientific publication, we would appreciate a reference
+to [our paper](https://arxiv.org/abs/2412.06354):
 
 ```
-@misc{Lucibello2021GNN,
-  author       = {Carlo Lucibello and other contributors},
-  title        = {GraphNeuralNetworks.jl: a geometric deep learning library for the Julia programming language},
-  year         = 2021,
-  url          = {https://github.com/JuliaGraphs/GraphNeuralNetworks.jl}
+@article{lucibello2024graphneuralnetworks,
+  title={GraphNeuralNetworks.jl: Deep Learning on Graphs with Julia},
+  author={Lucibello, Carlo and Rossi, Aurora},
+  journal={arXiv preprint arXiv:2412.06354},
+  url={https://arxiv.org/abs/2412.06354},
+  year={2024}
 }
 ```
-
-## Acknowledgments
-
-GraphNeuralNetworks.jl is largely inspired by [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/), [Deep Graph Library](https://docs.dgl.ai/),
-and [GeometricFlux.jl](https://fluxml.ai/GeometricFlux.jl/stable/).
-
-
